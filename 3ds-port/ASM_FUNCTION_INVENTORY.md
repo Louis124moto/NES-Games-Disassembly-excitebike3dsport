@@ -142,18 +142,18 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E091` | `sub_E091` | Pending | — |
 | `$E098` | `sub_E098` | Pending | — |
 | `$E09F` | `sub_E09F` | Pending | calls: sub_DC97 |
-| `$E16C` | `sub_E16C` | Pending | — |
+| `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
 | `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
 | `$E1A3` | `sub_E1A3` | Pending | calls: sub_E1F9 |
-| `$E1F9` | `sub_E1F9` | Pending | — |
-| `$E26A` | `sub_E26A` | Translated command-preparation model + regression test; 3DS build pending | `loc_D1C7` rendering remains separate |
-| `$E2F6` | `sub_E2F6` | Pending | — |
+| `$E1F9` | `sub_E1F9` | Partial state-level model only | Not a complete translation of all branches and side effects |
+| `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |
+| `$E2F6` | `sub_E2F6` | Precondition/state model only | Full OAM-writing tail not translated |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Pending | — |
-| `$E3F4` | `sub_E3F4` | Pending | — |
-| `$E456` | `sub_E456` | Translated + regression-tested; 3DS build pending | Culling, opponent reset, and sprite hiding |
-| `$E49B` | `sub_E49B_hide_12_sprites` | Pending | — |
-| `$E4AD` | `sub_E4AD_hide_4_sprites` | Pending | — |
-| `$E4C8` | `sub_E4C8` | Translated + host-tested; 3DS build pending | Object overlap scan; preserves scratch `$000B` input/output |
+| `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
+| `$E456` | `sub_E456` | Translated + regression-tested; host suite and 3DS build passed | Culling, opponent reset, and sprite hiding |
+| `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
+| `$E4AD` | `sub_E4AD_hide_4_sprites` | Translated + regression-tested; 3DS build passed | Literal loop writes three Y bytes at offsets 0,4,8 |
+| `$E4C8` | `sub_E4C8` | Translated + host-tested; 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
 | `$E52C` | `sub_E52C` | Pending | — |
 | `$E70B` | `sub_E70B` | Pending | — |
 | `$E733` | `sub_E733` | Pending | — |
