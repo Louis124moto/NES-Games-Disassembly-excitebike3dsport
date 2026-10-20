@@ -198,3 +198,15 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Add an independent exhaustive host reference test for all 16,777,216 `(state, Y, delta)` inputs for slot 0, while checking the remaining slots' expected effects.
 - [ ] Confirm the new exhaustive host test and native 3DS build pass in GitHub Actions before calling this fragment validated.
 - [ ] Translate and test the rest of `sub_E96C`, including the exact `sub_DD06` side effects, `$E53D` threshold loop, and `$EA07-$EA43` controller branch, before integrating this fragment into live gameplay.
+
+
+## Batch of exact RAM helpers — 2026-10-21
+
+- [x] Translate `sub_E84F` ($E84F): store A to RAM `$00BC,X` and `$00E4,X`.
+- [x] Translate `sub_E86F` ($E86F): store `$00E4,X - A` to `$00BC,X`, modulo 256.
+- [x] Translate `sub_E893` ($E893): store A to `$00D4,X` and `$00B4,X`; return `$00C8,X - $00D0,X`.
+- [x] Translate `sub_E73B` ($E73B): add `$0060,X` to X-low with 8-bit wrap and no high-byte carry.
+- [x] Translate `sub_E733` ($E733): execute the X-low update for slots 3, 2, 1; preserve the original `BNE` loop's omission of slot 0.
+- [x] Add host regression tests for these five routines. Test results are pending CI; no gameplay integration is claimed.
+- [ ] Wait for both the host-test workflow and native 3DS build on this batch; inspect failures and correct them before counting the batch as verified.
+- [ ] Continue tracing and translating additional self-contained ASM routines; only count routines as verified after the source mapping, tests, and CI pass.
