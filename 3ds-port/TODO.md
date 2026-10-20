@@ -4,6 +4,10 @@ This file is the active project checklist. The original NES disassembly is the r
 
 **Overall status:** not yet a playable faithful port. The application scaffold exists; routine translations are in progress. A translated routine is not automatically tested, build-verified, integrated, or fidelity-verified.
 
+## Use of AI assistance
+
+AI tools have been used to assist with repository analysis, technical documentation, assembly-to-C translation work, and test planning. AI-generated output is treated as a proposal, not as proof of correctness. Verify translations against the original NES instructions and record test execution, build success, gameplay integration, and fidelity comparisons only when supported by reproducible evidence. AI use does not mean a routine or feature is complete or validated; human review remains required.
+
 ## Status definitions
 
 - **Analyzed:** source instructions and relevant dependencies inspected; confirmed facts separated from hypotheses.
