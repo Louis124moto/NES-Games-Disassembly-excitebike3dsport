@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <string.h>
 
 #include "nes_routines.h"
 
@@ -377,8 +376,94 @@ static int testE8xxConstantAndResetEntries(void)
     return 0;
 }
 
+
+static int testBatchC333C3B1(void) {
+    uint8_t ctrl=0u,r2000=0u,a=0xFFu,b=0xA5u;
+    nesSubC333WritePpuCtrl(0xA5u,&r2000,&ctrl);
+    if(ctrl!=0xA5u||r2000!=0xA5u)return 1;
+    nesSubC3AFIncrementRaceCounter(&a); if(a!=0u)return 2;
+    nesSubC3B1ClearCounters(&a,&b); if(a!=0u||b!=0u)return 3;
+    puts("PASS: sub_C333/C3AF/C3B1 register and RAM effects."); return 0;
+}
+static int testBatchC621C68A(void) {
+    uint8_t source[256],dest[256],lo=0xFFu,hi=0x34u; unsigned int i;
+    for(i=0;i<256u;++i){source[i]=(uint8_t)(i^0xA5u);dest[i]=0u;}
+    nesSubC621CopyPage(source,dest);
+    if(memcmp(source,dest,256u)!=0)return 1;
+    nesSubC68AIncrementPointer(&lo,&hi); if(lo!=0u||hi!=0x35u)return 2;
+    puts("PASS: sub_C621 full page copy and C68A pointer carry."); return 0;
+}
+static int testBatchC971CA1B(void) {
+    uint8_t out=0u,x=0u,held=0u;
+    if(nesSubC971AddCommandLength(0xF0u,0x30u,&out,&x)!=0x20u||out!=0x20u||x!=0x30u)return 1;
+    nesSubCA1BCopyButtonHold(0xA6u,&held); if(held!=0xA6u)return 2;
+    puts("PASS: sub_C971 addition and CA1B button copy."); return 0;
+}
+static int testBatchCB13(void) {
+    if(nesSubCB13ComputeSpriteCode(5u,0u)!=0x20u)return 1;
+    if(nesSubCB13ComputeSpriteCode(4u,0u)!=0x0Cu)return 2;
+    if(nesSubCB13ComputeSpriteCode(0u,1u)!=0x10u)return 3;
+    if(nesSubCB13ComputeSpriteCode(1u,1u)!=0x13u)return 4;
+    if(nesSubCB13ComputeSpriteCode(0x55u,0u)!=0xFFu)return 5;
+    puts("PASS: sub_CB13 exact Y loop and flag branch."); return 0;
+}
+static int testBatchCFE3D24F(void) {
+    uint8_t flags[256]={0},mask=0xFFu; flags[0xF2u]=0xAFu;
+    nesSubCFE3ClearObjectFlags(0xF2u,flags); if(flags[0xF2u]!=0xA0u)return 1;
+    nesSubD24FDisableRendering(&mask); if(mask!=0u)return 2;
+    puts("PASS: sub_CFE3 flag mask and D24F rendering mask."); return 0;
+}
+static int testBatchCF8BECBF(void) {
+    unsigned int i;
+    for(i=0;i<256u;++i) {
+        uint8_t expected=(uint8_t)(i+1u); if(expected==0x40u)expected=0u;
+        if(nesSubECBFIncrementAndWrap((uint8_t)i)!=expected)return 1;
+        if(nesSubCF8BCarryOut((uint8_t)i)!=((i>=0x3Bu&&i<0x3Eu)?0u:1u))return 2;
+    }
+    puts("PASS: sub_CF8B carry and ECBF increment/wrap over all A values."); return 0;
+}
+static int testBatchF676F826(void) {
+    uint8_t ram[22]; uint8_t b7=0u,c5=0xAAu; unsigned int i;
+    for(i=0;i<22u;++i)ram[i]=(uint8_t)i;
+    nesSubF676FillCommandPayload(ram);
+    for(i=0;i<22u;++i)if(ram[i]!=((i>=4u&&i<=13u)?0xFCu:(uint8_t)i))return 1;
+    if(nesSubF826AdvanceObject(0xFFu,&b7,&c5)!=0u||b7!=0u||c5!=0u)return 2;
+    puts("PASS: sub_F676 payload fill and F826 byte wrap/state writes."); return 0;
+}
+static int testBatchF82E839(void) {
+    uint8_t loA[256],hiA[256],loB[256],hiB[256],lo=0u,hi=0u; unsigned int i;
+    for(i=0;i<256u;++i){loA[i]=(uint8_t)i;hiA[i]=(uint8_t)(255u-i);loB[i]=(uint8_t)(i^0x5Au);hiB[i]=(uint8_t)(i^0xA5u);}
+    nesSubF82EPreparePointer(0x91u,loA,hiA,&lo,&hi);if(lo!=0x91u||hi!=(uint8_t)(255u-0x91u))return 1;
+    nesSubF839PreparePointer(0x3Cu,loB,hiB,&lo,&hi);if(lo!=(uint8_t)(0x3Cu^0x5Au)||hi!=(uint8_t)(0x3Cu^0xA5u))return 2;
+    puts("PASS: sub_F82E/F839 indexed pointer-table reads."); return 0;
+}
+static int testBatchC62D(void) {
+    uint8_t strobe=0u; nesSubC62DControllerStrobe(&strobe);
+    if(strobe!=0x05u)return 1;
+    puts("PASS: sub_C62D controller strobe value."); return 0;
+}
+static int testBatchF6FB(void) {
+    uint8_t a=0xA3u,b=0x1Eu;
+    nesSubF6FBAdvanceAudioPhase(&a,&b); if(a!=0xA3u||b!=0x1Fu)return 1;
+    nesSubF6FBAdvanceAudioPhase(&a,&b); if(a!=0xA7u||b!=0u)return 2;
+    a=0xFFu;b=0xFFu;nesSubF6FBAdvanceAudioPhase(&a,&b);if(a!=0xFFu||b!=0u)return 3;
+    puts("PASS: sub_F6FB increment, equality branch and XOR bit."); return 0;
+}
+static int testBatchF871F885(void) {
+    uint8_t audio[16]={0};
+    nesSubF871WriteAudioTimer(0x21u,0x44u,0u,audio);
+    if(audio[2]!=0x44u||audio[3]!=0x29u)return 1;
+    audio[6]=0xAAu; audio[7]=0xBBu;
+    nesSubF885WriteAudioTimer(0x10u,0u,audio);
+    if(audio[6]!=0xAAu||audio[7]!=0xBBu)return 2;
+    nesSubF885WriteAudioTimer(0x11u,0x22u,audio);
+    if(audio[6]!=0x22u||audio[7]!=0x19u)return 3;
+    puts("PASS: sub_F871/F885 audio-register write conditions."); return 0;
+}
+
 int main(void)
 {
+    if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\\n",stderr); return 1; }
     if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\\n",stderr); return 1; }
     if(testSubD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
     if(testSubD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
