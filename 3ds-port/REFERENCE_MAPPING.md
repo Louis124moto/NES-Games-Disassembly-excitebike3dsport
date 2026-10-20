@@ -160,3 +160,54 @@ Known details from the visible handlers:
 - States `$03-$05` still need their full entry-to-exit data-flow trace before assigning higher-level meanings.
 
 Do not map these object states to “jump”, “crash”, “landing”, or other gameplay concepts solely from their state number or neighboring code.
+
+## Expanded state-handler trace — states `$02-$05`
+
+Source: `Excitebike/bank_FF.asm`, dispatch from `sub_D924`, handlers at CPU `$D953`, `$D983`, `$D9D3`, `$D9F6`.
+
+### State `$02` — target `$D953`
+
+- Set Y to X. If X is nonzero and `ram_00BC_obj,X` is nonzero, replace Y with `$04`.
+- Compare `ram_obj_pos_Y_lo,X` with `tbl_D8C4,Y`.
+- If unequal, write `$01` to `ram_00DC_obj,X` when the Y position is below the table value; otherwise write `$FF`. Return immediately.
+- If equal, clear `ram_0398_obj,X` and `ram_00DC_obj,X`, increment `ram_009C_obj,X`. If X is zero, set `ram_00FD = $02`. Set `ram_002A_timer,X = $08`, then return.
+
+This documents a comparison/state-transition handler. The disassembly alone in this block does not establish a semantic name such as landing or collision.
+
+### State `$03` — target `$D983`
+
+- If `ram_0370_obj,X == 0`, branch to the transition tail at `$D9C0`.
+- Otherwise, if `ram_002A_timer,X != 0`, return.
+- Compute `X OR ram_03F7`. If nonzero, skip the button-sampling branch. If zero, save the previous `ram_0049` in Y, compute `ram_btn_hold AND $C0`, and update `ram_0049` according to the branch at `$D998-$D99F`. If the prior value was zero in the qualifying branch, decrement `ram_0390_obj,X`.
+- Read `ram_003F AND $0F`. If zero, decrement `ram_0390_obj,X`. Then test its low three bits; if zero, toggle bit 0 of `ram_0398_obj,X`.
+- Compute the 8-bit value `ram_0390_obj,X - $08` and compare it with `ram_0080_obj,X`. If the result is greater than or equal to that value under the 6502 CMP/BCS semantics, return.
+- Otherwise, or if the initial `ram_0370_obj,X` was zero, set `ram_0036_timer,X = $03` and increment `ram_009C_obj,X`. For X=3 only, also clear `ram_03A8` and `ram_0370_obj+3`.
+
+The precise signed/unsigned meaning of these variables is not inferred here; branches and byte operations are what the code proves.
+
+### State `$04` — target `$D9D3`
+
+- If `ram_0036_timer,X` is nonzero, return.
+- For X=0: if `ram_03E0_obj` is nonzero, clear `ram_009C_obj,0` and return via `$DA10`. Otherwise, if `ram_03F7` is zero, increment `ram_009C_obj,0`; if nonzero, jump to `loc_CA85_clear_0021_00FF`.
+- For X nonzero: if `ram_0022_timer` is nonzero, return. Otherwise set `ram_00DC_obj,X = $01`, set `ram_0022_timer = $18`, increment `ram_009C_obj,X`, and return.
+
+### State `$05` — target `$D9F6`
+
+- If `ram_0094_obj,X OR ram_00DC_obj,X` is nonzero, enter the state-reset path.
+- If both are zero, compare `ram_obj_pos_Y_lo,X` with `tbl_D8C4,X`; equality returns without changing the state.
+- On the reset path, set `ram_00DC_obj,X = $01`. If X=0, clear `ram_009C_obj,0` immediately. For X nonzero, if `ram_obj_pos_Y_lo,X < $08`, return with the state unchanged; otherwise clear `ram_009C_obj,X`.
+
+### Shared derived-position routine — `sub_DA15`
+
+Called immediately after the dispatch handler for each X from 3 down to 0. Its arithmetic is:
+
+1. `A = ram_0390_obj,X - ram_0080_obj,X - $08`, using 6502 SEC/SBC carry semantics (the second SBC consumes the carry from the first subtraction).
+2. `ASL A` (8-bit shift, carry out discarded by the subsequent CLC).
+3. `A = A + ram_obj_pos_Y_lo,X + $04`, with 8-bit result and the carry from the addition to `ram_obj_pos_Y_lo,X` included by ADC.
+4. Store the final byte in `ram_006C_obj,X`.
+
+A faithful C translation must model every intermediate as an 8-bit value and preserve the carry/borrow between the two SBC instructions. Rewriting this as an unconstrained integer expression would not be equivalent for underflow/overflow cases.
+
+### Remaining proof obligations
+
+The handlers above still depend on variables whose writers and meaning are not completely mapped. Before turning them into native gameplay, trace the producers of `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`, and confirm which object slot is the player under each race state. Do not add guessed labels or physics behavior.
