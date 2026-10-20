@@ -243,3 +243,31 @@ Translate routines in dependency order rather than blindly copying address order
 | `sub_E2F6` | State model | `nesSubE2F6ShouldDrawWheel` |
 | `sub_E1F9` | State model | `nesSubE1F9SelectObjectSprite` |
 | `loc_E3AA` | State model | `nesLocE3AAUpdateHeatFlags` |
+
+
+## Additional translated entries (2026-10-21)
+
+| ASM entry | C translation | Coverage/status |
+|---|---|---|
+| `sub_CFCB` | `nesSubCFCBCompareObjectPosition` | Lexicographic compare and both flag-mask branches |
+| `sub_CFDB` | `nesSubCFDBClearUpperFlags` | Zero early return and low-nibble mask |
+| `sub_CFEA` | `nesSubCFEAUpdateComparisonFlags` | Zero, equal, less-than, greater-than |
+| `sub_CE58` | `nesSubCE58ObjectIndexMatches` | Equality/Z result |
+| `loc_CAFA` | `nesLocCAFAFillCommand` | Seven writes and 8-bit X wrap |
+| `loc_CD13` | `nesLocCD13CopySpriteTemplate` | Eight OAM bytes |
+| `loc_D0A6` | `nesLocD0A6StoreAndReturn` | Indexed store and A return |
+| `loc_D197` | `nesLocD197WriteScrollRegister` | PPU scroll write effect |
+| `loc_EC47` | `nesLocEC47WriteFixedSprite` | Four fixed sprite bytes |
+| `loc_CA85` | `nesLocCA85ClearRam` | RAM range clear and preserved $42 |
+| `sub_C339` | `nesSubC339WaitForVblank` | Finite trace of original bit-7 polling |
+| `sub_D19B` | `nesSubD19BWaitForStatus` | Finite trace of original bit-6 polling |
+| `sub_D347` | `nesSubD347ReadControllers` | Strobe and two controller decodes |
+| `loc_C4FC` | `nesLocC4FCComputeScaledValue` | Both arithmetic branches |
+| `sub_C92C` | `nesSubC92CSelectTableEntry` | Full table-index path |
+| `sub_C935` | `nesSubC935BuildCommand` | DF7F/DFA2 conversion and copy |
+| `sub_ECC9` | `nesSubECC9CheckSpriteBytes` | Four required byte comparisons |
+| `bra_C411` | `nesLocC411WriteSpriteX` | Sprite X, attribute, flag |
+| `loc_C3EF` | `nesLocC3EFWriteSpriteY` | Sprite Y store |
+| `sub_C409` | `nesSubC409SetupStaticSprite` | Tile, indexed X, attribute, flag |
+
+Native test source includes a dedicated regression group; execution and 3DS compilation are still pending.
