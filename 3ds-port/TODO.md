@@ -153,3 +153,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Replace the partial `sub_E1F9` model with the complete branch/return logic, including `$0036,X` timer semantics and `$039F` side effect.
 - [ ] Validate expanded `sub_E1F9` regression and 3DS build.
+
+- [x] Combine the `$E2AF-$E2F3` countdown state path into one model with explicit low/high borrow, finish blink, and render-command output.
+- [ ] Validate the combined countdown regression and 3DS build.
