@@ -45,6 +45,10 @@ static int testSubDCDE(void);
 static int testSubDD38(void);
 static int testSubDD6F(void);
 static int testSubDB95(void);
+static int testSubDA6A(void);
+static int testSubDB50(void);
+static int testSubDCA0(void);
+
 
 int main(void)
 {
@@ -78,6 +82,9 @@ int main(void)
     if (testSubDD38() != 0) return 1;
     if (testSubDD6F() != 0) return 1;
     if (testSubDB95() != 0) return 1;
+    if (testSubDA6A() != 0) return 1;
+    if (testSubDB50() != 0) return 1;
+    if (testSubDCA0() != 0) return 1;
     return 0;
 }
 
@@ -548,5 +555,115 @@ static int testSubDB95(void)
         }
     }
     printf("PASS: sub_DB95 clears exactly the 20 documented fields for slots 1..3.\n");
+    return 0;
+}
+
+
+static int testSubDA6A(void)
+{
+    unsigned int scroll, delta, nt;
+    unsigned long checked = 0u;
+    for (scroll = 0; scroll < 256u; ++scroll) {
+        for (delta = 0; delta < 256u; ++delta) {
+            for (nt = 0; nt < 2u; ++nt) {
+                uint8_t actualScroll = (uint8_t)scroll;
+                uint8_t actualNt = (uint8_t)nt;
+                unsigned int sum = scroll + delta;
+                uint8_t expectedScroll = (uint8_t)sum;
+                uint8_t expectedNt = (uint8_t)(nt ^ (sum > 0xFFu ? 1u : 0u));
+                nesSubDA6AUpdateScroll(&actualScroll, (uint8_t)delta, &actualNt);
+                if (actualScroll != expectedScroll || actualNt != expectedNt) {
+                    fprintf(stderr, "sub_DA6A mismatch: scroll=%02X delta=%02X nt=%u\n", scroll, delta, nt);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+    }
+    printf("PASS: sub_DA6A matched 131072 scroll/carry cases.\n");
+    return 0;
+}
+
+static int testSubDCA0(void)
+{
+    unsigned int x, index, finished, flags, mode;
+    unsigned long checked = 0u;
+    for (x = 0; x < 4u; ++x) {
+        for (index = 0; index < 256u; ++index) {
+            for (finished = 0; finished < 2u; ++finished) {
+                for (flags = 0; flags < 8u; ++flags) {
+                    uint8_t y[4] = {0u, 0u, 0u, 0u};
+                    uint8_t a4[4] = {0u, 0u, 0u, 0u};
+                    uint8_t h[4] = {0u, 0u, 0u, 0u};
+                    uint8_t table[256];
+                    uint8_t expected;
+                    unsigned int i;
+                    for (i = 0; i < 256u; ++i) table[i] = (uint8_t)(i ^ 0x5Au);
+                    y[x] = (uint8_t)index;
+                    a4[x] = (uint8_t)((flags & 1u) ? 1u : ((flags & 2u) ? 2u : 0u));
+                    expected = (finished == 1u && x == 0u && flags == 0u) ? 0x0Au : table[index];
+                    if (a4[x] == 1u) expected = 0x06u;
+                    nesSubDCA0SetupSpriteHeight((uint8_t)x, y, (uint8_t)finished,
+                        (uint8_t)((flags & 2u) ? 1u : 0u),
+                        (uint8_t)((flags & 4u) ? 1u : 0u),
+                        (uint8_t)((flags & 1u) ? 1u : 0u), a4, table, h);
+                    if (h[x] != expected) {
+                        fprintf(stderr, "sub_DCA0 mismatch: x=%u index=%u finished=%u flags=%u\n", x, index, finished, flags);
+                        return 1;
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: sub_DCA0 matched %lu table/flag combinations.\n", checked);
+    return 0;
+}
+
+static int testSubDB50(void)
+{
+    unsigned int x, scenario;
+    uint8_t d8d5[256], d8cd[16];
+    unsigned int i;
+    for (i = 0; i < 256u; ++i) d8d5[i] = (uint8_t)(i ^ 0xA5u);
+    for (i = 0; i < 16u; ++i) d8cd[i] = (uint8_t)(i * 7u);
+    for (x = 0; x < 4u; ++x) {
+        for (scenario = 0; scenario < 256u; ++scenario) {
+            uint8_t r84[4], r1b[4], r70[4], r78[4], r74[4], r80[4];
+            uint8_t r94 = (uint8_t)(scenario ^ 0x37u);
+            uint8_t r90 = (uint8_t)(scenario ^ 0x92u);
+            uint8_t finished = (uint8_t)((scenario >> 7) & 1u);
+            uint8_t y = (uint8_t)(scenario & 0x0Fu);
+            uint8_t expected78, expected74;
+            for (i = 0; i < 4u; ++i) {
+                r84[i] = (uint8_t)(scenario + i * 29u);
+                r1b[i] = (uint8_t)(scenario + i * 17u);
+                r70[i] = (uint8_t)(scenario + i * 31u);
+                r78[i] = (uint8_t)(scenario ^ (i * 11u));
+                r74[i] = (uint8_t)(scenario ^ (i * 23u));
+                r80[i] = (uint8_t)(scenario + i * 47u);
+            }
+            expected78 = finished ? 3u : d8d5[y];
+            expected74 = d8cd[r1b[x] & 0x0Fu];
+            if (!finished && x == 3u && (r84[x] & 2u) == 0u && r94 != 0u &&
+                (r84[x] == 0u || r80[x] < 0x40u)) {
+                expected78 = r94;
+                expected74 = r90;
+                if (!(r84[x] != 0u && r70[0] == r70[3])) {
+                    if (expected78 < 4u) expected78 = (uint8_t)(expected78 + 1u);
+                } else {
+                    expected78 = r78[x]; /* assembly returns after initial stores */
+                }
+            }
+            nesSubDB50SetupObject((uint8_t)x, y, finished, r84, r1b, r70, r78, r74, r80,
+                                  r94, r90, d8d5, d8cd);
+            if (r78[x] != expected78 || r74[x] != expected74) {
+                fprintf(stderr, "sub_DB50 mismatch: x=%u scenario=%u\n", x, scenario);
+                return 1;
+            }
+            ++checked;
+        }
+    }
+    printf("PASS: sub_DB50 matched branch/table reference for %lu cases.\n", checked);
     return 0;
 }
