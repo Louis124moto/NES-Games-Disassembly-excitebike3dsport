@@ -590,7 +590,7 @@ void nesSubE16CWriteSpriteStrip(uint8_t oam[256],uint8_t address,uint8_t firstTi
 /* sub_E3F4: initialize object order and sort four indices by unsigned Y. */
 void nesSubE3F4SortObjectsByY(uint8_t order[4],const uint8_t y[4],uint8_t active3,uint8_t y3){uint8_t yy[4],i,p;for(i=0;i<4u;i++){order[i]=i;yy[i]=y[i];}if(active3)yy[3]=y3;for(p=3u;p>0u;p--)for(i=0;i<p;i++)if(yy[order[i]]>=yy[order[i+1u]]){uint8_t t=order[i];order[i]=order[i+1u];order[i+1u]=t;}}
 /* sub_E4AD: writes $F8 to three OAM Y bytes, each four bytes apart. */
-void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset){uint8_t b=(uint8_t)(index+offset),y;for(y=0u;y<0x0Cu;y=(uint8_t)(y+4u))oam[(uint8_t)(b+y)]=0xF8u;}
+void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset){uint8_t b=(uint8_t)(index+offset);oam[b]=0xF8u;oam[(uint8_t)(b+4u)]=0xF8u;oam[(uint8_t)(b+8u)]=0xF8u;}
 /* sub_E49B: X=0..2; call the group hider only if bit 0 is clear. */
 void nesSubE49BHideSelectedSpriteGroups(uint8_t oam[256],uint8_t index,const uint8_t flags[3],const uint8_t offsets[3]){uint8_t x;for(x=0;x<3u;x++)if((flags[x]&1u)==0u)nesSubE4ADHideFourSprites(oam,index,offsets[x]);}
 /* sub_E2AF: SEC/SBC low byte; borrow decrements the high byte. */
