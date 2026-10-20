@@ -141,3 +141,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - The native app architecture and repeatable `.3dsx`/`.elf` CI build work, and the user previously confirmed the scaffold launches on 3DS.
 - There are currently 48 named C routine/helper definitions in `nes_routines.c` against an inventory of 177 original `sub_*` labels. This is a source-coverage count, not a project-completion percentage: some C definitions are partial state models or shared entry helpers, and several are not yet integrated into gameplay.
 - The port is still **not a playable faithful Excitebike implementation**. Bike physics, course data/rendering, opponent/race flow, menus, and audio need verified translation and integration. Do not claim a global completion percentage based only on the routine count.
+
+- [x] Translate `sub_E359` temperature arithmetic and OAM output using the literal `$D8F7/$D8FB` table bytes.
+- [ ] Validate `sub_E359` host regression and 3DS build in CI.
