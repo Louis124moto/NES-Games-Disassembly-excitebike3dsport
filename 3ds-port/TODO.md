@@ -156,3 +156,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Combine the `$E2AF-$E2F3` countdown state path into one model with explicit low/high borrow, finish blink, and render-command output.
 - [ ] Validate the combined countdown regression and 3DS build.
+
+- [x] Translate `sub_E1A3`'s `$D892/$D8A9` lookups, `$16` special pointer/attribute adjustment, and conditional overlay-tile loop.
+- [ ] Validate `sub_E1A3` host regression and 3DS build.
