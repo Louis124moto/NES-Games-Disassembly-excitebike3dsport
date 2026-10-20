@@ -137,3 +137,26 @@ Confirmed control flow:
 ### Analysis gate
 
 The next exact-analysis targets are the dispatch pointer tables `tbl_D8FF_lo`/`tbl_D905_hi`, every state handler reachable from them, the consumers/writers of the player slot's `ram_0060`/ `ram_0090_obj`/ `ram_0094_obj`, and the transition logic around `ram_005C_obj`, `ram_00BC_obj`, and `ram_0370_obj`. Until that data flow is traced, acceleration, jumping, and collision implementation remains blocked.
+
+## Dispatch table values — `tbl_D8FF_lo` / `tbl_D905_hi`
+
+The two tables are parallel arrays of low/high address bytes. Reading both directly from the disassembly yields:
+
+| `ram_009C_obj,X` | Target CPU address | Label |
+|---:|---:|---|
+| `$00` | `$D923` | `ofs_003_D923_00_RTS` |
+| `$01` | `$D933` | `ofs_003_D933_01` |
+| `$02` | `$D953` | `ofs_003_D953_02` |
+| `$03` | `$D983` | `ofs_003_D983_03` |
+| `$04` | `$D9D3` | `ofs_003_D9D3_04` |
+| `$05` | `$D9F6` | `ofs_003_D9F6_05` |
+
+These are confirmed pointer values, not semantic names for the states. The index is used directly as Y in both lookup tables; no range check is performed in `sub_D924`, so the valid range must be established from every writer of `ram_009C_obj,X` and the surrounding state machine before a native translation is considered safe.
+
+Known details from the visible handlers:
+- State `$00` jumps to an immediate RTS.
+- State `$01` uses `ram_0370_obj,X`, `ram_003F`, `ram_0390_obj,X`, `ram_03E4_obj,X`, `ram_0080_obj,X`, and `tbl_D90E` as described above.
+- State `$02` compares `ram_obj_pos_Y_lo,X` with `tbl_D8C4,Y`; depending on the comparison it writes `$01` or `$FF` to `ram_00DC_obj,X`. On equality it clears `ram_0398_obj,X` and `ram_00DC_obj,X`, increments `ram_009C_obj,X`, and sets an 8-frame timer in `ram_002A_timer,X`; for object slot 0 it also sets `ram_00FD` to `$02`.
+- States `$03-$05` still need their full entry-to-exit data-flow trace before assigning higher-level meanings.
+
+Do not map these object states to “jump”, “crash”, “landing”, or other gameplay concepts solely from their state number or neighboring code.
