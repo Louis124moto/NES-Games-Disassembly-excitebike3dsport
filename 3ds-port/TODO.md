@@ -113,3 +113,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate and test `sub_D000`, `sub_D11F`, `sub_D255`, `sub_D2FF`, `sub_E70B`, `sub_E80D`, `sub_E803`, `sub_E7FF`, `sub_E7FC`, and `sub_E836` at RAM/register level.
 - [ ] Confirm host regression and Nintendo 3DS build for this batch before marking fully validated.
+
+- [x] Add state-level models for E16C, E3F4, E4AD, E49B, E2AF, E2BD, E2D0, E2F6, E1F9 and E3AA.
+- [ ] Verify host tests and Nintendo 3DS build for this batch.
