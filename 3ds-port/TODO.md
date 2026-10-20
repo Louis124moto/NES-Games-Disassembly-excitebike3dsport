@@ -144,3 +144,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate `sub_E359` temperature arithmetic and OAM output using the literal `$D8F7/$D8FB` table bytes.
 - [ ] Validate `sub_E359` host regression and 3DS build in CI.
+
+- [x] Complete `sub_E2F6` through its OAM writes, including tile swap, attribute bit, wrapped coordinates, and conditional hide of the second wheel.
+- [ ] Validate the full `sub_E2F6` host regression and 3DS build.
