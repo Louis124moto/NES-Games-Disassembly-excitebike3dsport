@@ -144,16 +144,16 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E09F` | `sub_E09F` | Pending | calls: sub_DC97 |
 | `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
 | `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
-| `$E1A3` | `sub_E1A3` | Command setup + overlay translated; renderer dependency remains | Calls complete `sub_E1F9`; `$D1C7` still separate |
-| `$E1F9` | `sub_E1F9` | Full branch-level translation + expanded regression; CI validation pending | Includes `$000E` and `$039F` side effects and all RTS paths |
+| `$E1A3` | `sub_E1A3` | Command setup + overlay regression passed; 3DS build passed | `$D1C7` renderer remains separate |
+| `$E1F9` | `sub_E1F9` | Full branch-level translation; host regression and 3DS build passed | Includes `$000E` and `$039F` side effects and all RTS paths |
 | `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |
-| `$E2F6` | `sub_E2F6` | Full OAM path translated + regression test; CI validation pending | Two wheel sprites and all early-return gates |
-| `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Translated + regression test; CI validation pending | Heat update and four OAM sprite records |
+| `$E2F6` | `sub_E2F6` | Full OAM path translated; host regression and 3DS build passed | Two wheel sprites and all early-return gates |
+| `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Host regression and 3DS build passed | Heat update and four OAM sprite records |
 | `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
 | `$E456` | `sub_E456` | Translated + regression-tested; host suite and 3DS build passed | Culling, opponent reset, and sprite hiding |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Translated + regression-tested; 3DS build passed | Literal loop writes three Y bytes at offsets 0,4,8 |
-| `$E4C8` | `sub_E4C8` | Translated + host-tested; 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
+| `$E4C8` | `sub_E4C8` | Host regression and 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
 | `$E52C` | `sub_E52C` | Pending | — |
 | `$E70B` | `sub_E70B` | Pending | — |
 | `$E733` | `sub_E733` | Pending | — |
@@ -169,7 +169,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E893` | `sub_E893` | Pending | ; in |
 | `$E927` | `sub_E927` | Pending | — |
 | `$E96C` | `sub_E96C` | Pending | — |
-| `$EA44` | `sub_EA44` | Translated + regression test; CI validation pending | Special wheel tile and fallback wheel rendering |
+| `$EA44` | `sub_EA44` | Host regression and 3DS build passed | Special wheel tile and fallback wheel rendering |
 | `$EAC5` | `sub_EAC5` | Pending | — |
 | `$EB17` | `sub_EB17` | Pending | — |
 | `$EC25` | `sub_EC25` | Pending | — |
