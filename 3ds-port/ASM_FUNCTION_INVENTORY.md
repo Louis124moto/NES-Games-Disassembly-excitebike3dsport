@@ -146,7 +146,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
 | `$E1A3` | `sub_E1A3` | Pending | calls: sub_E1F9 |
 | `$E1F9` | `sub_E1F9` | Pending | — |
-| `$E26A` | `sub_E26A` | Pending | — |
+| `$E26A` | `sub_E26A` | Translated command-preparation model + regression test; 3DS build pending | `loc_D1C7` rendering remains separate |
 | `$E2F6` | `sub_E2F6` | Pending | — |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Pending | — |
 | `$E3F4` | `sub_E3F4` | Pending | — |
