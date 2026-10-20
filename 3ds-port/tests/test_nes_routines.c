@@ -108,14 +108,14 @@ static int testSubD310(void)
             referenceSubD310(&expected_frame, expected_timers);
             nesSubD310DecreaseAllTimers(&actual_frame, actual_timers);
             if (actual_frame != expected_frame) {
-                fprintf(stderr, "sub_D310 frame mismatch: in=%02X expected=%02X actual=%02X\\n",
+                fprintf(stderr, "sub_D310 frame mismatch: in=%02X expected=%02X actual=%02X\n",
                         frame, expected_frame, actual_frame);
                 return 1;
             }
             for (i = 0; i < 29u; ++i) {
                 if (actual_timers[i] != expected_timers[i]) {
                     fprintf(stderr,
-                            "sub_D310 timer mismatch: frame=%02X value=%02X slot=%u expected=%02X actual=%02X\\n",
+                            "sub_D310 timer mismatch: frame=%02X value=%02X slot=%u expected=%02X actual=%02X\n",
                             frame, timer_value, i, expected_timers[i], actual_timers[i]);
                     return 1;
                 }
@@ -123,6 +123,6 @@ static int testSubD310(void)
             ++checked;
         }
     }
-    printf("PASS: sub_D310 matched reference for %lu frame/timer vectors.\\n", checked);
+    printf("PASS: sub_D310 matched reference for %lu frame/timer vectors.\n", checked);
     return 0;
 }
