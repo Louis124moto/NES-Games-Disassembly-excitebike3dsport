@@ -7,8 +7,8 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Create the `3ds-port/` project structure.
 - [x] Add an initial C entry point and devkitARM Makefile.
 - [x] Add a GitHub Actions workflow for native 3DS builds and artifact upload.
-- [ ] Verify a successful CI build produces both `.3dsx` and `.elf` under `3ds-port/build/` (the earlier build succeeded before this output-path change; the new run must verify it).
-- [ ] Launch the build on a real 3DS or compatible emulator and record the result.
+- [x] Verify CI produces both `.3dsx` and `.elf` under `3ds-port/build/` (run 39493444147 succeeded; artifact `excitebike3ds-homebrew` uploaded).
+- [x] Launch the build on real 3DS hardware (user-confirmed: it launches and works; gameplay remains the architecture/debug scaffold, not faithful Excitebike).
 - [x] Add a `.gitignore` for generated build output and temporary files.
 
 ## Phase 2 — Application structure and source analysis
@@ -19,7 +19,9 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Document local build requirements and commands.
 - [x] Document the fidelity target, technical constraints, and original-source-to-native-module mapping.
 - [x] Compile the modular architecture successfully once (CI run 39492052328); re-run after the output-directory change.
-- [ ] Verify controls and screen layout on hardware/emulator.
+- [x] Verify the application and controls/screen layout on real hardware (user-confirmed working; this does not validate NES gameplay fidelity).
+
+- [x] Record the first verified temperature-meter/overheat routine trace from `sub_E359_display_temperature_meter_with_sprites` (CPU `$E359`, ROM offset `$002369`): update is skipped when `ram_0052_track_finished_flag` is nonzero; it derives an index from `ram_005C_obj & $C0` and race state, compares `ram_03B6` against `tbl_D8FB`, and adjusts the fractional/coarse pair `ram_03B5`/`ram_03B6` using `tbl_D8F7` or subtracts `$0B` on the cooling path. At coarse value `$1A`, a state-dependent branch can set the danger indicator. This is a partial trace, not a complete model of heat input/cooling.
 - [ ] Trace and map original gameplay routines and persistent RAM state (acceleration, heat/cooling, jumping/landing, collisions, course progression) before starting Phase 3.
 
 ## Phase 3 — Playable prototype
