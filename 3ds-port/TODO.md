@@ -74,3 +74,4 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [ ] Check indirect or alias writes to these RAM addresses and cross-check the RAM symbol declarations/memory map.
 
 - [x] Trace `sub_DA7A`'s opponent-only scroll-relative coordinate correction, `sub_DB95`'s opponent-slot reset path, and `sub_E96C`'s per-frame Y-delta application; record the confirmed facts and remaining uncertainties in `REFERENCE_MAPPING.md`.
+- [x] Record caller placement and surrounding frame-order for `sub_DA7A` and `sub_E96C`, including the `ram_03F2` gate and the adjacent update calls.
