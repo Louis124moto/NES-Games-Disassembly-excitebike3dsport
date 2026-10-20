@@ -208,7 +208,7 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_E73B` ($E73B): add `$0060,X` to X-low with 8-bit wrap and no high-byte carry.
 - [x] Translate `sub_E733` ($E733): execute the X-low update for slots 3, 2, 1; preserve the original `BNE` loop's omission of slot 0.
 - [x] Add host regression tests for these five routines. Test results are pending CI; no gameplay integration is claimed.
-- [ ] Wait for both the host-test workflow and native 3DS build on this batch; inspect failures and correct them before counting the batch as verified.
+- [x] Host regression workflow passed after correcting the initial compile failure; the native 3DS build and output checks passed on the corresponding code commit.
 - [ ] Continue tracing and translating additional self-contained ASM routines; only count routines as verified after the source mapping, tests, and CI pass.
 
 
@@ -229,5 +229,5 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Dispatch entries `ofs_002_E818_07`, `ofs_002_E845_04`, `ofs_002_E854_05`, `ofs_002_E85D_02`, `ofs_002_E86A_03`, and `ofs_002_E879_09` translated.
 - [x] Dispatch entries `ofs_002_E8BF_0E`, `ofs_002_E8C6_0F`, `ofs_002_E8E3_01`, `ofs_002_E8F5_14`, `ofs_002_E8FA_10`, and `ofs_002_E963_00` translated.
 - [x] Added host regression coverage for the new helpers, including byte-wrap arithmetic, slot isolation, lookup-table values, branch flags, and state-write behavior.
-- [ ] Host test and 3DS build must both pass on the final commit before these routines are counted as verified.
+- [x] Host regression workflow passed on code commit `1e290e35`; the native 3DS build, output-location check, and artifact upload also passed on that same code commit. Final workflow cleanup was still running at last poll.
 - [ ] These helpers are not yet wired into live gameplay; full caller state and call-graph effects must be traced before integration.
