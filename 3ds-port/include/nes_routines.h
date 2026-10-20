@@ -83,4 +83,10 @@ uint8_t nesSubE098AdjustValue(uint8_t value);
 void nesSubDFA4(uint8_t inputA, uint8_t divisor, uint8_t *outX, uint8_t *outA);
 void nesSubDFA2(uint8_t inputA, uint8_t *outX, uint8_t *outA);
 
+/* sub_D0AB/sub_DFB2: byte-exact object vertical-band calculations. */
+void nesSubD0ABComputeVerticalBands(const uint8_t ram00B8[4], uint8_t ram0360[4]);
+void nesSubDFB2SelectBand(uint8_t x, const uint8_t ram009C[4],
+                          const uint8_t ram00B8[4], const uint8_t ram00A4[4],
+                          uint8_t ram0070[4], const uint8_t tblD913[5]);
+
 #endif
