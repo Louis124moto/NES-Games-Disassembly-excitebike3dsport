@@ -215,4 +215,12 @@ void nesOfsE87909Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D
                        uint8_t ram00D4[4], uint8_t ram00B4[4],
                        uint8_t ram00BC[4], uint8_t ram00E4[4]);
 
+
+void nesOfsE8BF0EReset(uint8_t x, uint8_t ram00A4[4], uint8_t ram00A0[4]);
+void nesOfsE8C60FSetStateFromY(uint8_t x, uint8_t yLow, uint8_t ram00A4[4]);
+void nesOfsE8E301SetA0(uint8_t x, uint8_t ram00A0[4]);
+void nesOfsE8F514SetPair30(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE8FA10SetPair10(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE96300ClearThree(uint8_t x, uint8_t ram00CC[4], uint8_t ram00D4[4], uint8_t ram00B4[4]);
+
 #endif
