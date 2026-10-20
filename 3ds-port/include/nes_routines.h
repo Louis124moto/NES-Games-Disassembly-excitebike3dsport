@@ -256,4 +256,48 @@ void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1);
 void nesSubF871WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
 void nesSubF885WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
 
+
+/* Exact translations audited against bank_FF.asm, 2026-10-21. */
+void nesSubC1FDInitializeRam(const uint8_t tblC091[256], uint8_t cpuRam[2048]);
+void nesSubC229InitializeRows(uint8_t cpuRam[2048]);
+void nesSubC32FMaskPpuCtrl(uint8_t *ramFor2000, uint8_t *ppuCtrl);
+uint8_t nesSubCB06ComputeTableIndex(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2);
+void nesSubC53ESelectTableEntry(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2,
+                                const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007);
+void nesSubC53ASelectTableEntry(uint8_t ram0043, uint8_t ram0046Flag, uint8_t ram03F2,
+                                uint8_t *ram0002, const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007);
+void nesSubC716ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006);
+void nesSubC726ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006);
+uint8_t nesSubDC9ASubtractObjectY(uint8_t a, uint8_t x, const uint8_t ram00BC[4],
+                                  const uint8_t ramPosYLo[4], uint8_t *carryOut);
+uint8_t nesSubDC97SubtractObjectY(uint8_t ram03F1, uint8_t x, const uint8_t ram00BC[4],
+                                  const uint8_t ramPosYLo[4], uint8_t *carryOut);
+void nesSubEC25WriteSprite(uint8_t a, uint8_t ram00C2, const uint8_t tblE6F6[256], uint8_t oam[256]);
+void nesSubEC5DWriteSprite(uint8_t ram003F, uint8_t ram00C2, const uint8_t tblE6F6[256], uint8_t oam[256]);
+void nesSubEC3BCopyPageDescending(uint8_t cpuRam[2048]);
+void nesSubEC75InitializeObjectPositions(uint8_t ram00B0[4], uint8_t ram00C0[4],
+                                         const uint8_t tblE6E1[256],
+                                         uint8_t ramPosXLo[4], uint8_t ramPosYLo[4],
+                                         uint8_t ram00BC[4]);
+void nesSubF681CopyCommandBytes(uint16_t sourcePointer, uint8_t xIn, uint8_t yIn,
+                                const uint8_t cpuMemory[65536], uint8_t cpuRam[2048],
+                                uint8_t *xOut, uint8_t *yOut);
+uint8_t nesSubF821InitializeBufferAndAdvance(uint8_t x, uint8_t cpuRam[2048]);
+void nesSubF86BWriteAudioRegisters(uint8_t x, uint8_t y, uint8_t a,
+                                   const uint8_t tblFF00[256], uint8_t byteAt0000,
+                                   uint8_t audio4000To400F[16]);
+void nesSubF889WriteThirdAudioTimer(uint8_t a, const uint8_t tblFF00[256],
+                                    uint8_t byteAt0000, uint8_t audio4000To400F[16]);
+void nesSubC94BBuildCommand(uint8_t *ram0300, uint8_t tableIndex,
+                            const uint8_t tblC0EC[257], uint8_t ram0300To040A[267],
+                            uint8_t *xOut);
+void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2]);
+void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2]);
+
 #endif
