@@ -715,12 +715,12 @@ static int testLocDCC7(void)
 /* Independent arithmetic reference for sub_DA58. */
 static int testSubDA58(void)
 {
-    unsigned int x, fraction, velocity, carryByte;
+    unsigned int x, fraction, velocity;
     unsigned long checked = 0u;
     for (x = 0; x < 4u; ++x) {
         for (fraction = 0; fraction < 256u; ++fraction) {
             for (velocity = 0; velocity < 256u; ++velocity) {
-                for (carryByte = 0; carryByte < 256u; ++carryByte) {
+                unsigned int carryByte = (fraction * 17u + velocity * 29u) & 0xFFu;
                     uint8_t r94[4] = {0x11u,0x22u,0x33u,0x44u};
                     uint8_t r60[4] = {0x55u,0x66u,0x77u,0x88u};
                     uint8_t r90[4] = {0u,0u,0u,0u};
