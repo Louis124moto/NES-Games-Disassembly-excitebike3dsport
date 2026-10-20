@@ -67,3 +67,21 @@ void nesSubD310DecreaseAllTimers(uint8_t *timer0020, uint8_t timers[29])
         }
     }
 }
+
+
+/*
+ * Exact byte-level translation of sub_D326 ($D326).
+ * The initial carry is set when bit 1 differs between RAM $0018 and $0019.
+ * ROR then propagates carry through the eight consecutive bytes $0018-$001F.
+ */
+void nesSubD326RotateInputBits(uint8_t bytes[8])
+{
+    unsigned int i;
+    unsigned int carry = (((bytes[0] & 0x02u) ^ (bytes[1] & 0x02u)) != 0u) ? 1u : 0u;
+
+    for (i = 0u; i < 8u; ++i) {
+        unsigned int next_carry = (unsigned int)(bytes[i] & 0x01u);
+        bytes[i] = (uint8_t)((bytes[i] >> 1) | (uint8_t)(carry << 7));
+        carry = next_carry;
+    }
+}
