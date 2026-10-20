@@ -716,7 +716,24 @@ void nesSubEA44UpdateWheelSprites(uint8_t oam[256],const uint8_t ram0084[4],
     }
 }
 /* sub_E1F9 state-only return selection, including the $000E side effect. */
-uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp){uint8_t a,y;if(x>3u||temp==NULL)return 0u;*temp=0u;a=r9c[x];if(a!=0u&&a!=5u){y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;if(r36[x]!=0u)y=(uint8_t)(y-1u);return (uint8_t)(y|0x10u);}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
+uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *ram039C3,uint8_t *temp){
+    uint8_t a,y;
+    if(x>3u||temp==NULL||ram039C3==NULL)return 0u;
+    *temp=0u;*ram039C3=0u;
+    a=r9c[x];
+    if(a!=0u&&a!=5u){
+        y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;
+        if(r36[x]==0u)return (uint8_t)(y|0x10u);
+        return (uint8_t)((uint8_t)(r36[x]-1u)|0x10u);
+    }
+    if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}
+    if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];
+    if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];
+    if((uint8_t)(r90[x]|r94[x])==0u){*temp=1u;return rac[x];}
+    if(rac[x]!=6u)return rac[x];
+    if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:rac[x];
+    return (rdc[x]&0x80u)!=0u?0x15u:0x14u;
+}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
 void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags){uint8_t x=0u;if(heat>=0x20u){*timer=heat;*latch=heat;}if(heat>=0x1Au&&(uint8_t)(priorY-1u)==0u)x=0xB0u;*flags=(uint8_t)(*flags|x);}
 
