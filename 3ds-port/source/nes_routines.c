@@ -747,6 +747,32 @@ uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_
     if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:rac[x];
     return (rdc[x]&0x80u)!=0u?0x15u:0x14u;
 }
+uint8_t nesSubE1A3PrepareObjectSprite(uint8_t x,uint8_t oamAddress,
+    const uint8_t ram0080[4],const uint8_t ram008C[4],const uint8_t ram009C[4],
+    const uint8_t ram00BC[4],const uint8_t ram0370[4],const uint8_t ram0036[4],
+    const uint8_t ram00AC[4],const uint8_t ram0098[4],const uint8_t ram00B0[4],
+    const uint8_t ram0058[4],const uint8_t ram00B8[4],const uint8_t ram0090[4],
+    const uint8_t ram0094[4],const uint8_t ram00DC[4],uint8_t finished,uint8_t frameFlags,
+    const uint8_t tblD892[23],const uint8_t tblD8A9[23],uint8_t oam[256],
+    uint8_t *ram039C3,uint8_t *temp,uint8_t *renderType,NesPreparedSpriteCommand *out){
+    uint8_t selected,y;
+    int tileOffset;
+    if(x>3u||ram039C3==NULL||temp==NULL||renderType==NULL||out==NULL||oam==NULL)return 0u;
+    out->scratch0=ram0080[x];out->scratch1=ram008C[x];
+    selected=nesSubE1F9SelectObjectSprite(x,ram009C,ram00BC,ram0370,ram0036,ram00AC,
+        ram0098,ram00B0,ram0058,ram00B8,ram0090,ram0094,ram00DC,finished,frameFlags,ram039C3,temp);
+    if(selected>=23u)return 0u;
+    y=selected;out->scratch2=tblD892[y];out->scratch3=0x33u;out->scratch4=oamAddress;
+    if(y==0x16u){*ram039C3=oamAddress;out->scratch4=(uint8_t)(out->scratch4+0x0Cu);
+        out->scratch1=(uint8_t)(out->scratch1+0x08u);out->scratch3=0x23u;}
+    *renderType=tblD8A9[y];
+    if(*temp==0u)return 1u;
+    if((*temp&1u)!=0u){oam[(uint8_t)(out->scratch4+0x15u)]=0xAEu;return 1u;}
+    {uint8_t tile=0xB2u;for(tileOffset=0x11;tileOffset>=0;tileOffset-=4){
+        if(tileOffset!=0x09){oam[(uint8_t)(out->scratch4+(uint8_t)tileOffset)]=tile;tile=(uint8_t)(tile-1u);}
+    }}
+    return 1u;
+}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
 void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags){uint8_t x=0u;if(heat>=0x20u){*timer=heat;*latch=heat;}if(heat>=0x1Au&&(uint8_t)(priorY-1u)==0u)x=0xB0u;*flags=(uint8_t)(*flags|x);}
 
