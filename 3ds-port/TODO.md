@@ -220,3 +220,14 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate the decision/write behavior of dispatch entry `ofs_002_E818_07`, including `CMP #$07` followed by `BPL` sign-flag semantics.
 - [x] Add regression tests for these helpers; CI validation remains pending.
 - [ ] Do not mark either batch verified until the newest host test workflow and 3DS build both pass.
+
+
+## Batch of 21 exact RAM-level routines / dispatch entries — 2026-10-21
+
+- [x] `sub_E84F`, `sub_E86F`, `sub_E893`, `sub_E73B`, `sub_E733` translated into the native C routine module.
+- [x] `sub_E7FC`, `sub_E7FF`, `sub_E80D` pointer-byte table, and `sub_E803` indexed RAM read translated; existing pointer resolver kept under its original non-conflicting name.
+- [x] Dispatch entries `ofs_002_E818_07`, `ofs_002_E845_04`, `ofs_002_E854_05`, `ofs_002_E85D_02`, `ofs_002_E86A_03`, and `ofs_002_E879_09` translated.
+- [x] Dispatch entries `ofs_002_E8BF_0E`, `ofs_002_E8C6_0F`, `ofs_002_E8E3_01`, `ofs_002_E8F5_14`, `ofs_002_E8FA_10`, and `ofs_002_E963_00` translated.
+- [x] Added host regression coverage for the new helpers, including byte-wrap arithmetic, slot isolation, lookup-table values, branch flags, and state-write behavior.
+- [ ] Host test and 3DS build must both pass on the final commit before these routines are counted as verified.
+- [ ] These helpers are not yet wired into live gameplay; full caller state and call-graph effects must be traced before integration.
