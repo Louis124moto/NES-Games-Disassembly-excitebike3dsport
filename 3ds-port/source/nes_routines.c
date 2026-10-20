@@ -1046,3 +1046,54 @@ void nesOfsE96300ClearThree(uint8_t x, uint8_t ram00CC[4], uint8_t ram00D4[4], u
 {
     if (x < 4u) { ram00CC[x] = 0u; ram00D4[x] = 0u; ram00B4[x] = 0u; }
 }
+
+
+/*
+ * Portable RAM/register-effect models of three source fragments from bank_FF.asm.
+ * These do not perform PPU I/O: callers consume the explicit register writes.
+ */
+
+/* sub_D0F4 ($D0F4): exact setup before JMP loc_D2A3. */
+void nesSubD0F4PrepareCommandStream(const uint8_t ram03D9To03DF[7],
+                                    uint8_t ram03D0To03D7[8],
+                                    uint8_t *sourceLo, uint8_t *sourceHi,
+                                    uint8_t *dataLo, uint8_t *dataHi)
+{
+    unsigned int i;
+    if (ram03D9To03DF == NULL || ram03D0To03D7 == NULL ||
+        sourceLo == NULL || sourceHi == NULL || dataLo == NULL || dataHi == NULL) {
+        return;
+    }
+    for (i = 0u; i < 7u; ++i) {
+        ram03D0To03D7[i + 1u] = ram03D9To03DF[i];
+    }
+    ram03D0To03D7[0] = 0x17u;
+    ram03D0To03D7[2] = 0xFBu;
+    ram03D0To03D7[5] = 0xFBu;
+    *sourceLo = 0x56u;
+    *sourceHi = 0x23u;
+    *dataLo = 0xD0u;
+    *dataHi = 0x03u;
+}
+
+/* sub_D1A9: status-read/latch reset followed by two literal $2005 writes of zero. */
+void nesSubD1A9PrepareScrollWrites(uint8_t scrollWrites[2], uint8_t *statusReads)
+{
+    if (scrollWrites == NULL || statusReads == NULL) return;
+    scrollWrites[0] = 0u;
+    scrollWrites[1] = 0u;
+    *statusReads = (uint8_t)(*statusReads + 1u);
+}
+
+/* sub_D1B3: represent PPU writes in source order without touching NES hardware. */
+void nesSubD1B3PrepareScrollWrites(uint8_t ramFor2000, uint8_t baseNametable,
+                                  uint8_t scrollX, uint8_t scrollY,
+                                  uint8_t *ppuCtrl, uint8_t scrollWrites[2],
+                                  uint8_t *statusReads)
+{
+    if (ppuCtrl == NULL || scrollWrites == NULL || statusReads == NULL) return;
+    *ppuCtrl = (uint8_t)(ramFor2000 | baseNametable);
+    scrollWrites[0] = scrollX;
+    scrollWrites[1] = scrollY;
+    *statusReads = (uint8_t)(*statusReads + 1u);
+}
