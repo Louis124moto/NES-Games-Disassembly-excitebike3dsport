@@ -105,19 +105,19 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
 | `$DA26` | `sub_DA26` | Pending | — |
 | `$DA58` | `sub_DA58` | Pending | — |
-| `$DA6A` | `sub_DA6A` | Translated; host test result pending for latest batch | Helper and regression test added |
+| `$DA6A` | `sub_DA6A` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DA7A` | `sub_DA7A` | Translated + tested; host regression passed, 3DS build status being checked | Exact helper and instruction-level regression test added |
 | `$DA9F` | `sub_DA9F` | Pending | — |
 | `$DAE3` | `sub_DAE3` | Pending | calls: sub_DB95_clear_opponent_bike_data, sub_E7FF; ; in |
-| `$DB50` | `sub_DB50` | Translated; host test result pending for latest batch | Helper and regression test added |
+| `$DB50` | `sub_DB50` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DB95` | `sub_DB95_clear_opponent_bike_data` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DBC4` | `sub_DBC4` | Pending | — |
 | `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
 | `$DC97` | `sub_DC97` | Pending | — |
 | `$DC9A` | `sub_DC9A` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
-| `$DCA0` | `sub_DCA0` | Translated; host test result pending for latest batch | Helper and regression test added |
-| `$DCC7` | `loc_DCC7` | Translated; host test result pending for latest batch | Shared helper and regression test added |
+| `$DCA0` | `sub_DCA0` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
+| `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
 | `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCF2` | `sub_DCF2` | Pending | — |
 | `$DD06` | `sub_DD06` | Pending | — |
