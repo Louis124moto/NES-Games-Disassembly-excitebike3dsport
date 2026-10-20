@@ -633,6 +633,42 @@ uint8_t nesSubE26APrepareSpecialSprite(uint8_t x,uint8_t ram039C3,
     out->transformY=(uint8_t)(y==0u?0u:(y^0x03u));
     return 1u;
 }
+void nesSubE359UpdateTemperatureMeter(uint8_t finished,uint8_t ram005C,uint8_t raceStarted,
+    uint8_t *timer003C,uint8_t *fraction003B5,uint8_t *coarse003B6,
+    uint8_t *overheatLatch,uint8_t *ram00FC,uint8_t oam[256]){
+    static const uint8_t tblD8F7[4]={0x3Fu,0x0Fu,0x07u,0x07u};
+    static const uint8_t tblD8FB[4]={0x08u,0x20u,0x11u,0x11u};
+    uint8_t tile=0xFEu;
+    if(timer003C==NULL||fraction003B5==NULL||coarse003B6==NULL||overheatLatch==NULL||ram00FC==NULL||oam==NULL)return;
+    if(finished==0u){
+        if(*overheatLatch!=0u){if((*timer003C&1u)==0u)tile=0xFCu;}
+        else{
+            uint8_t a=(uint8_t)(ram005C&0xC0u),y,carry;
+            if(a!=0u){
+                if(raceStarted==0u)a=0x80u;
+                carry=(uint8_t)(a>>7);a=(uint8_t)(a<<1);
+                {uint8_t oldCarry=carry;carry=(uint8_t)(a>>7);a=(uint8_t)((uint8_t)(a<<1)|oldCarry);}
+                {uint8_t oldCarry=carry;carry=(uint8_t)(a>>7);a=(uint8_t)((uint8_t)(a<<1)|oldCarry);}
+            }
+            y=a;
+            if(*coarse003B6<tblD8FB[y]){
+                unsigned int sum=(unsigned int)*fraction003B5+(unsigned int)tblD8F7[y];
+                *fraction003B5=(uint8_t)sum;if(sum>0xFFu)*coarse003B6=(uint8_t)(*coarse003B6+1u);
+            }else if(*coarse003B6>tblD8FB[y]){
+                uint8_t old=*fraction003B5;*fraction003B5=(uint8_t)(old-0x0Bu);
+                if(old<0x0Bu&&*coarse003B6!=0u)*coarse003B6=(uint8_t)(*coarse003B6-1u);
+            }
+            if(*coarse003B6>=0x20u){*timer003C=*coarse003B6;*overheatLatch=*coarse003B6;}
+            if(*coarse003B6>=0x1Au){y=(uint8_t)(y-1u);if(y==0u)*ram00FC=(uint8_t)(*ram00FC|0xB0u);}
+        }
+    }else{tile=0xFEu;}
+    {uint8_t spriteX=(uint8_t)(*coarse003B6+0x50u);int index;
+        for(index=0x0C;index>=0;index-=4){uint8_t base=(uint8_t)(0xF0u+(uint8_t)index);
+            oam[base]=0xCFu;oam[(uint8_t)(base+1u)]=tile;oam[(uint8_t)(base+2u)]=0x20u;oam[(uint8_t)(base+3u)]=spriteX;
+            spriteX=(uint8_t)(spriteX+8u);
+        }
+    }
+}
 void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta){uint8_t old=*lo;*lo=(uint8_t)(old-delta);if(old<delta)*hi=(uint8_t)(*hi-1u);}
 /* loc_E2BD: toggle only when finish flag is exactly 1 and timer is zero. */
 void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){if(finished==1u&&timer==0u)*blink=(uint8_t)(*blink^1u);}
