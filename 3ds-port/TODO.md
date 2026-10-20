@@ -65,3 +65,10 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - Distinguish confirmed source facts from hypotheses; record source labels, ROM offsets, and confidence.
 - Mark fidelity tasks complete only after comparing behaviour with the original.
 - The current modules are scaffolding, not a playable or faithful port.
+
+## Source-analysis checkpoint (2026-10-20)
+
+- [x] Scan `bank_FF.asm` for direct write instructions affecting `ram_0390_obj`, `ram_0080_obj`, `ram_0094_obj`, `ram_00DC_obj`, `ram_00BC_obj`, `ram_0370_obj`, and `ram_009C_obj`; record writer addresses and interpretation limits in `REFERENCE_MAPPING.md`.
+- [x] Confirm the exhaustive `sub_DA15` test passed in CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829) and the native 3DS build passed in run [39495627228](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495627228).
+- [ ] Trace control flow and callers around every writer above; establish slot identity and initialization/reset sequences before translating any stateful behavior.
+- [ ] Check indirect or alias writes to these RAM addresses and cross-check the RAM symbol declarations/memory map.
