@@ -321,3 +321,21 @@ void nesSubDCA0SetupSpriteHeight(uint8_t x, uint8_t ram00D4[4],
     ram0368[x] = value;
     if (ram00A4[x] == 1u) ram0368[x] = 0x06u;
 }
+
+
+/* Exact translation of the shared entry loc_DCC7 ($DCC7).
+ * A supplies target; Y supplies the timer value to write. */
+void nesLocDCC7ApproachValue(uint8_t x, uint8_t target, uint8_t duration,
+                             uint8_t timers[4], uint8_t values[4])
+{
+    uint8_t current;
+    if (x > 3u || timers[x] != 0u) return;
+    timers[x] = duration;
+    current = values[x];
+    if (current == target) return;
+    if (current > target) {
+        current = (uint8_t)(current - 1u);
+        current = (uint8_t)(current - 1u);
+    }
+    values[x] = (uint8_t)(current + 1u);
+}
