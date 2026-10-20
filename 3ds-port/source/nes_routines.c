@@ -452,3 +452,134 @@ void nesSubDFB2SelectBand(uint8_t x, const uint8_t ram009C[4],
     }
     ram0070[x] = y;
 }
+
+
+/* sub_D000: reproduce the gate and Y value before the jump to sub_DB50.
+ * x must be a valid object slot (0..3); caller invokes sub_DB50 when true. */
+uint8_t nesSubD000ShouldSetupObject(uint8_t x, const uint8_t ram0080[4],
+                                    const uint8_t ram001A[4], uint8_t *outY)
+{
+    if (x > 3u || outY == NULL) return 0u;
+    *outY = 0u; /* LDY #$00 */
+    if (x == 3u) return 1u;
+    if ((ram0080[x] & 0x10u) == 0u) return 0u;
+    if (ram001A[x] < 0xC0u) return 0u;
+    if (ram001A[x] == 0xC0u) *outY = 1u; /* INY only for exact equality */
+    return 1u;
+}
+
+/* sub_D11F: exact writes to RAM $0300..$0312. */
+void nesSubD11FInitializeUpdateBuffer(uint8_t ram0300_to_0312[19])
+{
+    uint8_t x;
+    ram0300_to_0312[0] = 0x11u;
+    ram0300_to_0312[1] = 0x23u;
+    ram0300_to_0312[2] = 0xA0u;
+    ram0300_to_0312[3] = 0x0Eu;
+    for (x = 0x0Eu; x != 0u; --x) {
+        ram0300_to_0312[3u + x] = 0xFEu;
+    }
+    ram0300_to_0312[0x12u] = 0u; /* X is zero after the loop */
+}
+
+/* sub_D255: Y starts at zero, wraps through all 256 byte values, and writes
+ * $F8 to every OAM byte. */
+void nesSubD255HideAllSprites(uint8_t oam[256])
+{
+    unsigned int y;
+    for (y = 0u; y < 256u; ++y) oam[y] = 0xF8u;
+}
+
+/* sub_D2FF: INX/CMP #$3F; on the overflow path the routine resets X,
+ * clears RAM[$0301+X], and discards two return addresses from the stack. */
+void nesSubD2FFAdvanceBufferIndex(uint8_t *x, uint8_t ram0300,
+                                 uint8_t ram0301_to_0400[256],
+                                 uint8_t *stackBytesDiscarded)
+{
+    uint8_t next;
+    if (x == NULL || stackBytesDiscarded == NULL) return;
+    next = (uint8_t)(*x + 1u);
+    *x = next;
+    if (next < 0x3Fu) return;
+    *x = ram0300;
+    ram0301_to_0400[ram0300] = 0u;
+    *stackBytesDiscarded = (uint8_t)(*stackBytesDiscarded + 2u);
+}
+
+/* sub_E70B: branch on the SBC result's N/Z flags, not C or V. */
+void nesSubE70BUpdateObjectOffsets(uint8_t ram0060[4], uint8_t ram0064[4],
+                                   uint8_t ram00E0[4], uint8_t ram00D8[4])
+{
+    int x;
+    for (x = 3; x >= 0; --x) {
+        uint8_t a;
+        if (ram0060[x] == 0u) {
+            ram00D8[x] = 0u;
+            continue;
+        }
+        a = (uint8_t)(ram0064[x] - ram0060[x]); /* SEC; SBC */
+        if (a == 0u || (a & 0x80u) != 0u) {
+            ram0064[x] = (uint8_t)(a + 0x08u); /* CLC; ADC #$08 */
+            ram00E0[x] = (uint8_t)((ram00E0[x] + 1u) & 0x3Fu);
+        } else {
+            ram0064[x] = a;
+        }
+        ram00D8[x] = 0u;
+    }
+}
+
+/* sub_E80D: select one of the six original data pages using Y. */
+uint8_t nesSubE80DPreparePointer(uint8_t y, const uint8_t *const dataPages[6],
+                                 const uint8_t **outData)
+{
+    if (y >= 6u || dataPages == NULL || outData == NULL) return 0u;
+    *outData = dataPages[y];
+    return 1u;
+}
+
+/* sub_E803: prepare pointer using Y, save that Y, then read page[dataIndex]. */
+uint8_t nesSubE803ReadData(uint8_t y, uint8_t dataIndex,
+                           const uint8_t *const dataPages[6],
+                           uint8_t *savedY, uint8_t *outA)
+{
+    const uint8_t *data;
+    if (savedY == NULL || outA == NULL ||
+        !nesSubE80DPreparePointer(y, dataPages, &data) || data == NULL) return 0u;
+    *savedY = y; /* STY ram_0007_t08 */
+    *outA = data[dataIndex]; /* LDA (ram_0003_t01_data),Y */
+    return 1u;
+}
+
+/* sub_E7FF: load the per-object data index, then fall through to sub_E803. */
+uint8_t nesSubE7FFReadObjectData(uint8_t x, uint8_t y,
+                                 const uint8_t ram00E0[4],
+                                 const uint8_t *const dataPages[6],
+                                 uint8_t *savedY, uint8_t *outA)
+{
+    if (x > 3u || ram00E0 == NULL) return 0u;
+    return nesSubE803ReadData(y, ram00E0[x], dataPages, savedY, outA);
+}
+
+/* sub_E7FC: load Y from RAM[$0360+X], then execute sub_E7FF. */
+uint8_t nesSubE7FCReadObjectBandData(uint8_t x, const uint8_t ram0360[4],
+                                     const uint8_t ram00E0[4],
+                                     const uint8_t *const dataPages[6],
+                                     uint8_t *savedY, uint8_t *outA)
+{
+    if (x > 3u || ram0360 == NULL) return 0u;
+    return nesSubE7FFReadObjectData(x, ram0360[x], ram00E0,
+                                    dataPages, savedY, outA);
+}
+
+/* sub_E836: skip objects with nonzero RAM[$00B0+X]; others use sub_DC97. */
+void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
+                                       uint8_t ram00B8[4], uint8_t ram008C[4],
+                                       uint8_t ram03F1)
+{
+    int x;
+    for (x = 3; x >= 0; --x) {
+        if (ram00B0[x] == 0u) {
+            ram008C[x] = nesSubDC9A(ram03F1, ram00BC[x], ram00B8[x]);
+        }
+    }
+}
