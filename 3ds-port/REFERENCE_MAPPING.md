@@ -408,3 +408,6 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 - `sub_E4C8` scans candidate slots X=1 then X=0, and considers Y slots above X only. Eligibility follows the original LSR carry / nonzero branches and the `$F8` Y-position boundary. It counts overlapping Y coordinates and packs their indices into scratch byte `$000B`; that byte is intentionally modeled as input/output because the ASM comments explicitly identify it as uninitialized by this routine.
 - `sub_E52C` computes the wrapped 8-bit difference `ram_008C[X] - ram_008C[Y]` after SEC/SBC. It returns that difference only for values `$EC-$FF` or `$00-$11`; the middle interval returns zero.
 - The C helper is a byte/register-level translation. Its test covers the wrapped-difference boundary, a two-candidate packed pair, and the no-candidate path. This does not imply that the entire sprite renderer is integrated into the game loop.
+
+
+**Correction from ASM review:** `sub_E4AD` writes `$F8` to twelve OAM Y positions at offsets 0, 4, …, 44 from the calculated group base. It is not a three-write helper.
