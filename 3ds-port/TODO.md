@@ -190,3 +190,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Inspect and document `sub_E733` / `sub_E73B` directly from `bank_FF.asm`; distinguish the object/track-event path from player acceleration.
 - [ ] Trace the actual player-slot movement, acceleration, braking, heat, jump/landing, and crash state path from callers and all relevant RAM writers before enabling native physics.
 - [ ] Translate the traced state path with explicit 8-bit/carry/branch behavior and independent regression tests before reconnecting it to `gameUpdate`.
+
+
+## Verified routine fragment — 2026-10-21
+
+- [x] Translate the literal `$E96E-$E97D` block from `sub_E96C` into `nesLocE96EApplyVerticalDelta` in `nes_routines.c`, which is part of the native 3DS codebase. Preserve the `$14/$15` state skips, four-slot traversal, and 8-bit Y-plus-delta wrap; do not describe this fragment as a complete `sub_E96C` port.
+- [x] Add an independent exhaustive host reference test for all 16,777,216 `(state, Y, delta)` inputs for slot 0, while checking the remaining slots' expected effects.
+- [ ] Confirm the new exhaustive host test and native 3DS build pass in GitHub Actions before calling this fragment validated.
+- [ ] Translate and test the rest of `sub_E96C`, including the exact `sub_DD06` side effects, `$E53D` threshold loop, and `$EA07-$EA43` controller branch, before integrating this fragment into live gameplay.
