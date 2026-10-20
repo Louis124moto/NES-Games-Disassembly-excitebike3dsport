@@ -78,12 +78,12 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$D000` | `sub_D000` | Pending | — |
+| `$D000` | `sub_D000` | Translated in C; audit/test coverage recorded separately | — |
 | `$D018` | `sub_D018` | Pending | ; out |
-| `$D0AB` | `sub_D0AB` | Pending | — |
+| `$D0AB` | `sub_D0AB` | Translated in C; audit/test coverage recorded separately | — |
 | `$D0C6` | `sub_D0C6` | Pending | — |
 | `$D0F4` | `sub_D0F4` | Pending | — |
-| `$D11F` | `sub_D11F` | Pending | — |
+| `$D11F` | `sub_D11F` | Translated in C; audit/test coverage recorded separately | — |
 | `$D13F` | `sub_D13F` | Pending | calls: sub_ECE4 |
 | `$D14E` | `sub_D14E` | Pending | — |
 | `$D19B` | `sub_D19B` | Pending | — |
@@ -94,7 +94,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D24F` | `sub_D24F_disable_rendering` | Pending | — |
 | `$D255` | `sub_D255_hide_all_sprites` | Pending | — |
 | `$D260` | `sub_D260` | Pending | calls: sub_C333 |
-| `$D2FF` | `sub_D2FF` | Pending | — |
+| `$D2FF` | `sub_D2FF` | Translated in C; audit/test coverage recorded separately | — |
 | `$D310` | `sub_D310_decrease_all_timers` | Translated + tested (host exhaustive test passed; 3DS build pending) | — |
 | `$D326` | `sub_D326` | Translated + host regression passed; 3DS build pending | — |
 | `$D347` | `sub_D347_read_joy_regs` | Pending | calls: sub_D35B |
@@ -104,7 +104,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D924` | `sub_D924` | Pending | — |
 | `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
 | `$DA26` | `sub_DA26` | Pending | — |
-| `$DA58` | `sub_DA58` | Pending | — |
+| `$DA58` | `sub_DA58` | Translated in C; audit/test coverage recorded separately | — |
 | `$DA6A` | `sub_DA6A` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DA7A` | `sub_DA7A` | Translated + tested; host regression passed, 3DS build status being checked | Exact helper and instruction-level regression test added |
 | `$DA9F` | `sub_DA9F` | Pending | — |
@@ -114,7 +114,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DBC4` | `sub_DBC4` | Pending | — |
 | `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
-| `$DC97` | `sub_DC97` | Pending | — |
+| `$DC97` | `sub_DC97` | Translated in C; audit/test coverage recorded separately | — |
 | `$DC9A` | `sub_DC9A` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCA0` | `sub_DCA0` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
@@ -130,17 +130,17 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DEE2` | `sub_DEE2` | Pending | — |
 | `$DF30` | `sub_DF30` | Pending | — |
 | `$DF7F` | `sub_DF7F` | Pending | calls: sub_DFA2; ; in |
-| `$DFA2` | `sub_DFA2` | Pending | — |
-| `$DFA4` | `sub_DFA4` | Pending | — |
-| `$DFB2` | `sub_DFB2` | Pending | — |
+| `$DFA2` | `sub_DFA2` | Translated in C; audit/test coverage recorded separately | — |
+| `$DFA4` | `sub_DFA4` | Translated in C; audit/test coverage recorded separately | — |
+| `$DFB2` | `sub_DFB2` | Translated in C; audit/test coverage recorded separately | — |
 | `$DFD5` | `sub_DFD5` | Pending | — |
 
 ## $E000–$EFFF · race/object updates
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$E091` | `sub_E091` | Pending | — |
-| `$E098` | `sub_E098` | Pending | — |
+| `$E091` | `sub_E091` | Translated in C; audit/test coverage recorded separately | — |
+| `$E098` | `sub_E098` | Translated in C; audit/test coverage recorded separately | — |
 | `$E09F` | `sub_E09F` | Pending | calls: sub_DC97 |
 | `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
 | `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
@@ -154,16 +154,16 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Translated + regression-tested; 3DS build passed | Literal loop writes three Y bytes at offsets 0,4,8 |
 | `$E4C8` | `sub_E4C8` | Host regression and 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
-| `$E52C` | `sub_E52C` | Pending | — |
-| `$E70B` | `sub_E70B` | Pending | — |
+| `$E52C` | `sub_E52C` | Translated in C; audit/test coverage recorded separately | — |
+| `$E70B` | `sub_E70B` | Translated in C; audit/test coverage recorded separately | — |
 | `$E733` | `sub_E733` | Pending | — |
 | `$E73B` | `sub_E73B` | Pending | — |
 | `$E794` | `sub_E794` | Pending | — |
-| `$E7FC` | `sub_E7FC` | Pending | — |
-| `$E7FF` | `sub_E7FF` | Pending | — |
-| `$E803` | `sub_E803` | Pending | calls: sub_E80D_prepare_pointers |
+| `$E7FC` | `sub_E7FC` | Translated in C; audit/test coverage recorded separately | — |
+| `$E7FF` | `sub_E7FF` | Translated in C; audit/test coverage recorded separately | — |
+| `$E803` | `sub_E803` | Translated in C; audit/test coverage recorded separately | calls: sub_E80D_prepare_pointers |
 | `$E80D` | `sub_E80D_prepare_pointers` | Pending | ; out |
-| `$E836` | `sub_E836` | Pending | — |
+| `$E836` | `sub_E836` | Translated in C; audit/test coverage recorded separately | — |
 | `$E84F` | `sub_E84F` | Pending | — |
 | `$E86F` | `sub_E86F` | Pending | — |
 | `$E893` | `sub_E893` | Pending | ; in |
