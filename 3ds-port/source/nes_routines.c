@@ -367,3 +367,40 @@ uint8_t nesSubE098AdjustValue(uint8_t value)
     if (value >= 0xE7u) return value;
     return (uint8_t)((unsigned int)value + 0x02u);
 }
+
+
+/*
+ * Exact instruction-level model of sub_DFA4 ($DFA4).
+ * Preconditions: divisor != 0 and both output pointers are valid.
+ * The loop terminates on the 6502 BPL condition (N == 0), not on borrow.
+ */
+void nesSubDFA4(uint8_t inputA, uint8_t divisor,
+                uint8_t *outX, uint8_t *outA)
+{
+    uint8_t a = inputA;
+    uint8_t x = 0u;
+    uint8_t carry = 0u;
+
+    while (1) {
+        uint16_t difference;
+        x = (uint8_t)(x + 1u);
+        difference = (uint16_t)a - (uint16_t)divisor;
+        a = (uint8_t)difference;
+        carry = (uint8_t)(difference <= 0xFFu);
+        if ((a & 0x80u) != 0u) break;
+    }
+
+    x = (uint8_t)(x - 1u);
+    {
+        uint16_t sum = (uint16_t)a + (uint16_t)divisor + (uint16_t)carry;
+        a = (uint8_t)sum;
+    }
+    *outX = x;
+    *outA = a;
+}
+
+/* sub_DFA2 ($DFA2): LDX #$0A, then fall through into sub_DFA4. */
+void nesSubDFA2(uint8_t inputA, uint8_t *outX, uint8_t *outA)
+{
+    nesSubDFA4(inputA, 0x0Au, outX, outA);
+}
