@@ -111,3 +111,49 @@ void nesSubD35BDecodeController(const uint8_t serial_samples[8], uint8_t previou
         *press = (uint8_t)(buttons & 0x7Fu);
     }
 }
+
+
+/*
+ * Exact byte-level translation of sub_DA7A ($DA7A).
+ *
+ * The original starts X=$03 and processes X=$03,$02,$01; slot zero is
+ * deliberately excluded. For each active slot, the first ADC updates the
+ * high byte on carry, then SEC/SBC subtracts the global RAM[$0060] value
+ * from the low byte and decrements the high byte on borrow. The final SBC
+ * independently updates RAM[$0390+X]. All stored values wrap to 8 bits.
+ */
+void nesSubDA7AUpdateScrollSlots(uint8_t active[4], const uint8_t delta[4],
+                                uint8_t posXLo[4], uint8_t posXHi[4],
+                                uint8_t ram0390[4])
+{
+    int x;
+
+    for (x = 3; x >= 1; --x) {
+        uint8_t accumulator;
+        unsigned int sum;
+        int difference;
+
+        if (active[x] == 0u) {
+            continue;
+        }
+
+        /* LDA delta,X; CLC; ADC posXLo,X */
+        sum = (unsigned int)delta[x] + (unsigned int)posXLo[x];
+        accumulator = (uint8_t)sum;
+        if (sum > 0xFFu) {
+            posXHi[x] = (uint8_t)(posXHi[x] + 1u);
+        }
+
+        /* SEC; SBC delta[0] -- carry set means no extra subtraction. */
+        difference = (int)accumulator - (int)delta[0];
+        accumulator = (uint8_t)difference;
+        posXLo[x] = accumulator;
+        if (difference < 0) {
+            posXHi[x] = (uint8_t)(posXHi[x] - 1u);
+        }
+
+        /* LDA ram_0390_obj,X; SEC; SBC ram_0060; STA ram_0390_obj,X */
+        difference = (int)ram0390[x] - (int)delta[0];
+        ram0390[x] = (uint8_t)difference;
+    }
+}
