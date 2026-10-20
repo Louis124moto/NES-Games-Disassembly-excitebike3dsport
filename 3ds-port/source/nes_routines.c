@@ -907,7 +907,7 @@ uint8_t nesSubE7FFLoadDataIndex(uint8_t x, const uint8_t ram00E0[4])
 }
 
 /* sub_E80D ($E80D): exact pointer tables tbl_E54E_lo / tbl_E554_hi. */
-void nesSubE80DPreparePointer(uint8_t tableIndex, uint8_t *low, uint8_t *high)
+void nesSubE80DPointerBytes(uint8_t tableIndex, uint8_t *low, uint8_t *high)
 {
     static const uint8_t lo[6] = {0x00u,0x40u,0x80u,0xC0u,0x00u,0x40u};
     static const uint8_t hi[6] = {0x04u,0x04u,0x04u,0x04u,0x05u,0x05u};
