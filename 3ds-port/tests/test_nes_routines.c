@@ -378,6 +378,9 @@ static int testE8xxConstantAndResetEntries(void)
 
 int main(void)
 {
+    if(testSubD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
+    if(testSubD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
+    if(testSubD1B3ScrollWrites()!=0) { fputs("FAIL: sub_D1B3 scroll writes\\n",stderr); return 1; }
     if(testE8xxConstantAndResetEntries()) { fputs("FAIL: E8BF/E8C6/E8E3/E8F5/E8FA/E963\n",stderr); return 1; }
     if(testE8xxDispatchEntries()) { fputs("FAIL: E845/E854/E85D/E86A/E879 dispatch entries\n",stderr); return 1; }
     if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
