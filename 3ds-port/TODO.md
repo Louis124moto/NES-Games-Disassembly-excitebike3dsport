@@ -119,3 +119,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate `sub_E4C8` and `sub_E52C` at byte level, including wrapped subtraction, loop bounds, packed index scratch byte, and the source-commented `$000B` initialization bug.
 - [ ] Verify the new overlap routine tests and Nintendo 3DS build in CI before marking the batch validated.
+
+- [x] Correct `sub_E4AD` to write all 12 sprite Y bytes at four-byte strides, matching its 6502 loop.
+- [ ] Re-run host regression and 3DS build after correcting `sub_E4AD`.
