@@ -153,7 +153,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E456` | `sub_E456` | Pending | — |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Pending | — |
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Pending | — |
-| `$E4C8` | `sub_E4C8` | Pending | — |
+| `$E4C8` | `sub_E4C8` | Translated + host-tested; 3DS build pending | Object overlap scan; preserves scratch `$000B` input/output |
 | `$E52C` | `sub_E52C` | Pending | — |
 | `$E70B` | `sub_E70B` | Pending | — |
 | `$E733` | `sub_E733` | Pending | — |
