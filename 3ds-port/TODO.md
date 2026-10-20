@@ -262,3 +262,193 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 ## New exact ASM translations
 - [x] `sub_EC99` (`$EC99`): translated the nonzero-delta path, exact `$08` threshold, `$00B9` reset, and calls to the existing `$F6FB` / `$ECBF` helpers.
 - [ ] Run host regression and native 3DS builds for the `sub_EC99` addition before counting it as validated.
+
+## Audit global des routines ASM — 2026-10-21
+
+Cette section est l’inventaire de référence pour suivre la couverture des labels `sub_XXXX` dans `Excitebike/bank_FF.asm`. Les cases « présente » signifient uniquement qu’une fonction C dont le nom porte la même adresse existe dans `nes_routines.c` ; elles ne prouvent ni l’équivalence complète instruction par instruction, ni les tests, ni l’intégration au jeu. Ne pas compter une routine comme validée avant comparaison de son bloc ASM complet, vérification de ses appels/effets RAM et tests.
+
+- [x] Inventaire automatisé des labels `sub_XXXX` de l’ASM : 165 labels uniques.
+- [x] Inventaire des fonctions C existantes : 102 fonctions détectées par le motif de déclaration.
+- [ ] Audit instruction-par-instruction de chaque fonction existante et correction des écarts.
+- [ ] Exécuter les tests natifs avec les avertissements traités comme erreurs.
+- [ ] Compiler la cible Nintendo 3DS et corriger les erreurs.
+- [ ] Vérifier l’intégration au chemin de jeu réel ; les fragments C isolés ne prouvent pas que le jeu les appelle.
+- [ ] Vérifier l’état des workflows CI sur le commit courant avant d’indiquer « validé ».
+
+### Labels ASM avec une fonction C de même adresse (85/165, couverture nominale 51.5 %)
+
+- [x] `sub_C1FD` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C229` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C32F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C333` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C3AF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C3B1` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C53A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C53E` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C621` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C62D` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C64E` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C653` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C68A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C716` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C726` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C94B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_C971` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_CA1B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_CB06` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_CB13` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_CF8B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_CFE3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D000` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D0AB` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D0F4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D11F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D1A9` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D1B3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D2FF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D326` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_D35B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DA15` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DA58` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DA6A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DA7A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DB50` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DBFE` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DC97` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DC9A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DCA0` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DCDE` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DD38` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DD6F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DFA2` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DFA4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_DFB2` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E091` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E098` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E16C` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E1A3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E1F9` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E26A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E2F6` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E3F4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E456` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E4C8` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E52C` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E70B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E733` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E73B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E7FC` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E7FF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E803` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E836` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E84F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E86F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_E893` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EA44` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EC25` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EC3B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EC5D` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EC75` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_EC99` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_ECBF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F676` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F681` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F6FB` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F821` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F826` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F839` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F86B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F871` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F885` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_F889` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+- [x] `sub_FF53` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
+
+### Labels ASM sans fonction C de même adresse (80)
+
+- [ ] `sub_C27F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C2A9` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C318` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C339` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C409` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C522` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C639` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C66E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C6A5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C6C8` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C6D1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C739` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C792` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C7DE` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C92C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_C935` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CA08` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CA9B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CC15` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CC6B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CCCA` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CD1F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CD59` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CDEE` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CE29` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CE58` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CE5C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CED0` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CF0C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CF47` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CF6A` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CF88` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CF96` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CFCB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CFDB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_CFEA` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D018` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D0C6` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D13F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D14E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D19B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D1C7` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D23B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D260` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D3C1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D918` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_D924` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DA26` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DA9F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DAE3` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DBC4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DC1A` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DCF2` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DD06` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DD8D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DDD1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DE31` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DEBB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DEE2` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DF30` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DF7F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_DFD5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_E09F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_E17F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_E794` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_E927` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_E96C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_EAC5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_EB17` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_ECC9` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_ECE4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F4FF` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F64E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F68D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F755` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F844` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_F8D4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_FA74` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_FC3D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+- [ ] `sub_FC8D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
+
+### Priorités pour la suite
+
+- [ ] Traiter en premier les routines manquantes ayant un corps substantiel et des dépendances déjà traduites ; ne pas privilégier les stubs ou les entrées de dispatch sans les qualifier.
+- [ ] Pour chaque traduction : documenter registres/flags d’entrée et sortie, accès mémoire, branches, appels, débordements 8/16 bits et effets matériels.
+- [ ] Ajouter des tests pour chaque branche et les valeurs limites ; comparer les résultats aux séquences ASM, pas seulement aux noms de fonctions.
+- [ ] Actualiser ce tableau après chaque lot et n’augmenter le pourcentage « validé » qu’après exécution effective des tests et compilation.
