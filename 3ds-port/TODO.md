@@ -246,5 +246,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Added 20 source-level translations: `sub_C333`, `sub_C3AF`, `sub_C3B1`, `sub_C621`, `sub_C68A`, `sub_C971`, `sub_CA1B`, `sub_CB13`, `sub_CFE3`, `sub_CF8B`, `sub_C62D`, `sub_D24F`, `sub_ECBF`, `sub_F676`, `sub_F6FB`, `sub_F826`, `sub_F82E`, `sub_F839`, `sub_F871`, and `sub_F885`.
 - [x] Added batch regression coverage including all 256 accumulator values for the carry/wrap helpers and full 256-byte page-copy verification.
+- [x] Refined `sub_F871`/`sub_F885` to model the `Y`-indexed ROM reads, the zero-byte early exit, and 16-bit address wrap when `Y=$FF`.
 - [ ] Host tests and native 3DS compilation must pass before this batch is marked validated.
 - [ ] PPU/APU/controller register accesses are modeled as explicit output effects; these helpers do not directly emulate NES hardware or connect all effects to live gameplay.
