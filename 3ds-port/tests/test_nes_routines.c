@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "nes_routines.h"\n\nstatic int testSubDA58(void);\nstatic int testSubE091(void);\nstatic int testSubE098(void);
+#include "nes_routines.h"
+
+static int testSubDA58(void);
+static int testSubE091(void);
+static int testSubE098(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
