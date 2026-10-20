@@ -600,7 +600,19 @@ static int testBatchC64E653(void) {
 
 int main(void)
 {
-    if(testBatchC1FDC229()!=0||testBatchC32F()!=0||testBatchC53Family()!=0||testBatchC716C726()!=0||testBatchDC97()!=0||testBatchEC25EC5D()!=0||testBatchEC3B()!=0||testBatchEC75()!=0||testBatchF681()!=0||testBatchF821F86B()!=0||testBatchF889()!=0||testBatchC94B()!=0||testBatchC64E653()!=0) { fputs("FAIL: 21-routine exact ASM batch\\n",stderr); return 1; }
+    if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
+    if(testBatchC32F()!=0) { fputs("FAIL: sub_C32F\\n",stderr); return 1; }
+    if(testBatchC53Family()!=0) { fputs("FAIL: sub_C53A/sub_C53E/sub_CB06\\n",stderr); return 1; }
+    if(testBatchC716C726()!=0) { fputs("FAIL: sub_C716/sub_C726\\n",stderr); return 1; }
+    if(testBatchDC97()!=0) { fputs("FAIL: sub_DC97/sub_DC9A\\n",stderr); return 1; }
+    if(testBatchEC25EC5D()!=0) { fputs("FAIL: sub_EC25/sub_EC5D\\n",stderr); return 1; }
+    if(testBatchEC3B()!=0) { fputs("FAIL: sub_EC3B\\n",stderr); return 1; }
+    if(testBatchEC75()!=0) { fputs("FAIL: sub_EC75\\n",stderr); return 1; }
+    if(testBatchF681()!=0) { fputs("FAIL: sub_F681\\n",stderr); return 1; }
+    if(testBatchF821F86B()!=0) { fputs("FAIL: sub_F821/sub_F86B\\n",stderr); return 1; }
+    if(testBatchF889()!=0) { fputs("FAIL: sub_F889\\n",stderr); return 1; }
+    if(testBatchC94B()!=0) { fputs("FAIL: sub_C94B\\n",stderr); return 1; }
+    if(testBatchC64E653()!=0) { fputs("FAIL: sub_C64E/sub_C653\\n",stderr); return 1; }
     if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\n",stderr); return 1; }
     if(testD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
     if(testD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
