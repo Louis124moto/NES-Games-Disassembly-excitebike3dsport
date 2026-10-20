@@ -24,4 +24,9 @@ void nesSubD310DecreaseAllTimers(uint8_t *timer0020, uint8_t timers[29]);
  * RAM $0018..$001F and are rotated in-place. */
 void nesSubD326RotateInputBits(uint8_t bytes[8]);
 
+/* Portable translation of the RAM-level behavior of sub_D35B ($D35B).
+ * Samples are the eight raw reads from $4016/$4017; outputs are NES button masks. */
+void nesSubD35BDecodeController(const uint8_t serial_samples[8], uint8_t previous_hold,
+                                uint8_t *hold, uint8_t *press);
+
 #endif
