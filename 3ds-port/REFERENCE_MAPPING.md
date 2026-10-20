@@ -429,3 +429,9 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 ## Validation clarification
 
 The latest batch CI confirms the host regression suite and native 3DS build pass. This proves compilation and the covered test cases only. `sub_E1F9`, `sub_E2F6`, and `loc_E3AA` remain partial/state-level models; they must not be described as complete instruction-by-instruction ports until their remaining branches, memory writes, and call interactions are implemented and tested.
+
+
+## Temperature meter — $E359
+
+- Implements the `$D8F7/$D8FB` table-driven fractional/coarse temperature update, including byte carry/borrow, cooling subtraction `$0B`, the finish/latch blink paths, overheat timer/latch writes, `$00FC` flag OR, and the four sprite records written to OAM `$02F0-$02FF`.
+- The helper exposes the source RAM values as parameters; it does not claim to reproduce the rest of the full game loop or the surrounding PPU timing.
