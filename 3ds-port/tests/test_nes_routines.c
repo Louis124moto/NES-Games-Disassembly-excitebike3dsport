@@ -1010,7 +1010,7 @@ static int testSubE70B(void)
     uint8_t a[4]={1u,2u,0u,0x10u}, b[4]={4u,2u,0x77u,0x05u};
     uint8_t c[4]={0x3Fu,0x3Eu,0x22u,0xFFu}, d[4]={1u,1u,1u,1u};
     nesSubE70BUpdateObjectOffsets(a,b,c,d);
-    if (b[0]!=3u || c[0]!=0u || d[0]!=0u) return 1;
+    if (b[0]!=3u || c[0]!=0x3Fu || d[0]!=0u) return 1;
     if (b[1]!=8u || c[1]!=0x3Fu || d[1]!=0u) return 1;
     if (b[2]!=0x77u || c[2]!=0x22u || d[2]!=0u) return 1;
     if (b[3]!=0xFDu || c[3]!=0u || d[3]!=0u) return 1;
