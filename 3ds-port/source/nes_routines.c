@@ -693,6 +693,28 @@ void nesSubE2F6DrawWheelSprites(uint8_t x,uint8_t yOffset,const uint8_t ram036C[
     oam[(uint8_t)(0x96u+yOffset)]=attr;oam[(uint8_t)(0x9Au+yOffset)]=attr;
     if(ram0094[x]==0u)oam[(uint8_t)(0x98u+yOffset)]=0xF8u;
 }
+void nesSubEA44UpdateWheelSprites(uint8_t oam[256],const uint8_t ram0084[4],
+    const uint8_t ram0080[4],const uint8_t ram00B0[4],const uint8_t ram00B4[4],
+    const uint8_t ram00BC[4],const uint8_t ramY[4],const uint8_t tblE69A[7],
+    const uint8_t ram036C[4],const uint8_t ram0094[4],const uint8_t ram0090[4],
+    const uint8_t ram008C[4],uint8_t ram003F){
+    int xi;
+    for(xi=3;xi>=0;xi--){
+        uint8_t x=(uint8_t)xi,yOffset=(uint8_t)(x<<3),a=ram0084[x];
+        uint8_t special=0u;
+        if((a&1u)!=0u){if(ram0080[x]<0xF4u)special=1u;}
+        else if((a&2u)==0u&&ram0080[x]<0xF6u)special=1u;
+        if(special!=0u&&ram00B0[x]!=0u){
+            uint8_t y=nesSubDC9A(0xB6u,ram00BC[x],ramY[x]);
+            oam[(uint8_t)(0x94u+yOffset)]=y;
+            oam[(uint8_t)(0x97u+yOffset)]=(uint8_t)(ram0080[x]+0x0Au);
+            if(ram00B4[x]<7u)oam[(uint8_t)(0x95u+yOffset)]=tblE69A[ram00B4[x]];
+            oam[(uint8_t)(0x96u+yOffset)]=0u;
+        }else{
+            nesSubE2F6DrawWheelSprites(x,yOffset,ram036C,ram0094,ram0090,ram00BC,ram0084,ram0080,ram008C,ram003F,oam);
+        }
+    }
+}
 /* sub_E1F9 state-only return selection, including the $000E side effect. */
 uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp){uint8_t a,y;if(x>3u||temp==NULL)return 0u;*temp=0u;a=r9c[x];if(a!=0u&&a!=5u){y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;if(r36[x]!=0u)y=(uint8_t)(y-1u);return (uint8_t)(y|0x10u);}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
