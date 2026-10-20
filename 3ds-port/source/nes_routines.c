@@ -1,4 +1,5 @@
 #include "nes_routines.h"
+#include <stddef.h>
 
 /*
  * Mirrors the 6502 instruction sequence:
