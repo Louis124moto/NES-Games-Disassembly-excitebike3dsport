@@ -223,4 +223,14 @@ void nesOfsE8F514SetPair30(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
 void nesOfsE8FA10SetPair10(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
 void nesOfsE96300ClearThree(uint8_t x, uint8_t ram00CC[4], uint8_t ram00D4[4], uint8_t ram00B4[4]);
 
+
+/* Portable setup fragments from bank_FF.asm; PPU writes are returned as effects. */
+void nesSubD0F4PrepareCommandStream(const uint8_t ram03D9To03DF[7],
+    uint8_t ram03D0To03D7[8], uint8_t *sourceLo, uint8_t *sourceHi,
+    uint8_t *dataLo, uint8_t *dataHi);
+void nesSubD1A9PrepareScrollWrites(uint8_t scrollWrites[2], uint8_t *statusReads);
+void nesSubD1B3PrepareScrollWrites(uint8_t ramFor2000, uint8_t baseNametable,
+    uint8_t scrollX, uint8_t scrollY, uint8_t *ppuCtrl,
+    uint8_t scrollWrites[2], uint8_t *statusReads);
+
 #endif
