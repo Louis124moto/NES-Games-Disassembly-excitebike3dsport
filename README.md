@@ -124,6 +124,10 @@ The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). See [`
 
 The original disassembly originates from [NES Games Disassembly](https://github.com/cyneprepou4uk/NES-Games-Disassembly). Preserve relevant upstream credits and follow the original project's applicable terms when reusing or redistributing its work.
 
+## Use of AI assistance
+
+AI tools have been used as development assistants for repository analysis, documentation, assembly-to-C translation work, and test planning. AI-generated suggestions are not treated as authoritative: translated behavior must be checked against the original NES disassembly, and test/build/integration/fidelity status must only be claimed when supported by reproducible evidence. The use of AI does not imply that the port is complete, correct, or verified. Human review remains necessary for changes and project decisions.
+
 ## Contribution rules
 
 - Keep the original NES source unchanged.
