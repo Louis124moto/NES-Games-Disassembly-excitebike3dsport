@@ -81,6 +81,8 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_DA7A` as a byte-exact helper and add instruction-level reference tests.
 - [x] Translate six additional RAM-level routines: `sub_DBFE`, `sub_DC9A` (with its `$DC97` load entry), `sub_DCDE`, `sub_DD38`, `sub_DD6F`, and `sub_DB95`; add regression tests.
 - [x] Host regression suite passed and Nintendo 3DS build passed for the six-routine code revision `730a1048`; later commits only update documentation/inventory.
+- [x] Translate `sub_DA6A`, `sub_DB50`, `sub_DCA0`, and shared entry `loc_DCC7`; add regression coverage.
+- [ ] Confirm host tests and Nintendo 3DS build for the latest batch.
 - [ ] Continue translating the remaining `sub_*` routines systematically, preserving incoming flags, branch behavior, indexed slot bounds, and byte wraparound.
 
 - [x] Create a full checklist of all 177 `sub_*` labels in `ASM_FUNCTION_INVENTORY.md`; distinguish inventory status from actual port completion.
