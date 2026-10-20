@@ -293,7 +293,7 @@ static int testE80DPreparePointer(void)
     static const uint8_t lo[6]={0x00u,0x40u,0x80u,0xC0u,0x00u,0x40u};
     static const uint8_t hi[6]={0x04u,0x04u,0x04u,0x04u,0x05u,0x05u};
     unsigned int i;
-    for(i=0;i<6u;++i) { uint8_t l=0xAAu,h=0xBBu; nesSubE80DPreparePointer((uint8_t)i,&l,&h); if(l!=lo[i]||h!=hi[i]) return 1; }
+    for(i=0;i<6u;++i) { uint8_t l=0xAAu,h=0xBBu; nesSubE80DPointerBytes((uint8_t)i,&l,&h); if(l!=lo[i]||h!=hi[i]) return 1; }
     return 0;
 }
 static int testE803ReadIndexedRam(void)
