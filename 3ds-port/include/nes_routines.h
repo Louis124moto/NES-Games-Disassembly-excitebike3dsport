@@ -176,4 +176,7 @@ uint8_t nesSubE52CCheckVerticalOverlap(uint8_t x, uint8_t y, const uint8_t ram00
 void nesSubE4C8CheckOverlappingObjects(const uint8_t ram0084[4], const uint8_t ram0080[4],
                                        const uint8_t ram008c[4], uint8_t *ram000b, uint8_t *ram03a3);
 
+/* Exact loc_E96E block from sub_E96C: four object slots, 8-bit ADC, skip states $14/$15. */
+void nesLocE96EApplyVerticalDelta(const uint8_t state[4], uint8_t posY[4], const uint8_t delta[4]);
+
 #endif
