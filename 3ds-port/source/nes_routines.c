@@ -943,3 +943,70 @@ void nesOfsE81807Apply(uint8_t x, uint8_t ram00B0[4], const uint8_t ram00AC[4],
     }
     ram0098[x] = 0xFFu;
 }
+
+/* Exact dispatch entry ofs_002_E845_04: D8=80, E893(A=05), LSR, E84F. */
+void nesOfsE84504Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    uint8_t a;
+    if (x >= 4u) return;
+    ram00D8[x] = 0x80u; ram00D4[x] = 0x05u; ram00B4[x] = 0x05u;
+    a = (uint8_t)(ram00C8[x] - ram00D0[x]);
+    a = (uint8_t)(a >> 1);
+    ram00BC[x] = a; ram00E4[x] = a;
+}
+
+/* Exact dispatch entry ofs_002_E854_05: E893(A=02), LSR, then E86F. */
+void nesOfsE85405Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4])
+{
+    uint8_t a;
+    if (x >= 4u) return;
+    ram00D4[x] = 0x02u; ram00B4[x] = 0x02u;
+    a = (uint8_t)((uint8_t)(ram00C8[x] - ram00D0[x]) >> 1);
+    ram00BC[x] = (uint8_t)(ram00E4[x] - a);
+}
+
+/* Exact dispatch entry ofs_002_E85D_02: E893(A=06), E84F, D8=60. */
+void nesOfsE85D02Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    uint8_t a;
+    if (x >= 4u) return;
+    ram00D4[x] = 0x06u; ram00B4[x] = 0x06u;
+    a = (uint8_t)(ram00C8[x] - ram00D0[x]);
+    ram00BC[x] = a; ram00E4[x] = a; ram00D8[x] = 0x60u;
+}
+
+/* Exact dispatch entry ofs_002_E86A_03: E893(A=01), then E86F. */
+void nesOfsE86A03Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4])
+{
+    uint8_t a;
+    if (x >= 4u) return;
+    ram00D4[x] = 0x01u; ram00B4[x] = 0x01u;
+    a = (uint8_t)(ram00C8[x] - ram00D0[x]);
+    ram00BC[x] = (uint8_t)(ram00E4[x] - a);
+}
+
+/* Exact dispatch entry ofs_002_E879_09, including the conditional +$10. */
+void nesOfsE87909Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00A0[4], uint8_t ram00D8[4],
+                       uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    uint8_t a;
+    if (x >= 4u) return;
+    ram00D4[x] = 0x04u; ram00B4[x] = 0x04u;
+    a = (uint8_t)((uint8_t)(ram00C8[x] - ram00D0[x]) << 1);
+    ram00BC[x] = a; ram00E4[x] = a;
+    if (ram00A0[x] != 0u) {
+        a = (uint8_t)(ram00BC[x] + 0x10u);
+        ram00BC[x] = a; ram00E4[x] = a;
+    }
+    ram00D8[x] = 0x40u;
+}
