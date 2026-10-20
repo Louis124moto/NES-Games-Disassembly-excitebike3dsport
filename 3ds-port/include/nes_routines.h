@@ -253,7 +253,7 @@ void nesSubF82EPreparePointer(uint8_t x, const uint8_t tblF063Lo[256], const uin
 void nesSubF839PreparePointer(uint8_t x, const uint8_t tblF4F5Lo[256], const uint8_t tblF4FAHi[256], uint8_t *ptrLo, uint8_t *ptrHi);
 void nesSubC62DControllerStrobe(uint8_t *controller4016);
 void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1);
-void nesSubF871WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne, uint8_t channelOffset, uint8_t audio4000To400F[16]);
-void nesSubF885WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne, uint8_t audio4000To400F[16]);
+void nesSubF871WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
+void nesSubF885WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
 
 #endif
