@@ -1,0 +1,27 @@
+name: Verify NES routine translations
+
+on:
+  push:
+    paths:
+      - "3ds-port/source/nes_routines.c"
+      - "3ds-port/include/nes_routines.h"
+      - "3ds-port/tests/**"
+      - ".github/workflows/test-nes-routines.yml"
+  pull_request:
+    paths:
+      - "3ds-port/source/nes_routines.c"
+      - "3ds-port/include/nes_routines.h"
+      - "3ds-port/tests/**"
+      - ".github/workflows/test-nes-routines.yml"
+  workflow_dispatch:
+
+jobs:
+  exhaustive-sub-da15:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Compile host-side reference test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
+      - name: Exhaustively compare all 8-bit inputs
+        run: ./test_nes_routines
