@@ -79,4 +79,8 @@ void nesSubDA58UpdateObjectFraction(uint8_t x, uint8_t ram0094[4],
 uint8_t nesSubE091AdjustValue(uint8_t value);
 uint8_t nesSubE098AdjustValue(uint8_t value);
 
+/* sub_DFA2/sub_DFA4: exact 6502 subtraction loop; divisor must be nonzero. */
+void nesSubDFA4(uint8_t inputA, uint8_t divisor, uint8_t *outX, uint8_t *outA);
+void nesSubDFA2(uint8_t inputA, uint8_t *outX, uint8_t *outA);
+
 #endif
