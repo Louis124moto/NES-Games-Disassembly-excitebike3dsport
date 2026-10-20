@@ -368,3 +368,7 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 - **`sub_DA58` (`$DA58`)**: copies `ram_0094_obj,X` to `ram_0060_obj,X`, adds `ram_0090_obj,X` to `ram_0394_obj,X` modulo 256, and increments the copied `ram_0060_obj,X` byte only when that addition carries. The X index is limited to 0–3 in the C helper.
 - **`sub_E091` (`$E091`)**: returns A unchanged for A >= `$E7`; otherwise adds `$0C`. The CMP carry is clear on the ADC path, so the addition is exactly +12 modulo 256.
 - **`sub_E098` (`$E098`)**: same threshold as `sub_E091`, but adds `$02` when A < `$E7`.
+
+
+- **`sub_DFA4` (`$DFA4`)**: stores incoming X as the divisor, clears X, then repeatedly increments X and executes `SEC; SBC divisor` until the subtraction result has N=1 (the `BPL` loop condition). It then decrements X and performs `ADC divisor` using the carry left by the terminating SBC. The C helper exposes both final X and A and deliberately preserves byte wrapping and the N-flag termination condition; divisor zero is excluded because the original routine would not terminate for ordinary inputs.
+- **`sub_DFA2` (`$DFA2`)**: loads X with `$0A` and falls through to `sub_DFA4`; represented by the same exact helper with divisor `$0A`.
