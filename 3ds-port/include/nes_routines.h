@@ -332,8 +332,14 @@ uint8_t nesSubC339WaitForVblank(const uint8_t statusReads[], unsigned int count,
 uint8_t nesSubD19BWaitForStatus(const uint8_t statusReads[], unsigned int count, uint8_t ramFor2000, uint8_t *ppuCtrlWrite, uint8_t *ramFor2000Out, unsigned int *readsUsed);
 void nesSubD347ReadControllers(const uint8_t samples0[8], const uint8_t samples1[8], uint8_t previous0, uint8_t previous1, uint8_t *hold0, uint8_t *press0, uint8_t *hold1, uint8_t *press1, uint8_t strobeWrites[2]);
 uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A, uint8_t *ram0053);
-void nesLocC92CPrepareTableSelection(uint8_t a, uint8_t ram0043, uint8_t *ram0002, uint8_t *ram0003);
-uint8_t nesSubC935CopyPreparedBytes(uint8_t x, const uint8_t ram03D1[7], uint8_t ram0304To040Au[263]);
 uint8_t nesSubECC9CheckSpriteBytes(uint8_t y, const uint8_t ram0540[256], const uint8_t ram0480[256], const uint8_t ram0400[256], const uint8_t ram04C0[256]);
+
+void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram03F2,
+                                const uint8_t cpuRam[2048], uint8_t *ram0002,
+                                uint8_t *ram0003, uint8_t *ram0005,
+                                uint8_t *ram0006, uint8_t *ram0007);
+uint8_t nesSubC935BuildCommand(uint8_t ram0005, uint8_t ram0006, uint8_t ram0007,
+                               uint8_t x, uint8_t ram03D1To03D7[7],
+                               uint8_t ram0304To040Au[263]);
 
 #endif
