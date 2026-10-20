@@ -1171,5 +1171,5 @@ static int testNewE1F9(void){
     r98[2]=0u;r90[2]=1u;rdc[2]=0x80u;
     if(nesSubE1F9SelectObjectSprite(2u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=0x15u)return 5;
     puts("PASS: sub_E1F9 selection branches, timer return, temp and RAM side effect.");return 0;
-},z[4]={0u},ac[4]={3u},tmp=0u;return nesSubE1F9SelectObjectSprite(0u,s,z,z,z,ac,z,z,z,z,z,z,z,0u,0u,&tmp)==0x16u?0:1;}
+}
 static int testNewE3AA(void){uint8_t t=0u,l=0u,f=1u;nesLocE3AAUpdateHeatFlags(0x20u,1u,&t,&l,&f);return(t==0x20u&&l==0x20u&&f==0xB1u)?0:1;}
