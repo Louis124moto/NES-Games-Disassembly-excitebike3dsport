@@ -39,6 +39,12 @@ static int testSubD310(void);
 static int testSubD35B(void);
 static int testSubD326(void);
 static int testSubDA7A(void);
+static int testSubDBFE(void);
+static int testSubDC9A(void);
+static int testSubDCDE(void);
+static int testSubDD38(void);
+static int testSubDD6F(void);
+static int testSubDB95(void);
 
 int main(void)
 {
@@ -66,6 +72,12 @@ int main(void)
     if (testSubD35B() != 0) return 1;
     if (testSubD326() != 0) return 1;
     if (testSubDA7A() != 0) return 1;
+    if (testSubDBFE() != 0) return 1;
+    if (testSubDC9A() != 0) return 1;
+    if (testSubDCDE() != 0) return 1;
+    if (testSubDD38() != 0) return 1;
+    if (testSubDD6F() != 0) return 1;
+    if (testSubDB95() != 0) return 1;
     return 0;
 }
 
@@ -320,5 +332,221 @@ static int testSubDA7A(void)
         ++checked;
     }
     printf("PASS: sub_DA7A matched instruction reference for %lu patterns.\n", checked);
+    return 0;
+}
+
+
+static uint8_t refSBC(uint8_t a, uint8_t value, unsigned int *carry)
+{
+    int d = (int)a - (int)value - (int)(1u - *carry);
+    *carry = d >= 0 ? 1u : 0u;
+    return (uint8_t)d;
+}
+
+static int testSubDC9A(void)
+{
+    unsigned int a, b, c;
+    unsigned long checked = 0u;
+    for (a = 0; a < 256u; ++a) {
+        for (b = 0; b < 256u; ++b) {
+            for (c = 0; c < 256u; ++c) {
+                unsigned int carry = 1u;
+                uint8_t expected = refSBC((uint8_t)a, (uint8_t)b, &carry);
+                expected = refSBC(expected, (uint8_t)c, &carry);
+                if (nesSubDC9A((uint8_t)a, (uint8_t)b, (uint8_t)c) != expected) {
+                    fprintf(stderr, "sub_DC9A mismatch: %02X %02X %02X\n", a, b, c);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+    }
+    printf("PASS: sub_DC9A matched 6502 SBC chain for %lu triples.\n", checked);
+    return 0;
+}
+
+static int testSubDBFE(void)
+{
+    unsigned int a, b;
+    unsigned long checked = 0u;
+    for (a = 0; a < 256u; ++a) {
+        for (b = 0; b < 256u; ++b) {
+            uint8_t actualBf = (uint8_t)b, expectedBf = (uint8_t)b;
+            uint8_t actualScroll = (uint8_t)(a * 37u + b), expectedScroll = actualScroll;
+            uint8_t actualNt = (uint8_t)((a ^ b) & 1u), expectedNt = actualNt;
+            uint8_t expectedA = (uint8_t)a;
+            unsigned int carry = expectedA & 1u;
+            unsigned int i, sum;
+            expectedA = (uint8_t)(expectedA >> 1);
+            for (i = 0; i < 3u; ++i) {
+                unsigned int next = expectedA & 1u;
+                expectedA = (uint8_t)((expectedA >> 1) | (uint8_t)(carry << 7));
+                carry = next;
+            }
+            sum = (unsigned int)expectedA + expectedBf;
+            expectedBf = (uint8_t)sum;
+            carry = sum > 0xFFu ? 1u : 0u;
+            sum = (unsigned int)(uint8_t)a + expectedScroll + carry;
+            expectedScroll = (uint8_t)sum;
+            if (sum > 0xFFu) expectedNt = (uint8_t)(expectedNt ^ 1u);
+            nesSubDBFEUpdateScroll((uint8_t)a, &actualBf, &actualScroll, &actualNt);
+            if (actualBf != expectedBf || actualScroll != expectedScroll || actualNt != expectedNt) {
+                fprintf(stderr, "sub_DBFE mismatch: %02X %02X\n", a, b);
+                return 1;
+            }
+            ++checked;
+        }
+    }
+    printf("PASS: sub_DBFE matched instruction reference for %lu pairs.\n", checked);
+    return 0;
+}
+
+static int testSubDCDE(void)
+{
+    unsigned int timer, sample;
+    unsigned long checked = 0u;
+    for (timer = 0; timer < 256u; ++timer) {
+        for (sample = 0; sample < 256u; ++sample) {
+            uint8_t actual = (uint8_t)timer;
+            uint8_t expected = actual;
+            if (expected != 0u) {
+                expected = (uint8_t)(expected - 1u);
+                if ((sample & 0xC0u) != 0u) expected = 0u;
+            }
+            nesSubDCDE(&actual, (uint8_t)sample);
+            if (actual != expected) {
+                fprintf(stderr, "sub_DCDE mismatch: timer=%02X sample=%02X\n", timer, sample);
+                return 1;
+            }
+            ++checked;
+        }
+    }
+    printf("PASS: sub_DCDE matched timer/flag reference for %lu pairs.\n", checked);
+    return 0;
+}
+
+static int testSubDD38(void)
+{
+    unsigned int x, lo, hi, mode;
+    unsigned long checked = 0u;
+    for (x = 0; x < 4u; ++x) {
+        for (lo = 0; lo < 256u; ++lo) {
+            for (hi = 0; hi < 256u; ++hi) {
+                for (mode = 0; mode < 2u; ++mode) {
+                    uint8_t r90[4] = {0x11u, 0x22u, 0x33u, 0x44u};
+                    uint8_t r94[4] = {0u, 0u, 0u, 0u};
+                    uint8_t r388[4] = {0u, 0u, 0u, 0u};
+                    uint8_t r378[4] = {0u, 0u, 0u, 0u};
+                    uint8_t r37c[4] = {0u, 0u, 0u, 0u};
+                    uint8_t r380[4] = {0u, 0u, 0u, 0u};
+                    uint8_t r00b0[4] = {0u, 0u, 0u, 0u};
+                    uint8_t rff = 0xA5u;
+                    unsigned int sum, carry;
+                    uint8_t expectedLo, expectedHi;
+                    r90[x] = (uint8_t)lo;
+                    r94[x] = (uint8_t)hi;
+                    r388[x] = mode ? 2u : 0u;
+                    sum = lo + 0xAFu;
+                    expectedLo = (uint8_t)sum;
+                    carry = sum > 0xFFu ? 1u : 0u;
+                    expectedHi = (uint8_t)(hi + carry);
+                    if (mode) {
+                        carry = expectedHi & 1u;
+                        expectedHi = (uint8_t)(expectedHi >> 1);
+                        expectedLo = (uint8_t)((expectedLo >> 1) | (uint8_t)(carry << 7));
+                    }
+                    nesSubDD38SetupObject((uint8_t)x, r90, r94, r388, r378, r37c, r380, r00b0, &rff);
+                    if (r378[x] != expectedLo || r37c[x] != expectedHi ||
+                        r380[x] != 0x0Fu || r00b0[x] != 2u) {
+                        fprintf(stderr, "sub_DD38 mismatch: x=%u lo=%02X hi=%02X mode=%u\n", x, lo, hi, mode);
+                        return 1;
+                    }
+                    if (x == 0u) {
+                        uint8_t e = (uint8_t)(((uint8_t)hi << 4) ^ 0x30u);
+                        if (rff != (e != 0u ? e : 0x08u)) {
+                            fprintf(stderr, "sub_DD38 ram_00FF mismatch: hi=%02X\n", hi);
+                            return 1;
+                        }
+                    } else if (rff != 0xA5u) {
+                        fprintf(stderr, "sub_DD38 unexpectedly changed ram_00FF for X=%u\n", x);
+                        return 1;
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: sub_DD38 matched reference for %lu slot/value/mode cases.\n", checked);
+    return 0;
+}
+
+static int testSubDD6F(void)
+{
+    unsigned int pattern, x, carryIn;
+    unsigned long checked = 0u;
+    for (pattern = 0; pattern < 65536u; ++pattern) {
+        for (x = 0; x < 4u; ++x) {
+            for (carryIn = 0; carryIn < 2u; ++carryIn) {
+                uint8_t r380[4], r38c[4], r384[4], r37c[4];
+                uint8_t e380, e384, a, expected;
+                unsigned int sum, carry = carryIn;
+                int d;
+                unsigned int i;
+                for (i = 0; i < 4u; ++i) {
+                    r380[i] = (uint8_t)(pattern + i * 43u);
+                    r38c[i] = (uint8_t)((pattern >> 1) + i * 71u);
+                    r384[i] = (uint8_t)((pattern >> 3) + i * 19u);
+                    r37c[i] = (uint8_t)((pattern >> 5) + i * 97u);
+                }
+                e380 = (uint8_t)((unsigned int)r380[x] + r38c[x] + carry);
+                sum = (unsigned int)r380[x] + r38c[x] + carry;
+                carry = sum > 0xFFu ? 1u : 0u;
+                sum = (unsigned int)r384[x] + carry;
+                e384 = (uint8_t)sum;
+                carry = sum > 0xFFu ? 1u : 0u;
+                d = (int)(uint8_t)pattern - (int)r37c[x] - (int)(1u - carry);
+                a = (uint8_t)d;
+                carry = d >= 0 ? 1u : 0u;
+                sum = (unsigned int)a + e384 + carry;
+                expected = (uint8_t)sum;
+                if (nesSubDD6F((uint8_t)x, (uint8_t)carryIn, r380, r38c, r384, r37c, (uint8_t)pattern) != expected ||
+                    r380[x] != e380 || r384[x] != e384) {
+                    fprintf(stderr, "sub_DD6F mismatch: pattern=%u x=%u carry=%u\n", pattern, x, carryIn);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+    }
+    printf("PASS: sub_DD6F matched reference for %lu state combinations.\n", checked);
+    return 0;
+}
+
+static int testSubDB95(void)
+{
+    unsigned int x, i;
+    for (x = 1u; x <= 3u; ++x) {
+        uint8_t arrays[20][4];
+        uint8_t *p[20];
+        for (i = 0; i < 20u; ++i) {
+            unsigned int j;
+            p[i] = arrays[i];
+            for (j = 0; j < 4u; ++j) arrays[i][j] = (uint8_t)(0x20u + i * 7u + j);
+        }
+        nesSubDB95ClearOpponentBikeData((uint8_t)x,
+            p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],
+            p[10],p[11],p[12],p[13],p[14],p[15],p[16],p[17],p[18],p[19]);
+        for (i = 0; i < 20u; ++i) {
+            unsigned int j;
+            for (j = 0; j < 4u; ++j) {
+                uint8_t expected = (j == x) ? 0u : (uint8_t)(0x20u + i * 7u + j);
+                if (arrays[i][j] != expected) {
+                    fprintf(stderr, "sub_DB95 mismatch: field=%u slot=%u\n", i, j);
+                    return 1;
+                }
+            }
+        }
+    }
+    printf("PASS: sub_DB95 clears exactly the 20 documented fields for slots 1..3.\n");
     return 0;
 }
