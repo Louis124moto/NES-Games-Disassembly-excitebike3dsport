@@ -53,3 +53,14 @@ Confirmed directly from the instructions:
 - It then builds the meter's sprite tiles from `ram_03B6 + $50`; the comment says the bar is fixed-size and moves behind the HUD background.
 
 Not yet established: the full semantic meaning of each table index, exact frame-by-frame relation to speed, all cooling conditions, the crash/lockout transition, and the bike's acceleration values. Do not translate this routine into the current placeholder physics until the caller/state flow and related RAM writes are traced.
+
+## New source trace — NES controller sampling
+
+Source: `Excitebike/bank_FF.asm`, `sub_D35B`, CPU address `$D35B`, ROM offset `$00136B`.
+
+- The routine reads the NES controller serial register `$4016,X` eight times, assembles the sampled bits, and stores the result into `ram_btn_hold,X` and `ram_btn_press,X` (CPU `$D376-$D378`).
+- `bank_val.inc` defines the NES button bit assignments: Right `$01`, Left `$02`, Down `$04`, Up `$08`, Start `$10`, Select `$20`, B `$40`, A `$80`. These values are NES-side protocol/state bits, not 3DS HID masks.
+- If the current sample has bit `$80` set and the previous held sample also had it set, the routine clears `$80` from `ram_btn_press,X` (`$D37C-$D384`). This is a confirmed special repeat/edge rule for A; do not assume all buttons share that exact rule.
+- The native 3DS layer must translate physical HID controls into a separate NES-compatible logical bitfield if later code is to mirror the original routines. Preserve held and press semantics separately; do not pass raw `hidKeysHeld()` masks to code expecting the NES masks.
+
+Limit: this routine explains input sampling and one special A-button rule; it does not identify which buttons trigger every race-state action. That requires tracing the consumers of `ram_btn_hold` and `ram_btn_press` in context.
