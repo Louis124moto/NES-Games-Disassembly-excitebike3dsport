@@ -178,8 +178,36 @@ static int testSubE1A3Exact(void){
     if(temp!=2u||oam[0x51]!=0xB2u||oam[0x4D]!=0xB1u||oam[0x45]!=0xB0u||oam[0x41]!=0xAFu)return 1;
     puts("PASS: sub_E1A3 table selection, special offset, and overlay tiles.");return 0;
 }
+static int testLocE96EVerticalDelta(void)
+{
+    unsigned int state, y, delta;
+    unsigned long checked = 0ul;
+    for (state = 0u; state < 256u; ++state) {
+        for (y = 0u; y < 256u; ++y) {
+            for (delta = 0u; delta < 256u; ++delta) {
+                uint8_t states[4] = {(uint8_t)state, 0x14u, 0x15u, 0x00u};
+                uint8_t posY[4] = {(uint8_t)y, 0xA5u, 0x5Au, 0xFEu};
+                uint8_t deltas[4] = {(uint8_t)delta, 0x11u, 0x22u, 0x03u};
+                uint8_t expected = (state == 0x14u || state == 0x15u)
+                    ? (uint8_t)y : (uint8_t)(y + delta);
+                nesLocE96EApplyVerticalDelta(states, posY, deltas);
+                if (posY[0] != expected || posY[1] != 0xA5u ||
+                    posY[2] != 0x5Au || posY[3] != (uint8_t)0x01u) {
+                    fprintf(stderr, "sub_E96C loc_E96E mismatch: state=%02X y=%02X delta=%02X\\n",
+                            state, y, delta);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+    }
+    printf("PASS: loc_E96E vertical delta matched byte-level reference for %lu combinations.\\n", checked);
+    return 0;
+}
+
 int main(void)
 {
+    if (testLocE96EVerticalDelta() != 0) return 1;
     if(testSubE1A3Exact()) { fputs("FAIL: sub_E1A3 reference test\\n",stderr); return 1; }
     if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\\n",stderr); return 1; }
     if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\\n",stderr); return 1; }
