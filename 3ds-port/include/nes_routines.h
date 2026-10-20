@@ -272,8 +272,6 @@ void nesSubC716ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000
                              uint8_t *ram0005, uint8_t *ram0006);
 void nesSubC726ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
                              uint8_t *ram0005, uint8_t *ram0006);
-uint8_t nesSubDC9ASubtractObjectY(uint8_t a, uint8_t x, const uint8_t ram00BC[4],
-                                  const uint8_t ramPosYLo[4], uint8_t *carryOut);
 uint8_t nesSubDC97SubtractObjectY(uint8_t ram03F1, uint8_t x, const uint8_t ram00BC[4],
                                   const uint8_t ramPosYLo[4], uint8_t *carryOut);
 void nesSubEC25WriteSprite(uint8_t a, uint8_t ram00C2, const uint8_t tblE6F6[256], uint8_t oam[256]);
