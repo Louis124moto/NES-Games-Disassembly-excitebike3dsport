@@ -1587,3 +1587,20 @@ void nesSubEC99AdvanceObjectPhase(uint8_t ram0060, uint8_t *ram00B9Object1,
     *ram00B0Object2Out = nesSubECBFIncrementAndWrap(ram00B0Object2);
     *ram00B0Object3Out = nesSubECBFIncrementAndWrap(ram00B0Object3);
 }
+
+
+/* bra_C411: stores the supplied sprite X, clears its attribute and ram0046. */
+void nesLocC411WriteSpriteX(uint8_t a, uint8_t spriteOam[4], uint8_t *ram0046)
+{
+    if (spriteOam != NULL) {
+        spriteOam[3] = a;
+        spriteOam[2] = 0u;
+    }
+    if (ram0046 != NULL) *ram0046 = 0u;
+}
+
+/* loc_C3EF: the entry consists solely of STA ram_spr_Y; RTS. */
+void nesLocC3EFWriteSpriteY(uint8_t a, uint8_t *spriteY)
+{
+    if (spriteY != NULL) *spriteY = a;
+}
