@@ -20,4 +20,8 @@ uint8_t nesSubDA15DerivedY(uint8_t ram0390, uint8_t ram0080, uint8_t ramY);
  * timers[28] is RAM $003D. */
 void nesSubD310DecreaseAllTimers(uint8_t *timer0020, uint8_t timers[29]);
 
+/* Exact byte-level translation of sub_D326 ($D326). bytes[0..7] map to
+ * RAM $0018..$001F and are rotated in-place. */
+void nesSubD326RotateInputBits(uint8_t bytes[8]);
+
 #endif
