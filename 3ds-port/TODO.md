@@ -240,3 +240,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Model `sub_D1B3` as explicit `$2000` control and `$2005` scroll write effects in source order; no direct PPU access is performed by the portable helper.
 - [ ] Validate these new tests in host CI and compile the native 3DS target before marking this batch verified.
 - [ ] These are portable source fragments only; the generic command decoder at `loc_D2A3` and PPU backend are not completed by this batch.
+
+
+## Batch — 2026-10-21: 20 exact bank_FF.asm helpers
+
+- [x] Added 20 source-level translations: `sub_C333`, `sub_C3AF`, `sub_C3B1`, `sub_C621`, `sub_C68A`, `sub_C971`, `sub_CA1B`, `sub_CB13`, `sub_CFE3`, `sub_CF8B`, `sub_C62D`, `sub_D24F`, `sub_ECBF`, `sub_F676`, `sub_F6FB`, `sub_F826`, `sub_F82E`, `sub_F839`, `sub_F871`, and `sub_F885`.
+- [x] Added batch regression coverage including all 256 accumulator values for the carry/wrap helpers and full 256-byte page-copy verification.
+- [ ] Host tests and native 3DS compilation must pass before this batch is marked validated.
+- [ ] PPU/APU/controller register accesses are modeled as explicit output effects; these helpers do not directly emulate NES hardware or connect all effects to live gameplay.
