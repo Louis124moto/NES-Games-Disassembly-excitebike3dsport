@@ -321,3 +321,11 @@ Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games
 - The portable helper accepts the eight sampled bytes and reproduces the 6502's `LSR` / `ORA` / `LSR` carry extraction followed by eight `ROL` operations.
 - It writes the reconstructed NES button mask to hold and press state. If A is set in both the new and previous hold masks, it clears A only from the press mask, matching the source branch.
 - Native helper: `nesSubD35BDecodeController`. Regression test covers every decoded 8-bit button pattern, every previous hold mask, and three active-sample encodings. CI must pass before marking it validated.
+
+
+### Latest validation snapshot
+
+- `sub_D310`: host regression passed in [run 39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809).
+- `sub_D326`: host regression passed in [run 39497063113](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497063113).
+- `sub_D35B`: host regression passed in [run 39497203936](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497203936).
+- The 3DS build workflow for the newest source changes is still running; do not mark the new helpers fully validated until it completes.
