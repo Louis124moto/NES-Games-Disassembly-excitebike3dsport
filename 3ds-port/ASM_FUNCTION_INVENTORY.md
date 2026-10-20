@@ -96,9 +96,9 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D260` | `sub_D260` | Pending | calls: sub_C333 |
 | `$D2FF` | `sub_D2FF` | Pending | — |
 | `$D310` | `sub_D310_decrease_all_timers` | Translated + tested (host exhaustive test passed; 3DS build pending) | — |
-| `$D326` | `sub_D326` | Pending | — |
+| `$D326` | `sub_D326` | Translated + host regression passed; 3DS build pending | — |
 | `$D347` | `sub_D347_read_joy_regs` | Pending | calls: sub_D35B |
-| `$D35B` | `sub_D35B` | Pending | — |
+| `$D35B` | `sub_D35B` | Translated + host regression passed; 3DS build pending | — |
 | `$D3C1` | `sub_D3C1` | Pending | — |
 | `$D918` | `sub_D918` | Pending | — |
 | `$D924` | `sub_D924` | Pending | — |
