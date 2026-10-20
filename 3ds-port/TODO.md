@@ -28,7 +28,9 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Resolve the exact pointer values for dispatch states `$00-$05` from `tbl_D8FF_lo`/`tbl_D905_hi`; document only state behavior directly supported by the visible instructions.
 - [x] Trace visible branch and byte-operation behavior for dispatch states `$02-$05` and `sub_DA15`; record unresolved variable semantics separately.
 - [x] Add a standalone byte-exact C translation of `sub_DA15` in `nes_routines.c`, preserving 6502 carry/borrow semantics; it is not yet connected to placeholder physics.
-- [ ] Build the new routine through CI and exhaustively compare its output against an independent 6502 arithmetic reference for all 256³ input combinations before calling the translation validated.
+- [x] Build the new routine into the 3DS homebrew (run `39495476753` succeeded and uploaded `.3dsx`/`.elf`).
+- [x] Add a host-side exhaustive comparison test and CI workflow for all 256³ input combinations.
+- [ ] Confirm the new exhaustive-test workflow passes before calling the translation validated.
 - [ ] Trace every writer of `ram_009C_obj,X` and the producers of `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`; establish player-slot identity before implementing gameplay.
 
 ## Phase 3 — Playable prototype
