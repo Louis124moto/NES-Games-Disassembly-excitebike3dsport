@@ -8,6 +8,8 @@ static int testSubE091(void);
 static int testSubE098(void);
 static int testSubDFA4(void);
 static int testSubDFA2(void);
+static int testSubD0AB(void);
+static int testSubDFB2(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
@@ -98,6 +100,8 @@ int main(void)
     if (testSubE098() != 0) return 1;
     if (testSubDFA4() != 0) return 1;
     if (testSubDFA2() != 0) return 1;
+    if (testSubD0AB() != 0) return 1;
+    if (testSubDFB2() != 0) return 1;
     return 0;
 }
 
@@ -843,5 +847,94 @@ static int testSubDFA2(void)
         }
     }
     puts("PASS: sub_DFA2 matched sub_DFA4 with X initialized to $0A for all 256 A values.");
+    return 0;
+}
+
+
+static uint8_t referenceD0ABOne(uint8_t input)
+{
+    uint8_t a = (uint8_t)(input - 0x10u);
+    uint8_t y = 5u;
+    if ((a & 0x80u) == 0u) {
+        do {
+            y = (uint8_t)(y - 1u);
+            if (y == 0u) break;
+            a = (uint8_t)(a - 0x08u);
+        } while ((a & 0x80u) == 0u);
+    }
+    return y;
+}
+
+static int testSubD0AB(void)
+{
+    unsigned int value, x;
+    for (value = 0; value < 256u; ++value) {
+        uint8_t input[4] = {0x00u,0x01u,0x02u,0x03u};
+        uint8_t output[4] = {0xAAu,0xAAu,0xAAu,0xAAu};
+        input[0] = (uint8_t)value;
+        input[1] = (uint8_t)value;
+        input[2] = (uint8_t)value;
+        input[3] = (uint8_t)value;
+        nesSubD0ABComputeVerticalBands(input, output);
+        for (x = 0; x < 4u; ++x) {
+            uint8_t expected = referenceD0ABOne((uint8_t)value);
+            if (output[x] != expected) {
+                fprintf(stderr, "sub_D0AB mismatch: input=%02X x=%u expected=%u actual=%u\n",
+                        value, x, expected, output[x]);
+                return 1;
+            }
+        }
+    }
+    puts("PASS: sub_D0AB matched the SBC/N-flag reference for all 256 input bytes and four slots.");
+    return 0;
+}
+
+static uint8_t referenceDFB2One(uint8_t ram009C, uint8_t ram00B8,
+                                uint8_t ram00A4, const uint8_t table[5])
+{
+    uint8_t y = 0u;
+    if (ram009C == 0u) {
+        y = 0u;
+        while (1) {
+            uint8_t cmp = (uint8_t)(ram00B8 - table[y]);
+            if ((cmp & 0x80u) != 0u) break;
+            y = (uint8_t)(y + 1u);
+            if (y >= 5u) { y = 0u; break; }
+        }
+        if (y != 0u && ram00A4 == 1u) y = (uint8_t)(y + 2u);
+    }
+    return y;
+}
+
+static int testSubDFB2(void)
+{
+    static const uint8_t table[5] = {0x08u,0x14u,0x20u,0x2Cu,0x38u};
+    unsigned int yValue, state, a4, x;
+    unsigned long checked = 0u;
+    for (yValue = 0; yValue < 256u; ++yValue) {
+        for (state = 0; state < 256u; ++state) {
+            for (a4 = 0; a4 < 2u; ++a4) {
+                for (x = 0; x < 4u; ++x) {
+                    uint8_t r9c[4] = {0u,0u,0u,0u};
+                    uint8_t rb8[4] = {0u,0u,0u,0u};
+                    uint8_t ra4[4] = {0u,0u,0u,0u};
+                    uint8_t r70[4] = {0xCCu,0xCCu,0xCCu,0xCCu};
+                    uint8_t expected;
+                    r9c[x] = (uint8_t)state;
+                    rb8[x] = (uint8_t)yValue;
+                    ra4[x] = (uint8_t)a4;
+                    expected = referenceDFB2One((uint8_t)state,(uint8_t)yValue,(uint8_t)a4,table);
+                    nesSubDFB2SelectBand((uint8_t)x,r9c,rb8,ra4,r70,table);
+                    if (r70[x] != expected) {
+                        fprintf(stderr, "sub_DFB2 mismatch: B8=%02X 9C=%02X A4=%02X x=%u expected=%u actual=%u\n",
+                                yValue,state,a4,x,expected,r70[x]);
+                        return 1;
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: sub_DFB2 matched CMP/N-flag reference for %lu cases.\n", checked);
     return 0;
 }
