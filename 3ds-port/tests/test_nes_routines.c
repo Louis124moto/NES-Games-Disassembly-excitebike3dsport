@@ -117,8 +117,24 @@ static int testSubE26AExact(void){
     if(nesSubE26APrepareSpecialSprite(1u,0x50u,r84,(uint8_t[4]){0u,0xF8u,0u,0u},r80,r6c,ra4,r398,tbl,0u,&o))return 1;
     puts("PASS: sub_E26A gate and exact sprite-command parameters.");return 0;
 }
+static int testSubE359Exact(void){
+    uint8_t timer=0u,frac=0xF0u,coarse=4u,latch=0u,flags=0u,oam[256]={0};
+    nesSubE359UpdateTemperatureMeter(0u,0u,0u,&timer,&frac,&coarse,&latch,&flags,oam);
+    if(frac!=0x2Fu||coarse!=5u||latch!=0u||oam[0xFC]!=0xCFu||oam[0xFD]!=0xFEu||oam[0xFE]!=0x20u||oam[0xFF]!=0x55u)return 1;
+    timer=0u;frac=5u;coarse=9u;latch=0u;flags=0u;
+    nesSubE359UpdateTemperatureMeter(0u,0u,0u,&timer,&frac,&coarse,&latch,&flags,oam);
+    if(frac!=0xFAu||coarse!=8u)return 1;
+    timer=2u;frac=0u;coarse=0x20u;latch=1u;flags=0u;
+    nesSubE359UpdateTemperatureMeter(0u,0u,0u,&timer,&frac,&coarse,&latch,&flags,oam);
+    if(oam[0xFD]!=0xFCu)return 1;
+    timer=1u;frac=0u;coarse=0x20u;latch=1u;flags=0u;
+    nesSubE359UpdateTemperatureMeter(1u,0u,0u,&timer,&frac,&coarse,&latch,&flags,oam);
+    if(oam[0xFD]!=0xFEu)return 1;
+    puts("PASS: sub_E359 heat arithmetic, overheat tile selection, and four OAM sprites.");return 0;
+}
 int main(void)
 {
+    if(testSubE359Exact()) { fputs("FAIL: sub_E359 reference test\\n",stderr); return 1; }
     if(testSubE26AExact()) { fputs("FAIL: sub_E26A reference test\\n",stderr); return 1; }
     if(testSubE456Exact()) { fputs("FAIL: sub_E456 reference test\\n",stderr); return 1; }
     if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\\n",stderr); return 1; }
