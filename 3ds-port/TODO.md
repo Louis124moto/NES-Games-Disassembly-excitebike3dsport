@@ -116,3 +116,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Add state-level models for E16C, E3F4, E4AD, E49B, E2AF, E2BD, E2D0, E2F6, E1F9 and E3AA.
 - [ ] Verify host tests and Nintendo 3DS build for this batch.
+
+- [x] Translate `sub_E4C8` and `sub_E52C` at byte level, including wrapped subtraction, loop bounds, packed index scratch byte, and the source-commented `$000B` initialization bug.
+- [ ] Verify the new overlap routine tests and Nintendo 3DS build in CI before marking the batch validated.
