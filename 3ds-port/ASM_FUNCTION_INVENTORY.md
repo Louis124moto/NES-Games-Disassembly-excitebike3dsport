@@ -106,7 +106,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DA26` | `sub_DA26` | Pending | — |
 | `$DA58` | `sub_DA58` | Pending | — |
 | `$DA6A` | `sub_DA6A` | Pending | — |
-| `$DA7A` | `sub_DA7A` | Pending | — |
+| `$DA7A` | `sub_DA7A` | Translation added; awaiting host-test and 3DS-build CI | Exact helper and instruction-level regression test added; do not mark validated until both workflows pass |
 | `$DA9F` | `sub_DA9F` | Pending | — |
 | `$DAE3` | `sub_DAE3` | Pending | calls: sub_DB95_clear_opponent_bike_data, sub_E7FF; ; in |
 | `$DB50` | `sub_DB50` | Pending | — |
