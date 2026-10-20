@@ -35,6 +35,8 @@ static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
     return a;
 }
 
+static int testSubD310(void);
+
 int main(void)
 {
     unsigned int x, y, z;
