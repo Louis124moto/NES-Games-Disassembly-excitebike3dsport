@@ -1157,5 +1157,19 @@ static int testNewE16C(void){uint8_t o[256]={0};nesSubE16CWriteSpriteStrip(o,0x2
 static int testNewE3F4(void){uint8_t o[4],y[4]={30u,10u,20u,40u};nesSubE3F4SortObjectsByY(o,y,0u,0u);if(o[0]!=1u||o[1]!=2u||o[2]!=0u||o[3]!=3u)return 1;nesSubE3F4SortObjectsByY(o,y,1u,5u);return(o[0]==3u&&o[1]==1u&&o[2]==2u&&o[3]==0u)?0:1;}
 static int testNewE4(void){uint8_t o[256]={0},f[3]={0u,1u,2u},off[3]={0x10u,0x20u,0x30u};nesSubE4ADHideFourSprites(o,0x40u,8u);if(o[0x48]!=0xF8u||o[0x4C]!=0xF8u||o[0x50]!=0xF8u)return 1;for(unsigned i=0;i<256u;i++)o[i]=0u;nesSubE49BHideSelectedSpriteGroups(o,0x40u,f,off);return(o[0x50]==0xF8u&&o[0x54]==0xF8u&&o[0x58]==0xF8u&&o[0x60]==0u&&o[0x70]==0xF8u&&o[0x78]==0xF8u)?0:1;}
 static int testNewE2(void){uint8_t lo=3u,hi=9u,b=0u;uint8_t one[4]={1u},z[4]={0u},bc[4]={0u},d[4]={1u},e[4]={0x10u};nesSubE2AFDecrementCountdown(&lo,&hi,4u);if(lo!=0xFFu||hi!=8u)return 1;nesLocE2BDUpdateFinishBlink(1u,0u,&b);if(b!=1u||!nesLocE2D0CountdownReachedOne(1u))return 1;return nesSubE2F6ShouldDrawWheel(0u,one,one,z,bc,d,e)?0:1;}
-static int testNewE1F9(void){uint8_t s[4]={1u},z[4]={0u},ac[4]={3u},tmp=0u;return nesSubE1F9SelectObjectSprite(0u,s,z,z,z,ac,z,z,z,z,z,z,z,0u,0u,&tmp)==0x16u?0:1;}
+static int testNewE1F9(void){
+    uint8_t r9c[4]={1u,0u,0u,0u},rbc[4]={0u},r370[4]={0u},r36[4]={0u};
+    uint8_t rac[4]={3u,0x0Au,6u,6u},r98[4]={0u},rb0[4]={0u},r58[4]={0u},rb8[4]={0u};
+    uint8_t r90[4]={0u},r94[4]={0u},rdc[4]={0u},temp=0xFFu,ram039C3=0xFFu;
+    if(nesSubE1F9SelectObjectSprite(0u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=0x16u||temp!=0u||ram039C3!=0u)return 1;
+    r36[0]=3u;
+    if(nesSubE1F9SelectObjectSprite(0u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=0x12u)return 2;
+    r9c[0]=0u;
+    if(nesSubE1F9SelectObjectSprite(1u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,1u,0u,&ram039C3,&temp)!=2u||temp!=2u)return 3;
+    r98[2]=1u;
+    if(nesSubE1F9SelectObjectSprite(2u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=6u||temp!=0u)return 4;
+    r98[2]=0u;r90[2]=1u;rdc[2]=0x80u;
+    if(nesSubE1F9SelectObjectSprite(2u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=0x15u)return 5;
+    puts("PASS: sub_E1F9 selection branches, timer return, temp and RAM side effect.");return 0;
+},z[4]={0u},ac[4]={3u},tmp=0u;return nesSubE1F9SelectObjectSprite(0u,s,z,z,z,ac,z,z,z,z,z,z,z,0u,0u,&tmp)==0x16u?0:1;}
 static int testNewE3AA(void){uint8_t t=0u,l=0u,f=1u;nesLocE3AAUpdateHeatFlags(0x20u,1u,&t,&l,&f);return(t==0x20u&&l==0x20u&&f==0xB1u)?0:1;}
