@@ -217,3 +217,6 @@ Translate routines in dependency order rather than blindly copying address order
 
 | `sub_DFA2` | Implemented | `nesSubDFA2` (shared arithmetic entry with `sub_DFA4`) |
 | `sub_DFA4` | Implemented | `nesSubDFA4` |
+
+| `sub_D0AB` | Implemented | `nesSubD0ABComputeVerticalBands` |
+| `sub_DFB2` | Implemented | `nesSubDFB2SelectBand` |
