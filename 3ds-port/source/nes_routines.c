@@ -404,3 +404,51 @@ void nesSubDFA2(uint8_t inputA, uint8_t *outX, uint8_t *outA)
 {
     nesSubDFA4(inputA, 0x0Au, outX, outA);
 }
+
+
+/* sub_D0AB: emulate SBC sign tests and the Y countdown for all four objects. */
+void nesSubD0ABComputeVerticalBands(const uint8_t ram00B8[4], uint8_t ram0360[4])
+{
+    int x;
+    for (x = 3; x >= 0; --x) {
+        uint8_t a = (uint8_t)(ram00B8[x] - 0x10u);
+        uint8_t y = 5u;
+        if ((a & 0x80u) == 0u) {
+            for (;;) {
+                y = (uint8_t)(y - 1u);
+                if (y == 0u) break;
+                a = (uint8_t)(a - 0x08u);
+                if ((a & 0x80u) != 0u) break;
+            }
+        }
+        ram0360[x] = y;
+    }
+}
+
+/*
+ * sub_DFB2: choose the Y band using CMP's N flag (signed result bit),
+ * not a conventional unsigned comparison.
+ */
+void nesSubDFB2SelectBand(uint8_t x, const uint8_t ram009C[4],
+                          const uint8_t ram00B8[4], const uint8_t ram00A4[4],
+                          uint8_t ram0070[4], const uint8_t tblD913[5])
+{
+    uint8_t y = 0u;
+    uint8_t a;
+    if (x > 3u) return;
+    if (ram009C[x] == 0u) {
+        a = ram00B8[x];
+        for (;;) {
+            uint8_t cmp = (uint8_t)(a - tblD913[y]);
+            if ((cmp & 0x80u) != 0u) break;
+            y = (uint8_t)(y + 1u);
+            if ((uint8_t)(y - 5u) & 0x80u) continue;
+            y = 0u;
+            break;
+        }
+        if (y != 0u && ram00A4[x] == 1u) {
+            y = (uint8_t)(y + 2u);
+        }
+    }
+    ram0070[x] = y;
+}
