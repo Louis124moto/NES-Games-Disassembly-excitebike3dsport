@@ -296,7 +296,7 @@ void nesSubC94BBuildCommand(uint8_t *ram0300, uint8_t tableIndex,
                             const uint8_t tblC0EC[257], uint8_t ram0300To040A[267],
                             uint8_t *xOut);
 void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
-                               uint8_t *ram000C, uint8_t controllerWrites[2]);
+                               uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2]);
 void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
                                uint8_t *ram000C, uint8_t controllerWrites[2]);
 
