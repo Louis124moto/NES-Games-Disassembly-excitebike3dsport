@@ -214,3 +214,6 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 ## Translation policy
 
 Translate routines in dependency order rather than blindly copying address order: pure arithmetic/timer/input helpers first; then object state and coordinate updates; then bike/race mechanics; then track/course and scoring; finally menus, PPU rendering and APU audio. Preserve 6502 carry/negative/zero flags, byte wraparound, loop bounds, call order, and RAM aliases. A routine is only marked complete after reference tests and the native build pass.
+
+| `sub_DFA2` | Implemented | `nesSubDFA2` (shared arithmetic entry with `sub_DFA4`) |
+| `sub_DFA4` | Implemented | `nesSubDFA4` |
