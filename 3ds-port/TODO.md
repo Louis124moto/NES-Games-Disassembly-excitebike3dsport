@@ -110,3 +110,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_D0AB` with the original SBC sign-bit branches and four-object loop.
 - [x] Translate `sub_DFB2` with the exact `CMP` N-flag condition and the `tbl_D913` lookup sequence.
 - [ ] Await host regression and native 3DS build for the D0AB/DFB2 batch before marking the batch fully validated.
+
+- [x] Translate and test `sub_D000`, `sub_D11F`, `sub_D255`, `sub_D2FF`, `sub_E70B`, `sub_E80D`, `sub_E803`, `sub_E7FF`, `sub_E7FC`, and `sub_E836` at RAM/register level.
+- [ ] Confirm host regression and Nintendo 3DS build for this batch before marking fully validated.
