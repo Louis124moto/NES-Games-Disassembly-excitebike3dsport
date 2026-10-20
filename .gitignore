@@ -20,3 +20,10 @@ PRG_ROM.bin
 CHR_screens.chr
 
 *.lnk
+
+# Nintendo 3DS homebrew build output
+/3ds-port/build/
+/3ds-port/*.3dsx
+/3ds-port/*.elf
+/3ds-port/*.smdh
+/3ds-port/*.cia
