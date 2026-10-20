@@ -55,6 +55,9 @@ clean:
 	@rm -rf $(BUILD) $(TARGET).elf $(TARGET).3dsx $(TARGET).smdh
 
 else
+# devkitARM's rules initialize OUTPUT relative to the build subdirectory;
+# override it so the ELF and 3DSX are emitted under the top-level build/ directory.
+OUTPUT := $(TOPDIR)/$(BUILD)/$(TARGET)
 .PHONY: all
 all: $(OUTPUT).elf $(OUTPUT).3dsx
 
