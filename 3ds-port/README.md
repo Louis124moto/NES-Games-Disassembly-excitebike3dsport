@@ -13,7 +13,7 @@ make
 make clean
 ```
 
-The CI build should produce `excitebike3ds.3dsx` and `excitebike3ds.elf`. The `.3dsx` can be copied to an SD card for a homebrew launcher, once the build and launch have been verified.
+The CI build should produce `build/excitebike3ds.3dsx` and `build/excitebike3ds.elf`. Generated objects, dependency files, and final binaries belong under `build/`. The `.3dsx` can be copied to an SD card for a homebrew launcher, once the build and launch have been verified.
 
 ## Architecture status
 
