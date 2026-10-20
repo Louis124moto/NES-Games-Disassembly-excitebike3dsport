@@ -1,0 +1,42 @@
+name: Build Nintendo 3DS homebrew
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile Excitebike 3DS
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkitarm:latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Nintendo 3DS development libraries
+        run: |
+          dkp-pacman -Sy --noconfirm
+          dkp-pacman -S --noconfirm 3ds-dev
+
+      - name: Compile homebrew
+        run: make -C 3ds-port
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: excitebike3ds-homebrew
+          path: |
+            3ds-port/excitebike3ds.3dsx
+            3ds-port/excitebike3ds.elf
+          if-no-files-found: error
+          retention-days: 14
