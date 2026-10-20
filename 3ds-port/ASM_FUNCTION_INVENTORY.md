@@ -207,6 +207,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$FC8D` | `sub_FC8D` | Pending | — |
 | `$FF53` | `sub_FF53` | Pending | — |
 
-| `sub_DA58` | Implemented | `nesSubDA58UpdateObjectFraction` |\n| `sub_E091` | Implemented | `nesSubE091AdjustValue` |\n| `sub_E098` | Implemented | `nesSubE098AdjustValue` |\n\n## Translation policy
+| `sub_DA58` | Implemented | `nesSubDA58UpdateObjectFraction` |
+| `sub_E091` | Implemented | `nesSubE091AdjustValue` |
+| `sub_E098` | Implemented | `nesSubE098AdjustValue` |
+
+## Translation policy
 
 Translate routines in dependency order rather than blindly copying address order: pure arithmetic/timer/input helpers first; then object state and coordinate updates; then bike/race mechanics; then track/course and scoring; finally menus, PPU rendering and APU audio. Preserve 6502 carry/negative/zero flags, byte wraparound, loop bounds, call order, and RAM aliases. A routine is only marked complete after reference tests and the native build pass.
