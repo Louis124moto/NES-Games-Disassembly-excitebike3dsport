@@ -150,7 +150,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E2F6` | `sub_E2F6` | Pending | — |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Pending | — |
 | `$E3F4` | `sub_E3F4` | Pending | — |
-| `$E456` | `sub_E456` | Pending | — |
+| `$E456` | `sub_E456` | Translated + regression-tested; 3DS build pending | Culling, opponent reset, and sprite hiding |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Pending | — |
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Pending | — |
 | `$E4C8` | `sub_E4C8` | Translated + host-tested; 3DS build pending | Object overlap scan; preserves scratch `$000B` input/output |
