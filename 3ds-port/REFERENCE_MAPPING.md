@@ -296,3 +296,12 @@ The disassembly contains 177 labels named sub_* in Excitebike/bank_FF.asm. The n
 - A separate reference test compares 65,536 frame-timer/value vectors with generated timer-array patterns. CI must pass before this is considered validated.
 
 This helper models the RAM/timing routine only; it does not recreate the NES's interrupt cadence or call schedule.
+
+
+## Master routine index
+
+A full index of all 177 `sub_*` labels found in `Excitebike/bank_FF.asm` is maintained in [`ASM_FUNCTION_INVENTORY.md`](ASM_FUNCTION_INVENTORY.md). It is a checklist, not a claim that every label is a standalone routine or already ported. The current exact native helper set is small; each subsequent function will be implemented in dependency order and tested against a separate 6502 reference wherever practical.
+
+### Latest exact routine: `sub_D310`
+
+Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809) passed after adding the byte-level timer helper and 65,536 input vectors. The matching 3DS build is still running at the time of this documentation update.
