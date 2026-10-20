@@ -147,3 +147,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Complete `sub_E2F6` through its OAM writes, including tile swap, attribute bit, wrapped coordinates, and conditional hide of the second wheel.
 - [ ] Validate the full `sub_E2F6` host regression and 3DS build.
+
+- [x] Translate `sub_EA44`'s four-slot sprite dispatch, thresholds, table lookup, and shared-SBC path; pass inherited zero-page scratch explicitly.
+- [ ] Validate `sub_EA44` host regression and 3DS build.
