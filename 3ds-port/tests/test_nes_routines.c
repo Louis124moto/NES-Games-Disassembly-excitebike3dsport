@@ -739,8 +739,7 @@ static int testSubDA58(void)
                                 x, fraction, velocity, carryByte);
                         return 1;
                     }
-                    ++checked;
-                }
+                ++checked;
             }
         }
     }
