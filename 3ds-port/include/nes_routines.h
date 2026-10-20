@@ -197,4 +197,22 @@ uint8_t nesSubE803ReadIndexedRam(uint8_t tableIndex, uint8_t dataIndex, const ui
 void nesOfsE81807Apply(uint8_t x, uint8_t ram00B0[4], const uint8_t ram00AC[4],
                        const uint8_t ram0094[4], const uint8_t ram0090[4], uint8_t ram0098[4]);
 
+
+void nesOfsE84504Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE85405Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4]);
+void nesOfsE85D02Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE86A03Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4]);
+void nesOfsE87909Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00A0[4], uint8_t ram00D8[4],
+                       uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+
 #endif
