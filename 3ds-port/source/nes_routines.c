@@ -1267,3 +1267,266 @@ void nesSubF885WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256],
     audio4000To400F[6u] = highPlusOne;
     audio4000To400F[7u] = (uint8_t)(tblFF00[y] | 0x08u);
 }
+
+
+/* Additional byte-accurate translations checked against bank_FF.asm on 2026-10-21. */
+void nesSubC1FDInitializeRam(const uint8_t tblC091[256], uint8_t cpuRam[2048])
+{
+    int x;
+    if (tblC091 == NULL || cpuRam == NULL) return;
+    for (x = 0x1E; x >= 0; --x) {
+        cpuRam[0x0580u + (unsigned)x] = tblC091[x];
+        cpuRam[0x05A3u + (unsigned)x] = tblC091[x];
+    }
+    cpuRam[0x06E0] = 0x01u;
+    for (x = 0x01; x < 0xCF; ++x) cpuRam[0x06E0u + (unsigned)x] = 0x40u;
+    cpuRam[0x06E0u + 0xCFu] = 0x09u;
+    cpuRam[0x05CE] = 0xA5u;
+    cpuRam[0x05CF] = 0x5Au;
+}
+
+void nesSubC229InitializeRows(uint8_t cpuRam[2048])
+{
+    unsigned int x;
+    uint8_t a = 0x0Au;
+    if (cpuRam == NULL) return;
+    for (x = 0u; x < 3u; ++x) {
+        cpuRam[0x05A0u + x] = a;
+        cpuRam[0x05C3u + x] = a;
+        a = 0u;
+    }
+}
+
+/* sub_C32F: LDA ram_for_2000 / AND #$7F, then falls through sub_C333. */
+void nesSubC32FMaskPpuCtrl(uint8_t *ramFor2000, uint8_t *ppuCtrl)
+{
+    uint8_t a;
+    if (ramFor2000 == NULL || ppuCtrl == NULL) return;
+    a = (uint8_t)(*ramFor2000 & 0x7Fu);
+    *ppuCtrl = a;
+    *ramFor2000 = a;
+}
+
+static uint8_t nesSubCB06Index(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2)
+{
+    uint8_t a = nesSubCB13ComputeSpriteCode(ram0002, ram0046Flag);
+    if (ram03F2 != 0u) a = (uint8_t)(a + 0x23u); /* CLC; ADC #$23 */
+    return a; /* TAX is not performed; the caller uses this value as Y. */
+}
+
+uint8_t nesSubCB06ComputeTableIndex(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2)
+{
+    return nesSubCB06Index(ram0002, ram0046Flag, ram03F2);
+}
+
+void nesSubC53ESelectTableEntry(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2,
+                                const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007)
+{
+    uint8_t y;
+    if (cpuRam == NULL || ram0005 == NULL || ram0006 == NULL || ram0007 == NULL) return;
+    y = nesSubCB06Index(ram0002, ram0046Flag, ram03F2);
+    *ram0005 = cpuRam[(uint16_t)(0x0580u + y)];
+    *ram0006 = cpuRam[(uint16_t)(0x0581u + y)];
+    *ram0007 = cpuRam[(uint16_t)(0x0582u + y)];
+}
+
+void nesSubC53ASelectTableEntry(uint8_t ram0043, uint8_t ram0046Flag, uint8_t ram03F2,
+                                uint8_t *ram0002, const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007)
+{
+    if (ram0002 == NULL) return;
+    *ram0002 = ram0043; /* STA ram_0002_t07 before falling through to sub_C53E. */
+    nesSubC53ESelectTableEntry(*ram0002, ram0046Flag, ram03F2, cpuRam,
+                               ram0005, ram0006, ram0007);
+}
+
+void nesSubC716ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006)
+{
+    if (ram000D == NULL || ram000E == NULL || ram000F == NULL ||
+        ram0005 == NULL || ram0006 == NULL) return;
+    *ram000D = 0x40u; *ram000E = 0x60u; *ram000F = 0x00u;
+    *ram0005 = 0x28u; *ram0006 = 0x28u;
+}
+
+void nesSubC726ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006)
+{
+    if (ram000D == NULL || ram000E == NULL || ram000F == NULL ||
+        ram0005 == NULL || ram0006 == NULL) return;
+    *ram000D = 0x00u; *ram000E = 0xE0u; *ram000F = 0x05u;
+    *ram0005 = 0x14u; *ram0006 = 0x14u;
+}
+
+static uint8_t nesSbcByte(uint8_t a, uint8_t value, uint8_t *carry)
+{
+    unsigned int borrow = (*carry != 0u) ? 0u : 1u;
+    unsigned int subtrahend = (unsigned int)value + borrow;
+    uint16_t diff = (uint16_t)a - (uint16_t)subtrahend;
+    *carry = ((unsigned int)a >= subtrahend) ? 1u : 0u;
+    return (uint8_t)diff;
+}
+
+/* sub_DC9A: SEC; SBC ram_00BC_obj,X; SBC ram_obj_pos_Y_lo,X. */
+uint8_t nesSubDC9ASubtractObjectY(uint8_t a, uint8_t x, const uint8_t ram00BC[4],
+                                  const uint8_t ramPosYLo[4], uint8_t *carryOut)
+{
+    uint8_t carry = 1u;
+    if (ram00BC == NULL || ramPosYLo == NULL) return a;
+    a = nesSbcByte(a, ram00BC[x & 3u], &carry);
+    a = nesSbcByte(a, ramPosYLo[x & 3u], &carry);
+    if (carryOut != NULL) *carryOut = carry;
+    return a;
+}
+
+/* sub_DC97 starts with LDA $03F1 and falls through the exact sub_DC9A arithmetic. */
+uint8_t nesSubDC97SubtractObjectY(uint8_t ram03F1, uint8_t x, const uint8_t ram00BC[4],
+                                  const uint8_t ramPosYLo[4], uint8_t *carryOut)
+{
+    return nesSubDC9ASubtractObjectY(ram03F1, x, ram00BC, ramPosYLo, carryOut);
+}
+
+void nesSubEC25WriteSprite(uint8_t a, uint8_t ram00C2, const uint8_t tblE6F6[256],
+                           uint8_t oam[256])
+{
+    if (tblE6F6 == NULL || oam == NULL) return;
+    oam[0x30] = a;
+    oam[0x31] = 0xCAu;
+    oam[0x32] = 0x00u;
+    oam[0x33] = tblE6F6[ram00C2];
+}
+
+void nesSubEC5DWriteSprite(uint8_t ram003F, uint8_t ram00C2,
+                           const uint8_t tblE6F6[256], uint8_t oam[256])
+{
+    if (oam == NULL) return;
+    nesSubEC25WriteSprite(0xF8u, ram00C2, tblE6F6, oam);
+    oam[0x28] = ((ram003F & 0x10u) != 0u) ? 0xF8u : 0xC7u;
+    oam[0x2C] = oam[0x28];
+}
+
+/* sub_EC3B copies in this exact order: X=0, then $FF down through $01. */
+void nesSubEC3BCopyPageDescending(uint8_t cpuRam[2048])
+{
+    unsigned int x;
+    if (cpuRam == NULL) return;
+    cpuRam[0x06E0] = cpuRam[0x05E0];
+    for (x = 0xFFu; x >= 1u; --x)
+        cpuRam[0x06E0u + x] = cpuRam[0x05E0u + x];
+}
+
+/* sub_EC75: exact zeroing, indexed table read, compare and conditional low-nibble write. */
+void nesSubEC75InitializeObjectPositions(uint8_t ram00B0[4], uint8_t ram00C0[4],
+                                         const uint8_t tblE6E1[256],
+                                         uint8_t ramPosXLo[4], uint8_t ramPosYLo[4],
+                                         uint8_t ram00BC[4])
+{
+    uint8_t a;
+    if (ram00B0 == NULL || ram00C0 == NULL || tblE6E1 == NULL ||
+        ramPosXLo == NULL || ramPosYLo == NULL || ram00BC == NULL) return;
+    ramPosXLo[2] = 0u; ramPosXLo[0] = 0u; ramPosXLo[1] = 0u;
+    ramPosYLo[2] = ram00B0[2];
+    ramPosYLo[3] = ram00B0[0];
+    ram00BC[0] = ram00B0[1];
+    a = tblE6E1[ram00C0[2]];
+    ramPosYLo[0] = a;
+    if (a >= 0x11u) ramPosXLo[0] = (uint8_t)(a & 0x0Fu);
+}
+
+void nesSubF681CopyCommandBytes(uint16_t sourcePointer, uint8_t xIn, uint8_t yIn,
+                                const uint8_t cpuMemory[65536], uint8_t cpuRam[2048],
+                                uint8_t *xOut, uint8_t *yOut)
+{
+    uint8_t x = xIn, y = yIn;
+    unsigned int iterations = (0x0Fu - (unsigned int)xIn) & 0xFFu;
+    unsigned int i;
+    if (cpuMemory == NULL || cpuRam == NULL) return;
+    if (iterations == 0u) iterations = 256u;
+    for (i = 0u; i < iterations; ++i) {
+        uint16_t address;
+        y = (uint8_t)(y + 1u); /* INY occurs before the indirect read. */
+        address = (uint16_t)(sourcePointer + y);
+        cpuRam[(uint16_t)(0x0303u + x)] = cpuMemory[address];
+        x = (uint8_t)(x + 1u);
+    }
+    if (xOut != NULL) *xOut = x;
+    if (yOut != NULL) *yOut = y;
+}
+
+uint8_t nesSubF821InitializeBufferAndAdvance(uint8_t x, uint8_t cpuRam[2048])
+{
+    if (cpuRam == NULL) return (uint8_t)(x + 1u);
+    cpuRam[(uint16_t)(0x05E0u + x)] = 0x40u;
+    x = (uint8_t)(x + 1u); /* Falls through to sub_F826. */
+    cpuRam[0x00B7] = x;
+    cpuRam[0x00C5] = 0x00u;
+    return x;
+}
+
+void nesSubF86BWriteAudioRegisters(uint8_t x, uint8_t y, uint8_t a,
+                                   const uint8_t tblFF00[256], uint8_t byteAt0000,
+                                   uint8_t audio4000To400F[16])
+{
+    uint8_t highPlusOne;
+    if (tblFF00 == NULL || audio4000To400F == NULL) return;
+    audio4000To400F[0] = x; audio4000To400F[1] = y;
+    highPlusOne = (a == 0xFFu) ? byteAt0000 : tblFF00[(uint8_t)(a + 1u)];
+    if (highPlusOne == 0u) return;
+    audio4000To400F[2] = highPlusOne;
+    audio4000To400F[3] = (uint8_t)(tblFF00[a] | 0x08u);
+}
+
+void nesSubF889WriteThirdAudioTimer(uint8_t a, const uint8_t tblFF00[256],
+                                    uint8_t byteAt0000, uint8_t audio4000To400F[16])
+{
+    uint8_t highPlusOne;
+    if (tblFF00 == NULL || audio4000To400F == NULL) return;
+    highPlusOne = (a == 0xFFu) ? byteAt0000 : tblFF00[(uint8_t)(a + 1u)];
+    if (highPlusOne == 0u) return;
+    audio4000To400F[10] = highPlusOne;
+    audio4000To400F[11] = (uint8_t)(tblFF00[a] | 0x08u);
+}
+
+void nesSubC94BBuildCommand(uint8_t *ram0300, uint8_t tableIndex,
+                            const uint8_t tblC0EC[257], uint8_t ram0300To040A[267],
+                            uint8_t *xOut)
+{
+    uint8_t x;
+    if (ram0300 == NULL || tblC0EC == NULL || ram0300To040A == NULL) return;
+    x = *ram0300;
+    *ram0300 = (uint8_t)(x + 0x0Au); /* sub_C971: LDX old length; CLC; ADC #$0A. */
+    if (xOut != NULL) *xOut = x;
+    ram0300To040A[(unsigned int)x + 1u] = tblC0EC[tableIndex];
+    ram0300To040A[(unsigned int)x + 2u] = tblC0EC[(unsigned int)tableIndex + 1u];
+    ram0300To040A[(unsigned int)x + 5u] = 0xFBu;
+    ram0300To040A[(unsigned int)x + 8u] = 0xFBu;
+    ram0300To040A[(unsigned int)x + 3u] = 0x07u;
+    ram0300To040A[(unsigned int)x + 11u] = 0x00u;
+}
+
+static void nesControllerDelayEffect(uint8_t originalA, uint8_t count,
+                                     uint8_t *aOut, uint8_t *ram0007, uint8_t *ram000C,
+                                     uint8_t controllerWrites[2])
+{
+    if (aOut != NULL) *aOut = originalA; /* PHA ... PLA preserves the input A. */
+    if (ram0007 != NULL) *ram0007 = 0u;   /* DEC loop reaches zero. */
+    if (ram000C != NULL) *ram000C = 0u;
+    if (controllerWrites != NULL) {
+        controllerWrites[0] = 0x04u;
+        controllerWrites[1] = 0xFFu;
+    }
+    (void)count; /* Delay iteration count is count iterations in each loop; no cycle emulation. */
+}
+
+void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2])
+{
+    nesControllerDelayEffect(a, 0x34u, aOut, ram0007, ram000C, controllerWrites);
+}
+
+void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2])
+{
+    nesControllerDelayEffect(a, 0x6Au, aOut, ram0007, ram000C, controllerWrites);
+}
