@@ -1,98 +1,37 @@
-# NES Games Disassembly
+# Excitebike 3DS
 
-Each source code is equal to the original ROM, compilable and editable.
+A Nintendo 3DS homebrew project focused on bringing **Excitebike** to the Nintendo 3DS.
 
-All of them were made with my [BZK 6502 Disassembler](https://github.com/cyneprepou4uk/BZK-6502-Disassembler) scripts.
+> **Status: Work in progress.** This repository currently contains the original NES Excitebike disassembly and its assembly tools. A playable Nintendo 3DS port is not claimed yet.
 
-You can contact me at [RHDN](https://www.romhacking.net/forum/index.php?topic=32220.0) topic.
+## Repository contents
 
+- `Excitebike/` — NES disassembly, assets, and assembly scripts.
+- `_scripts/` — shared build helpers required by `Excitebike/assemble.sh`.
+- `syntax_6502.xml` — optional 6502 syntax-highlighting definition.
+- `.gitignore` — Git ignore rules.
 
+Unrelated game disassemblies from the original multi-game repository have been removed from this project branch.
 
-## How to build a disassembly
+## Build the NES disassembly
 
-### Windows
+Run these commands from the repository root.
 
-No special requirements. Just launch `assemble.bat` and wait until it's done.
+**Linux / macOS**
+```sh
+sh Excitebike/assemble.sh
+```
 
-### Any other OS
+**Windows**
 
-Try using `sh assemble.sh` in terminal instead. All credits goes to [gb-2312](https://github.com/gb-2312).
+Run `Excitebike/assemble.bat`.
 
-Do not delete or edit `_scripts` and `_install_packages` folders, unless you know how it works.
+These scripts assemble the NES version. They do **not** build a Nintendo 3DS application. A native 3DS port still requires a 3DS-specific implementation and build pipeline.
 
+## Upstream source and credits
 
+The disassembly originates from [NES Games Disassembly](https://github.com/cyneprepou4uk/NES-Games-Disassembly). Please preserve relevant upstream credits and follow the original project's applicable terms when reusing or redistributing its work.
 
-## Syntax highlighting
+## Contributing
 
-Use `syntax_6502.xml` to highlight code in [Notepad++](https://notepad-plus-plus.org/).
-
-Go to Language -> User Defined Language -> Define your language -> Import.
-
-
-
-## How to edit a disassembly
-
-Important comments are marked with `bzk` text. Start with deleting garbage to free up some space.
-
-And don't worry about stuff like `C - - - - - 0x00009C 00:C08C: A9 00     LDA #$00`.
-
-`preparations.lua` script will take care of it before compilation. You just write new code as usual, like this `LDA #$00`.
-
-You can manually delete this text with `.\s.\s.\s.\s.\s.\s0x0........:....:\s..\s..\s..\s\s` regex if necessary.
-
-
-
-## Games list (GoodNES) + CRC32
-
-### Disassembled
-* Adventure Island (U) [!] `B78C09A2`
-* Battle City (J) [!] `F599A07E`
-* Bugs Bunny Crazy Castle, The (U) [!] `DB0C3656`
-* Captain America and The Avengers (U) [!] `7254D53D`
-* Castlevania III - Dracula's Curse (U) [!] `7CC9C669`
-* Contra Force (U) [!] `83D69922`
-* Danny Sullivan's Indy Heat (U) [!] `311B5A58`
-* Double Dragon II - The Revenge (J) `8CF69E4B`
-* Dr. Mario (JU) (PRG0) [!] `B1F7E3E9`
-* Excitebike (JU) [!] `2BB33C69`
-* Felix the Cat (U) [!] `0639E88E`
-* Ice Climber (J) [!] `80C41616`
-* Kunio-kun no Nekketsu Soccer League (J) [!] `61C27F7B`
-* Legend of Zelda, The (U) (PRG0) [!] `D7AE93DF`
-* Little Mermaid, The (U) [!] `08EB97DB`
-* Mappy (J) [!] `3F0E8E0A`
-* Nuts & Milk (J) [!] `11879FE8`
-* Pac-Man (J) (V1.1) [!] `D747B639`
-* RoboCop 3 (U) [!] `FBBB58A6`
-* Solstice - The Quest for the Staff of Demnos (U) [!] `1D60732E`
-* Son Son (J) [!] `F7C8F42D`
-* Street Fighter III (9 Fighter) (Unl) `22CDD2F6`
-* Super C (U) [!] `1AC846F0`
-* Tecmo World Cup Soccer (J) [!] `19F24980`
-* Tennis (JU) [!] `5F457C00`
-* Yie Ar Kung-Fu (J) (V1.4) [!] `0D526208`
-
-
-
-### WIP
-* Battletoads & Double Dragon - The Ultimate Team (U) [!] `53B02F3D`
-* Galaga - Demons of Death (U) [!] `E36D5991`
-* Ninja Gaiden III - The Ancient Ship of Doom (U) [!] `BABD39FA`
-* R.C. Pro-Am II (U) [!] `03DB5562`
-* River City Ransom (U) [!] `C3508F7E`
-* Super Mario Bros. (W) [!] `3337EC46`
-* Teenage Mutant Ninja Turtles III - The Manhattan Project (U) [!] `DBB3BC30`
-* Urban Champion (W) [!] `0770CDAA`
-
-
-
-### Planning
-* Balloon Fight (J) [!] `A0DABE0A`
-* Bubble Bobble (U) [!] `D3A91B41`
-* Ghosts 'N Goblins (U) [!] `87ED54AA`
-* Kid Icarus (UE) [!] `0B30E036`
-* Kinnikuman - Muscle Tag Match (J) (PRG0) [!] `C296C8CE`
-* Mighty Final Fight (U) [!] `15EB0BEE`
-* Mitsume ga Tooru (J) [!] `E27EC1EC`
-* Popeye (JU) (PRG0) [!] `DE1D762F`
-* Tetris (Tengen) [!] `88F071C3`
+Contributions should focus on the Excitebike 3DS project. Please include build instructions and clearly state which hardware or emulator versions have been tested.
