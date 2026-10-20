@@ -107,8 +107,19 @@ static int testSubE456Exact(void){
     puts("PASS: sub_E456 culling, opponent reset, and three-write sprite groups.");
     return 0;
 }
+static int testSubE26AExact(void){
+    uint8_t r84[4]={0u},r390[4]={0u,0x20u,0u,0u},r80[4]={0u,0x10u,0u,0u};
+    uint8_t r6c[4]={0u,0x10u,0u,0u},ra4[4]={0u,1u,0u,0u},r398[4]={0u,2u,0u,0u};
+    uint8_t tbl[3]={0xBFu,0xC3u,0xC6u};
+    NesPreparedSpriteCommand o={0};
+    if(!nesSubE26APrepareSpecialSprite(1u,0x50u,r84,r390,r80,r6c,ra4,r398,tbl,0x04u,&o))return 1;
+    if(o.scratch0!=0x20u||o.scratch1!=0x98u||o.scratch2!=0xC6u||o.scratch3!=0x22u||o.scratch4!=0x50u||o.scratchB!=0x24u||o.transformY!=1u)return 1;
+    if(nesSubE26APrepareSpecialSprite(1u,0x50u,r84,(uint8_t[4]){0u,0xF8u,0u,0u},r80,r6c,ra4,r398,tbl,0u,&o))return 1;
+    puts("PASS: sub_E26A gate and exact sprite-command parameters.");return 0;
+}
 int main(void)
 {
+    if(testSubE26AExact()) { fputs("FAIL: sub_E26A reference test\\n",stderr); return 1; }
     if(testSubE456Exact()) { fputs("FAIL: sub_E456 reference test\\n",stderr); return 1; }
     if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\\n",stderr); return 1; }
     unsigned int x, y, z;
