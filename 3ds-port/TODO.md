@@ -172,3 +172,13 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [ ] Translate remaining routines in dependency order, prioritizing long gameplay/state routines before audio/data decoders where practical.
 
 - [x] Remove contradictory historical TODO entries that incorrectly said `sub_E4AD` writes twelve OAM bytes; the literal ASM loop bound and regression test establish three writes.
+
+
+### Audit snapshot details
+
+- ASM inventory: 177 original `sub_*` entries.
+- C source: 51 function/helper definitions detected by source scan.
+- Inventory after reconciliation: 134 rows remain marked pending, 17 have a matching C definition but need their status/test coverage reconciled, and 26 have other statuses. These are tracking categories, not a percentage of playable game completion.
+- Largest unported gameplay/state candidates by ASM instruction count include `sub_EB17` (~135 instructions), `sub_E96C` (~106), `sub_D260` (~88), `sub_DFD5` (~85), `sub_D018` (~76), and `sub_D1C7` (~73). Exact counts are a rough source scan, not an estimate of implementation effort.
+- The first full audit pass found at least one real documentation/implementation mistake in the E4AD sprite-hide loop: the literal `CPY #$0C` loop writes three bytes (offsets 0, 4, 8), not twelve. The C code and regression expectation were corrected, and the subsequent host test run passed.
+- Next work should translate the larger object/race-state routines with explicit RAM state and tests for branch conditions and byte wraparound; then integrate the helpers into the native frame loop. Audio/PPU-heavy routines are later because they depend on memory-mapped hardware behavior.
