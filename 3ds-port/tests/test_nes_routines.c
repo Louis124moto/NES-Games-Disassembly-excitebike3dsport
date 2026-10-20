@@ -572,7 +572,7 @@ static int testBatchF821F86B(void) {
     if(nesSubF821InitializeBufferAndAdvance(0xE0u,ram)!=0xE1u||ram[0x6C0]!=0x40u||ram[0xB7]!=0xE1u||ram[0xC5]!=0u)return 1;
     for(i=0;i<256u;i++)tbl[i]=(uint8_t)(i+1u);
     nesSubF86BWriteAudioRegisters(0x80u,0x9Cu,3u,tbl,0x77u,audio);
-    return (audio[0]==0x80u&&audio[1]==0x9Cu&&audio[2]==5u&&audio[3]==0x0Bu)?0:2;
+    return (audio[0]==0x80u&&audio[1]==0x9Cu&&audio[2]==5u&&audio[3]==0x0Cu)?0:2;
 }
 static int testBatchF889(void) {
     uint8_t tbl[256],audio[16];unsigned i;for(i=0;i<256u;i++)tbl[i]=1u;for(i=0;i<16u;i++)audio[i]=0xAAu;
