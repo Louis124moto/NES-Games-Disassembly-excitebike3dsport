@@ -303,4 +303,12 @@ void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
 uint8_t nesSubFF53Lookup(uint8_t inputA, uint8_t carryIn, uint8_t ram07F0,
                          const uint8_t cpuMemory[65536], uint8_t *yOut);
 
+/* RAM-level translation of sub_EC99 ($EC99), including its sub_F6FB and
+ * sub_ECBF calls. */
+void nesSubEC99AdvanceObjectPhase(uint8_t ram0060, uint8_t *ram00B9Object1,
+                                  uint8_t *ram00C0Object0, uint8_t ram00B0Object2,
+                                  uint8_t ram00B0Object3, uint8_t *ram00B0Global,
+                                  uint8_t *ram00B1Global, uint8_t *ram00B0Object2Out,
+                                  uint8_t *ram00B0Object3Out);
+
 #endif
