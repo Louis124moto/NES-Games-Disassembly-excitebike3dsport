@@ -69,4 +69,7 @@ void nesSubDCA0SetupSpriteHeight(uint8_t x, uint8_t ram00D4[4],
     uint8_t trackFinished, uint8_t ram0098Player, uint8_t ram009CPlayer,
     uint8_t ram0058Player, uint8_t ram00A4[4], uint8_t tblD88B[256],
     uint8_t ram0368[4]);
+/* Exact translation of shared entry loc_DCC7 ($DCC7). */
+void nesLocDCC7ApproachValue(uint8_t x, uint8_t target, uint8_t duration,
+                             uint8_t timers[4], uint8_t values[4]);
 #endif
