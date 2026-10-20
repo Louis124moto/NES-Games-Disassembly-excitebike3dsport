@@ -24,7 +24,7 @@ LIBS := -lctru -lm
 LIBDIRS := $(CTRULIB)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
-export OUTPUT := $(CURDIR)/$(TARGET)
+export OUTPUT := $(CURDIR)/$(BUILD)/$(TARGET)
 export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
