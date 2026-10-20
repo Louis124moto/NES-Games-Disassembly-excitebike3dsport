@@ -211,3 +211,15 @@ A faithful C translation must model every intermediate as an 8-bit value and pre
 ### Remaining proof obligations
 
 The handlers above still depend on variables whose writers and meaning are not completely mapped. Before turning them into native gameplay, trace the producers of `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`, and confirm which object slot is the player under each race state. Do not add guessed labels or physics behavior.
+
+
+## First native exact-translation unit: `nesSubDA15DerivedY`
+
+Implementation: `3ds-port/include/nes_routines.h` and `3ds-port/source/nes_routines.c`.
+
+- The function `nesSubDA15DerivedY(ram0390, ram0080, ramY)` translates the instruction sequence at CPU `$DA15` byte-by-byte.
+- It explicitly preserves the no-borrow carry from the first `SBC` for the second `SBC #$08`, and the carry from `ADC ramY` for the final `ADC #$04`.
+- Each accumulator write is reduced to 8 bits. It does not use floating-point or unconstrained integer arithmetic to approximate the routine.
+- The function is intentionally not wired into `bike_physics.c`: the native scaffold does not yet model the original four object slots or their RAM layout, and the meaning/lifetime of the source fields still needs to be established. Integrating it into the current placeholder model would imply a relationship that has not been proven.
+
+Verification status: source translation committed; CI build and a byte-for-byte exhaustive comparison against an independent 6502 reference calculation are still required. No fidelity claim is made until those checks pass.
