@@ -128,3 +128,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Correct E4AD test expectations for all twelve writes and E456 group offsets after inspecting the first failing CI run.
 - [ ] Re-run host tests after correcting the culling test expectations.
+
+- [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; corrected the model back to exactly three writes (Y=0,4,8) rather than inferring write count from the routine label/comment.
+- [ ] Re-run host regression after restoring the literal E4AD loop bound.
