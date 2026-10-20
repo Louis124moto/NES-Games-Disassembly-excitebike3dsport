@@ -321,8 +321,38 @@ static int testOfsE81807Apply(void)
     return 0;
 }
 
+
+static int testE8xxDispatchEntries(void)
+{
+    static const uint8_t probes[]={0u,1u,2u,7u,0x7Fu,0x80u,0xFEu,0xFFu};
+    unsigned int x,c,d,p,q;
+    for(x=0;x<4u;++x) for(c=0;c<256u;++c) for(d=0;d<256u;++d) for(p=0;p<sizeof(probes);++p) for(q=0;q<2u;++q) {
+        uint8_t c8[4]={0},d0[4]={0},e4[4]={0},a0[4]={0},d8[4]={9,8,7,6},d4[4]={0},b4[4]={0},bc[4]={0},e4out[4]={0};
+        uint8_t diff=(uint8_t)(c-d);
+        c8[x]=(uint8_t)c; d0[x]=(uint8_t)d; e4[x]=probes[p]; a0[x]=(uint8_t)q;
+        d8[x]=0xAAu; bc[x]=0xBBu; e4out[x]=0xCCu;
+        nesOfsE84504Apply((uint8_t)x,c8,d0,d8,d4,b4,bc,e4out);
+        if(d8[x]!=0x80u||d4[x]!=5u||b4[x]!=5u||bc[x]!=(uint8_t)(diff>>1)||e4out[x]!=(uint8_t)(diff>>1)) return 1;
+        d8[x]=0xAAu;d4[x]=0;b4[x]=0;bc[x]=0xBBu;
+        nesOfsE85405Apply((uint8_t)x,c8,d0,e4,d4,b4,bc);
+        if(d4[x]!=2u||b4[x]!=2u||bc[x]!=(uint8_t)(probes[p]-(uint8_t)(diff>>1))) return 1;
+        d8[x]=0xAAu;d4[x]=0;b4[x]=0;bc[x]=0xBBu;e4out[x]=0xCCu;
+        nesOfsE85D02Apply((uint8_t)x,c8,d0,d8,d4,b4,bc,e4out);
+        if(d8[x]!=0x60u||d4[x]!=6u||b4[x]!=6u||bc[x]!=diff||e4out[x]!=diff) return 1;
+        d4[x]=0;b4[x]=0;bc[x]=0xBBu;
+        nesOfsE86A03Apply((uint8_t)x,c8,d0,e4,d4,b4,bc);
+        if(d4[x]!=1u||b4[x]!=1u||bc[x]!=(uint8_t)(probes[p]-diff)) return 1;
+        d8[x]=0xAAu;d4[x]=0;b4[x]=0;bc[x]=0xBBu;e4out[x]=0xCCu;
+        nesOfsE87909Apply((uint8_t)x,c8,d0,a0,d8,d4,b4,bc,e4out);
+        { uint8_t expected=(uint8_t)(diff<<1); if(q!=0u) expected=(uint8_t)(expected+0x10u);
+          if(d8[x]!=0x40u||d4[x]!=4u||b4[x]!=4u||bc[x]!=expected||e4out[x]!=expected) return 1; }
+    }
+    return 0;
+}
+
 int main(void)
 {
+    if(testE8xxDispatchEntries()) { fputs("FAIL: E845/E854/E85D/E86A/E879 dispatch entries\n",stderr); return 1; }
     if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
     if(testE80DPreparePointer()) { fputs("FAIL: sub_E80D\n",stderr); return 1; }
     if(testE803ReadIndexedRam()) { fputs("FAIL: sub_E803\n",stderr); return 1; }
