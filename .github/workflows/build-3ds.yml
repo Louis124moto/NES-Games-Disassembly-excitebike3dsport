@@ -29,12 +29,20 @@ jobs:
       - name: Compile homebrew
         run: make -C 3ds-port
 
+      - name: Verify build outputs are inside build/
+        run: |
+          test -s 3ds-port/build/excitebike3ds.3dsx
+          test -s 3ds-port/build/excitebike3ds.elf
+          test ! -e 3ds-port/excitebike3ds.3dsx
+          test ! -e 3ds-port/excitebike3ds.elf
+          file 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: excitebike3ds-homebrew
           path: |
-            3ds-port/excitebike3ds.3dsx
-            3ds-port/excitebike3ds.elf
+            3ds-port/build/excitebike3ds.3dsx
+            3ds-port/build/excitebike3ds.elf
           if-no-files-found: error
           retention-days: 14
