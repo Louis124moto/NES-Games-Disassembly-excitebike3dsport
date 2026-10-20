@@ -100,3 +100,8 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_DA58` with the original add/carry side effect and validate against the byte-level reference.
 - [x] Translate `sub_E091` and `sub_E098`, preserving the `CMP #$E7` branch threshold and carry state on the ADC path.
 - [ ] Await host regression and native 3DS build for the DA58/E091/E098 batch before marking the batch fully validated.
+
+
+- [x] Translate `sub_DFA4` with the 6502 N-flag loop condition, byte-wrapped X/A registers, and final ADC carry preserved.
+- [x] Translate `sub_DFA2` as the original `LDX #$0A` entry into `sub_DFA4`.
+- [ ] Await host regression and native 3DS build for the DFA2/DFA4 batch before marking the batch fully validated.
