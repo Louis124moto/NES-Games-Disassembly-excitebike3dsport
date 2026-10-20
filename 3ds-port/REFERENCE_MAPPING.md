@@ -281,3 +281,18 @@ Source scanned: `Excitebike/bank_FF.asm` on branch `nes-game`. This inventory re
 - `sub_E96C` is called from the race-update path at `$C9DB`, after `sub_DDD1` and `sub_CD1F`, and before `sub_DE31`, `sub_E836`, and `sub_EA44`. Its vertical delta application has a defined place in the update sequence; translating it elsewhere could change interactions with the following routines.
 - The RAM declaration file `Excitebike/bank_ram.inc` lists contiguous byte symbols for the object arrays (for example `$0080`–`$0083`, `$009C`–`$009F`, `$00BC`–`$00BF`, `$00DC`–`$00DF`, `$0370`–`$0373`, and `$0390`–`$0393`). This confirms the array-shaped layout, but the assembly's fixed-address stores still need to be interpreted in the context of which slots are active.
 
+
+
+## Translation progress — timer routine
+
+The disassembly contains 177 labels named sub_* in Excitebike/bank_FF.asm. The native C code does not yet translate all of them; this is a multi-stage translation. Each label must be classified as executable behavior, data/table helper, hardware-specific PPU/APU logic, or an alias/branch label before porting.
+
+### Exact translation added: sub_D310 at CPU $D310
+
+- Decrements ram_0020_0A_frm_timer as an 8-bit value.
+- Uses the 6502 Negative flag (bit 7 of the decremented result) for BPL. If bit 7 is set, resets the frame timer to $0A and processes all 29 timer bytes at RAM $0021–$003D; otherwise processes the first 15 bytes at RAM $0021–$002F.
+- Each selected timer is decremented only if nonzero.
+- Native helper: nesSubD310DecreaseAllTimers in source/nes_routines.c.
+- A separate reference test compares 65,536 frame-timer/value vectors with generated timer-array patterns. CI must pass before this is considered validated.
+
+This helper models the RAM/timing routine only; it does not recreate the NES's interrupt cadence or call schedule.
