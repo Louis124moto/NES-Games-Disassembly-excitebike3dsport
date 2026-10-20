@@ -110,3 +110,30 @@ At CPU `$C99A` (ROM offset `$0009AA`), the routine calls `sub_CA08`, then return
 - `ram_03B5` and `ram_03B6` are the two bytes directly updated by this routine. Do not replace the byte arithmetic with floating-point temperature values.
 - The routine itself does not establish a complete acceleration or cooling model, nor does it prove the exact frame in which a crash occurs. Those require tracing callers, all writers of these RAM bytes, and related state transitions.
 - The current native `bike_physics.c` is still placeholder code and has not been changed to pretend to implement this trace. Implement only after input-to-index mapping, all relevant writes, and reproducible NES comparison cases are established.
+
+
+## Detailed trace — per-object state dispatch and horizontal object update
+
+### `sub_D918` / `sub_D924` (CPU `$D918` / `$D924`, ROM `$001928` / `$001934`)
+
+Confirmed control flow:
+
+- `sub_D918` initializes X to `$03`; for X = 3, 2, 1, 0 it calls `sub_D924`, then `sub_DA15`, and decrements X. Thus these two operations are performed for all four object slots, descending.
+- `sub_D924` loads `ram_009C_obj,X` into Y, loads the low byte from `tbl_D8FF_lo,Y` and high byte from `tbl_D905_hi,Y`, stores the pointer in zero-page scratch `ram_0000_t06_jmp`/ `ram_0001_t06_jmp`, then performs an indirect JMP. This is a state-indexed dispatch table, not a conventional C switch with yet-known state meanings.
+- The entry at dispatch target `$D933` checks `ram_0370_obj,X`. If zero, it increments `ram_009C_obj,X` and continues into the state-transition setup at `$D97E`. If nonzero, it checks bit 0 of `ram_003F`; when that bit is set it returns without the per-frame increment. Otherwise it increments `ram_0390_obj,X`, looks up `tbl_D90E` using `ram_03E4_obj,X`, adds `ram_0080_obj,X`, and compares that sum with `ram_0390_obj,X`; it returns if the sum is greater than or equal to the latter, else it advances `ram_009C_obj,X`.
+- The state number alone is insufficient to name this behaviour: the state-pointer table and every target must be mapped before translating all states.
+
+### `sub_E733` / `sub_E73B` (CPU `$E733` / `$E73B`, ROM `$002743` / `$00274B`)
+
+Confirmed control flow:
+
+- `sub_E733` initializes X=`$03`, calls `sub_E73B`, decrements X, and repeats while X is nonzero. It therefore calls the routine for slots 3, 2, and 1; slot 0 is not processed by this loop.
+- `sub_E73B` first performs 8-bit addition `ram_obj_pos_X_lo,X += ram_0060,X`.
+- If `ram_0058_obj,X` is nonzero, execution enters the table-driven sequence handler at `$E762`.
+- If `ram_0058_obj,X == 0`, it calculates `(ram_00C0_obj,X - $40)` as an 8-bit subtraction. If the result has the negative flag set, it returns. Otherwise it shifts right twice; if the result is `>= $16`, it returns. For values below `$16`, it stores the result in `ram_0058_obj,X`, increments that state byte, clears `ram_00C4_obj,X`, sets `ram_obj_pos_X_lo,X` to `ram_0064,X - 1` (8-bit), then enters the table-driven handler.
+- The handler chooses low/high pointers from `tbl_E55A_lo - 1,Y` and `tbl_E56F_hi - 1,Y`, where Y is `ram_0058_obj,X`; reads the sequence byte at index `ram_00C4_obj,X`; and terminates the sequence when the byte is `$FF`. Otherwise it compares the sequence coordinate with `ram_obj_pos_X_lo,X`. Depending on that comparison and the sequence byte's flag bits, it either returns for this frame, dispatches through `tbl_E6B7`, or updates object-state fields such as `ram_00AC_obj,X` and `ram_00D4_obj,X`. A full interpretation of those sequence encodings requires tracing the target handlers and table data.
+- These are object-position/state-sequence operations. They are not yet proof of the player's acceleration formula, nor grounds to reuse them as native bike physics without mapping object indices and callers.
+
+### Analysis gate
+
+The next exact-analysis targets are the dispatch pointer tables `tbl_D8FF_lo`/`tbl_D905_hi`, every state handler reachable from them, the consumers/writers of the player slot's `ram_0060`/ `ram_0090_obj`/ `ram_0094_obj`, and the transition logic around `ram_005C_obj`, `ram_00BC_obj`, and `ram_0370_obj`. Until that data flow is traced, acceleration, jumping, and collision implementation remains blocked.
