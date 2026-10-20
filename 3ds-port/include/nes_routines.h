@@ -118,6 +118,16 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram03F1);
 
 
+typedef struct NesSpriteCullState {
+    uint8_t ram00A8[4],ram00B8[4],ram00BC[4],ram00A0[4],ram00A4[4];
+    uint8_t ram0058[4],ram00CC[4],ram036C[4],ram0090[4],ram0094[4];
+    uint8_t ram0098[4],ram009C[4],ram00B0[4],ram00D4[4],ram0388[4];
+    uint8_t ram00C0[4],ram039C[4],ram00DC[4],ram0070[4],ram0370[4];
+    uint8_t ram0080[4],ram0084[4],ram0088[4],ram03A6_flag;
+} NesSpriteCullState;
+
+void nesSubE456CullObjectSprites(uint8_t oam[256],NesSpriteCullState *state,
+                                  const uint8_t oamIndex[4],const uint8_t spriteOffset[3]);
 void nesSubE16CWriteSpriteStrip(uint8_t oam[256],uint8_t address,uint8_t firstTile);
 void nesSubE3F4SortObjectsByY(uint8_t order[4],const uint8_t y[4],uint8_t active3,uint8_t y3);
 void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset);
