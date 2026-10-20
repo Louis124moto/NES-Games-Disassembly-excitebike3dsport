@@ -72,8 +72,30 @@ static int testSubDCA0(void);
 static int testLocDCC7(void);
 
 
+
+static int testSubE4C8Exact(void)
+{
+    uint8_t flags[4]={0u,1u,1u,1u};
+    uint8_t y[4]={0u,40u,41u,42u};
+    uint8_t rel[4]={0u,20u,22u,24u};
+    uint8_t packed=0u,found=0xAAu;
+    if(nesSubE52CCheckVerticalOverlap(1u,2u,rel)!=(uint8_t)0xFEu) return 1;
+    rel[2]=0x50u;
+    if(nesSubE52CCheckVerticalOverlap(1u,2u,rel)!=0u) return 1;
+    rel[2]=22u;
+    nesSubE4C8CheckOverlappingObjects(flags,y,rel,&packed,&found);
+    if(found!=1u||packed!=11u) return 1;
+    flags[1]=0u; flags[2]=0u; flags[3]=0u;
+    packed=0xA5u; found=0xAAu;
+    nesSubE4C8CheckOverlappingObjects(flags,y,rel,&packed,&found);
+    if(found!=0u||packed!=0xA5u) return 1;
+    puts("PASS: sub_E4C8/sub_E52C object-overlap logic and preserved scratch byte.");
+    return 0;
+}
+
 int main(void)
 {
+    if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\\n",stderr); return 1; }
     unsigned int x, y, z;
     unsigned long checked = 0;
 
