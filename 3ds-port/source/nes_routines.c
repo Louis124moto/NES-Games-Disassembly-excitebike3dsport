@@ -594,6 +594,28 @@ void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset){ui
 /* sub_E49B: X=0..2; call the group hider only if bit 0 is clear. */
 void nesSubE49BHideSelectedSpriteGroups(uint8_t oam[256],uint8_t index,const uint8_t flags[3],const uint8_t offsets[3]){uint8_t x;for(x=0;x<3u;x++)if((flags[x]&1u)==0u)nesSubE4ADHideFourSprites(oam,index,offsets[x]);}
 /* sub_E2AF: SEC/SBC low byte; borrow decrements the high byte. */
+void nesSubE456CullObjectSprites(uint8_t oam[256],NesSpriteCullState *s,
+                                  const uint8_t oamIndex[4],const uint8_t spriteOffset[3]){
+    int row;
+    if(s==NULL)return;
+    for(row=3;row>=0;row--){
+        uint8_t slot=s->ram0088[row],x,flags[3];
+        if(slot==0u)continue;
+        x=slot;
+        flags[0]=flags[1]=flags[2]=s->ram0084[x];
+        if((s->ram0084[x]&1u)==0u && s->ram0080[x]>=0x70u && s->ram0080[x]<0x90u){
+            nesSubDB95ClearOpponentBikeData(x,s->ram00A8,s->ram00B8,s->ram00BC,s->ram00A0,
+                s->ram00A4,s->ram0058,s->ram00CC,s->ram036C,s->ram0090,s->ram0094,
+                s->ram0098,s->ram009C,s->ram00B0,s->ram00D4,s->ram0388,s->ram00C0,
+                s->ram039C,s->ram00DC,s->ram0070,s->ram0370);
+            s->ram03A6_flag=1u;
+        }else{
+            if(s->ram0080[x]>=0xF8u)flags[1]=(uint8_t)(flags[1]+1u);
+            if(s->ram0080[x]>=0xF0u)flags[2]=(uint8_t)(flags[2]+1u);
+        }
+        nesSubE49BHideSelectedSpriteGroups(oam,oamIndex[row],flags,spriteOffset);
+    }
+}
 void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta){uint8_t old=*lo;*lo=(uint8_t)(old-delta);if(old<delta)*hi=(uint8_t)(*hi-1u);}
 /* loc_E2BD: toggle only when finish flag is exactly 1 and timer is zero. */
 void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){if(finished==1u&&timer==0u)*blink=(uint8_t)(*blink^1u);}
