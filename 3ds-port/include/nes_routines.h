@@ -315,3 +315,6 @@ void nesSubEC99AdvanceObjectPhase(uint8_t ram0060, uint8_t *ram00B9Object1,
 
 void nesLocC411WriteSpriteX(uint8_t a, uint8_t spriteOam[4], uint8_t *ram0046);
 void nesLocC3EFWriteSpriteY(uint8_t a, uint8_t *spriteY);
+
+uint8_t nesSubC409SetupStaticSprite(uint8_t y, const uint8_t tblC088[256],
+                                    uint8_t spriteOam[4], uint8_t *ram0046);
