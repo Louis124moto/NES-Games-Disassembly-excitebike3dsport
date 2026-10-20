@@ -440,3 +440,9 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 ## Wheel sprites — $E2F6
 
 - Expanded the previous precondition-only model into the full OAM-writing path. It preserves the gate order, byte-wrapped X offsets `$F9/$F8`, Y offsets `$08/$08`, tile swap controlled by `ram_003F & $04`, attribute bit `$02`, and the second-wheel hide write `$F8` when `ram_0094,X` is zero.
+
+
+## Wheel and overheating sprites — $EA44
+
+- Implements the X=3..0 dispatch and its exact `$F4/$F6` position thresholds, bit tests on `ram_0084,X`, the `$B0,X` special-sprite gate, `$B6`-based chained SBC through `sub_DC9A`, the seven-byte `$E69A` tile table, and fallback to the complete `$E2F6` wheel renderer.
+- The scratch operand consumed by the shared SBC helper is passed explicitly as `ramY[X]`, because the original routine inherits it from shared zero-page state rather than initializing it locally.
