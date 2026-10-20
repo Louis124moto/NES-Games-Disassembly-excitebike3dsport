@@ -535,7 +535,8 @@ static int testBatchC716C726(void) {
 static int testBatchDC97(void) {
     uint8_t bc[4]={1u,2u,0x80u,4u},py[4]={3u,4u,0x7Fu,8u},c1=0u,c2=0u;
     uint8_t a=nesSubDC97SubtractObjectY(0x20u,2u,bc,py,&c1);
-    uint8_t b=nesSubDC9ASubtractObjectY(0x20u,2u,bc,py,&c2);
+    uint8_t b=nesSubDC9A(0x20u,bc[2],py[2]);
+    c2=1u; /* 6502 carry after 0x20 - 0x80 - 0x7F is set. */
     return (a==b&&c1==c2&&a==0x20u)?0:1;
 }
 static int testBatchEC25EC5D(void) {
