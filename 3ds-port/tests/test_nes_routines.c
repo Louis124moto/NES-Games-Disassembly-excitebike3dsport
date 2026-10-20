@@ -450,15 +450,21 @@ static int testBatchF6FB(void) {
     puts("PASS: sub_F6FB increment, equality branch and XOR bit."); return 0;
 }
 static int testBatchF871F885(void) {
-    uint8_t audio[16]={0};
-    nesSubF871WriteAudioTimer(0x21u,0x44u,0u,audio);
+    uint8_t audio[16]={0},table[256]={0}; unsigned int i;
+    for(i=0;i<256u;++i)table[i]=(uint8_t)(i^0x21u);
+    table[0x11u]=0x44u; table[0x10u]=0x21u;
+    nesSubF871WriteAudioTimer(0x10u,table,0u,audio);
     if(audio[2]!=0x44u||audio[3]!=0x29u)return 1;
-    audio[6]=0xAAu; audio[7]=0xBBu;
-    nesSubF885WriteAudioTimer(0x10u,0u,audio);
+    audio[6]=0xAAu; audio[7]=0xBBu; table[0x21u]=0u;
+    nesSubF885WriteAudioTimer(0x20u,table,0u,audio);
     if(audio[6]!=0xAAu||audio[7]!=0xBBu)return 2;
-    nesSubF885WriteAudioTimer(0x11u,0x22u,audio);
+    table[0x31u]=0x22u; table[0x30u]=0x11u;
+    nesSubF885WriteAudioTimer(0x30u,table,0u,audio);
     if(audio[6]!=0x22u||audio[7]!=0x19u)return 3;
-    puts("PASS: sub_F871/F885 audio-register write conditions."); return 0;
+    table[0xFFu]=0x12u;
+    nesSubF871WriteAudioTimer(0xFFu,table,0x33u,audio);
+    if(audio[2]!=0x33u||audio[3]!=0x1Au)return 4;
+    puts("PASS: sub_F871/F885 indexed ROM reads, zero exit and address wrap."); return 0;
 }
 
 int main(void)
