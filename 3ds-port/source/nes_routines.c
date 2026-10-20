@@ -263,3 +263,66 @@ void nesSubDB95ClearOpponentBikeData(uint8_t x, uint8_t ram00A8[4],
     ram0098[x] = ram009C[x] = ram00B0[x] = ram00D4[x] = ram0388[x] = 0u;
     ram00C0[x] = ram039C[x] = ram00DC[x] = ram0070[x] = ram0370[x] = 0u;
 }
+
+
+/* Exact translation of sub_DA6A ($DA6A). */
+void nesSubDA6AUpdateScroll(uint8_t *scrollX, uint8_t delta,
+                            uint8_t *baseNametable)
+{
+    unsigned int sum = (unsigned int)*scrollX + (unsigned int)delta;
+    *scrollX = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        *baseNametable = (uint8_t)(*baseNametable ^ 0x01u);
+    }
+}
+
+/* sub_DB50 ($DB50): table bytes are supplied from the original ROM tables. */
+void nesSubDB50SetupObject(uint8_t x, uint8_t y, uint8_t trackFinished,
+                           uint8_t ram0084[4], uint8_t ram001B[4],
+                           uint8_t ram0070[4], uint8_t ram0078[4],
+                           uint8_t ram0074[4], uint8_t ram0080[4], uint8_t ram0094Player,
+                           uint8_t ram0090Player, uint8_t ram0070Global[4],
+                           const uint8_t tblD8D5[256],
+                           const uint8_t tblD8CD[16])
+{
+    uint8_t value;
+    if (x > 3u) return;
+
+    if (trackFinished != 0u) {
+        value = 0x03u;
+    } else if (x == 3u && (ram0084[x] & 0x02u) == 0u && ram0094Player != 0u) {
+        ram0078[x] = ram0094Player;
+        ram0074[x] = ram0090Player;
+        if (ram0084[x] != 0u && ram0080[x] < 0x40u &&
+            ram0070Global[0] == ram0070Global[3]) {
+            return;
+        }
+        if (ram0078[x] < 0x04u) ram0078[x] = (uint8_t)(ram0078[x] + 1u);
+        goto done;
+    } else {
+        value = tblD8D5[y];
+    }
+
+    ram0078[x] = value;
+    value = (uint8_t)(ram001B[x] & 0x0Fu);
+    ram0074[x] = tblD8CD[value];
+done:
+    return;
+}
+
+/* Exact RAM-level translation of sub_DCA0 ($DCA0). */
+void nesSubDCA0SetupSpriteHeight(uint8_t x, uint8_t ram00D4[4],
+    uint8_t trackFinished, uint8_t ram0098Player, uint8_t ram009CPlayer,
+    uint8_t ram0058Player, uint8_t ram00A4[4], uint8_t tblD88B[256],
+    uint8_t ram0368[4])
+{
+    uint8_t value;
+    if (x > 3u) return;
+    if (trackFinished == 1u && (x | ram0098Player | ram009CPlayer | ram0058Player) == 0u) {
+        value = 0x0Au;
+    } else {
+        value = tblD88B[ram00D4[x]];
+    }
+    ram0368[x] = value;
+    if (ram00A4[x] == 1u) ram0368[x] = 0x06u;
+}
