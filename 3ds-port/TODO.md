@@ -231,3 +231,12 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Added host regression coverage for the new helpers, including byte-wrap arithmetic, slot isolation, lookup-table values, branch flags, and state-write behavior.
 - [x] Host regression workflow passed on code commit `1e290e35`; the native 3DS build, output-location check, and artifact upload also passed on that same code commit. Final workflow cleanup was still running at last poll.
 - [ ] These helpers are not yet wired into live gameplay; full caller state and call-graph effects must be traced before integration.
+
+
+## Batch — 2026-10-21: command-stream and PPU-write fragments
+
+- [x] Translate the pre-dispatch setup of `sub_D0F4`: copy seven bytes from RAM `$03D9-$03DF` into `$03D1-$03D7`, then apply the literal writes `$03D0=$17`, `$03D2=$FB`, `$03D5=$FB`; expose source pointer `$2356` and data pointer `$03D0`.
+- [x] Model `sub_D1A9` as an explicit status-read count and the two `$2005` writes of zero.
+- [x] Model `sub_D1B3` as explicit `$2000` control and `$2005` scroll write effects in source order; no direct PPU access is performed by the portable helper.
+- [ ] Validate these new tests in host CI and compile the native 3DS target before marking this batch verified.
+- [ ] These are portable source fragments only; the generic command decoder at `loc_D2A3` and PPU backend are not completed by this batch.
