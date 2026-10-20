@@ -71,3 +71,12 @@ The original disassembly originates from [NES Games Disassembly](https://github.
 ## Contributing
 
 Please focus contributions on the Excitebike 3DS port. When translating a routine, include the source label/address, preserve observable 6502 behavior, add regression tests for edge cases, and document what was actually built and tested. Clearly distinguish confirmed source behavior from hypotheses.
+
+
+## Faithful-port ASM translation progress — 2026-10-21
+
+A new batch of 20 entry-level translations has been added to `3ds-port/source/nes_routines.c`, declared in `3ds-port/include/nes_routines.h`, and covered by `testBatchAdditional20` in `3ds-port/tests/test_nes_routines.c`.
+
+The batch covers object flag comparisons, command-buffer writes, RAM clearing, PPU-status polling, controller reads, scroll-register writes, and sprite setup. PPU hardware effects are represented as explicit outputs; the two polling routines accept a finite status trace so host tests cannot hang when a trace never reaches the original loop's exit condition.
+
+The regression test source has been updated, but this batch has **not yet been compiled or executed in this environment**. Do not treat it as runtime-verified until the native test target and the 3DS build both pass.
