@@ -37,7 +37,7 @@ static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
 
 static int testSubD310(void);
 static int testSubD35B(void);
-static int testSubD326(void);
+static int testSubD326(void);\nstatic int testSubDA7A(void);
 
 int main(void)
 {
@@ -63,7 +63,7 @@ int main(void)
     printf("PASS: %lu input combinations matched the 6502 reference.\n", checked);
     if (testSubD310() != 0) return 1;
     if (testSubD35B() != 0) return 1;
-    if (testSubD326() != 0) return 1;
+    if (testSubD326() != 0) return 1;\n    if (testSubDA7A() != 0) return 1;
     return 0;
 }
 
@@ -245,5 +245,78 @@ static int testSubD35B(void)
         }
     }
     printf("PASS: sub_D35B matched reference for %lu controller vectors.\n", checked);
+    return 0;
+}
+
+
+/* Independent reference: model each 6502 instruction and its carry flag. */
+static void referenceSubDA7A(uint8_t active[4], const uint8_t delta[4],
+                             uint8_t posXLo[4], uint8_t posXHi[4],
+                             uint8_t ram0390[4])
+{
+    int x;
+    for (x = 3; x >= 1; --x) {
+        uint8_t a;
+        unsigned int carry;
+        int difference;
+        if (active[x] == 0u) continue;
+
+        a = delta[x];
+        carry = 0u; /* CLC */
+        {
+            unsigned int sum = (unsigned int)a + posXLo[x] + carry;
+            a = (uint8_t)sum;
+            carry = sum > 0xFFu ? 1u : 0u;
+        }
+        if (carry != 0u) posXHi[x] = (uint8_t)(posXHi[x] + 1u);
+
+        carry = 1u; /* SEC */
+        difference = (int)a - (int)delta[0] - (int)(1u - carry);
+        a = (uint8_t)difference;
+        carry = difference >= 0 ? 1u : 0u;
+        posXLo[x] = a;
+        if (carry == 0u) posXHi[x] = (uint8_t)(posXHi[x] - 1u);
+
+        carry = 1u; /* SEC before SBC ram_0060 */
+        difference = (int)ram0390[x] - (int)delta[0] - (int)(1u - carry);
+        ram0390[x] = (uint8_t)difference;
+    }
+}
+
+static int testSubDA7A(void)
+{
+    unsigned int pattern;
+    unsigned long checked = 0u;
+
+    /* Deterministic exhaustive byte pairs for delta[0], delta[x], posXLo[x],
+       plus edge patterns in the high and 0390 bytes and active flags. */
+    for (pattern = 0; pattern < 65536u; ++pattern) {
+        uint8_t activeA[4], activeB[4], deltaA[4], deltaB[4];
+        uint8_t loA[4], loB[4], hiA[4], hiB[4], rA[4], rB[4];
+        unsigned int i;
+        deltaA[0] = deltaB[0] = (uint8_t)(pattern >> 8);
+        for (i = 1; i < 4u; ++i) {
+            deltaA[i] = deltaB[i] = (uint8_t)(pattern + i * 53u);
+            loA[i] = loB[i] = (uint8_t)((pattern >> 1) + i * 71u);
+            hiA[i] = hiB[i] = (uint8_t)((pattern >> 3) + i * 29u);
+            rA[i] = rB[i] = (uint8_t)((pattern >> 5) + i * 97u);
+            activeA[i] = activeB[i] = (uint8_t)(((pattern >> (i - 1u)) & 1u) ? 1u : 0u);
+        }
+        activeA[0] = activeB[0] = 0u;
+        loA[0] = loB[0] = 0u;
+        hiA[0] = hiB[0] = 0u;
+        rA[0] = rB[0] = 0u;
+
+        referenceSubDA7A(activeA, deltaA, loA, hiA, rA);
+        nesSubDA7AUpdateScrollSlots(activeB, deltaB, loB, hiB, rB);
+        for (i = 0; i < 4u; ++i) {
+            if (loA[i] != loB[i] || hiA[i] != hiB[i] || rA[i] != rB[i]) {
+                fprintf(stderr, "sub_DA7A mismatch: pattern=%u slot=%u\n", pattern, i);
+                return 1;
+            }
+        }
+        ++checked;
+    }
+    printf("PASS: sub_DA7A matched instruction reference for %lu patterns.\n", checked);
     return 0;
 }
