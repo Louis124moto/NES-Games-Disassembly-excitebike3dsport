@@ -64,7 +64,8 @@ int main(void)
     printf("PASS: %lu input combinations matched the 6502 reference.\n", checked);
     if (testSubD310() != 0) return 1;
     if (testSubD35B() != 0) return 1;
-    if (testSubD326() != 0) return 1;\n    if (testSubDA7A() != 0) return 1;
+    if (testSubD326() != 0) return 1;
+    if (testSubDA7A() != 0) return 1;
     return 0;
 }
 
