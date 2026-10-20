@@ -276,8 +276,57 @@ static int testE733UpdateThreeXLowSlots(void)
     return 0;
 }
 
+
+static int testE7FCAndE7FF(void)
+{
+    unsigned int x,v;
+    for(x=0;x<4u;++x) for(v=0;v<256u;++v) {
+        uint8_t a[4]={0,0,0,0},b[4]={0,0,0,0};
+        a[x]=(uint8_t)v; b[x]=(uint8_t)(255u-v);
+        if(nesSubE7FCLoadDataIndex((uint8_t)x,a)!=(uint8_t)v ||
+           nesSubE7FFLoadDataIndex((uint8_t)x,b)!=(uint8_t)(255u-v)) return 1;
+    }
+    return 0;
+}
+static int testE80DPreparePointer(void)
+{
+    static const uint8_t lo[6]={0x00u,0x40u,0x80u,0xC0u,0x00u,0x40u};
+    static const uint8_t hi[6]={0x04u,0x04u,0x04u,0x04u,0x05u,0x05u};
+    unsigned int i;
+    for(i=0;i<6u;++i) { uint8_t l=0xAAu,h=0xBBu; nesSubE80DPreparePointer((uint8_t)i,&l,&h); if(l!=lo[i]||h!=hi[i]) return 1; }
+    return 0;
+}
+static int testE803ReadIndexedRam(void)
+{
+    uint8_t ram[1024]; unsigned int i,t,y;
+    for(i=0;i<1024u;++i) ram[i]=(uint8_t)((i*37u+11u)&0xFFu);
+    for(t=0;t<6u;++t) for(y=0;y<256u;++y) {
+        static const unsigned int base[6]={0u,0x40u,0x80u,0xC0u,0x100u,0x140u};
+        if(nesSubE803ReadIndexedRam((uint8_t)t,(uint8_t)y,ram)!=ram[base[t]+y]) return 1;
+    }
+    return 0;
+}
+static int testOfsE81807Apply(void)
+{
+    unsigned int b,ac,s,other;
+    for(b=0;b<2u;++b) for(ac=0;ac<256u;++ac) for(s=0;s<4u;++s) for(other=0;other<2u;++other) {
+        uint8_t rb[4]={0,0,0,0},rac[4]={0,0,0,0},r94[4]={0,0,0,0},r90[4]={0,0,0,0},r98[4]={0x11,0x22,0x33,0x44};
+        uint8_t expected=(uint8_t)(s<3u ? ((s==2u && other!=0u)?0xFFu:r98[0]) : 0xFFu);
+        rb[0]=(uint8_t)b; rac[0]=(uint8_t)ac; r94[0]=(uint8_t)s; r90[0]=(uint8_t)(other?0x80u:0u);
+        if(b!=0u) expected=r98[0];
+        if((int8_t)(uint8_t)(ac-7u)>=0) expected=r98[0];
+        nesOfsE81807Apply(0u,rb,rac,r94,r90,r98);
+        if(r98[0]!=expected) return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
+    if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
+    if(testE80DPreparePointer()) { fputs("FAIL: sub_E80D\n",stderr); return 1; }
+    if(testE803ReadIndexedRam()) { fputs("FAIL: sub_E803\n",stderr); return 1; }
+    if(testOfsE81807Apply()) { fputs("FAIL: ofs_E818_07\n",stderr); return 1; }
     if (testE84FStorePair()) { fputs("FAIL: sub_E84F\n",stderr); return 1; }
     if (testE86FSubtractFromE4()) { fputs("FAIL: sub_E86F\n",stderr); return 1; }
     if (testE893SetOffsetsAndSubtract()) { fputs("FAIL: sub_E893\n",stderr); return 1; }
