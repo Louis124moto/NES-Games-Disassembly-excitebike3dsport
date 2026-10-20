@@ -205,8 +205,75 @@ static int testLocE96EVerticalDelta(void)
     return 0;
 }
 
+
+static int testE84FStorePair(void)
+{
+    unsigned int x, value;
+    for (x = 0; x < 4u; ++x) for (value = 0; value < 256u; ++value) {
+        uint8_t a[4] = {1u,2u,3u,4u}, b[4] = {5u,6u,7u,8u};
+        uint8_t oldA[4], oldB[4]; unsigned int i;
+        memcpy(oldA,a,4); memcpy(oldB,b,4);
+        nesSubE84FStorePair((uint8_t)x,(uint8_t)value,a,b);
+        for(i=0;i<4u;++i) {
+            uint8_t ea=(i==x)?(uint8_t)value:oldA[i], eb=(i==x)?(uint8_t)value:oldB[i];
+            if(a[i]!=ea || b[i]!=eb) return 1;
+        }
+    }
+    return 0;
+}
+static int testE86FSubtractFromE4(void)
+{
+    unsigned int x, a, e;
+    for(x=0;x<4u;++x) for(a=0;a<256u;++a) for(e=0;e<256u;++e) {
+        uint8_t src[4]={0,0,0,0}, dst[4]={0xAA,0xAA,0xAA,0xAA};
+        src[x]=(uint8_t)e;
+        if(nesSubE86FSubtractFromE4((uint8_t)x,(uint8_t)a,src,dst)!=(uint8_t)(e-a) ||
+           dst[x]!=(uint8_t)(e-a)) return 1;
+    }
+    return 0;
+}
+static int testE893SetOffsetsAndSubtract(void)
+{
+    unsigned int x,a,c,d;
+    for(x=0;x<4u;++x) for(a=0;a<256u;++a) for(c=0;c<256u;++c) for(d=0;d<256u;++d) {
+        uint8_t cv[4]={0},dv[4]={0},out1[4]={0},out2[4]={0};
+        cv[x]=(uint8_t)c; dv[x]=(uint8_t)d;
+        if(nesSubE893SetOffsetsAndSubtract((uint8_t)x,(uint8_t)a,cv,dv,out1,out2)!=(uint8_t)(c-d) ||
+           out1[x]!=(uint8_t)a || out2[x]!=(uint8_t)a) return 1;
+    }
+    return 0;
+}
+static int testE73BAddXLow(void)
+{
+    unsigned int x,delta,pos;
+    for(x=0;x<4u;++x) for(delta=0;delta<256u;++delta) for(pos=0;pos<256u;++pos) {
+        uint8_t d[4]={0},p[4]={11,22,33,44},before[4]; unsigned int i;
+        d[x]=(uint8_t)delta; memcpy(before,p,4);
+        nesSubE73BAddXLow((uint8_t)x,d,p);
+        for(i=0;i<4u;++i) if(p[i]!=(i==x?(uint8_t)(before[i]+delta):before[i])) return 1;
+    }
+    return 0;
+}
+static int testE733UpdateThreeXLowSlots(void)
+{
+    unsigned int a,b,c,d;
+    for(a=0;a<256u;++a) for(b=0;b<256u;++b) for(c=0;c<256u;++c) for(d=0;d<256u;++d) {
+        uint8_t delta[4]={(uint8_t)a,(uint8_t)b,(uint8_t)c,(uint8_t)d};
+        uint8_t pos[4]={0xF0u,0xF1u,0xF2u,0xF3u};
+        nesSubE733UpdateThreeXLowSlots(delta,pos);
+        if(pos[0]!=0xF0u || pos[1]!=(uint8_t)(0xF1u+b) ||
+           pos[2]!=(uint8_t)(0xF2u+c) || pos[3]!=(uint8_t)(0xF3u+d)) return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
+    if (testE84FStorePair()) { fputs("FAIL: sub_E84F\n",stderr); return 1; }
+    if (testE86FSubtractFromE4()) { fputs("FAIL: sub_E86F\n",stderr); return 1; }
+    if (testE893SetOffsetsAndSubtract()) { fputs("FAIL: sub_E893\n",stderr); return 1; }
+    if (testE73BAddXLow()) { fputs("FAIL: sub_E73B\n",stderr); return 1; }
+    if (testE733UpdateThreeXLowSlots()) { fputs("FAIL: sub_E733\n",stderr); return 1; }
     if (testLocE96EVerticalDelta() != 0) return 1;
     if(testSubE1A3Exact()) { fputs("FAIL: sub_E1A3 reference test\\n",stderr); return 1; }
     if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\\n",stderr); return 1; }
