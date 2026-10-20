@@ -1,6 +1,6 @@
 # Native Nintendo 3DS homebrew build using devkitARM and libctru.
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "DEVKITPRO is not set. Install/configure devkitPro first.")
+ifeq ($(strip $(DEVKITARM)),)
+$(error "DEVKITARM is not set. Install/configure devkitPro first.")
 endif
 
 TARGET      := excitebike3ds
@@ -18,4 +18,4 @@ LDFLAGS     := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 LIBS        := -lctru -lm
 
 # libctru's 3DS rules build the .elf and package it as a .3dsx.
-include $(DEVKITPRO)/libctru/share/3ds_rules
+include $(DEVKITARM)/3ds_rules
