@@ -462,3 +462,8 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 
 - Translates the caller-side parameter setup around `sub_E1F9`: loads `$0080,X/$008C,X`, performs the 23-entry `$D892/$D8A9` lookups, applies the `$16` special case (save OAM base to `$039F`, add `$0C` to OAM pointer and `$08` to Y, change attribute `$33` to `$23`), and writes the exact conditional overlay tile bytes for `$000E` values 1 or 2.
 - The call into `loc_D1C7` remains represented by the returned render-type and command fields; the renderer itself is still a separate dependency.
+
+
+## Reviewed priority batch — October 20, 2026
+
+The host suite and 3DS build pass for the current code content. Routines that prepare commands still return data to the separate `loc_D1C7` renderer; they are not proof that the complete object-rendering call chain is integrated into the playable game.
