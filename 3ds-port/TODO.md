@@ -249,3 +249,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Refined `sub_F871`/`sub_F885` to model the `Y`-indexed ROM reads, the zero-byte early exit, and 16-bit address wrap when `Y=$FF`.
 - [ ] Host tests and native 3DS compilation must pass before this batch is marked validated.
 - [ ] PPU/APU/controller register accesses are modeled as explicit output effects; these helpers do not directly emulate NES hardware or connect all effects to live gameplay.
+
+
+## Batch — 2026-10-21: 21 additional ASM-to-C translations
+
+- [x] Added translations for `sub_C1FD`, `sub_C229`, `sub_C32F`, `sub_C53A`, `sub_C53E`, `sub_C716`, `sub_C726`, `sub_CB06`, `sub_DC97`, `sub_EC25`, `sub_EC3B`, `sub_EC5D`, `sub_EC75`, `sub_F681`, `sub_F821`, `sub_F86B`, `sub_F889`, `sub_C94B`, `sub_C64E`, and `sub_C653`.
+- [x] Added regression cases for RAM initialization, exact copy order, indexed reads/writes, 8-bit subtraction carry, command-buffer writes, and audio-register effects.
+- [ ] Host regression tests and native 3DS build must pass before this batch can be marked validated.
+- [ ] Delay-loop helpers preserve final RAM/register effects but do not emulate CPU cycle timing. These helpers remain effect-level translations and are not yet fully connected to live gameplay.
