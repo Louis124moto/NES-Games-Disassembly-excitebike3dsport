@@ -157,8 +157,19 @@ static int testSubEA44Exact(void){
     if(oam[0x9F]!=0xEDu||oam[0xA3]!=0xE5u||oam[0xA0]!=0x28u)return 1;
     puts("PASS: sub_EA44 special wheel tile path and fallback to sub_E2F6.");return 0;
 }
+static int testSubE2AFCountdownExact(void){
+    uint8_t low=4u,high=1u,blink=0u,tbl[2]={0xE2u,0xE8u};NesPreparedSpriteCommand out={0};
+    if(nesSubE2AFUpdateFinishCountdown(1u,1u,0u,&low,&high,&blink,tbl,&out)!=1u)return 1;
+    if(low!=3u||high!=1u||blink!=1u||out.scratch0!=3u||out.scratch1!=0x50u||out.scratch2!=0xE8u||out.scratch3!=0x32u||out.scratch4!=0xC0u||out.scratchB!=0u)return 1;
+    low=2u;high=1u;blink=0u;
+    if(nesSubE2AFUpdateFinishCountdown(3u,0u,0u,&low,&high,&blink,tbl,&out)!=2u||low!=0xFFu||high!=0u)return 1;
+    low=5u;high=1u;blink=0u;
+    if(nesSubE2AFUpdateFinishCountdown(1u,2u,0u,&low,&high,&blink,tbl,&out)!=0u||low!=4u||blink!=0u)return 1;
+    puts("PASS: countdown decrement/borrow, finish blink, and draw-command branch.");return 0;
+}
 int main(void)
 {
+    if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\\n",stderr); return 1; }
     if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\\n",stderr); return 1; }
     if(testSubE2F6Exact()) { fputs("FAIL: sub_E2F6 reference test\\n",stderr); return 1; }
     if(testSubE359Exact()) { fputs("FAIL: sub_E359 reference test\\n",stderr); return 1; }
