@@ -828,3 +828,17 @@ void nesSubE4C8CheckOverlappingObjects(const uint8_t ram0084[4],const uint8_t ra
     }
     *ram03a3=0u;
 }
+
+
+/* Exact translated block at loc_E96E in sub_E96C ($E96C).
+ * X runs 3..0. CMP #$15 / CMP #$14 bypass the Y update for those states;
+ * otherwise CLC; ADC ram_00DC_obj,X; STA ram_obj_pos_Y_lo,X, with 8-bit wrap. */
+void nesLocE96EApplyVerticalDelta(const uint8_t state[4], uint8_t posY[4], const uint8_t delta[4])
+{
+    int x;
+    for (x = 3; x >= 0; --x) {
+        if (state[x] != 0x15u && state[x] != 0x14u) {
+            posY[x] = (uint8_t)(posY[x] + delta[x]);
+        }
+    }
+}
