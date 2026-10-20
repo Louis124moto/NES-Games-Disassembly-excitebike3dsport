@@ -36,6 +36,7 @@ static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
 }
 
 static int testSubD310(void);
+static int testSubD326(void);
 
 int main(void)
 {
@@ -60,6 +61,7 @@ int main(void)
 
     printf("PASS: %lu input combinations matched the 6502 reference.\n", checked);
     if (testSubD310() != 0) return 1;
+    if (testSubD326() != 0) return 1;
     return 0;
 }
 
@@ -126,5 +128,66 @@ static int testSubD310(void)
         }
     }
     printf("PASS: sub_D310 matched reference for %lu frame/timer vectors.\n", checked);
+    return 0;
+}
+
+
+/* Independent reference for sub_D326, preserving the initial SEC decision
+ * and the carry chain across each memory ROR. */
+static void referenceSubD326(uint8_t bytes[8])
+{
+    unsigned int carry = 0u;
+    unsigned int i;
+    uint8_t tmp0 = (uint8_t)(bytes[0] & 0x02u);
+    uint8_t tmp1 = (uint8_t)(bytes[1] & 0x02u);
+    uint8_t different = (uint8_t)(tmp0 ^ tmp1);
+
+    if (different != 0u) carry = 1u;
+    for (i = 0u; i < 8u; ++i) {
+        uint8_t value = bytes[i];
+        uint8_t outgoing = (uint8_t)(value & 1u);
+        bytes[i] = (uint8_t)((value >> 1) | (uint8_t)(carry << 7));
+        carry = outgoing;
+    }
+}
+
+static int testSubD326(void)
+{
+    unsigned int first, second, pattern;
+    unsigned long checked = 0;
+
+    for (first = 0; first < 256u; ++first) {
+        for (second = 0; second < 256u; ++second) {
+            uint8_t actual[8];
+            uint8_t expected[8];
+            unsigned int i;
+            for (i = 0; i < 8u; ++i) {
+                actual[i] = (uint8_t)(first + second * (i + 1u) + i * 29u);
+                expected[i] = actual[i];
+            }
+            actual[0] = expected[0] = (uint8_t)first;
+            actual[1] = expected[1] = (uint8_t)second;
+            pattern = (first ^ second) & 3u;
+            if (pattern == 1u) {
+                for (i = 2; i < 8u; ++i) actual[i] = expected[i] = (uint8_t)first;
+            } else if (pattern == 2u) {
+                for (i = 2; i < 8u; ++i) actual[i] = expected[i] = (uint8_t)(255u - second);
+            } else if (pattern == 3u) {
+                for (i = 2; i < 8u; ++i) actual[i] = expected[i] = (uint8_t)(i & 1u ? 0xFFu : 0x00u);
+            }
+            referenceSubD326(expected);
+            nesSubD326RotateInputBits(actual);
+            for (i = 0; i < 8u; ++i) {
+                if (actual[i] != expected[i]) {
+                    fprintf(stderr,
+                            "sub_D326 mismatch: first=%02X second=%02X slot=%u expected=%02X actual=%02X\n",
+                            first, second, i, expected[i], actual[i]);
+                    return 1;
+                }
+            }
+            ++checked;
+        }
+    }
+    printf("PASS: sub_D326 matched reference for %lu input vectors.\n", checked);
     return 0;
 }
