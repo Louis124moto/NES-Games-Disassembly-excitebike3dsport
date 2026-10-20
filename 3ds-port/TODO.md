@@ -87,3 +87,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate sub_D326's eight-byte ROR carry chain into `nesSubD326RotateInputBits`; host regression and 3DS build are pending CI.
 
 - [x] Translate sub_D35B's portable controller decode and A-button press suppression; host regression and 3DS build pending CI.
+
+- [x] Validate host-side regression tests for `sub_D326` and `sub_D35B`: [D326 test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497063113), [D35B test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497203936).
+- [ ] Confirm the newest 3DS build after adding `sub_D35B`; keep all native helper translations separate from gameplay until integrated through verified call order.
