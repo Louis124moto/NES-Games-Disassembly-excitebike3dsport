@@ -18,4 +18,4 @@ LDFLAGS     := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 LIBS        := -lctru -lm
 
 # libctru's 3DS rules build the .elf and package it as a .3dsx.
-include $(DEVKITPRO)/libctru/3ds_rules
+include $(DEVKITPRO)/libctru/share/3ds_rules
