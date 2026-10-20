@@ -98,6 +98,13 @@ int main(void)
     if (testSubDA58() != 0) return 1;
     if (testSubE091() != 0) return 1;
     if (testSubE098() != 0) return 1;
+    if (testSubD000() != 0) return 1;
+    if (testSubD11F() != 0) return 1;
+    if (testSubD255() != 0) return 1;
+    if (testSubD2FF() != 0) return 1;
+    if (testSubE70B() != 0) return 1;
+    if (testSubE7FCFamily() != 0) return 1;
+    if (testSubE836() != 0) return 1;
     if (testSubDFA4() != 0) return 1;
     if (testSubDFA2() != 0) return 1;
     if (testSubD0AB() != 0) return 1;
@@ -936,5 +943,106 @@ static int testSubDFB2(void)
         }
     }
     printf("PASS: sub_DFB2 matched CMP/N-flag reference for %lu cases.\n", checked);
+    return 0;
+}
+
+
+static int testSubD000(void)
+{
+    uint8_t flags[4] = {0x10u,0x10u,0x00u,0xFFu};
+    uint8_t state[4] = {0xBFu,0xC0u,0xF0u,0x00u};
+    uint8_t y = 0xAAu;
+    if (nesSubD000ShouldSetupObject(0u, flags, state, &y) != 0u) return 1;
+    if (nesSubD000ShouldSetupObject(1u, flags, state, &y) != 1u || y != 1u) return 1;
+    if (nesSubD000ShouldSetupObject(2u, flags, state, &y) != 0u) return 1;
+    if (nesSubD000ShouldSetupObject(3u, flags, state, &y) != 1u || y != 0u) return 1;
+    puts("PASS: sub_D000 gate and exact-$C0 Y increment.");
+    return 0;
+}
+
+static int testSubD11F(void)
+{
+    uint8_t ram[19];
+    unsigned int i;
+    for (i=0u;i<19u;++i) ram[i]=0x55u;
+    nesSubD11FInitializeUpdateBuffer(ram);
+    if (ram[0]!=0x11u || ram[1]!=0x23u || ram[2]!=0xA0u ||
+        ram[3]!=0x0Eu || ram[18]!=0u) return 1;
+    for (i=4u;i<=17u;++i) if (ram[i]!=0xFEu) return 1;
+    puts("PASS: sub_D11F exact RAM $0300-$0312 writes.");
+    return 0;
+}
+
+static int testSubD255(void)
+{
+    uint8_t oam[256];
+    unsigned int i;
+    for (i=0u;i<256u;++i) oam[i]=0u;
+    nesSubD255HideAllSprites(oam);
+    for (i=0u;i<256u;++i) if (oam[i]!=0xF8u) return 1;
+    puts("PASS: sub_D255 hides all 256 OAM bytes.");
+    return 0;
+}
+
+static int testSubD2FF(void)
+{
+    uint8_t x=0x3Eu, base=0x05u, memory[256], discarded=0u;
+    unsigned int i;
+    for (i=0u;i<256u;++i) memory[i]=0xAAu;
+    nesSubD2FFAdvanceBufferIndex(&x,base,memory,&discarded);
+    if (x!=base || memory[base]!=0u || discarded!=2u) return 1;
+    x=0x10u; discarded=0u;
+    nesSubD2FFAdvanceBufferIndex(&x,base,memory,&discarded);
+    if (x!=0x11u || discarded!=0u) return 1;
+    puts("PASS: sub_D2FF normal and stack-discard paths.");
+    return 0;
+}
+
+static int testSubE70B(void)
+{
+    uint8_t a[4]={1u,2u,0u,0x10u}, b[4]={4u,2u,0x77u,0x05u};
+    uint8_t c[4]={0x3Fu,0x3Eu,0x22u,0xFFu}, d[4]={1u,1u,1u,1u};
+    nesSubE70BUpdateObjectOffsets(a,b,c,d);
+    if (b[0]!=3u || c[0]!=0u || d[0]!=0u) return 1;
+    if (b[1]!=8u || c[1]!=0x3Fu || d[1]!=0u) return 1;
+    if (b[2]!=0x77u || c[2]!=0x22u || d[2]!=0u) return 1;
+    if (b[3]!=0xF5u || c[3]!=0u || d[3]!=0u) return 1;
+    puts("PASS: sub_E70B N/Z flag branches and six-bit wrap.");
+    return 0;
+}
+
+static int testSubE7FCFamily(void)
+{
+    static uint8_t pages[6][256];
+    const uint8_t *pagePtrs[6];
+    uint8_t ram360[4]={0u,1u,2u,5u}, ramE0[4]={4u,5u,6u,7u};
+    uint8_t saved=0xFFu, value=0xFFu;
+    unsigned int p,i;
+    for (p=0u;p<6u;++p) {
+        pagePtrs[p]=pages[p];
+        for (i=0u;i<256u;++i) pages[p][i]=(uint8_t)(p+i);
+    }
+    if (!nesSubE80DPreparePointer(4u,pagePtrs,(const uint8_t **)&pagePtrs[0])) {
+        /* The direct pointer test below uses its own output variable. */
+        return 1;
+    }
+    if (!nesSubE803ReadData(3u,0x22u,pagePtrs,&saved,&value) ||
+        saved!=3u || value!=(uint8_t)(3u+0x22u)) return 1;
+    if (!nesSubE7FFReadObjectData(2u,1u,ramE0,pagePtrs,&saved,&value) ||
+        saved!=1u || value!=7u) return 1;
+    if (!nesSubE7FCReadObjectBandData(3u,ram360,ramE0,pagePtrs,&saved,&value) ||
+        saved!=5u || value!=12u) return 1;
+    puts("PASS: sub_E80D/E803/E7FF/E7FC pointer and indexed reads.");
+    return 0;
+}
+
+static int testSubE836(void)
+{
+    uint8_t b0[4]={0u,1u,0u,0u}, bc[4]={1u,2u,3u,4u};
+    uint8_t by[4]={5u,6u,7u,8u}, out[4]={0xAAu,0xAAu,0xAAu,0xAAu};
+    nesSubE836UpdateObjectDifferences(b0,bc,by,out,100u);
+    if (out[0]!=(uint8_t)(100u-1u-5u) || out[1]!=0xAAu ||
+        out[2]!=(uint8_t)(100u-3u-7u) || out[3]!=(uint8_t)(100u-4u-8u)) return 1;
+    puts("PASS: sub_E836 skips nonzero $00B0 slots and uses shared SBC helper.");
     return 0;
 }
