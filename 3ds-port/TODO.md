@@ -124,13 +124,20 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [ ] Re-run host regression and 3DS build after correcting `sub_E4AD`.
 
 - [x] Translate `sub_E456` with reverse object-order traversal, `$70-$8F` cleanup gate, `$F0/$F8` thresholds, and the exact opponent-reset helper.
-- [ ] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI.
+- [x] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI (host suite run `39504720602` and 3DS build run `39504884005` succeeded).
 
 - [x] Correct E4AD test expectations for all twelve writes and E456 group offsets after inspecting the first failing CI run.
 - [ ] Re-run host tests after correcting the culling test expectations.
 
 - [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; corrected the model back to exactly three writes (Y=0,4,8) rather than inferring write count from the routine label/comment.
-- [ ] Re-run host regression after restoring the literal E4AD loop bound.
+- [x] Re-run host regression after restoring the literal E4AD loop bound (run `39504720602` succeeded).
 
 - [x] Model `sub_E26A`'s gate and sprite-command parameters from the literal instructions and `$D90B` three-byte table.
-- [ ] Validate `sub_E26A` host test and 3DS build.
+- [x] Validate `sub_E26A` host test and 3DS build (host run `39504865406` and 3DS build run `39504884005` succeeded).
+
+
+## Whole-project status snapshot (2026-10-20)
+
+- The native app architecture and repeatable `.3dsx`/`.elf` CI build work, and the user previously confirmed the scaffold launches on 3DS.
+- There are currently 48 named C routine/helper definitions in `nes_routines.c` against an inventory of 177 original `sub_*` labels. This is a source-coverage count, not a project-completion percentage: some C definitions are partial state models or shared entry helpers, and several are not yet integrated into gameplay.
+- The port is still **not a playable faithful Excitebike implementation**. Bike physics, course data/rendering, opponent/race flow, menus, and audio need verified translation and integration. Do not claim a global completion percentage based only on the routine count.
