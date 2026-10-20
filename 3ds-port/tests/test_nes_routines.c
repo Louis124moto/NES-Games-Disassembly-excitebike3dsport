@@ -5,6 +5,8 @@
 #include "nes_routines.h"
 
 static int testBatchAdditional20(void);
+static int testSubEC99Exact(void);
+static int testSubFF53Exact(void);
 
 static int testSubDA58(void);
 static int testSubE091(void);
