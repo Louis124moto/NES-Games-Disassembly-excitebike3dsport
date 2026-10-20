@@ -339,3 +339,31 @@ void nesLocDCC7ApproachValue(uint8_t x, uint8_t target, uint8_t duration,
     }
     values[x] = (uint8_t)(current + 1u);
 }
+
+
+/* Exact byte/carry translation of sub_DA58 ($DA58). */
+void nesSubDA58UpdateObjectFraction(uint8_t x, uint8_t ram0094[4],
+                                    uint8_t ram0060[4], uint8_t ram0090[4],
+                                    uint8_t ram0394[4])
+{
+    unsigned int sum;
+    if (x > 3u) return;
+    ram0060[x] = ram0094[x];
+    sum = (unsigned int)ram0090[x] + (unsigned int)ram0394[x];
+    ram0394[x] = (uint8_t)sum;
+    if (sum > 0xFFu) ram0060[x] = (uint8_t)(ram0060[x] + 1u);
+}
+
+/* CMP #$E7; if below, ADC #$0C with CMP's carry clear. */
+uint8_t nesSubE091AdjustValue(uint8_t value)
+{
+    if (value >= 0xE7u) return value;
+    return (uint8_t)((unsigned int)value + 0x0Cu);
+}
+
+/* CMP #$E7; if below, ADC #$02 with CMP's carry clear. */
+uint8_t nesSubE098AdjustValue(uint8_t value)
+{
+    if (value >= 0xE7u) return value;
+    return (uint8_t)((unsigned int)value + 0x02u);
+}
