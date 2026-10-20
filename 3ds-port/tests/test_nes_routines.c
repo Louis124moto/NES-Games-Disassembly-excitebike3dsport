@@ -256,13 +256,21 @@ static int testE73BAddXLow(void)
 }
 static int testE733UpdateThreeXLowSlots(void)
 {
-    unsigned int a,b,c,d;
-    for(a=0;a<256u;++a) for(b=0;b<256u;++b) for(c=0;c<256u;++c) for(d=0;d<256u;++d) {
-        uint8_t delta[4]={(uint8_t)a,(uint8_t)b,(uint8_t)c,(uint8_t)d};
-        uint8_t pos[4]={0xF0u,0xF1u,0xF2u,0xF3u};
-        nesSubE733UpdateThreeXLowSlots(delta,pos);
-        if(pos[0]!=0xF0u || pos[1]!=(uint8_t)(0xF1u+b) ||
-           pos[2]!=(uint8_t)(0xF2u+c) || pos[3]!=(uint8_t)(0xF3u+d)) return 1;
+    unsigned int slot, value;
+    for (slot = 1u; slot <= 3u; ++slot) {
+        for (value = 0u; value < 256u; ++value) {
+            uint8_t delta[4] = {0x19u,0x29u,0x39u,0x49u};
+            uint8_t pos[4] = {0xF0u,0xF1u,0xF2u,0xF3u};
+            uint8_t before[4];
+            unsigned int i;
+            delta[slot] = (uint8_t)value;
+            memcpy(before, pos, sizeof(pos));
+            nesSubE733UpdateThreeXLowSlots(delta, pos);
+            for (i = 0u; i < 4u; ++i) {
+                uint8_t expected = (i == 0u) ? before[i] : (uint8_t)(before[i] + delta[i]);
+                if (pos[i] != expected) return 1;
+            }
+        }
     }
     return 0;
 }
