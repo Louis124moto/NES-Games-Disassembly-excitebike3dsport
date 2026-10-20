@@ -313,3 +313,11 @@ Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games
 - It then performs `ROR` in sequence across RAM `$0018–$001F`, with each byte's low bit feeding the next byte's high bit.
 - Native helper: `nesSubD326RotateInputBits`.
 - Regression test compares the implementation against an independent carry-chain reference over all 65,536 combinations of the first two bytes and generated patterns for the remaining six bytes. CI must pass before marking the helper validated.
+
+
+### Exact RAM-level translation added: `sub_D35B` at CPU `$D35B`
+
+- The physical controller reads from `$4016,X` remain platform-specific and are not copied into the 3DS port.
+- The portable helper accepts the eight sampled bytes and reproduces the 6502's `LSR` / `ORA` / `LSR` carry extraction followed by eight `ROL` operations.
+- It writes the reconstructed NES button mask to hold and press state. If A is set in both the new and previous hold masks, it clears A only from the press mask, matching the source branch.
+- Native helper: `nesSubD35BDecodeController`. Regression test covers every decoded 8-bit button pattern, every previous hold mask, and three active-sample encodings. CI must pass before marking it validated.
