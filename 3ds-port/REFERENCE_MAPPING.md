@@ -446,3 +446,8 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 
 - Implements the X=3..0 dispatch and its exact `$F4/$F6` position thresholds, bit tests on `ram_0084,X`, the `$B0,X` special-sprite gate, `$B6`-based chained SBC through `sub_DC9A`, the seven-byte `$E69A` tile table, and fallback to the complete `$E2F6` wheel renderer.
 - The scratch operand consumed by the shared SBC helper is passed explicitly as `ramY[X]`, because the original routine inherits it from shared zero-page state rather than initializing it locally.
+
+
+## Object sprite selection — $E1F9
+
+- Replaced the earlier partial approximation with the literal branch sequence through RTS: resets `$000E` and `$039F`, handles the `$009C` fast path and timer-dependent return, finish-state special case, `$0098/$00B0` gate, `$0058/$00B8` gate, `$0090|$0094` temporary increment, and `$00AC == $06` orientation/flag selection. The return value uses `$0036,X - 1` when the timer is nonzero, matching the actual `LDY ram_0036_timer,X / DEY / TYA` sequence.
