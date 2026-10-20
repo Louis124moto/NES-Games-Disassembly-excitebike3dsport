@@ -257,3 +257,8 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Added regression cases for RAM initialization, exact copy order, indexed reads/writes, 8-bit subtraction carry, command-buffer writes, and audio-register effects.
 - [ ] Host regression tests and native 3DS build must pass before this batch can be marked validated.
 - [ ] Delay-loop helpers preserve final RAM/register effects but do not emulate CPU cycle timing. These helpers remain effect-level translations and are not yet fully connected to live gameplay.
+
+
+## New exact ASM translations
+- [x] `sub_EC99` (`$EC99`): translated the nonzero-delta path, exact `$08` threshold, `$00B9` reset, and calls to the existing `$F6FB` / `$ECBF` helpers.
+- [ ] Run host regression and native 3DS builds for the `sub_EC99` addition before counting it as validated.
