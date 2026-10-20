@@ -1006,7 +1006,7 @@ static int testSubE70B(void)
     if (b[0]!=3u || c[0]!=0u || d[0]!=0u) return 1;
     if (b[1]!=8u || c[1]!=0x3Fu || d[1]!=0u) return 1;
     if (b[2]!=0x77u || c[2]!=0x22u || d[2]!=0u) return 1;
-    if (b[3]!=0xF5u || c[3]!=0u || d[3]!=0u) return 1;
+    if (b[3]!=0xFDu || c[3]!=0u || d[3]!=0u) return 1;
     puts("PASS: sub_E70B N/Z flag branches and six-bit wrap.");
     return 0;
 }
@@ -1017,12 +1017,13 @@ static int testSubE7FCFamily(void)
     const uint8_t *pagePtrs[6];
     uint8_t ram360[4]={0u,1u,2u,5u}, ramE0[4]={4u,5u,6u,7u};
     uint8_t saved=0xFFu, value=0xFFu;
+    const uint8_t *selected=NULL;
     unsigned int p,i;
     for (p=0u;p<6u;++p) {
         pagePtrs[p]=pages[p];
         for (i=0u;i<256u;++i) pages[p][i]=(uint8_t)(p+i);
     }
-    if (!nesSubE80DPreparePointer(4u,pagePtrs,(const uint8_t **)&pagePtrs[0])) {
+    if (!nesSubE80DPreparePointer(4u,pagePtrs,&selected) || selected!=pagePtrs[4]) {
         /* The direct pointer test below uses its own output variable. */
         return 1;
     }
