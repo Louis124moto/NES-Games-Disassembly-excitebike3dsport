@@ -410,11 +410,11 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 - The C helper is a byte/register-level translation. Its test covers the wrapped-difference boundary, a two-candidate packed pair, and the no-candidate path. This does not imply that the entire sprite renderer is integrated into the game loop.
 
 
-**Correction from ASM review:** `sub_E4AD` writes `$F8` to twelve OAM Y positions at offsets 0, 4, …, 44 from the calculated group base. It is not a three-write helper.
+**Correction from instruction-level review:** `sub_E4AD` writes `$F8` at offsets 0, 4, and 8, then stops when Y reaches `$0C`; despite its label, it writes three Y bytes per call.
 
 
 ## Sprite culling — $E456 / $E49B / $E4AD
 
 - `sub_E456` iterates sorted object slots in reverse order, skips slot zero, seeds three culling flags from `ram_0084,X`, and either clears opponent-bike RAM for a Y position in `$70-$8F` when bit 0 is clear or adjusts group flags at Y thresholds `$F0/$F8`.
 - `sub_E49B` tests bit 0 of each of three group flags; each clear flag invokes `sub_E4AD`.
-- `sub_E4AD` forms the OAM byte offset by adding the selected `tbl_D8DC_spr_index` entry to the OAM base and writes `$F8` at twelve byte positions with stride four. This supersedes the earlier incomplete three-write model.
+- `sub_E4AD` forms the OAM byte offset by adding the selected `tbl_D8DC_spr_index` entry to the OAM base and writes `$F8` at offsets 0, 4, and 8, then exits when Y reaches `$0C`. The routine label says “hide 4 sprites”, but the instruction loop writes exactly three Y bytes per call.
