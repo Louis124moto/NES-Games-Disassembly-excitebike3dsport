@@ -182,3 +182,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - Largest unported gameplay/state candidates by ASM instruction count include `sub_EB17` (~135 instructions), `sub_E96C` (~106), `sub_D260` (~88), `sub_DFD5` (~85), `sub_D018` (~76), and `sub_D1C7` (~73). Exact counts are a rough source scan, not an estimate of implementation effort.
 - The first full audit pass found at least one real documentation/implementation mistake in the E4AD sprite-hide loop: the literal `CPY #$0C` loop writes three bytes (offsets 0, 4, 8), not twelve. The C code and regression expectation were corrected, and the subsequent host test run passed.
 - Next work should translate the larger object/race-state routines with explicit RAM state and tests for branch conditions and byte wraparound; then integrate the helpers into the native frame loop. Audio/PPU-heavy routines are later because they depend on memory-mapped hardware behavior.
+
+
+## Fidelity gate update — 2026-10-20
+
+- [x] Disable the native placeholder speed/temperature increments and arbitrary track-position clamp; they were not justified by the NES source.
+- [x] Inspect and document `sub_E733` / `sub_E73B` directly from `bank_FF.asm`; distinguish the object/track-event path from player acceleration.
+- [ ] Trace the actual player-slot movement, acceleration, braking, heat, jump/landing, and crash state path from callers and all relevant RAM writers before enabling native physics.
+- [ ] Translate the traced state path with explicit 8-bit/carry/branch behavior and independent regression tests before reconnecting it to `gameUpdate`.
