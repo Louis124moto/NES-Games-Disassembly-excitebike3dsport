@@ -298,4 +298,9 @@ void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
 void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
                                uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2]);
 
+/* Exact translation of sub_FF53 ($FF53). cpuMemory models 6502 address
+ * space so tbl_FF3E,Y reads remain correct when the index crosses $FFFF. */
+uint8_t nesSubFF53Lookup(uint8_t inputA, uint8_t carryIn, uint8_t ram07F0,
+                         const uint8_t cpuMemory[65536], uint8_t *yOut);
+
 #endif
