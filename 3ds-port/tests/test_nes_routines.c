@@ -10,6 +10,13 @@ static int testSubDFA4(void);
 static int testSubDFA2(void);
 static int testSubD0AB(void);
 static int testSubDFB2(void);
+static int testSubD000(void);
+static int testSubD11F(void);
+static int testSubD255(void);
+static int testSubD2FF(void);
+static int testSubE70B(void);
+static int testSubE7FCFamily(void);
+static int testSubE836(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
