@@ -150,3 +150,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate `sub_EA44`'s four-slot sprite dispatch, thresholds, table lookup, and shared-SBC path; pass inherited zero-page scratch explicitly.
 - [ ] Validate `sub_EA44` host regression and 3DS build.
+
+- [x] Replace the partial `sub_E1F9` model with the complete branch/return logic, including `$0036,X` timer semantics and `$039F` side effect.
+- [ ] Validate expanded `sub_E1F9` regression and 3DS build.
