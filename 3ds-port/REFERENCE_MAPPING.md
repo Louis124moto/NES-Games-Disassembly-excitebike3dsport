@@ -339,3 +339,17 @@ Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games
 - It then subtracts the global byte `ram_0060` from that low-byte result. If this subtraction borrows, it decrements `ram_0084_obj,X`. This order matters: the increment and decrement are separate operations and may cancel.
 - Finally, it subtracts the same global `ram_0060` byte from `ram_0390_obj,X`, with 8-bit wraparound.
 - Native helper: `nesSubDA7AUpdateScrollSlots`. Its regression test compares it with a separate instruction-level reference over 65,536 deterministic patterns. This helper does not claim to implement the full race/scroll system; callers and global state remain separate work.
+
+
+## Additional exact native translations added on 2026-10-20
+
+These helpers preserve the original byte operations. They do not replace callers or imply that the whole race system is implemented.
+
+- **`sub_DBFE` (`$DBFE`)**: performs `LSR ram_0060`, three consecutive `ROR` operations on the accumulator, `CLC/ADC ram_03BF`, then `ADC ram_0050_scroll_X` using the carry from the previous addition. It toggles bit 0 of `ram_004E_base_nametable` only when the final scroll addition carries. Native helper: `nesSubDBFEUpdateScroll`.
+- **`sub_DC97` / `sub_DC9A` (`$DC97/$DC9A`)**: the entry at `$DC97` loads `ram_03F1`; the shared arithmetic at `$DC9A` executes `SEC; SBC ram_00BC_obj,X; SBC ram_obj_pos_Y_lo,X`. The second SBC consumes the first SBC's carry/no-borrow flag. Native helper `nesSubDC9A` models the combined load-and-arithmetic path.
+- **`sub_DCDE` (`$DCDE`)**: if `ram_0374_obj,X` is nonzero, decrements it first; then, only when `ram_005C_obj,X & $C0` is nonzero, clears the timer. Native helper: `nesSubDCDE`.
+- **`sub_DD38` (`$DD38`)**: sets `ram_00B0_obj,X=$02` and `ram_0380_obj,X=$0F`; adds `$00AF` to the two-byte value `ram_0094_obj,X:ram_0090_obj,X` with 6502 carry propagation; when `ram_0388_obj,X==$02`, shifts the two-byte result right with LSR/ROR; for X=0 only, computes `ram_00FF` from four ASLs of `ram_0094_obj`, EOR `$30`, and the zero-result fallback `$08`. Native helper: `nesSubDD38SetupObject`.
+- **`sub_DD6F` (`$DD6F`)**: preserves the incoming carry as an explicit argument because the first ADC has no preceding CLC. It updates `ram_0380_obj,X`, propagates carry through `ram_0384_obj,X`, performs the SBC against `ram_037C_obj,X`, then the final ADC. Native helper: `nesSubDD6F`.
+- **`sub_DB95_clear_opponent_bike_data` (`$DB95`)**: clears exactly the 20 RAM fields written by the assembly, for X=1,2,3 only; X=0 is intentionally untouched. Native helper: `nesSubDB95ClearOpponentBikeData`.
+
+Regression tests compare these helpers against independent instruction-level references or exact RAM-field expectations. Hardware-specific calls and higher-level caller state remain outside these helpers.
