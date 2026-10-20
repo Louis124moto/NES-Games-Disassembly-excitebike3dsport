@@ -4,6 +4,8 @@
 
 #include "nes_routines.h"
 
+static int testBatchAdditional20(void);
+
 static int testSubDA58(void);
 static int testSubE091(void);
 static int testSubE098(void);
@@ -601,6 +603,7 @@ static int testBatchC64E653(void) {
 
 int main(void)
 {
+    if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
     if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
@@ -1702,3 +1705,64 @@ static int testSubEC99Exact(void)
 }
 
 static int testNewE3AA(void){uint8_t t=0u,l=0u,f=1u;nesLocE3AAUpdateHeatFlags(0x20u,1u,&t,&l,&f);return(t==0x20u&&l==0x20u&&f==0xB1u)?0:1;}
+
+
+/* Regression vectors for the additional 20 byte-level routine translations. */
+static int testBatchAdditional20(void)
+{
+    uint8_t f, oam[256], buf[263], ram[256], source7[7], table8[8], table256[256];
+    uint8_t statusV[3]={0x80u,0xFFu,0x00u}, statusD[3]={0x00u,0x80u,0x40u};
+    uint8_t ppu=0x55u, ctrl=0u, ctrlRam=0u, x0=0u, x1=0u, hold0=0u, press0=0u, hold1=0u, press1=0u, strobe[2];
+    uint8_t samples0[8]={0u,0u,0u,0u,0u,0u,0u,0u}, samples1[8]={1u,1u,1u,1u,1u,1u,1u,1u};
+    unsigned int used=0u, i;
+    for (i=0u;i<256u;++i) { table256[i]=(uint8_t)i; ram[i]=(uint8_t)(i^0xA5u); }
+    for (i=0u;i<263u;++i) buf[i]=0x11u;
+    for (i=0u;i<8u;++i) { table8[i]=(uint8_t)(0x20u+i); oam[0xC0u+i]=0u; }
+    for (i=0u;i<7u;++i) source7[i]=(uint8_t)(0x70u+i);
+
+    f=0x5Au; nesSubCFDBClearUpperFlags(1u,&f); if(f!=0x0Au)return 1;
+    f=0xA5u; nesSubCFDBClearUpperFlags(0u,&f); if(f!=0xA5u)return 2;
+    f=0x35u; nesSubCFCBCompareObjectPosition(4u,5u,0u,0u,&f); if(f!=0xB5u)return 3;
+    f=0xA5u; nesSubCFCBCompareObjectPosition(7u,6u,0u,0u,&f); if(f!=0x05u)return 4;
+    f=0x5Fu; nesSubCFEAUpdateComparisonFlags(2u,3u,&f); if(f!=0x51u)return 5;
+    f=0x5Fu; nesSubCFEAUpdateComparisonFlags(3u,3u,&f); if(f!=0x50u)return 6;
+    f=0x5Fu; nesSubCFEAUpdateComparisonFlags(4u,3u,&f); if(f!=0x52u)return 7;
+    if(!nesSubCE58ObjectIndexMatches(3u,3u)||nesSubCE58ObjectIndexMatches(3u,4u))return 8;
+    if(nesLocCAFAFillCommand(2u,buf)!=9u)return 9;
+    for(i=6u;i<13u;++i)if(buf[i]!=0xFEu)return 10;
+    nesLocCD13CopySpriteTemplate(oam,table8);
+    for(i=0u;i<8u;++i)if(oam[0xC0u+i]!=table8[i])return 11;
+    if(nesLocD0A6StoreAndReturn(0xA0u,0x6Cu,0x91u,ram)!=0x91u||ram[0xA0u]!=0x6Cu)return 12;
+    nesLocD197WriteScrollRegister(0x42u,&ppu); if(ppu!=0x42u)return 13;
+    memset(oam,0,sizeof(oam)); nesLocEC47WriteFixedSprite(oam,0x7Bu);
+    if(oam[0x34u]!=0xCFu||oam[0x35u]!=0x7Bu||oam[0x36u]!=0u||oam[0x37u]!=0xE4u)return 14;
+    memset(ram,0xCC,sizeof(ram)); ram[0x20u]=0x44u;ram[0x42u]=0x77u;
+    nesLocCA85ClearRam(ram);
+    if(ram[0x20u]!=0x44u||ram[0x42u]!=0x77u||ram[0x49u]!=1u||ram[0x21u]!=0u||ram[0xFFu]!=0u)return 15;
+    if(!nesSubC339WaitForVblank(statusV,3u,0x25u,&ctrl,&ctrlRam,&used)||used!=3u||ctrl!=0xA5u||ctrlRam!=0xA5u)return 16;
+    ctrl=0x33u;ctrlRam=0x44u;
+    if(nesSubC339WaitForVblank(statusV,2u,0x25u,&ctrl,&ctrlRam,&used)!=0u||ctrl!=0x33u||ctrlRam!=0x44u)return 17;
+    if(!nesSubD19BWaitForStatus(statusD,3u,0xABu,&ctrl,&ctrlRam,&used)||used!=3u||ctrl!=0xA0u||ctrlRam!=0xA0u)return 18;
+    nesSubD347ReadControllers(samples0,samples1,0u,0u,&hold0,&press0,&hold1,&press1,strobe);
+    if(strobe[0]!=1u||strobe[1]!=0u)return 19;
+    if(nesLocC4FCComputeScaledValue(10u,20u,2u,&f)!=15u||f!=15u)return 20;
+    if(nesLocC4FCComputeScaledValue(30u,10u,0u,&f)!=14u||f!=14u)return 21;
+    nesLocC92CPrepareTableSelection(0x37u,0x82u,&x0,&x1); if(x0!=0x82u||x1!=0x37u)return 22;
+    if(nesSubC935CopyPreparedBytes(1u,source7,buf)!=8u)return 23;
+    for(i=0u;i<7u;++i)if(buf[5u+i]!=source7[i])return 24;
+    for(i=0u;i<256u;++i) { ram[i]=0x3Du; oam[i]=0x3Du; table256[i]=0x3Bu; }
+    if(nesSubECC9CheckSpriteBytes(9u,ram,oam,table256,table256)!=0u)return 25;
+    table256[9u]=0u; if(nesSubECC9CheckSpriteBytes(9u,ram,oam,table256,table256)!=1u)return 26;
+    {
+        uint8_t sprite[4]={0x11u,0x22u,0x33u,0x44u}, flag=0xFFu;
+        nesLocC411WriteSpriteX(0x99u,sprite,&flag);
+        if(sprite[0]!=0x11u||sprite[1]!=0x22u||sprite[2]!=0u||sprite[3]!=0x99u||flag!=0u)return 27;
+        nesLocC3EFWriteSpriteY(0x68u,&sprite[0]); if(sprite[0]!=0x68u)return 28;
+        memset(table256,0,sizeof(table256)); table256[2]=0xACu;
+        memset(sprite,0,sizeof(sprite)); flag=0xFFu;
+        if(nesSubC409SetupStaticSprite(2u,table256,sprite,&flag)!=0u||
+           sprite[1]!=0xFAu||sprite[2]!=0u||sprite[3]!=0xACu||flag!=0u)return 29;
+    }
+    puts("PASS: additional ASM batch: compare branches, buffer writes, RAM clearing, PPU polling, controller latch and sprite setup.");
+    return 0;
+}
