@@ -39,3 +39,17 @@ The original `../Excitebike/` source is a 6502/NES disassembly. Its CPU instruct
 
 ## Current status
 The code is architecture scaffolding, not playable or faithful gameplay. The source analysis has identified input constants, a table-driven routine dispatcher, a course-finished flag, opponent-bike cleanup, and an audio routine associated with overheating. It has **not** yet mapped the core acceleration/heat/jump/collision routines and their persistent RAM variables with enough confidence to finish Phase 2. Do not start implementing supposedly authentic physics from guesses.
+
+## New source trace — temperature meter (partial)
+
+Source: `Excitebike/bank_FF.asm`, `sub_E359_display_temperature_meter_with_sprites`, CPU address `$E359`, ROM offset `$002369`.
+
+Confirmed directly from the instructions:
+
+- If `ram_0052_track_finished_flag` is nonzero, the routine bypasses its normal temperature-meter update path.
+- Otherwise, the routine forms a table index from `ram_005C_obj & $C0` (the NES A/B bits in the game's button representation), with a branch that also considers `ram_004F_race_started_flag`.
+- It compares `ram_03B6` against `tbl_D8FB,Y`. One path adds `tbl_D8F7,Y` into `ram_03B5`, carrying into `ram_03B6`; the other subtracts `$0B` from `ram_03B5` and may decrement `ram_03B6`. This establishes a fractional/coarse accumulator pair used by the displayed temperature meter, but not yet the complete gameplay heat model.
+- When `ram_03B6 >= $1A`, the routine stores timer/state values and may set the danger indicator depending on the selected state. The comment at CPU `$E3BF` explicitly calls this the overheat-danger breakpoint while holding B.
+- It then builds the meter's sprite tiles from `ram_03B6 + $50`; the comment says the bar is fixed-size and moves behind the HUD background.
+
+Not yet established: the full semantic meaning of each table index, exact frame-by-frame relation to speed, all cooling conditions, the crash/lockout transition, and the bike's acceleration values. Do not translate this routine into the current placeholder physics until the caller/state flow and related RAM writes are traced.
