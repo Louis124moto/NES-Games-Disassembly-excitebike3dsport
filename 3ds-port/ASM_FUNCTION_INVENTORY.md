@@ -169,7 +169,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E893` | `sub_E893` | Pending | ; in |
 | `$E927` | `sub_E927` | Pending | — |
 | `$E96C` | `sub_E96C` | Pending | — |
-| `$EA44` | `sub_EA44` | Pending | — |
+| `$EA44` | `sub_EA44` | Translated + regression test; CI validation pending | Special wheel tile and fallback wheel rendering |
 | `$EAC5` | `sub_EAC5` | Pending | — |
 | `$EB17` | `sub_EB17` | Pending | — |
 | `$EC25` | `sub_EC25` | Pending | — |
