@@ -192,7 +192,7 @@ void nesSubE733UpdateThreeXLowSlots(const uint8_t ram0060[4], uint8_t posXLo[4])
 
 uint8_t nesSubE7FCLoadDataIndex(uint8_t x, const uint8_t ram0360[4]);
 uint8_t nesSubE7FFLoadDataIndex(uint8_t x, const uint8_t ram00E0[4]);
-void nesSubE80DPreparePointer(uint8_t tableIndex, uint8_t *low, uint8_t *high);
+void nesSubE80DPointerBytes(uint8_t tableIndex, uint8_t *low, uint8_t *high);
 uint8_t nesSubE803ReadIndexedRam(uint8_t tableIndex, uint8_t dataIndex, const uint8_t ram0400To07FF[1024]);
 void nesOfsE81807Apply(uint8_t x, uint8_t ram00B0[4], const uint8_t ram00AC[4],
                        const uint8_t ram0094[4], const uint8_t ram0090[4], uint8_t ram0098[4]);
