@@ -9,7 +9,7 @@ This is the ordered source of truth for the remaining port work. Tasks are check
 - [x] Add a GitHub Actions workflow that attempts a native 3DS build on each push and uploads the `.3dsx`/ `.elf` artifacts.
 - [ ] Verify the first GitHub Actions run; fix any container, dependency, Makefile, or linker errors.
 - [ ] Confirm that the generated `.3dsx` launches on a real 3DS or a compatible emulator.
-- [ ] Add a `.gitignore` for generated build output and temporary files.
+- [x] Add a `.gitignore` for generated build output and temporary files.
 
 ## Phase 2 — Application structure
 
