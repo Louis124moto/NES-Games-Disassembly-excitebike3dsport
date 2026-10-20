@@ -85,3 +85,5 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [ ] Confirm the 3DS build for the new timer helper, then continue with the next self-contained assembly routine.
 
 - [x] Translate sub_D326's eight-byte ROR carry chain into `nesSubD326RotateInputBits`; host regression and 3DS build are pending CI.
+
+- [x] Translate sub_D35B's portable controller decode and A-button press suppression; host regression and 3DS build pending CI.
