@@ -125,3 +125,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate `sub_E456` with reverse object-order traversal, `$70-$8F` cleanup gate, `$F0/$F8` thresholds, and the exact opponent-reset helper.
 - [ ] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI.
+
+- [x] Correct E4AD test expectations for all twelve writes and E456 group offsets after inspecting the first failing CI run.
+- [ ] Re-run host tests after correcting the culling test expectations.
