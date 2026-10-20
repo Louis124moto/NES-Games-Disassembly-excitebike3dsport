@@ -733,7 +733,7 @@ uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_
     if(rac[x]!=6u)return rac[x];
     if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:rac[x];
     return (rdc[x]&0x80u)!=0u?0x15u:0x14u;
-}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
+}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
 void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags){uint8_t x=0u;if(heat>=0x20u){*timer=heat;*latch=heat;}if(heat>=0x1Au&&(uint8_t)(priorY-1u)==0u)x=0xB0u;*flags=(uint8_t)(*flags|x);}
 
