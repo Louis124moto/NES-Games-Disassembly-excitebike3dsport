@@ -139,7 +139,7 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 ## Whole-project status snapshot (2026-10-20)
 
 - The native app architecture and repeatable `.3dsx`/`.elf` CI build work, and the user previously confirmed the scaffold launches on 3DS.
-- There are currently 53 named C routine/helper definitions in `nes_routines.c` against an inventory of 177 original `sub_*` labels. This is a source-coverage count, not a project-completion percentage: some C definitions are partial state models or shared entry helpers, and several are not yet integrated into gameplay.
+- The current source scan detects 51 C routine/helper definitions against 177 original `sub_*` labels. Inventory status is not a completion percentage: helpers and state models count as definitions, and several translations are not integrated into gameplay. A translated label is not automatically fidelity-verified.
 - The port is still **not a playable faithful Excitebike implementation**. Bike physics, course data/rendering, opponent/race flow, menus, and audio need verified translation and integration. Do not claim a global completion percentage based only on the routine count.
 
 - [x] Translate `sub_E359` temperature arithmetic and OAM output using the literal `$D8F7/$D8FB` table bytes.
@@ -166,3 +166,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Add or complete `sub_E4C8`/`sub_E52C`, `sub_E456`, `sub_E26A`, `sub_E359`, `sub_E2F6`, `sub_EA44`, the `$E2AF` countdown path, and `sub_E1A3` command setup.
 - [x] Replace the partial `sub_E1F9` approximation with its full branch-level logic and correct the literal `$E4AD` loop to its three writes at Y=`$00/$04/$08`.
 - [x] Host regression run `39506455129` and Nintendo 3DS build run `39506455082` both passed at code/test revision `b0d89905`; subsequent commits in this section change documentation only.
+
+
+## Audit pass — 2026-10-20
+
+- [x] Re-scan `nes_routines.c` and reconcile inventory rows that were still marked `Pending` despite having a matching C definition.
+- [x] Keep source translation status separate from fidelity/test status; compilation alone does not prove instruction-level equivalence.
+- [ ] Compare every existing routine against its exact ASM control flow, flags, indexed RAM effects, and dependencies; correct discrepancies before claiming faithful coverage.
+- [ ] Translate remaining routines in dependency order, prioritizing long gameplay/state routines before audio/data decoders where practical.
