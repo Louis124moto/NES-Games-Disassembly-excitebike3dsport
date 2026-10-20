@@ -75,3 +75,7 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Trace `sub_DA7A`'s opponent-only scroll-relative coordinate correction, `sub_DB95`'s opponent-slot reset path, and `sub_E96C`'s per-frame Y-delta application; record the confirmed facts and remaining uncertainties in `REFERENCE_MAPPING.md`.
 - [x] Record caller placement and surrounding frame-order for `sub_DA7A` and `sub_E96C`, including the `ram_03F2` gate and the adjacent update calls.
+
+- [x] Translate the byte-level logic of sub_D310 into nesSubD310DecreaseAllTimers, preserving 8-bit wraparound, BPL's negative-flag condition, selected timer ranges, and nonzero-only decrements.
+- [ ] Verify the expanded host regression test and 3DS build in GitHub Actions before marking the timer helper validated.
+- [ ] Continue translating the remaining sub_* routines systematically, starting with self-contained timer/input/state helpers before hardware-specific graphics/audio code.
