@@ -842,3 +842,54 @@ void nesLocE96EApplyVerticalDelta(const uint8_t state[4], uint8_t posY[4], const
         }
     }
 }
+
+/* Exact RAM-level translation of bank_FF.asm sub_E84F ($E84F):
+ * STA ram_00BC_obj,X; STA ram_00E4_obj,X. */
+void nesSubE84FStorePair(uint8_t x, uint8_t value, uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    if (x < 4u) {
+        ram00BC[x] = value;
+        ram00E4[x] = value;
+    }
+}
+
+/* Exact RAM-level translation of bank_FF.asm sub_E86F ($E86F):
+ * A is saved, then ram_00E4_obj,X - A is stored in ram_00BC_obj,X.
+ * SEC/SBC is modulo 256; no borrow is propagated elsewhere. */
+uint8_t nesSubE86FSubtractFromE4(uint8_t x, uint8_t a, const uint8_t ram00E4[4], uint8_t ram00BC[4])
+{
+    uint8_t result;
+    if (x >= 4u) return 0u;
+    result = (uint8_t)(ram00E4[x] - a);
+    ram00BC[x] = result;
+    return result;
+}
+
+/* Exact RAM-level translation of bank_FF.asm sub_E893 ($E893):
+ * store A in $00D4,X and $00B4,X; return $00C8,X - $00D0,X. */
+uint8_t nesSubE893SetOffsetsAndSubtract(uint8_t x, uint8_t a,
+                                       const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                                       uint8_t ram00D4[4], uint8_t ram00B4[4])
+{
+    if (x >= 4u) return 0u;
+    ram00D4[x] = a;
+    ram00B4[x] = a;
+    return (uint8_t)(ram00C8[x] - ram00D0[x]);
+}
+
+/* Exact sub_E73B ($E73B): add $0060,X to X-low, with 8-bit wrap.
+ * This routine does not update the high byte. */
+void nesSubE73BAddXLow(uint8_t x, const uint8_t ram0060[4], uint8_t posXLo[4])
+{
+    if (x < 4u) posXLo[x] = (uint8_t)(posXLo[x] + ram0060[x]);
+}
+
+/* Exact sub_E733 ($E733): call sub_E73B for X=3,2,1. The original BNE
+ * after DEX means slot 0 is intentionally omitted. */
+void nesSubE733UpdateThreeXLowSlots(const uint8_t ram0060[4], uint8_t posXLo[4])
+{
+    int x;
+    for (x = 3; x > 0; --x) {
+        posXLo[x] = (uint8_t)(posXLo[x] + ram0060[x]);
+    }
+}
