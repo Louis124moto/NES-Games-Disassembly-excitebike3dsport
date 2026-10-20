@@ -147,6 +147,11 @@ void nesSubE49BHideSelectedSpriteGroups(uint8_t oam[256],uint8_t index,const uin
 void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta);
 void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink);
 uint8_t nesLocE2D0CountdownReachedOne(uint8_t countdown);
+void nesSubEA44UpdateWheelSprites(uint8_t oam[256],const uint8_t ram0084[4],
+    const uint8_t ram0080[4],const uint8_t ram00B0[4],const uint8_t ram00B4[4],
+    const uint8_t ram00BC[4],const uint8_t ramY[4],const uint8_t tblE69A[7],
+    const uint8_t ram036C[4],const uint8_t ram0094[4],const uint8_t ram0090[4],
+    const uint8_t ram008C[4],uint8_t ram003F);
 void nesSubE2F6DrawWheelSprites(uint8_t x,uint8_t yOffset,const uint8_t ram036C[4],
     const uint8_t ram0094[4],const uint8_t ram0090[4],const uint8_t ram00BC[4],
     const uint8_t ram0084[4],const uint8_t ram0080[4],const uint8_t ram008C[4],
