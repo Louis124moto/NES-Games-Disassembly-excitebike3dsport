@@ -23,6 +23,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Install Nintendo 3DS development libraries
+        run: dkp-pacman -S --noconfirm 3ds-dev
+
       - name: Compile homebrew
         run: make -C 3ds-port
 
