@@ -140,7 +140,7 @@ static int testSubE2F6Exact(void){
     for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,4u,oam);
     if(oam[0x95]!=0xF7u||oam[0x99]!=0xF6u){fprintf(stderr,"E2F6 swap fail: %02X %02X\\n",oam[0x95],oam[0x99]);return 2;}
-    r94[0]=0u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
+    r94[0]=0u;r90[0]=1u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
     if(oam[0x98]!=0xF8u){fprintf(stderr,"E2F6 hide fail: %02X\\n",oam[0x98]);return 3;}
     rbc[0]=1u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
