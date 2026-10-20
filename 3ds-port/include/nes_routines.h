@@ -176,4 +176,139 @@ uint8_t nesSubE52CCheckVerticalOverlap(uint8_t x, uint8_t y, const uint8_t ram00
 void nesSubE4C8CheckOverlappingObjects(const uint8_t ram0084[4], const uint8_t ram0080[4],
                                        const uint8_t ram008c[4], uint8_t *ram000b, uint8_t *ram03a3);
 
+/* Exact loc_E96E block from sub_E96C: four object slots, 8-bit ADC, skip states $14/$15. */
+void nesLocE96EApplyVerticalDelta(const uint8_t state[4], uint8_t posY[4], const uint8_t delta[4]);
+
+
+/* Exact RAM-level helpers from bank_FF.asm, keeping 6502 byte arithmetic. */
+void nesSubE84FStorePair(uint8_t x, uint8_t value, uint8_t ram00BC[4], uint8_t ram00E4[4]);
+uint8_t nesSubE86FSubtractFromE4(uint8_t x, uint8_t a, const uint8_t ram00E4[4], uint8_t ram00BC[4]);
+uint8_t nesSubE893SetOffsetsAndSubtract(uint8_t x, uint8_t a,
+                                       const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                                       uint8_t ram00D4[4], uint8_t ram00B4[4]);
+void nesSubE73BAddXLow(uint8_t x, const uint8_t ram0060[4], uint8_t posXLo[4]);
+void nesSubE733UpdateThreeXLowSlots(const uint8_t ram0060[4], uint8_t posXLo[4]);
+
+
+uint8_t nesSubE7FCLoadDataIndex(uint8_t x, const uint8_t ram0360[4]);
+uint8_t nesSubE7FFLoadDataIndex(uint8_t x, const uint8_t ram00E0[4]);
+void nesSubE80DPointerBytes(uint8_t tableIndex, uint8_t *low, uint8_t *high);
+uint8_t nesSubE803ReadIndexedRam(uint8_t tableIndex, uint8_t dataIndex, const uint8_t ram0400To07FF[1024]);
+void nesOfsE81807Apply(uint8_t x, uint8_t ram00B0[4], const uint8_t ram00AC[4],
+                       const uint8_t ram0094[4], const uint8_t ram0090[4], uint8_t ram0098[4]);
+
+
+void nesOfsE84504Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE85405Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4]);
+void nesOfsE85D02Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       uint8_t ram00D8[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE86A03Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00E4[4], uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4]);
+void nesOfsE87909Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D0[4],
+                       const uint8_t ram00A0[4], uint8_t ram00D8[4],
+                       uint8_t ram00D4[4], uint8_t ram00B4[4],
+                       uint8_t ram00BC[4], uint8_t ram00E4[4]);
+
+
+void nesOfsE8BF0EReset(uint8_t x, uint8_t ram00A4[4], uint8_t ram00A0[4]);
+void nesOfsE8C60FSetStateFromY(uint8_t x, uint8_t yLow, uint8_t ram00A4[4]);
+void nesOfsE8E301SetA0(uint8_t x, uint8_t ram00A0[4]);
+void nesOfsE8F514SetPair30(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE8FA10SetPair10(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4]);
+void nesOfsE96300ClearThree(uint8_t x, uint8_t ram00CC[4], uint8_t ram00D4[4], uint8_t ram00B4[4]);
+
+
+/* Portable setup fragments from bank_FF.asm; PPU writes are returned as effects. */
+void nesSubD0F4PrepareCommandStream(const uint8_t ram03D9To03DF[7],
+    uint8_t ram03D0To03D7[8], uint8_t *sourceLo, uint8_t *sourceHi,
+    uint8_t *dataLo, uint8_t *dataHi);
+void nesSubD1A9PrepareScrollWrites(uint8_t scrollWrites[2], uint8_t *statusReads);
+void nesSubD1B3PrepareScrollWrites(uint8_t ramFor2000, uint8_t baseNametable,
+    uint8_t scrollX, uint8_t scrollY, uint8_t *ppuCtrl,
+    uint8_t scrollWrites[2], uint8_t *statusReads);
+
+
+/* 2026-10-21: exact bank_FF.asm RAM/register-effect helpers. */
+void nesSubC333WritePpuCtrl(uint8_t a, uint8_t *ramFor2000, uint8_t *ppuCtrl);
+void nesSubC3AFIncrementRaceCounter(uint8_t *ram0041);
+void nesSubC3B1ClearCounters(uint8_t *ram0040, uint8_t *ram0044);
+void nesSubC621CopyPage(const uint8_t ram06E0[256], uint8_t ram05E0[256]);
+void nesSubC68AIncrementPointer(uint8_t *lo, uint8_t *hi);
+uint8_t nesSubC971AddCommandLength(uint8_t a, uint8_t ram0300, uint8_t *newRam0300, uint8_t *xOut);
+void nesSubCA1BCopyButtonHold(uint8_t ramButtonHold, uint8_t *ram005C);
+uint8_t nesSubCB13ComputeSpriteCode(uint8_t yIn, uint8_t ram0046Flag);
+void nesSubCFE3ClearObjectFlags(uint8_t x, uint8_t ram005C[256]);
+void nesSubD24FDisableRendering(uint8_t *ppuMask);
+uint8_t nesSubCF8BCarryOut(uint8_t a);
+uint8_t nesSubECBFIncrementAndWrap(uint8_t a);
+void nesSubF676FillCommandPayload(uint8_t ram0300To0315[22]);
+uint8_t nesSubF826AdvanceObject(uint8_t x, uint8_t *ram00B7, uint8_t *ram00C5);
+void nesSubF82EPreparePointer(uint8_t x, const uint8_t tblF063Lo[256], const uint8_t tblF087Hi[256], uint8_t *ptrLo, uint8_t *ptrHi);
+void nesSubF839PreparePointer(uint8_t x, const uint8_t tblF4F5Lo[256], const uint8_t tblF4FAHi[256], uint8_t *ptrLo, uint8_t *ptrHi);
+void nesSubC62DControllerStrobe(uint8_t *controller4016);
+void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1);
+void nesSubF871WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
+void nesSubF885WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256], uint8_t byteAt0000, uint8_t audio4000To400F[16]);
+
+
+/* Exact translations audited against bank_FF.asm, 2026-10-21. */
+void nesSubC1FDInitializeRam(const uint8_t tblC091[256], uint8_t cpuRam[2048]);
+void nesSubC229InitializeRows(uint8_t cpuRam[2048]);
+void nesSubC32FMaskPpuCtrl(uint8_t *ramFor2000, uint8_t *ppuCtrl);
+uint8_t nesSubCB06ComputeTableIndex(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2);
+void nesSubC53ESelectTableEntry(uint8_t ram0002, uint8_t ram0046Flag, uint8_t ram03F2,
+                                const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007);
+void nesSubC53ASelectTableEntry(uint8_t ram0043, uint8_t ram0046Flag, uint8_t ram03F2,
+                                uint8_t *ram0002, const uint8_t cpuRam[2048],
+                                uint8_t *ram0005, uint8_t *ram0006, uint8_t *ram0007);
+void nesSubC716ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006);
+void nesSubC726ConfigureLoop(uint8_t *ram000D, uint8_t *ram000E, uint8_t *ram000F,
+                             uint8_t *ram0005, uint8_t *ram0006);
+uint8_t nesSubDC97SubtractObjectY(uint8_t ram03F1, uint8_t x, const uint8_t ram00BC[4],
+                                  const uint8_t ramPosYLo[4], uint8_t *carryOut);
+void nesSubEC25WriteSprite(uint8_t a, uint8_t ram00C2, const uint8_t tblE6F6[256], uint8_t oam[256]);
+void nesSubEC5DWriteSprite(uint8_t ram003F, uint8_t ram00C2, const uint8_t tblE6F6[256], uint8_t oam[256]);
+void nesSubEC3BCopyPageDescending(uint8_t cpuRam[2048]);
+void nesSubEC75InitializeObjectPositions(uint8_t ram00B0[4], uint8_t ram00C0[4],
+                                         const uint8_t tblE6E1[256],
+                                         uint8_t ramPosXLo[4], uint8_t ramPosYLo[4],
+                                         uint8_t ram00BC[4]);
+void nesSubF681CopyCommandBytes(uint16_t sourcePointer, uint8_t xIn, uint8_t yIn,
+                                const uint8_t cpuMemory[65536], uint8_t cpuRam[2048],
+                                uint8_t *xOut, uint8_t *yOut);
+uint8_t nesSubF821InitializeBufferAndAdvance(uint8_t x, uint8_t cpuRam[2048]);
+void nesSubF86BWriteAudioRegisters(uint8_t x, uint8_t y, uint8_t a,
+                                   const uint8_t tblFF00[256], uint8_t byteAt0000,
+                                   uint8_t audio4000To400F[16]);
+void nesSubF889WriteThirdAudioTimer(uint8_t a, const uint8_t tblFF00[256],
+                                    uint8_t byteAt0000, uint8_t audio4000To400F[16]);
+void nesSubC94BBuildCommand(uint8_t *ram0300, uint8_t tableIndex,
+                            const uint8_t tblC0EC[257], uint8_t ram0300To040A[267],
+                            uint8_t *xOut);
+void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2]);
+void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
+                               uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2]);
+
+/* Exact translation of sub_FF53 ($FF53). cpuMemory models 6502 address
+ * space so tbl_FF3E,Y reads remain correct when the index crosses $FFFF. */
+uint8_t nesSubFF53Lookup(uint8_t inputA, uint8_t carryIn, uint8_t ram07F0,
+                         const uint8_t cpuMemory[65536], uint8_t *yOut);
+
+/* RAM-level translation of sub_EC99 ($EC99), including its sub_F6FB and
+ * sub_ECBF calls. */
+void nesSubEC99AdvanceObjectPhase(uint8_t ram0060, uint8_t *ram00B9Object1,
+                                  uint8_t *ram00C0Object0, uint8_t ram00B0Object2,
+                                  uint8_t ram00B0Object3, uint8_t *ram00B0Global,
+                                  uint8_t *ram00B1Global, uint8_t *ram00B0Object2Out,
+                                  uint8_t *ram00B0Object3Out);
+
 #endif

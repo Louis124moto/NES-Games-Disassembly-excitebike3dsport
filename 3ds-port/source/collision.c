@@ -1,13 +1,11 @@
 #include "collision.h"
 
-/* Placeholder collision boundary; track geometry is not implemented yet. */
+/*
+ * Deliberately disabled until the relevant NES object/track collision path is
+ * traced and translated. Clamping track_position at zero was an invented
+ * placeholder rule, not a behavior established by the original disassembly.
+ */
 void collisionResolve(BikeState *bike)
 {
-    if (bike == 0) {
-        return;
-    }
-
-    if (bike->track_position < 0) {
-        bike->track_position = 0;
-    }
+    (void)bike;
 }
