@@ -1734,14 +1734,53 @@ uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A
     return a;
 }
 
-void nesLocC92CPrepareTableSelection(uint8_t a, uint8_t ram0043, uint8_t *ram0002, uint8_t *ram0003)
-{ if(ram0002!=NULL)*ram0002=ram0043;if(ram0003!=NULL)*ram0003=a; }
-
-uint8_t nesSubC935CopyPreparedBytes(uint8_t x, const uint8_t ram03D1[7], uint8_t ram0304To040Au[263])
+/* Full sub_C92C -> sub_C53E -> sub_CB06/CB13 table-selection path. */
+void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram03F2,
+                                const uint8_t cpuRam[2048], uint8_t *ram0002,
+                                uint8_t *ram0003, uint8_t *ram0005,
+                                uint8_t *ram0006, uint8_t *ram0007)
 {
+    uint8_t index;
+    if (cpuRam == NULL) return;
+    if (ram0002 != NULL) *ram0002 = ram0043;
+    if (ram0003 != NULL) *ram0003 = a;
+    index = (ram0043 == 5u) ? 0x20u : (uint8_t)(ram0043 * 3u);
+    if (ram03F2 != 0u) index = (uint8_t)(index + 0x23u);
+    if (ram0005 != NULL) *ram0005 = cpuRam[0x0580u + index];
+    if (ram0006 != NULL) *ram0006 = cpuRam[0x0581u + index];
+    if (ram0007 != NULL) *ram0007 = cpuRam[0x0582u + index];
+}
+
+static void nesSubDFA2DivideByTen(uint8_t input, uint8_t *outX, uint8_t *outA)
+{
+    uint8_t x=0u, a=input;
+    for (;;) {
+        x=(uint8_t)(x+1u);
+        a=(uint8_t)(a-10u); /* SEC; SBC #$0A */
+        if ((a&0x80u)!=0u) break; /* BPL loop stops when N=1 */
+    }
+    x=(uint8_t)(x-1u); /* DEX */
+    a=(uint8_t)(a+10u); /* ADC #$0A; carry is clear after negative SBC */
+    if(outX!=NULL)*outX=x;
+    if(outA!=NULL)*outA=a;
+}
+
+/* Full sub_C935 including sub_DF7F/sub_DFA2 and the seven-byte copy. */
+uint8_t nesSubC935BuildCommand(uint8_t ram0005, uint8_t ram0006, uint8_t ram0007,
+                               uint8_t x, uint8_t ram03D1To03D7[7],
+                               uint8_t ram0304To040Au[263])
+{
+    uint8_t quotient, remainder;
     unsigned int i;
-    if(ram03D1==NULL||ram0304To040Au==NULL)return x;
-    for(i=0u;i<7u;++i)ram0304To040Au[4u+(uint8_t)(x+(uint8_t)i)]=ram03D1[i];
+    if(ram03D1To03D7==NULL||ram0304To040Au==NULL)return x;
+    nesSubDFA2DivideByTen(ram0007,&quotient,&remainder);
+    ram03D1To03D7[5]=quotient; ram03D1To03D7[6]=remainder;
+    nesSubDFA2DivideByTen(ram0006,&quotient,&remainder);
+    ram03D1To03D7[2]=quotient; ram03D1To03D7[3]=remainder;
+    nesSubDFA2DivideByTen(ram0005,&quotient,&remainder);
+    ram03D1To03D7[0]=remainder; /* quotient is intentionally discarded */
+    for(i=0u;i<7u;++i)
+        ram0304To040Au[4u+(uint8_t)(x+(uint8_t)i)]=ram03D1To03D7[i];
     return (uint8_t)(x+7u);
 }
 
