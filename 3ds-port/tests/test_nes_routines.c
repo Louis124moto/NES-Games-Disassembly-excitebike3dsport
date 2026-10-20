@@ -683,7 +683,6 @@ static int testLocDCC7(void)
                     uint8_t timers[4] = {0u, 0u, 0u, 0u};
                     uint8_t values[4] = {0u, 0u, 0u, 0u};
                     uint8_t duration = (uint8_t)(target ^ 0xA7u);
-                    uint8_t expectedTimer = timerMode ? 1u : duration;
                     uint8_t expected = (uint8_t)current;
                     unsigned int i;
                     for (i = 0; i < 4u; ++i) {
