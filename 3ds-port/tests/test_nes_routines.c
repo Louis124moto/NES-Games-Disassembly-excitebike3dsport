@@ -601,6 +601,7 @@ static int testBatchC64E653(void) {
 
 int main(void)
 {
+    if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
     if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
     if(testBatchC32F()!=0) { fputs("FAIL: sub_C32F\\n",stderr); return 1; }
     if(testBatchC53Family()!=0) { fputs("FAIL: sub_C53A/sub_C53E/sub_CB06\\n",stderr); return 1; }
@@ -1645,4 +1646,44 @@ static int testNewE1F9(void){
     if(nesSubE1F9SelectObjectSprite(2u,r9c,rbc,r370,r36,rac,r98,rb0,r58,rb8,r90,r94,rdc,0u,0u,&ram039C3,&temp)!=0x15u)return 5;
     puts("PASS: sub_E1F9 selection branches, timer return, temp and RAM side effect.");return 0;
 }
+static int testSubFF53Exact(void)
+{
+    static uint8_t memory[65536];
+    unsigned int a, carry, offset;
+    for (unsigned int address = 0u; address < 65536u; ++address)
+        memory[address] = (uint8_t)((address ^ (address >> 8)) & 0xFFu);
+    for (a = 0u; a < 256u; ++a) {
+        for (carry = 0u; carry < 2u; ++carry) {
+            for (offset = 0u; offset < 256u; ++offset) {
+                uint8_t x = (uint8_t)a, value = (uint8_t)a;
+                uint8_t c = (uint8_t)carry, expectedY, actualY = 0u, expected;
+                uint16_t address;
+                c = (uint8_t)(value & 1u);
+                value = (uint8_t)((value >> 1) | (uint8_t)(carry << 7));
+                value = x;
+                for (unsigned int bit = 0u; bit < 3u; ++bit) {
+                    uint8_t next = (uint8_t)(value >> 7);
+                    value = (uint8_t)((uint8_t)(value << 1) | c);
+                    c = next;
+                }
+                value = (uint8_t)((value & 0x07u) + (uint8_t)offset);
+                expectedY = value;
+                address = (uint16_t)(0xFF3Eu + (uint16_t)expectedY);
+                expected = memory[address];
+                {
+                    uint8_t actual = nesSubFF53Lookup((uint8_t)a, (uint8_t)carry,
+                                                       (uint8_t)offset, memory, &actualY);
+                    if (actual != expected || actualY != expectedY) {
+                        fprintf(stderr, "sub_FF53 mismatch A=%02X C=%u offset=%02X Y=%02X/%02X value=%02X/%02X\\n",
+                                a, carry, offset, actualY, expectedY, actual, expected);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    puts("PASS: sub_FF53 ROR/ROL carry flow and indexed 6502 memory read.");
+    return 0;
+}
+
 static int testNewE3AA(void){uint8_t t=0u,l=0u,f=1u;nesLocE3AAUpdateHeatFlags(0x20u,1u,&t,&l,&f);return(t==0x20u&&l==0x20u&&f==0xB1u)?0:1;}
