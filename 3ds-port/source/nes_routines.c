@@ -1618,3 +1618,138 @@ uint8_t nesSubC409SetupStaticSprite(uint8_t y, const uint8_t tblC088[256],
     if (ram0046 != NULL) *ram0046 = 0u;
     return 0u;
 }
+
+
+/* Additional translations from bank_FF.asm; each models the listed entry's RAM effects. */
+void nesSubCFDBClearUpperFlags(uint8_t ram0094, uint8_t *ram005C)
+{ if (ram005C != NULL && ram0094 != 0u) *ram005C = (uint8_t)(*ram005C & 0x0Fu); }
+
+void nesSubCFCBCompareObjectPosition(uint8_t ram0094, uint8_t ram0078,
+                                     uint8_t ram0090, uint8_t ram0074, uint8_t *ram005C)
+{
+    if (ram005C == NULL) return;
+    if (ram0094 < ram0078 || (ram0094 == ram0078 && ram0090 < ram0074))
+        *ram005C = (uint8_t)(*ram005C | 0x80u);
+    else if (ram0094 != 0u)
+        *ram005C = (uint8_t)(*ram005C & 0x0Fu);
+}
+
+void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *ram005C)
+{
+    uint8_t flags;
+    if (ram005C == NULL) return;
+    flags = (uint8_t)(*ram005C & 0xF0u);
+    if (ram007C != 0u && ram007C != ram00AC)
+        flags = (uint8_t)(flags | (ram007C < ram00AC ? 1u : 2u));
+    *ram005C = flags;
+}
+
+uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C)
+{ return (uint8_t)(x == ram004C); }
+
+uint8_t nesLocCAFAFillCommand(uint8_t x, uint8_t ram0304To040Au[263])
+{
+    unsigned int i;
+    if (ram0304To040Au == NULL) return x;
+    for (i=0u;i<7u;++i) ram0304To040Au[4u+(uint8_t)(x+(uint8_t)i)] = 0xFEu;
+    return (uint8_t)(x+7u);
+}
+
+void nesLocCD13CopySpriteTemplate(uint8_t oam[256], const uint8_t tblC150[8])
+{ unsigned int i; if(oam!=NULL&&tblC150!=NULL)for(i=0u;i<8u;++i)oam[0xC0u+i]=tblC150[i]; }
+
+uint8_t nesLocD0A6StoreAndReturn(uint8_t x, uint8_t a, uint8_t ram000D, uint8_t ram007C[256])
+{ if(ram007C!=NULL)ram007C[x]=a; return ram000D; }
+
+void nesLocD197WriteScrollRegister(uint8_t a, uint8_t *ppuScrollWrite)
+{ if(ppuScrollWrite!=NULL)*ppuScrollWrite=a; }
+
+void nesLocEC47WriteFixedSprite(uint8_t oam[256], uint8_t ram05E0)
+{ if(oam!=NULL){oam[0x34]=0xCFu;oam[0x35]=ram05E0;oam[0x36]=0u;oam[0x37]=0xE4u;} }
+
+void nesLocCA85ClearRam(uint8_t cpuRam[256])
+{
+    uint8_t saved42; unsigned int i;
+    if(cpuRam==NULL)return;
+    saved42=cpuRam[0x42];
+    for(i=0x21u;i<=0xFFu;++i)cpuRam[i]=0u;
+    cpuRam[0xFC]=0u;
+    cpuRam[0x49]=(uint8_t)(cpuRam[0x49]+1u);
+    cpuRam[0x42]=saved42;
+}
+
+uint8_t nesSubC339WaitForVblank(const uint8_t statusReads[], unsigned int count,
+                               uint8_t ramFor2000, uint8_t *ppuCtrlWrite,
+                               uint8_t *ramFor2000Out, unsigned int *readsUsed)
+{
+    unsigned int i;
+    if(readsUsed!=NULL)*readsUsed=0u;
+    if(statusReads==NULL||ppuCtrlWrite==NULL||ramFor2000Out==NULL)return 0u;
+    for(i=0u;i<count;++i){
+        if(readsUsed!=NULL)*readsUsed=i+1u;
+        if((statusReads[i]&0x80u)==0u){
+            uint8_t v=(uint8_t)(ramFor2000|0x80u);
+            *ppuCtrlWrite=v;*ramFor2000Out=v;return 1u;
+        }
+    }
+    return 0u; /* The real 6502 loops forever if no terminating status occurs. */
+}
+
+uint8_t nesSubD19BWaitForStatus(const uint8_t statusReads[], unsigned int count,
+                                uint8_t ramFor2000, uint8_t *ppuCtrlWrite,
+                                uint8_t *ramFor2000Out, unsigned int *readsUsed)
+{
+    unsigned int i;
+    if(readsUsed!=NULL)*readsUsed=0u;
+    if(statusReads==NULL||ppuCtrlWrite==NULL||ramFor2000Out==NULL)return 0u;
+    for(i=0u;i<count;++i){
+        if(readsUsed!=NULL)*readsUsed=i+1u;
+        if((statusReads[i]&0x40u)!=0u){
+            uint8_t v=(uint8_t)(ramFor2000&0xF0u);
+            *ppuCtrlWrite=v;*ramFor2000Out=v;return 1u;
+        }
+    }
+    return 0u;
+}
+
+void nesSubD347ReadControllers(const uint8_t samples0[8], const uint8_t samples1[8],
+                               uint8_t previous0, uint8_t previous1,
+                               uint8_t *hold0, uint8_t *press0,
+                               uint8_t *hold1, uint8_t *press1, uint8_t strobeWrites[2])
+{
+    if(strobeWrites!=NULL){strobeWrites[0]=1u;strobeWrites[1]=0u;}
+    if(samples0!=NULL&&hold0!=NULL&&press0!=NULL)nesSubD35BDecodeController(samples0,previous0,hold0,press0);
+    if(samples1!=NULL&&hold1!=NULL&&press1!=NULL)nesSubD35BDecodeController(samples1,previous1,hold1,press1);
+}
+
+uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A, uint8_t *ram0053)
+{
+    if(a<ram0009){
+        a=(uint8_t)(a+ram0009);
+        while((ram000A=(uint8_t)(ram000A>>1))!=0u)a=(uint8_t)(a>>1);
+    }else{
+        a=(uint8_t)(a-ram0009);a=(uint8_t)(a>>1);a=(uint8_t)(a+4u);
+    }
+    if(ram0053!=NULL)*ram0053=a;
+    return a;
+}
+
+void nesLocC92CPrepareTableSelection(uint8_t a, uint8_t ram0043, uint8_t *ram0002, uint8_t *ram0003)
+{ if(ram0002!=NULL)*ram0002=ram0043;if(ram0003!=NULL)*ram0003=a; }
+
+uint8_t nesSubC935CopyPreparedBytes(uint8_t x, const uint8_t ram03D1[7], uint8_t ram0304To040Au[263])
+{
+    unsigned int i;
+    if(ram03D1==NULL||ram0304To040Au==NULL)return x;
+    for(i=0u;i<7u;++i)ram0304To040Au[4u+(uint8_t)(x+(uint8_t)i)]=ram03D1[i];
+    return (uint8_t)(x+7u);
+}
+
+uint8_t nesSubECC9CheckSpriteBytes(uint8_t y, const uint8_t ram0540[256],
+                                   const uint8_t ram0480[256], const uint8_t ram0400[256],
+                                   const uint8_t ram04C0[256])
+{
+    if(ram0540==NULL||ram0480==NULL||ram0400==NULL||ram04C0==NULL)return 1u;
+    return (uint8_t)(ram0540[y]!=0x3Du||ram0480[y]!=0x3Du||
+                     ram0400[y]!=0x3Bu||ram04C0[y]!=0x3Bu);
+}
