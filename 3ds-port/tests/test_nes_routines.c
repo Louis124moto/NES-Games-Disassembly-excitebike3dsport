@@ -37,7 +37,8 @@ static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
 
 static int testSubD310(void);
 static int testSubD35B(void);
-static int testSubD326(void);\nstatic int testSubDA7A(void);
+static int testSubD326(void);
+static int testSubDA7A(void);
 
 int main(void)
 {
