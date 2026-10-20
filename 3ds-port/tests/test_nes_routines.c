@@ -468,6 +468,39 @@ static int testBatchF871F885(void) {
 }
 
 
+
+static int testD0F4PrepareCommandStream(void)
+{
+    uint8_t src[7]={1u,2u,3u,4u,5u,6u,7u},dst[8]={0u};
+    uint8_t slo=0u,shi=0u,dlo=0u,dhi=0u;unsigned i;
+    nesSubD0F4PrepareCommandStream(src,dst,&slo,&shi,&dlo,&dhi);
+    if(dst[0]!=0x17u||dst[2]!=0xFBu||dst[5]!=0xFBu||
+       slo!=0x56u||shi!=0x23u||dlo!=0xD0u||dhi!=0x03u)return 1;
+    for(i=1u;i<8u;i++) {
+        uint8_t expected=src[i-1u];
+        if(i==2u||i==5u)expected=0xFBu;
+        if(dst[i]!=expected)return 2;
+    }
+    puts("PASS: sub_D0F4 command-stream copy and explicit pointers.");
+    return 0;
+}
+static int testD1A9ScrollWrites(void)
+{
+    uint8_t writes[2]={0xAAu,0xBBu},reads=4u;
+    nesSubD1A9PrepareScrollWrites(writes,&reads);
+    if(writes[0]!=0u||writes[1]!=0u||reads!=5u)return 1;
+    puts("PASS: sub_D1A9 two zero scroll writes and status-read count.");
+    return 0;
+}
+static int testD1B3ScrollWrites(void)
+{
+    uint8_t ctrl=0u,writes[2]={0u,0u},reads=7u;
+    nesSubD1B3PrepareScrollWrites(0xA0u,0x02u,0x35u,0x71u,&ctrl,writes,&reads);
+    if(ctrl!=0xA2u||writes[0]!=0x35u||writes[1]!=0x71u||reads!=8u)return 1;
+    puts("PASS: sub_D1B3 control and ordered scroll-write effects.");
+    return 0;
+}
+
 static int testBatchC1FDC229(void) {
     uint8_t table[256], ram[2048]; unsigned i;
     for(i=0;i<256u;i++) table[i]=(uint8_t)(i^0x5Au);
@@ -550,7 +583,8 @@ static int testBatchF889(void) {
 }
 static int testBatchC94B(void) {
     uint8_t length=0x10u,table[257],ram[267];uint8_t x=0u;unsigned i;
-    for(i=0;i<257u;i++)table[i]=(uint8_t)(i^0xA5u);for(i=0;i<267u;i++)ram[i]=0xCCu;
+    for(i=0;i<257u;i++) table[i]=(uint8_t)(i^0xA5u);
+    for(i=0;i<267u;i++) ram[i]=0xCCu;
     nesSubC94BBuildCommand(&length,0xFEu,table,ram,&x);
     if(x!=0x10u||length!=0x1Au)return 1;
     if(ram[0x11]!=table[0xFE]||ram[0x12]!=table[0xFF]||ram[0x13]!=0x07u||ram[0x15]!=0xFBu||ram[0x18]!=0xFBu||ram[0x1B]!=0u)return 2;
@@ -568,9 +602,9 @@ int main(void)
 {
     if(testBatchC1FDC229()!=0||testBatchC32F()!=0||testBatchC53Family()!=0||testBatchC716C726()!=0||testBatchDC97()!=0||testBatchEC25EC5D()!=0||testBatchEC3B()!=0||testBatchEC75()!=0||testBatchF681()!=0||testBatchF821F86B()!=0||testBatchF889()!=0||testBatchC94B()!=0||testBatchC64E653()!=0) { fputs("FAIL: 21-routine exact ASM batch\\n",stderr); return 1; }
     if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\n",stderr); return 1; }
-    if(testSubD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
-    if(testSubD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
-    if(testSubD1B3ScrollWrites()!=0) { fputs("FAIL: sub_D1B3 scroll writes\\n",stderr); return 1; }
+    if(testD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
+    if(testD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
+    if(testD1B3ScrollWrites()!=0) { fputs("FAIL: sub_D1B3 scroll writes\\n",stderr); return 1; }
     if(testE8xxConstantAndResetEntries()) { fputs("FAIL: E8BF/E8C6/E8E3/E8F5/E8FA/E963\n",stderr); return 1; }
     if(testE8xxDispatchEntries()) { fputs("FAIL: E845/E854/E85D/E86A/E879 dispatch entries\n",stderr); return 1; }
     if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
