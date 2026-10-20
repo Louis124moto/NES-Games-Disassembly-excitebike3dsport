@@ -95,14 +95,14 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D255` | `sub_D255_hide_all_sprites` | Pending | — |
 | `$D260` | `sub_D260` | Pending | calls: sub_C333 |
 | `$D2FF` | `sub_D2FF` | Pending | — |
-| `$D310` | `sub_D310_decrease_all_timers` | Translated + tested (verify current CI) | — |
+| `$D310` | `sub_D310_decrease_all_timers` | Translated + tested (host exhaustive test passed; 3DS build pending) | — |
 | `$D326` | `sub_D326` | Pending | — |
 | `$D347` | `sub_D347_read_joy_regs` | Pending | calls: sub_D35B |
 | `$D35B` | `sub_D35B` | Pending | — |
 | `$D3C1` | `sub_D3C1` | Pending | — |
 | `$D918` | `sub_D918` | Pending | — |
 | `$D924` | `sub_D924` | Pending | — |
-| `$DA15` | `sub_DA15` | Translated + tested (verify current CI) | — |
+| `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
 | `$DA26` | `sub_DA26` | Pending | — |
 | `$DA58` | `sub_DA58` | Pending | — |
 | `$DA6A` | `sub_DA6A` | Pending | — |
