@@ -85,3 +85,29 @@ void nesSubD326RotateInputBits(uint8_t bytes[8])
         carry = next_carry;
     }
 }
+
+
+/*
+ * RAM-level translation of sub_D35B ($D35B), excluding the physical $4016/$4017
+ * reads. Each serial read contributes a 1 if either bit 0 or bit 1 is set,
+ * matching LSR / ORA saved sample / LSR carry behavior. Eight ROL operations
+ * assemble the standard NES bit order: A, B, Select, Start, Up, Down, Left, Right.
+ */
+void nesSubD35BDecodeController(const uint8_t serial_samples[8], uint8_t previous_hold,
+                                uint8_t *hold, uint8_t *press)
+{
+    uint8_t buttons = 0u;
+    unsigned int i;
+
+    for (i = 0u; i < 8u; ++i) {
+        uint8_t sample = serial_samples[i];
+        uint8_t bit = (uint8_t)(((sample | (sample >> 1)) & 1u) != 0u);
+        buttons = (uint8_t)((buttons << 1) | bit);
+    }
+
+    *hold = buttons;
+    *press = buttons;
+    if ((buttons & 0x80u) != 0u && (previous_hold & 0x80u) != 0u) {
+        *press = (uint8_t)(buttons & 0x7Fu);
+    }
+}
