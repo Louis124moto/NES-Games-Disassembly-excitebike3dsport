@@ -601,6 +601,7 @@ static int testBatchC64E653(void) {
 
 int main(void)
 {
+    if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
     if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
     if(testBatchC32F()!=0) { fputs("FAIL: sub_C32F\\n",stderr); return 1; }
@@ -1683,6 +1684,20 @@ static int testSubFF53Exact(void)
         }
     }
     puts("PASS: sub_FF53 ROR/ROL carry flow and indexed 6502 memory read.");
+    return 0;
+}
+
+static int testSubEC99Exact(void)
+{
+    uint8_t y=3u,c0=0u,b0=0x10u,b1=0x1Eu,o2=0x3Eu,o3=0x20u;
+    uint8_t out2=0xAAu,out3=0xBBu;
+    nesSubEC99AdvanceObjectPhase(0u,&y,&c0,o2,o3,&b0,&b1,&out2,&out3);
+    if(y!=3u||c0!=0u||b0!=0x10u||b1!=0x1Eu||out2!=0xAAu||out3!=0xBBu)return 1;
+    nesSubEC99AdvanceObjectPhase(4u,&y,&c0,o2,o3,&b0,&b1,&out2,&out3);
+    if(y!=7u||c0!=0u||b0!=0x10u||out2!=0xAAu)return 2;
+    nesSubEC99AdvanceObjectPhase(1u,&y,&c0,o2,o3,&b0,&b1,&out2,&out3);
+    if(y!=0u||c0!=1u||b1!=0u||b0!=(uint8_t)(0x10u^0x04u)||out2!=0u||out3!=0x21u)return 3;
+    puts("PASS: sub_EC99 early exits, exact $08 trigger, phase helper, and $40 wrap.");
     return 0;
 }
 
