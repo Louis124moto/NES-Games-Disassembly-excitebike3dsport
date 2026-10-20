@@ -353,3 +353,13 @@ These helpers preserve the original byte operations. They do not replace callers
 - **`sub_DB95_clear_opponent_bike_data` (`$DB95`)**: clears exactly the 20 RAM fields written by the assembly, for X=1,2,3 only; X=0 is intentionally untouched. Native helper: `nesSubDB95ClearOpponentBikeData`.
 
 Regression tests compare these helpers against independent instruction-level references or exact RAM-field expectations. Hardware-specific calls and higher-level caller state remain outside these helpers.
+
+
+## Additional routine translations — 2026-10-20
+
+- **`sub_DA6A` (`$DA6A`)**: adds RAM[$0060] to `ram_scroll_X` with 8-bit wrap. It toggles bit 0 of `ram_004D_base_nametable` only on carry.
+- **`sub_DB50` (`$DB50`)**: table-driven object setup. Uses the original `tbl_D8D5` and `tbl_D8CD` bytes supplied by the caller. The X=3 special path preserves the exact bit-1 test on `ram_0084_obj,X`, the player/object position comparison, and the early RTS before the final increment.
+- **`sub_DCA0` (`$DCA0`)**: chooses the indexed `tbl_D88B` value, except for the exact `track_finished == 1` and all-zero player/object-index condition; `ram_00A4_obj,X == 1` overrides the result with `$06`.
+- **`loc_DCC7` (`$DCC7`)**: shared non-label-prefixed entry takes target in A and duration in Y. If the indexed timer is nonzero, it returns without changes. Otherwise it stores the duration and moves `ram_00AC_obj,X` one unsigned byte step toward the target, with the original DEC/DEC/INC sequence retained for the greater-than case.
+
+The host tests exercise byte boundaries and branch cases. These helpers remain isolated translations; the complete caller paths and game-state integration are still in progress.
