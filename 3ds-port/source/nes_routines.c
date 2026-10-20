@@ -1560,3 +1560,30 @@ uint8_t nesSubFF53Lookup(uint8_t inputA, uint8_t carryIn, uint8_t ram07F0,
     address = (uint16_t)(0xFF3Eu + (uint16_t)a);
     return cpuMemory[address]; /* LDA tbl_FF3E,Y */
 }
+
+/* Exact RAM-level translation of sub_EC99 ($EC99).
+ * The F6FB call is represented by the already translated phase helper.
+ * ramB0Object[2] and [3] are the two bytes updated through sub_ECBF.
+ */
+void nesSubEC99AdvanceObjectPhase(uint8_t ram0060, uint8_t *ram00B9Object1,
+                                  uint8_t *ram00C0Object0, uint8_t ram00B0Object2,
+                                  uint8_t ram00B0Object3, uint8_t *ram00B0Global,
+                                  uint8_t *ram00B1Global, uint8_t *ram00B0Object2Out,
+                                  uint8_t *ram00B0Object3Out)
+{
+    uint8_t updatedY;
+    if (ram0060 == 0u || ram00B9Object1 == NULL ||
+        ram00C0Object0 == NULL || ram00B0Global == NULL ||
+        ram00B1Global == NULL || ram00B0Object2Out == NULL ||
+        ram00B0Object3Out == NULL) return;
+
+    updatedY = (uint8_t)(ram0060 + *ram00B9Object1);
+    *ram00B9Object1 = updatedY;
+    if (updatedY != 0x08u) return;
+
+    *ram00C0Object0 = 0x01u;
+    *ram00B9Object1 = 0x00u;
+    nesSubF6FBAdvanceAudioPhase(ram00B0Global, ram00B1Global);
+    *ram00B0Object2Out = nesSubECBFIncrementAndWrap(ram00B0Object2);
+    *ram00B0Object3Out = nesSubECBFIncrementAndWrap(ram00B0Object3);
+}
