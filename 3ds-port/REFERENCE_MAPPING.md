@@ -451,3 +451,8 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 ## Object sprite selection — $E1F9
 
 - Replaced the earlier partial approximation with the literal branch sequence through RTS: resets `$000E` and `$039F`, handles the `$009C` fast path and timer-dependent return, finish-state special case, `$0098/$00B0` gate, `$0058/$00B8` gate, `$0090|$0094` temporary increment, and `$00AC == $06` orientation/flag selection. The return value uses `$0036,X - 1` when the timer is nonzero, matching the actual `LDY ram_0036_timer,X / DEY / TYA` sequence.
+
+
+## Finish countdown — entry $E2AF / labels $E2BD and $E2D0
+
+- Adds a combined state transition for the code beginning at `$E2AF`: low-byte subtract and borrow into `$03BE`, finish-flag/timer blink behavior, exact early RTS for finish values other than 0/1, and the `$03BE == 1` countdown sprite command (`$50`, `$32`, OAM base `$C0`, and `$D8E5` tile). Return code 2 explicitly represents the original branch into the shared `$E2F6` tail rather than pretending it is an independent RTS helper.
