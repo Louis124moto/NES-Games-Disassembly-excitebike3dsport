@@ -233,4 +233,27 @@ void nesSubD1B3PrepareScrollWrites(uint8_t ramFor2000, uint8_t baseNametable,
     uint8_t scrollX, uint8_t scrollY, uint8_t *ppuCtrl,
     uint8_t scrollWrites[2], uint8_t *statusReads);
 
+
+/* 2026-10-21: exact bank_FF.asm RAM/register-effect helpers. */
+void nesSubC333WritePpuCtrl(uint8_t a, uint8_t *ramFor2000, uint8_t *ppuCtrl);
+void nesSubC3AFIncrementRaceCounter(uint8_t *ram0041);
+void nesSubC3B1ClearCounters(uint8_t *ram0040, uint8_t *ram0044);
+void nesSubC621CopyPage(const uint8_t ram06E0[256], uint8_t ram05E0[256]);
+void nesSubC68AIncrementPointer(uint8_t *lo, uint8_t *hi);
+uint8_t nesSubC971AddCommandLength(uint8_t a, uint8_t ram0300, uint8_t *newRam0300, uint8_t *xOut);
+void nesSubCA1BCopyButtonHold(uint8_t ramButtonHold, uint8_t *ram005C);
+uint8_t nesSubCB13ComputeSpriteCode(uint8_t yIn, uint8_t ram0046Flag);
+void nesSubCFE3ClearObjectFlags(uint8_t x, uint8_t ram005C[256]);
+void nesSubD24FDisableRendering(uint8_t *ppuMask);
+uint8_t nesSubCF8BCarryOut(uint8_t a);
+uint8_t nesSubECBFIncrementAndWrap(uint8_t a);
+void nesSubF676FillCommandPayload(uint8_t ram0300To0315[22]);
+uint8_t nesSubF826AdvanceObject(uint8_t x, uint8_t *ram00B7, uint8_t *ram00C5);
+void nesSubF82EPreparePointer(uint8_t x, const uint8_t tblF063Lo[256], const uint8_t tblF087Hi[256], uint8_t *ptrLo, uint8_t *ptrHi);
+void nesSubF839PreparePointer(uint8_t x, const uint8_t tblF4F5Lo[256], const uint8_t tblF4FAHi[256], uint8_t *ptrLo, uint8_t *ptrHi);
+void nesSubC62DControllerStrobe(uint8_t *controller4016);
+void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1);
+void nesSubF871WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne, uint8_t channelOffset, uint8_t audio4000To400F[16]);
+void nesSubF885WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne, uint8_t audio4000To400F[16]);
+
 #endif
