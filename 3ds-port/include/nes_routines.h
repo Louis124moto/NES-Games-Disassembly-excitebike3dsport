@@ -117,4 +117,16 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram00B8[4], uint8_t ram008C[4],
                                        uint8_t ram03F1);
 
+
+void nesSubE16CWriteSpriteStrip(uint8_t oam[256],uint8_t address,uint8_t firstTile);
+void nesSubE3F4SortObjectsByY(uint8_t order[4],const uint8_t y[4],uint8_t active3,uint8_t y3);
+void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset);
+void nesSubE49BHideSelectedSpriteGroups(uint8_t oam[256],uint8_t index,const uint8_t flags[3],const uint8_t offsets[3]);
+void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta);
+void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink);
+uint8_t nesLocE2D0CountdownReachedOne(uint8_t countdown);
+uint8_t nesSubE2F6ShouldDrawWheel(uint8_t x,const uint8_t r36c[4],const uint8_t r94[4],const uint8_t r90[4],const uint8_t rbc[4],const uint8_t r84[4],const uint8_t r80[4]);
+uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp);
+void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags);
+
 #endif
