@@ -1604,3 +1604,17 @@ void nesLocC3EFWriteSpriteY(uint8_t a, uint8_t *spriteY)
 {
     if (spriteY != NULL) *spriteY = a;
 }
+
+
+/* sub_C409: Y indexes tbl_C088_spr_X; writes sprite tile $FA, X from the
+ * table, attribute $00 and ram0046=$00. A is $00 on return. */
+uint8_t nesSubC409SetupStaticSprite(uint8_t y, const uint8_t tblC088[256],
+                                    uint8_t spriteOam[4], uint8_t *ram0046)
+{
+    if (tblC088 == NULL || spriteOam == NULL) return 0u;
+    spriteOam[1] = 0xFAu;
+    spriteOam[3] = tblC088[y];
+    spriteOam[2] = 0u;
+    if (ram0046 != NULL) *ram0046 = 0u;
+    return 0u;
+}
