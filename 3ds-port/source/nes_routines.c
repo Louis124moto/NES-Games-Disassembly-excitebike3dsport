@@ -157,3 +157,109 @@ void nesSubDA7AUpdateScrollSlots(uint8_t active[4], const uint8_t delta[4],
         ram0390[x] = (uint8_t)difference;
     }
 }
+
+/* Exact instruction-level translation of sub_DBFE ($DBFE). */
+void nesSubDBFEUpdateScroll(uint8_t ram0060, uint8_t *ram03BF,
+                            uint8_t *scrollX, uint8_t *baseNametable)
+{
+    uint8_t a = ram0060;
+    unsigned int carry = (unsigned int)(a & 1u);
+    unsigned int i, sum;
+    a = (uint8_t)(a >> 1); /* LSR */
+    for (i = 0u; i < 3u; ++i) {
+        unsigned int next = (unsigned int)(a & 1u);
+        a = (uint8_t)((a >> 1) | (uint8_t)(carry << 7));
+        carry = next;
+    }
+    sum = (unsigned int)a + (unsigned int)*ram03BF; /* CLC; ADC */
+    *ram03BF = (uint8_t)sum;
+    carry = sum > 0xFFu ? 1u : 0u;
+    sum = (unsigned int)ram0060 + (unsigned int)*scrollX + carry; /* LDA preserves C */
+    *scrollX = (uint8_t)sum;
+    if (sum > 0xFFu) *baseNametable = (uint8_t)(*baseNametable ^ 1u);
+}
+
+/* sub_DC97/sub_DC9A: LDA ram_03F1; SEC; SBC ram_00BC_obj,X; SBC ram_obj_pos_Y_lo,X. */
+uint8_t nesSubDC9A(uint8_t ram03F1, uint8_t ram00BC, uint8_t ramY)
+{
+    int d = (int)ram03F1 - (int)ram00BC;
+    uint8_t a = (uint8_t)d;
+    unsigned int carry = d >= 0 ? 1u : 0u;
+    d = (int)a - (int)ramY - (int)(1u - carry);
+    return (uint8_t)d;
+}
+
+/* sub_DCDE: DEC RAM[$0374+X] before checking RAM[$005C+X] & $C0. */
+void nesSubDCDE(uint8_t *timer0374, uint8_t ram005C)
+{
+    if (*timer0374 == 0u) return;
+    *timer0374 = (uint8_t)(*timer0374 - 1u);
+    if ((ram005C & 0xC0u) != 0u) *timer0374 = 0u;
+}
+
+/* Exact RAM-level translation of sub_DD38 ($DD38), including ROR carry. */
+void nesSubDD38SetupObject(uint8_t x, uint8_t ram0090[4], uint8_t ram0094[4],
+                           uint8_t ram0388[4], uint8_t ram0378[4],
+                           uint8_t ram037C[4], uint8_t ram0380[4],
+                           uint8_t ram00B0[4], uint8_t *ram00FF)
+{
+    unsigned int sum, carry;
+    uint8_t a;
+    if (x > 3u) return;
+    ram00B0[x] = 0x02u;
+    ram0380[x] = 0x0Fu;
+    sum = (unsigned int)ram0090[x] + 0xAFu;
+    ram0378[x] = (uint8_t)sum;
+    carry = sum > 0xFFu ? 1u : 0u;
+    sum = (unsigned int)ram0094[x] + carry;
+    ram037C[x] = (uint8_t)sum;
+    if (ram0388[x] == 0x02u) {
+        carry = (unsigned int)(ram037C[x] & 1u);
+        ram037C[x] = (uint8_t)(ram037C[x] >> 1);
+        ram0378[x] = (uint8_t)((ram0378[x] >> 1) | (uint8_t)(carry << 7));
+    }
+    if (x == 0u) {
+        a = (uint8_t)(ram0094[x] << 4);
+        a = (uint8_t)(a ^ 0x30u);
+        *ram00FF = a != 0u ? a : 0x08u;
+    }
+}
+
+/* sub_DD6F: incoming carry is an explicit input because ADC uses it unchanged. */
+uint8_t nesSubDD6F(uint8_t x, uint8_t carryIn, uint8_t ram0380[4],
+                   uint8_t ram038C[4], uint8_t ram0384[4],
+                   uint8_t ram037C[4], uint8_t temp0001)
+{
+    unsigned int sum, carry;
+    int d;
+    uint8_t a;
+    if (x > 3u) return 0u;
+    sum = (unsigned int)ram0380[x] + ram038C[x] + (unsigned int)(carryIn != 0u);
+    ram0380[x] = (uint8_t)sum;
+    carry = sum > 0xFFu ? 1u : 0u;
+    sum = (unsigned int)ram0384[x] + carry;
+    ram0384[x] = (uint8_t)sum;
+    carry = sum > 0xFFu ? 1u : 0u;
+    d = (int)temp0001 - (int)ram037C[x] - (int)(1u - carry);
+    a = (uint8_t)d;
+    carry = d >= 0 ? 1u : 0u;
+    sum = (unsigned int)a + ram0384[x] + carry;
+    return (uint8_t)sum;
+}
+
+/* sub_DB95 clears only the 20 fields listed in the original assembly. */
+void nesSubDB95ClearOpponentBikeData(uint8_t x, uint8_t ram00A8[4],
+    uint8_t ram00B8[4], uint8_t ram00BC[4], uint8_t ram00A0[4],
+    uint8_t ram00A4[4], uint8_t ram0058[4], uint8_t ram00CC[4],
+    uint8_t ram036C[4], uint8_t ram0090[4], uint8_t ram0094[4],
+    uint8_t ram0098[4], uint8_t ram009C[4], uint8_t ram00B0[4],
+    uint8_t ram00D4[4], uint8_t ram0388[4], uint8_t ram00C0[4],
+    uint8_t ram039C[4], uint8_t ram00DC[4], uint8_t ram0070[4],
+    uint8_t ram0370[4])
+{
+    if (x == 0u || x > 3u) return;
+    ram00A8[x] = ram00B8[x] = ram00BC[x] = ram00A0[x] = ram00A4[x] = 0u;
+    ram0058[x] = ram00CC[x] = ram036C[x] = ram0090[x] = ram0094[x] = 0u;
+    ram0098[x] = ram009C[x] = ram00B0[x] = ram00D4[x] = ram0388[x] = 0u;
+    ram00C0[x] = ram039C[x] = ram00DC[x] = ram0070[x] = ram0370[x] = 0u;
+}
