@@ -1744,7 +1744,17 @@ void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram03F2,
     if (cpuRam == NULL) return;
     if (ram0002 != NULL) *ram0002 = ram0043;
     if (ram0003 != NULL) *ram0003 = a;
-    index = (ram0043 == 5u) ? 0x20u : (uint8_t)(ram0043 * 3u);
+    if (ram0043 == 5u) {
+        index = 0x20u;
+    } else {
+        uint8_t counter = ram0043;
+        index = 0u;
+        for (;;) {
+            counter = (uint8_t)(counter - 1u); /* DEY; branch on N */
+            if ((counter & 0x80u) != 0u) break;
+            index = (uint8_t)(index + 3u); /* CLC; ADC #$03 */
+        }
+    }
     if (ram03F2 != 0u) index = (uint8_t)(index + 0x23u);
     if (ram0005 != NULL) *ram0005 = cpuRam[0x0580u + index];
     if (ram0006 != NULL) *ram0006 = cpuRam[0x0581u + index];
