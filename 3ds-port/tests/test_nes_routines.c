@@ -136,16 +136,16 @@ static int testSubE2F6Exact(void){
     uint8_t r36[4]={1u,0u,0u,0u},r94[4]={1u,0u,0u,0u},r90[4]={0u},rbc[4]={0u},r84[4]={1u,0u,0u,0u};
     uint8_t r80[4]={0x20u,0u,0u,0u},r8c[4]={0x30u,0u,0u,0u},oam[256]={0};
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x97]!=0x19u||oam[0x9B]!=0x11u||oam[0x98]!=0x38u||oam[0x94]!=0x40u||oam[0x95]!=0xF6u||oam[0x99]!=0xF7u)return 1;
+    if(oam[0x97]!=0x19u||oam[0x9B]!=0x11u||oam[0x98]!=0x38u||oam[0x94]!=0x40u||oam[0x95]!=0xF6u||oam[0x99]!=0xF7u){fprintf(stderr,"E2F6 primary fail: %02X %02X %02X %02X %02X %02X\\n",oam[0x97],oam[0x9B],oam[0x98],oam[0x94],oam[0x95],oam[0x99]);return 1;}
     for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,4u,oam);
-    if(oam[0x95]!=0xF7u||oam[0x99]!=0xF6u)return 1;
+    if(oam[0x95]!=0xF7u||oam[0x99]!=0xF6u){fprintf(stderr,"E2F6 swap fail: %02X %02X\\n",oam[0x95],oam[0x99]);return 2;}
     r94[0]=0u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x98]!=0xF8u)return 1;
+    if(oam[0x98]!=0xF8u){fprintf(stderr,"E2F6 hide fail: %02X\\n",oam[0x98]);return 3;}
     rbc[0]=1u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x97]!=0u)return 1;
+    if(oam[0x97]!=0u){fprintf(stderr,"E2F6 gate fail: %02X\\n",oam[0x97]);return 4;}
     puts("PASS: sub_E2F6 full wheel-sprite gates and OAM writes.");return 0;
 }
 int main(void)
