@@ -1097,3 +1097,164 @@ void nesSubD1B3PrepareScrollWrites(uint8_t ramFor2000, uint8_t baseNametable,
     scrollWrites[1] = scrollY;
     *statusReads = (uint8_t)(*statusReads + 1u);
 }
+
+
+/* Exact register/RAM-effect translations from bank_FF.asm, batch 2026-10-21. */
+void nesSubC333WritePpuCtrl(uint8_t a, uint8_t *ramFor2000, uint8_t *ppuCtrl)
+{
+    if (ramFor2000 == NULL || ppuCtrl == NULL) return;
+    *ppuCtrl = a;
+    *ramFor2000 = a;
+}
+
+void nesSubC3AFIncrementRaceCounter(uint8_t *ram0041)
+{
+    if (ram0041 != NULL) *ram0041 = (uint8_t)(*ram0041 + 1u);
+}
+
+void nesSubC3B1ClearCounters(uint8_t *ram0040, uint8_t *ram0044)
+{
+    if (ram0040 != NULL) *ram0040 = 0u;
+    if (ram0044 != NULL) *ram0044 = 0u;
+}
+
+/* X runs 00, FF, FE, ... 01: every byte of both 256-byte pages is copied. */
+void nesSubC621CopyPage(const uint8_t ram06E0[256], uint8_t ram05E0[256])
+{
+    unsigned int i;
+    if (ram06E0 == NULL || ram05E0 == NULL) return;
+    for (i = 0u; i < 256u; ++i) ram05E0[i] = ram06E0[i];
+}
+
+void nesSubC68AIncrementPointer(uint8_t *lo, uint8_t *hi)
+{
+    if (lo == NULL || hi == NULL) return;
+    *lo = (uint8_t)(*lo + 1u);
+    if (*lo == 0u) *hi = (uint8_t)(*hi + 1u);
+}
+
+/* LDX reads the old command length; ADC is explicitly CLC + RAM[$0300]. */
+uint8_t nesSubC971AddCommandLength(uint8_t a, uint8_t ram0300,
+                                  uint8_t *newRam0300, uint8_t *xOut)
+{
+    if (newRam0300 == NULL || xOut == NULL) return a;
+    *xOut = ram0300;
+    *newRam0300 = (uint8_t)(a + ram0300);
+    return *newRam0300;
+}
+
+void nesSubCA1BCopyButtonHold(uint8_t ramButtonHold, uint8_t *ram005C)
+{
+    if (ram005C != NULL) *ram005C = ramButtonHold;
+}
+
+/* Exact loop/branch behavior of sub_CB13, including Y=$05 special case. */
+uint8_t nesSubCB13ComputeSpriteCode(uint8_t yIn, uint8_t ram0046Flag)
+{
+    uint8_t y = yIn;
+    uint8_t a;
+    if (y == 0x05u) return 0x20u;
+    a = 0u;
+    for (;;) {
+        y = (uint8_t)(y - 1u); /* DEY; BMI tests bit 7. */
+        if ((y & 0x80u) != 0u) break;
+        a = (uint8_t)(a + 3u); /* CLC; ADC #$03. */
+        if (a == 0u) break;    /* BNE loop; zero exits early. */
+    }
+    if (ram0046Flag != 0u) a = (uint8_t)(a | 0x10u);
+    return a;
+}
+
+void nesSubCFE3ClearObjectFlags(uint8_t x, uint8_t ram005C[256])
+{
+    if (ram005C != NULL) ram005C[x] = (uint8_t)(ram005C[x] & 0xF0u);
+}
+
+/* sub_D24F: STA $2001 with A=0. The caller applies this value to its PPU. */
+void nesSubD24FDisableRendering(uint8_t *ppuMask)
+{
+    if (ppuMask != NULL) *ppuMask = 0u;
+}
+
+/* sub_CF8B returns carry clear only for A in [$3B,$3D], set otherwise. */
+uint8_t nesSubCF8BCarryOut(uint8_t a)
+{
+    return (a >= 0x3Bu && a < 0x3Eu) ? 0u : 1u;
+}
+
+/* CLC / ADC #1 / CMP #$40 / LDA #0 only when the increment equals $40. */
+uint8_t nesSubECBFIncrementAndWrap(uint8_t a)
+{
+    uint8_t result = (uint8_t)(a + 1u);
+    return result == 0x40u ? 0u : result;
+}
+
+/* Fills RAM $0304..$030D with $FC; other bytes remain untouched. */
+void nesSubF676FillCommandPayload(uint8_t ram0300To0315[22])
+{
+    unsigned int address;
+    if (ram0300To0315 == NULL) return;
+    for (address = 4u; address <= 13u; ++address) ram0300To0315[address] = 0xFCu;
+}
+
+/* INX then stores X at $00B7 and clears $00C5. */
+uint8_t nesSubF826AdvanceObject(uint8_t x, uint8_t *ram00B7, uint8_t *ram00C5)
+{
+    x = (uint8_t)(x + 1u);
+    if (ram00B7 != NULL) *ram00B7 = x;
+    if (ram00C5 != NULL) *ram00C5 = 0u;
+    return x;
+}
+
+void nesSubF82EPreparePointer(uint8_t x, const uint8_t tblF063Lo[256],
+                              const uint8_t tblF087Hi[256],
+                              uint8_t *ptrLo, uint8_t *ptrHi)
+{
+    if (tblF063Lo == NULL || tblF087Hi == NULL || ptrLo == NULL || ptrHi == NULL) return;
+    *ptrLo = tblF063Lo[x];
+    *ptrHi = tblF087Hi[x];
+}
+
+void nesSubF839PreparePointer(uint8_t x, const uint8_t tblF4F5Lo[256],
+                              const uint8_t tblF4FAHi[256],
+                              uint8_t *ptrLo, uint8_t *ptrHi)
+{
+    if (tblF4F5Lo == NULL || tblF4FAHi == NULL || ptrLo == NULL || ptrHi == NULL) return;
+    *ptrLo = tblF4F5Lo[x];
+    *ptrHi = tblF4FAHi[x];
+}
+
+/* sub_C62D writes literal $05 to the controller strobe register $4016. */
+void nesSubC62DControllerStrobe(uint8_t *controller4016)
+{
+    if (controller4016 != NULL) *controller4016 = 0x05u;
+}
+
+/* INC $00B1; only when it reaches $20, clear it and toggle bit 2 of $00B0. */
+void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1)
+{
+    if (ram00B0 == NULL || ram00B1 == NULL) return;
+    *ram00B1 = (uint8_t)(*ram00B1 + 1u);
+    if (*ram00B1 == 0x20u) {
+        *ram00B1 = 0u;
+        *ram00B0 = (uint8_t)(*ram00B0 ^ 0x04u);
+    }
+}
+
+/* sub_F871 shared core. Caller supplies the two ROM bytes selected by Y. */
+void nesSubF871WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne,
+                               uint8_t channelOffset, uint8_t audio4000To400F[16])
+{
+    if (audio4000To400F == NULL || channelOffset > 8u ||
+        (channelOffset != 0u && channelOffset != 4u && channelOffset != 8u)) return;
+    if (tableHighPlusOne == 0u) return;
+    audio4000To400F[2u + channelOffset] = tableHighPlusOne;
+    audio4000To400F[3u + channelOffset] = (uint8_t)(tableLow | 0x08u);
+}
+
+/* sub_F885 loads X=$04 and enters the shared F873 audio-table writer. */
+void nesSubF885WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne,
+                               uint8_t audio4000To400F[16])
+{
+    nesSubF871WriteAudioTimer(tableLow, tableHighPlusOne, 4u, audio4000To400F);
+}
