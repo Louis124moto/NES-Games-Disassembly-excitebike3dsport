@@ -17,6 +17,12 @@ static int testSubD2FF(void);
 static int testSubE70B(void);
 static int testSubE7FCFamily(void);
 static int testSubE836(void);
+static int testNewE16C(void);
+static int testNewE3F4(void);
+static int testNewE4(void);
+static int testNewE2(void);
+static int testNewE1F9(void);
+static int testNewE3AA(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
