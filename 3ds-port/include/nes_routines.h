@@ -118,6 +118,10 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram03F1);
 
 
+/* Return: 0 = original RTS path, 1 = prepare countdown sprite, 2 = original branch into E2F6 tail. */
+uint8_t nesSubE2AFUpdateFinishCountdown(uint8_t delta,uint8_t finished,uint8_t frameTimer,
+    uint8_t *low03BD,uint8_t *high03BE,uint8_t *blink03BB,
+    const uint8_t tblD8E5[2],NesPreparedSpriteCommand *out);
 void nesSubE359UpdateTemperatureMeter(uint8_t finished,uint8_t ram005C,uint8_t raceStarted,
     uint8_t *timer003C,uint8_t *fraction003B5,uint8_t *coarse003B6,
     uint8_t *overheatLatch,uint8_t *ram00FC,uint8_t oam[256]);
