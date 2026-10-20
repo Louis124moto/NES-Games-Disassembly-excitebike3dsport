@@ -89,4 +89,32 @@ void nesSubDFB2SelectBand(uint8_t x, const uint8_t ram009C[4],
                           const uint8_t ram00B8[4], const uint8_t ram00A4[4],
                           uint8_t ram0070[4], const uint8_t tblD913[5]);
 
+
+/* Additional byte-exact translations from bank_FF.asm. */
+uint8_t nesSubD000ShouldSetupObject(uint8_t x, const uint8_t ram0080[4],
+                                    const uint8_t ram001A[4], uint8_t *outY);
+void nesSubD11FInitializeUpdateBuffer(uint8_t ram0300_to_0312[19]);
+void nesSubD255HideAllSprites(uint8_t oam[256]);
+void nesSubD2FFAdvanceBufferIndex(uint8_t *x, uint8_t ram0300,
+                                 uint8_t ram0301_to_0400[256],
+                                 uint8_t *stackBytesDiscarded);
+void nesSubE70BUpdateObjectOffsets(uint8_t ram0060[4], uint8_t ram0064[4],
+                                   uint8_t ram00E0[4], uint8_t ram00D8[4]);
+uint8_t nesSubE80DPreparePointer(uint8_t y, const uint8_t *const dataPages[6],
+                                 const uint8_t **outData);
+uint8_t nesSubE803ReadData(uint8_t y, uint8_t dataIndex,
+                           const uint8_t *const dataPages[6],
+                           uint8_t *savedY, uint8_t *outA);
+uint8_t nesSubE7FFReadObjectData(uint8_t x, uint8_t y,
+                                 const uint8_t ram00E0[4],
+                                 const uint8_t *const dataPages[6],
+                                 uint8_t *savedY, uint8_t *outA);
+uint8_t nesSubE7FCReadObjectBandData(uint8_t x, const uint8_t ram0360[4],
+                                     const uint8_t ram00E0[4],
+                                     const uint8_t *const dataPages[6],
+                                     uint8_t *savedY, uint8_t *outA);
+void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
+                                       uint8_t ram00B8[4], uint8_t ram008C[4],
+                                       uint8_t ram03F1);
+
 #endif
