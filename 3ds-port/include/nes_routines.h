@@ -35,4 +35,26 @@ void nesSubDA7AUpdateScrollSlots(uint8_t active[4], const uint8_t delta[4],
                                 uint8_t posXLo[4], uint8_t posXHi[4],
                                 uint8_t ram0390[4]);
 
+
+/* Exact RAM-level translations from bank_FF.asm. */
+void nesSubDBFEUpdateScroll(uint8_t ram0060, uint8_t *ram03BF,
+                            uint8_t *scrollX, uint8_t *baseNametable);
+uint8_t nesSubDC9A(uint8_t ram03F1, uint8_t ram00BC, uint8_t ramY);
+void nesSubDCDE(uint8_t *timer0374, uint8_t ram005C);
+void nesSubDD38SetupObject(uint8_t x, uint8_t ram0090[4], uint8_t ram0094[4],
+                           uint8_t ram0388[4], uint8_t ram0378[4],
+                           uint8_t ram037C[4], uint8_t ram0380[4],
+                           uint8_t ram00B0[4], uint8_t *ram00FF);
+uint8_t nesSubDD6F(uint8_t x, uint8_t carryIn, uint8_t ram0380[4],
+                   uint8_t ram038C[4], uint8_t ram0384[4],
+                   uint8_t ram037C[4], uint8_t temp0001);
+void nesSubDB95ClearOpponentBikeData(uint8_t x, uint8_t ram00A8[4],
+    uint8_t ram00B8[4], uint8_t ram00BC[4], uint8_t ram00A0[4],
+    uint8_t ram00A4[4], uint8_t ram0058[4], uint8_t ram00CC[4],
+    uint8_t ram036C[4], uint8_t ram0090[4], uint8_t ram0094[4],
+    uint8_t ram0098[4], uint8_t ram009C[4], uint8_t ram00B0[4],
+    uint8_t ram00D4[4], uint8_t ram0388[4], uint8_t ram00C0[4],
+    uint8_t ram039C[4], uint8_t ram00DC[4], uint8_t ram0070[4],
+    uint8_t ram0370[4]);
+
 #endif
