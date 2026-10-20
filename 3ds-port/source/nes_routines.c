@@ -1368,23 +1368,17 @@ static uint8_t nesSbcByte(uint8_t a, uint8_t value, uint8_t *carry)
     return (uint8_t)diff;
 }
 
-/* sub_DC9A: SEC; SBC ram_00BC_obj,X; SBC ram_obj_pos_Y_lo,X. */
-uint8_t nesSubDC9ASubtractObjectY(uint8_t a, uint8_t x, const uint8_t ram00BC[4],
-                                  const uint8_t ramPosYLo[4], uint8_t *carryOut)
-{
-    uint8_t carry = 1u;
-    if (ram00BC == NULL || ramPosYLo == NULL) return a;
-    a = nesSbcByte(a, ram00BC[x & 3u], &carry);
-    a = nesSbcByte(a, ramPosYLo[x & 3u], &carry);
-    if (carryOut != NULL) *carryOut = carry;
-    return a;
-}
-
-/* sub_DC97 starts with LDA $03F1 and falls through the exact sub_DC9A arithmetic. */
+/* sub_DC97: LDA $03F1 then falls through SEC / SBC / SBC from sub_DC9A. */
 uint8_t nesSubDC97SubtractObjectY(uint8_t ram03F1, uint8_t x, const uint8_t ram00BC[4],
                                   const uint8_t ramPosYLo[4], uint8_t *carryOut)
 {
-    return nesSubDC9ASubtractObjectY(ram03F1, x, ram00BC, ramPosYLo, carryOut);
+    uint8_t carry = 1u;
+    uint8_t a;
+    if (ram00BC == NULL || ramPosYLo == NULL) return ram03F1;
+    a = nesSbcByte(ram03F1, ram00BC[x & 3u], &carry);
+    a = nesSbcByte(a, ramPosYLo[x & 3u], &carry);
+    if (carryOut != NULL) *carryOut = carry;
+    return a;
 }
 
 void nesSubEC25WriteSprite(uint8_t a, uint8_t ram00C2, const uint8_t tblE6F6[256],
