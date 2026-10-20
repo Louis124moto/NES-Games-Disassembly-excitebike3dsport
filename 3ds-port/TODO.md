@@ -1,51 +1,53 @@
 # Excitebike 3DS — roadmap and task tracker
 
-This is the ordered source of truth for the remaining port work. Tasks are checked only after they are actually completed and, where applicable, verified. The GitHub Actions workflow compiles the project on every push and on pull requests targeting `main`.
+Tasks are checked only after completion and evidence. The native 3DS port is intended to match the original NES game's behaviour as closely as practical; the original 6502 assembly is a reference, not code that can be compiled directly for ARM11.
 
 ## Phase 1 — Build foundation
 
 - [x] Create the `3ds-port/` project structure.
-- [x] Add the initial C entry point and devkitARM Makefile.
-- [x] Add a GitHub Actions workflow that attempts a native 3DS build on each push and uploads the `.3dsx`/ `.elf` artifacts.
-- [ ] Verify the first GitHub Actions run; fix any container, dependency, Makefile, or linker errors.
-- [ ] Confirm that the generated `.3dsx` launches on a real 3DS or a compatible emulator.
+- [x] Add an initial C entry point and devkitARM Makefile.
+- [x] Add a GitHub Actions workflow for native 3DS builds and artifact upload.
+- [ ] Obtain a successful CI build that produces both `.3dsx` and `.elf`.
+- [ ] Launch the build on a real 3DS or compatible emulator and record the result.
 - [x] Add a `.gitignore` for generated build output and temporary files.
 
 ## Phase 2 — Application structure
 
-- [ ] Define separate modules and interfaces for game state, input, rendering, track data, bike physics, collision, audio, and menus.
-- [ ] Add a stable frame/update loop with clear timing and frame-rate handling.
-- [ ] Add a simple top-screen status/debug view and bottom-screen control/help view.
-- [ ] Document build steps and hardware/emulator testing.
+- [x] Define module interfaces for game state, input, rendering, track, bike physics, collision, audio, and menus.
+- [x] Add a central game lifecycle and deterministic module update order.
+- [x] Add a basic top-screen debug/status view and bottom-screen console initialization.
+- [x] Document local build requirements and commands.
+- [x] Document the fidelity target, technical constraints, and original-source-to-native-module mapping.
+- [ ] Compile and fix warnings/errors for the modular architecture.
+- [ ] Verify controls and screen layout on hardware/emulator.
+- [ ] Analyse the original Excitebike disassembly and map core routines/state before implementing authentic gameplay.
 
 ## Phase 3 — Playable prototype
 
-- [ ] Draw a basic test track and ground.
-- [ ] Add a controllable bike placeholder.
-- [ ] Implement acceleration, braking, steering, and speed display.
-- [ ] Implement jumping and landing.
-- [ ] Add basic collision and crash/recovery behavior.
-- [ ] Add a restartable test course and finish condition.
+- [ ] Draw a test track and ground.
+- [ ] Add a controllable bike placeholder with visible position.
+- [ ] Implement a restartable test course and finish condition.
+- [ ] Replace temporary input/physics with an explicitly documented prototype model.
 
-## Phase 4 — Excitebike gameplay
+## Phase 4 — Faithful Excitebike implementation
 
-- [ ] Inspect the original NES source and document its game logic, data formats, and asset/license constraints.
-- [ ] Port or reimplement the track representation and track selection.
-- [ ] Implement ramps, terrain effects, overheating, and other core mechanics as supported by the source.
-- [ ] Add opponents and race progression.
-- [ ] Implement menus, scoring, and results.
-- [ ] Add sound and music using assets that can legally be redistributed, or newly created replacements.
+- [ ] Map original disassembly routines, RAM variables, timing, and track data to native code.
+- [ ] Reproduce acceleration, braking, overheating/cooling, jumping, posture, landing, and crashes from verified source behaviour.
+- [ ] Reproduce track layouts, ramps, terrain, and course selection.
+- [ ] Reproduce opponents, race progression, scoring, and results.
+- [ ] Reproduce menus and sound/music using technically and legally suitable assets.
+- [ ] Compare scenarios against the original NES game and document known differences.
 
 ## Phase 5 — 3DS polish and release
 
 - [ ] Optimize rendering, memory use, and frame pacing for original 3DS hardware.
-- [ ] Test controls and layout on original 3DS and New 3DS hardware where available.
+- [ ] Test controls and layout on original 3DS and New 3DS where available.
 - [ ] Test clean builds and document known limitations.
 - [ ] Produce a versioned `.3dsx` release and release notes.
 
-## Progress rules
+## Fidelity and progress rules
 
-- Keep tasks in dependency order; do not mark a task complete merely because a file was created.
-- Update this checklist whenever a task is completed or its scope changes.
-- Record build/test evidence in the relevant commit or workflow run when possible.
-- The project is **not playable yet** until the prototype and gameplay tasks are implemented and tested.
+- Preserve the original NES disassembly on its existing branch.
+- Translate logic and data for the 3DS; do not assume 6502 assembly can be linked into an ARM11 homebrew.
+- Mark fidelity tasks complete only after comparing behaviour with the original.
+- The current modules are scaffolding, not a playable or faithful port.
