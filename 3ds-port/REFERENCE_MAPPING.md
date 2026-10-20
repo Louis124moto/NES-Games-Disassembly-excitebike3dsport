@@ -424,3 +424,8 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 
 - Models the original early-return gates: `$039C+$03` nonzero, `ram_0084,X != $02`, `ram_0390,X < $F8`, and `ram_0390,X >= ram_0080,X`.
 - On the taken path, preserves the 8-bit `SEC/SBC` result `$A8 - ram_006C,X`, table byte from the three-entry `$D90B` table, `$22` attribute, OAM base, OR of the existing `$000B` scratch value with `$20` when `ram_00A4,X` is nonzero, and the Y-index XOR `$03` when Y is nonzero. The final `loc_D1C7` renderer remains a separate dependency.
+
+
+## Validation clarification
+
+The latest batch CI confirms the host regression suite and native 3DS build pass. This proves compilation and the covered test cases only. `sub_E1F9`, `sub_E2F6`, and `loc_E3AA` remain partial/state-level models; they must not be described as complete instruction-by-instruction ports until their remaining branches, memory writes, and call interactions are implemented and tested.
