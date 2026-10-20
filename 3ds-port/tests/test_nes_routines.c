@@ -87,6 +87,9 @@ int main(void)
     if (testSubDB50() != 0) return 1;
     if (testSubDCA0() != 0) return 1;
     if (testLocDCC7() != 0) return 1;
+    if (testSubDA58() != 0) return 1;
+    if (testSubE091() != 0) return 1;
+    if (testSubE098() != 0) return 1;
     return 0;
 }
 
