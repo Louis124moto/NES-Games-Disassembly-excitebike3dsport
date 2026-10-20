@@ -122,3 +122,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Correct `sub_E4AD` to write all 12 sprite Y bytes at four-byte strides, matching its 6502 loop.
 - [ ] Re-run host regression and 3DS build after correcting `sub_E4AD`.
+
+- [x] Translate `sub_E456` with reverse object-order traversal, `$70-$8F` cleanup gate, `$F0/$F8` thresholds, and the exact opponent-reset helper.
+- [ ] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI.
