@@ -1712,7 +1712,7 @@ static int testBatchAdditional20(void)
 {
     uint8_t f, oam[256], buf[263], ram[256], source7[7], table8[8], table256[256];
     uint8_t statusV[3]={0x80u,0xFFu,0x00u}, statusD[3]={0x00u,0x80u,0x40u};
-    uint8_t ppu=0x55u, ctrl=0u, ctrlRam=0u, x0=0u, x1=0u, hold0=0u, press0=0u, hold1=0u, press1=0u, strobe[2];
+    uint8_t ppu=0x55u, ctrl=0u, ctrlRam=0u, hold0=0u, press0=0u, hold1=0u, press1=0u, strobe[2];
     uint8_t samples0[8]={0u,0u,0u,0u,0u,0u,0u,0u}, samples1[8]={1u,1u,1u,1u,1u,1u,1u,1u};
     unsigned int used=0u, i;
     for (i=0u;i<256u;++i) { table256[i]=(uint8_t)i; ram[i]=(uint8_t)(i^0xA5u); }
