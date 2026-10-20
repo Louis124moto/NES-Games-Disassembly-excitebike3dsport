@@ -36,6 +36,7 @@ static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
 }
 
 static int testSubD310(void);
+static int testSubD35B(void);
 static int testSubD326(void);
 
 int main(void)
@@ -61,6 +62,7 @@ int main(void)
 
     printf("PASS: %lu input combinations matched the 6502 reference.\n", checked);
     if (testSubD310() != 0) return 1;
+    if (testSubD35B() != 0) return 1;
     if (testSubD326() != 0) return 1;
     return 0;
 }
@@ -189,5 +191,59 @@ static int testSubD326(void)
         }
     }
     printf("PASS: sub_D326 matched reference for %lu input vectors.\n", checked);
+    return 0;
+}
+
+
+/* Reference model for the RAM-level decode and A-button repeat suppression. */
+static void referenceSubD35B(const uint8_t serial_samples[8], uint8_t previous_hold,
+                             uint8_t *hold, uint8_t *press)
+{
+    uint8_t accumulator = 0u;
+    unsigned int i;
+
+    for (i = 0; i < 8u; ++i) {
+        uint8_t saved = serial_samples[i];
+        uint8_t shifted = (uint8_t)(saved >> 1);
+        uint8_t combined = (uint8_t)(shifted | saved);
+        uint8_t carry = (uint8_t)(combined & 1u);
+        accumulator = (uint8_t)((accumulator << 1) | carry);
+    }
+
+    *hold = accumulator;
+    *press = accumulator;
+    if ((*hold & 0x80u) != 0u && (previous_hold & 0x80u) != 0u) {
+        *press = (uint8_t)(accumulator & 0x7Fu);
+    }
+}
+
+static int testSubD35B(void)
+{
+    unsigned int mask, previous, encoding;
+    unsigned long checked = 0;
+
+    for (mask = 0; mask < 256u; ++mask) {
+        for (previous = 0; previous < 256u; ++previous) {
+            for (encoding = 0; encoding < 3u; ++encoding) {
+                uint8_t samples[8];
+                uint8_t actual_hold, actual_press, expected_hold, expected_press;
+                unsigned int i;
+                for (i = 0; i < 8u; ++i) {
+                    uint8_t active = (uint8_t)((mask >> (7u - i)) & 1u);
+                    samples[i] = active ? (uint8_t)(encoding + 1u) : 0u;
+                }
+                referenceSubD35B(samples, (uint8_t)previous, &expected_hold, &expected_press);
+                nesSubD35BDecodeController(samples, (uint8_t)previous, &actual_hold, &actual_press);
+                if (actual_hold != expected_hold || actual_press != expected_press) {
+                    fprintf(stderr,
+                            "sub_D35B mismatch: mask=%02X previous=%02X encoding=%u hold=%02X/%02X press=%02X/%02X\n",
+                            mask, previous, encoding, expected_hold, actual_hold, expected_press, actual_press);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+    }
+    printf("PASS: sub_D35B matched reference for %lu controller vectors.\n", checked);
     return 0;
 }
