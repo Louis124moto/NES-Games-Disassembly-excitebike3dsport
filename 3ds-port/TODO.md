@@ -139,23 +139,30 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 ## Whole-project status snapshot (2026-10-20)
 
 - The native app architecture and repeatable `.3dsx`/`.elf` CI build work, and the user previously confirmed the scaffold launches on 3DS.
-- There are currently 48 named C routine/helper definitions in `nes_routines.c` against an inventory of 177 original `sub_*` labels. This is a source-coverage count, not a project-completion percentage: some C definitions are partial state models or shared entry helpers, and several are not yet integrated into gameplay.
+- There are currently 53 named C routine/helper definitions in `nes_routines.c` against an inventory of 177 original `sub_*` labels. This is a source-coverage count, not a project-completion percentage: some C definitions are partial state models or shared entry helpers, and several are not yet integrated into gameplay.
 - The port is still **not a playable faithful Excitebike implementation**. Bike physics, course data/rendering, opponent/race flow, menus, and audio need verified translation and integration. Do not claim a global completion percentage based only on the routine count.
 
 - [x] Translate `sub_E359` temperature arithmetic and OAM output using the literal `$D8F7/$D8FB` table bytes.
-- [ ] Validate `sub_E359` host regression and 3DS build in CI.
+- [x] Validate `sub_E359` host regression and 3DS build in CI (host run `39505218389`; 3DS build run `39505237364`).
 
 - [x] Complete `sub_E2F6` through its OAM writes, including tile swap, attribute bit, wrapped coordinates, and conditional hide of the second wheel.
-- [ ] Validate the full `sub_E2F6` host regression and 3DS build.
+- [x] Validate the full `sub_E2F6` host regression and 3DS build (host run `39505508682`; 3DS build run `39505373018`).
 
 - [x] Translate `sub_EA44`'s four-slot sprite dispatch, thresholds, table lookup, and shared-SBC path; pass inherited zero-page scratch explicitly.
-- [ ] Validate `sub_EA44` host regression and 3DS build.
+- [x] Validate `sub_EA44` host regression and 3DS build (host run `39505657843`; 3DS build run `39505675306`).
 
 - [x] Replace the partial `sub_E1F9` model with the complete branch/return logic, including `$0036,X` timer semantics and `$039F` side effect.
-- [ ] Validate expanded `sub_E1F9` regression and 3DS build.
+- [x] Validate expanded `sub_E1F9` regression and 3DS build (host run `39505926103`; 3DS build run `39506181543`).
 
 - [x] Combine the `$E2AF-$E2F3` countdown state path into one model with explicit low/high borrow, finish blink, and render-command output.
-- [ ] Validate the combined countdown regression and 3DS build.
+- [x] Validate the combined countdown regression and 3DS build (host run `39506181462`; 3DS build run `39506181543`).
 
 - [x] Translate `sub_E1A3`'s `$D892/$D8A9` lookups, `$16` special pointer/attribute adjustment, and conditional overlay-tile loop.
-- [ ] Validate `sub_E1A3` host regression and 3DS build.
+- [x] Validate `sub_E1A3` host regression and 3DS build (host run `39506455129`; 3DS build run `39506426121`).
+
+
+## Batch 2026-10-20 — 10 priority routines/entries reviewed
+
+- [x] Add or complete `sub_E4C8`/`sub_E52C`, `sub_E456`, `sub_E26A`, `sub_E359`, `sub_E2F6`, `sub_EA44`, the `$E2AF` countdown path, and `sub_E1A3` command setup.
+- [x] Replace the partial `sub_E1F9` approximation with its full branch-level logic and correct the literal `$E4AD` loop to its three writes at Y=`$00/$04/$08`.
+- [x] Host regressions pass for the current source/test revision; the 3DS build succeeded for the same source content. The latest post-test-only build workflow may still be finishing.
