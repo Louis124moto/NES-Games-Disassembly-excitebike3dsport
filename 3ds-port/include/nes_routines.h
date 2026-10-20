@@ -16,4 +16,8 @@
  */
 uint8_t nesSubDA15DerivedY(uint8_t ram0390, uint8_t ram0080, uint8_t ramY);
 
+/* Exact byte-level translation of sub_D310 ($D310). timers[0] is RAM $0021;
+ * timers[28] is RAM $003D. */
+void nesSubD310DecreaseAllTimers(uint8_t *timer0020, uint8_t timers[29]);
+
 #endif
