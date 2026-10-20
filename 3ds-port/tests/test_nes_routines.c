@@ -350,8 +350,35 @@ static int testE8xxDispatchEntries(void)
     return 0;
 }
 
+
+static int testE8xxConstantAndResetEntries(void)
+{
+    unsigned int x,y;
+    for(x=0;x<4u;++x) for(y=0;y<256u;++y) {
+        uint8_t a4[4]={1,2,3,4},a0[4]={5,6,7,8},bc[4]={9,10,11,12},e4[4]={13,14,15,16},cc[4]={17,18,19,20},d4[4]={21,22,23,24},b4[4]={25,26,27,28};
+        uint8_t oldA4[4],oldA0[4],oldBC[4],oldE4[4],oldCC[4],oldD4[4],oldB4[4]; unsigned int i;
+        memcpy(oldA4,a4,4);memcpy(oldA0,a0,4);memcpy(oldBC,bc,4);memcpy(oldE4,e4,4);memcpy(oldCC,cc,4);memcpy(oldD4,d4,4);memcpy(oldB4,b4,4);
+        nesOfsE8BF0EReset((uint8_t)x,a4,a0);
+        if(a4[x]!=0u||a0[x]!=0u) return 1;
+        for(i=0;i<4u;++i) if(i!=x&&(a4[i]!=oldA4[i]||a0[i]!=oldA0[i])) return 1;
+        memcpy(a4,oldA4,4); nesOfsE8C60FSetStateFromY((uint8_t)x,(uint8_t)y,a4);
+        if(a4[x]!=(y<0x20u?2u:1u)) return 1;
+        memcpy(a0,oldA0,4); nesOfsE8E301SetA0((uint8_t)x,a0);
+        if(a0[x]!=1u) return 1;
+        memcpy(bc,oldBC,4);memcpy(e4,oldE4,4);nesOfsE8F514SetPair30((uint8_t)x,bc,e4);
+        if(bc[x]!=0x30u||e4[x]!=0x30u) return 1;
+        memcpy(bc,oldBC,4);memcpy(e4,oldE4,4);nesOfsE8FA10SetPair10((uint8_t)x,bc,e4);
+        if(bc[x]!=0x10u||e4[x]!=0x10u) return 1;
+        nesOfsE96300ClearThree((uint8_t)x,cc,d4,b4);
+        if(cc[x]!=0u||d4[x]!=0u||b4[x]!=0u) return 1;
+        for(i=0;i<4u;++i) if(i!=x&&(cc[i]!=oldCC[i]||d4[i]!=oldD4[i]||b4[i]!=oldB4[i])) return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
+    if(testE8xxConstantAndResetEntries()) { fputs("FAIL: E8BF/E8C6/E8E3/E8F5/E8FA/E963\n",stderr); return 1; }
     if(testE8xxDispatchEntries()) { fputs("FAIL: E845/E854/E85D/E86A/E879 dispatch entries\n",stderr); return 1; }
     if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
     if(testE80DPreparePointer()) { fputs("FAIL: sub_E80D\n",stderr); return 1; }
