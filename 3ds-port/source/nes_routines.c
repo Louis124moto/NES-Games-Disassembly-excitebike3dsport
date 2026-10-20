@@ -42,3 +42,28 @@ uint8_t nesSubDA15DerivedY(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
 
     return accumulator;
 }
+
+
+/* Exact byte-level translation of sub_D310 ($D310).
+ * timer array index 0 maps to RAM $0021; index 28 maps to RAM $003D.
+ * BPL tests bit 7 of DEC's 8-bit result. */
+void nesSubD310DecreaseAllTimers(uint8_t *timer0020, uint8_t timers[29])
+{
+    uint8_t frame_timer = (uint8_t)(*timer0020 - 1u);
+    unsigned int count;
+    unsigned int i;
+
+    *timer0020 = frame_timer;
+    if ((frame_timer & 0x80u) != 0u) {
+        *timer0020 = 0x0Au;
+        count = 29u;
+    } else {
+        count = 15u;
+    }
+
+    for (i = 0u; i < count; ++i) {
+        if (timers[i] != 0u) {
+            timers[i] = (uint8_t)(timers[i] - 1u);
+        }
+    }
+}
