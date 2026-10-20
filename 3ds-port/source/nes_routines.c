@@ -1527,3 +1527,36 @@ void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
 {
     nesControllerDelayEffect(a, 0x6Au, aOut, ram0007, ram000C, controllerWrites, delayIterations);
 }
+
+/* Exact byte/flag translation of sub_FF53 ($FF53).
+ * Models the incoming carry consumed by ROR, the following three ROLs,
+ * and the absolute-indexed table read at $FF3E,Y (including page wrap).
+ */
+uint8_t nesSubFF53Lookup(uint8_t inputA, uint8_t carryIn, uint8_t ram07F0,
+                         const uint8_t cpuMemory[65536], uint8_t *yOut)
+{
+    uint8_t a = inputA;
+    uint8_t x = inputA;
+    uint8_t carry = (uint8_t)(carryIn & 1u);
+    uint16_t address;
+
+    /* ROR A */
+    {
+        uint8_t nextCarry = (uint8_t)(a & 1u);
+        a = (uint8_t)((a >> 1) | (uint8_t)(carry << 7));
+        carry = nextCarry;
+    }
+    a = x; /* TXA leaves carry unchanged. */
+    /* ROL A; ROL A; ROL A */
+    for (unsigned int i = 0u; i < 3u; ++i) {
+        uint8_t nextCarry = (uint8_t)(a >> 7);
+        a = (uint8_t)((uint8_t)(a << 1) | carry);
+        carry = nextCarry;
+    }
+    a = (uint8_t)(a & 0x07u); /* AND #$07 */
+    a = (uint8_t)(a + ram07F0); /* CLC; ADC ram_07F0 */
+    if (yOut != NULL) *yOut = a; /* TAY */
+    if (cpuMemory == NULL) return 0u;
+    address = (uint16_t)(0xFF3Eu + (uint16_t)a);
+    return cpuMemory[address]; /* LDA tbl_FF3E,Y */
+}
