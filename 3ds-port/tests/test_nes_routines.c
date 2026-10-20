@@ -167,8 +167,20 @@ static int testSubE2AFCountdownExact(void){
     if(nesSubE2AFUpdateFinishCountdown(1u,2u,0u,&low,&high,&blink,tbl,&out)!=0u||low!=4u||blink!=0u)return 1;
     puts("PASS: countdown decrement/borrow, finish blink, and draw-command branch.");return 0;
 }
+static int testSubE1A3Exact(void){
+    uint8_t z[4]={0u},r9c[4]={1u,0u,0u,0u},r36[4]={0u},rac[4]={3u},r80[4]={0u,0x20u,0u,0u},r8c[4]={0u,0x30u,0u,0u};
+    uint8_t d892[23],d8a9[23],oam[256]={0},ram039C3=0xFFu,temp=0xFFu,render=0u;NesPreparedSpriteCommand out={0};
+    for(unsigned i=0;i<23u;i++){d892[i]=(uint8_t)(0x40u+i);d8a9[i]=(uint8_t)(0x80u+i);}
+    if(!nesSubE1A3PrepareObjectSprite(1u,0x20u,r80,r8c,r9c,z,z,r36,rac,z,z,z,z,z,z,z,0u,0u,d892,d8a9,oam,&ram039C3,&temp,&render,&out))return 1;
+    if(out.scratch0!=0x20u||out.scratch1!=0x38u||out.scratch2!=d892[0x16]||out.scratch3!=0x23u||out.scratch4!=0x2Cu||ram039C3!=0x20u||render!=d8a9[0x16])return 1;
+    r9c[1]=0u;rac[1]=0x0Au;for(unsigned i=0;i<256u;i++)oam[i]=0u;
+    if(!nesSubE1A3PrepareObjectSprite(1u,0x40u,r80,r8c,r9c,z,z,r36,rac,z,z,z,z,z,z,z,1u,0u,d892,d8a9,oam,&ram039C3,&temp,&render,&out))return 1;
+    if(temp!=2u||oam[0x51]!=0xB2u||oam[0x4D]!=0xB1u||oam[0x45]!=0xB0u||oam[0x41]!=0xAFu)return 1;
+    puts("PASS: sub_E1A3 table selection, special offset, and overlay tiles.");return 0;
+}
 int main(void)
 {
+    if(testSubE1A3Exact()) { fputs("FAIL: sub_E1A3 reference test\\n",stderr); return 1; }
     if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\\n",stderr); return 1; }
     if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\\n",stderr); return 1; }
     if(testSubE2F6Exact()) { fputs("FAIL: sub_E2F6 reference test\\n",stderr); return 1; }
