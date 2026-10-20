@@ -652,7 +652,7 @@ static int testSubDB50(void)
                 if (!(r84[x] != 0u && r70[0] == r70[3])) {
                     if (expected78 < 4u) expected78 = (uint8_t)(expected78 + 1u);
                 } else {
-                    expected78 = r78[x]; /* assembly returns after initial stores */
+                    expected78 = r94; /* assembly returns after initial stores */
                 }
             }
             nesSubDB50SetupObject((uint8_t)x, y, finished, r84, r1b, r70, r78, r74, r80,
