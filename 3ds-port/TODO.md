@@ -131,3 +131,6 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; corrected the model back to exactly three writes (Y=0,4,8) rather than inferring write count from the routine label/comment.
 - [ ] Re-run host regression after restoring the literal E4AD loop bound.
+
+- [x] Model `sub_E26A`'s gate and sprite-command parameters from the literal instructions and `$D90B` three-byte table.
+- [ ] Validate `sub_E26A` host test and 3DS build.
