@@ -78,11 +78,11 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Translate the byte-level logic of sub_D310 into nesSubD310DecreaseAllTimers, preserving 8-bit wraparound, BPL's negative-flag condition, selected timer ranges, and nonzero-only decrements.
 - [ ] Verify the expanded host regression test and 3DS build in GitHub Actions before marking the timer helper validated.
-- [ ] Continue translating the remaining sub_* routines systematically, starting with self-contained timer/input/state helpers before hardware-specific graphics/audio code.
+- [x] Translate `sub_DA7A` as a byte-exact helper, preserving the X=3..1 loop, both carry/borrow effects on the high coordinate byte, and the independent `ram_0390_obj,X` subtraction; add reference tests.\n- [ ] Continue translating the remaining sub_* routines systematically, starting with self-contained timer/input/state helpers before hardware-specific graphics/audio code.
 
 - [x] Create a full checklist of all 177 `sub_*` labels in `ASM_FUNCTION_INVENTORY.md`; distinguish inventory status from actual port completion.
 - [x] Validate `sub_D310` host regression against the independent reference: [workflow run 39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809) passed.
-- [ ] Confirm the 3DS build for the new timer helper, then continue with the next self-contained assembly routine.
+- [ ] Confirm host-test and 3DS-build CI for the new `sub_DA7A` helper before marking it validated.
 
 - [x] Translate sub_D326's eight-byte ROR carry chain into `nesSubD326RotateInputBits`; host regression and 3DS build are pending CI.
 
