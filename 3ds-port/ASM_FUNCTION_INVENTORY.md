@@ -232,3 +232,14 @@ Translate routines in dependency order rather than blindly copying address order
 | `sub_E7FF` | Implemented | `nesSubE7FFReadObjectData` |
 | `sub_E7FC` | Implemented | `nesSubE7FCReadObjectBandData` |
 | `sub_E836` | Implemented | `nesSubE836UpdateObjectDifferences` |
+
+| `sub_E16C` | Implemented | `nesSubE16CWriteSpriteStrip` |
+| `sub_E3F4` | Implemented | `nesSubE3F4SortObjectsByY` |
+| `sub_E4AD` | Implemented | `nesSubE4ADHideFourSprites` |
+| `sub_E49B` | Implemented | `nesSubE49BHideSelectedSpriteGroups` |
+| `sub_E2AF` | Implemented | `nesSubE2AFDecrementCountdown` |
+| `loc_E2BD` | Implemented | `nesLocE2BDUpdateFinishBlink` |
+| `loc_E2D0` | Implemented | `nesLocE2D0CountdownReachedOne` |
+| `sub_E2F6` | State model | `nesSubE2F6ShouldDrawWheel` |
+| `sub_E1F9` | State model | `nesSubE1F9SelectObjectSprite` |
+| `loc_E3AA` | State model | `nesLocE3AAUpdateHeatFlags` |
