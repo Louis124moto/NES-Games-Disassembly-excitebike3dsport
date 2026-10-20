@@ -280,25 +280,22 @@ void nesSubDA6AUpdateScroll(uint8_t *scrollX, uint8_t delta,
 void nesSubDB50SetupObject(uint8_t x, uint8_t y, uint8_t trackFinished,
                            uint8_t ram0084[4], uint8_t ram001B[4],
                            uint8_t ram0070[4], uint8_t ram0078[4],
-                           uint8_t ram0074[4], uint8_t ram0080[4], uint8_t ram0094Player,
-                           uint8_t ram0090Player, uint8_t ram0070Global[4],
-                           const uint8_t tblD8D5[256],
-                           const uint8_t tblD8CD[16])
+                           uint8_t ram0074[4], uint8_t ram0080[4],
+                           uint8_t ram0094Player, uint8_t ram0090Player,
+                           const uint8_t tblD8D5[256], const uint8_t tblD8CD[16])
 {
     uint8_t value;
     if (x > 3u) return;
 
     if (trackFinished != 0u) {
         value = 0x03u;
-    } else if (x == 3u && (ram0084[x] & 0x02u) == 0u && ram0094Player != 0u) {
+    } else if (x == 3u && (ram0084[x] & 0x02u) == 0u && ram0094Player != 0u &&
+               (ram0084[x] == 0u || ram0080[x] < 0x40u)) {
         ram0078[x] = ram0094Player;
         ram0074[x] = ram0090Player;
-        if (ram0084[x] != 0u && ram0080[x] < 0x40u &&
-            ram0070Global[0] == ram0070Global[3]) {
-            return;
-        }
+        if (ram0084[x] != 0u && ram0070[0] == ram0070[3]) return;
         if (ram0078[x] < 0x04u) ram0078[x] = (uint8_t)(ram0078[x] + 1u);
-        goto done;
+        return;
     } else {
         value = tblD8D5[y];
     }
@@ -306,8 +303,6 @@ void nesSubDB50SetupObject(uint8_t x, uint8_t y, uint8_t trackFinished,
     ram0078[x] = value;
     value = (uint8_t)(ram001B[x] & 0x0Fu);
     ram0074[x] = tblD8CD[value];
-done:
-    return;
 }
 
 /* Exact RAM-level translation of sub_DCA0 ($DCA0). */
