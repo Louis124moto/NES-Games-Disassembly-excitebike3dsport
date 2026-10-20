@@ -605,3 +605,56 @@ uint8_t nesSubE2F6ShouldDrawWheel(uint8_t x,const uint8_t r36c[4],const uint8_t 
 uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp){uint8_t a,y;if(x>3u||temp==NULL)return 0u;*temp=0u;a=r9c[x];if(a!=0u&&a!=5u){y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;if(r36[x]!=0u)y=(uint8_t)(y-1u);return (uint8_t)(y|0x10u);}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
 void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags){uint8_t x=0u;if(heat>=0x20u){*timer=heat;*latch=heat;}if(heat>=0x1Au&&(uint8_t)(priorY-1u)==0u)x=0xB0u;*flags=(uint8_t)(*flags|x);}
+
+
+/* sub_E52C: SEC/SBC indexed Y coordinates; nonzero only for wrapped distance < $12. */
+uint8_t nesSubE52CCheckVerticalOverlap(uint8_t x,uint8_t y,const uint8_t ram008c[4]){
+    uint8_t a=(uint8_t)(ram008c[x]-ram008c[y]);
+    return (a>=0xECu||a<0x12u)?a:0u;
+}
+/* sub_E4C8: preserve the original scratch-byte dependency at $000B.
+ * $000B is deliberately an input/output: the ASM comments identify it as
+ * uninitialized by this routine, so resetting it here would not be faithful.
+ */
+void nesSubE4C8CheckOverlappingObjects(const uint8_t ram0084[4],const uint8_t ram0080[4],
+                                       const uint8_t ram008c[4],uint8_t *ram000b,uint8_t *ram03a3){
+    int x;
+    if(ram000b==NULL||ram03a3==NULL)return;
+    for(x=1;x>=0;x--){
+        uint8_t a=ram0084[x];
+        uint8_t carry=(uint8_t)(a&1u);
+        if(carry==0u){
+            if(a!=0u)continue;
+            if(ram0080[x]<0xF8u)continue;
+        }
+        {
+            uint8_t y=(uint8_t)(x+1);
+            uint8_t count=0u;
+            while(y<4u){
+                a=ram0084[y];
+                carry=(uint8_t)(a&1u);
+                if(carry==0u){
+                    if(a!=0u || ram0080[x]<0xF8u){y++;continue;}
+                }
+                a=nesSubE52CCheckVerticalOverlap((uint8_t)x,y,ram008c);
+                if(a!=0u){
+                    count=(uint8_t)(count+1u);
+                    *ram000b=(uint8_t)((uint8_t)(*ram000b<<2)|y);
+                }
+                y++;
+            }
+            if(count>=2u){
+                if(count!=2u){*ram03a3=1u;return;}
+                {
+                    uint8_t packed=*ram000b;
+                    uint8_t y2=(uint8_t)(packed&3u);
+                    uint8_t x2=(uint8_t)((packed>>2)&3u);
+                    if(nesSubE52CCheckVerticalOverlap(x2,y2,ram008c)!=0u){
+                        *ram03a3=1u;return;
+                    }
+                }
+            }
+        }
+    }
+    *ram03a3=0u;
+}
