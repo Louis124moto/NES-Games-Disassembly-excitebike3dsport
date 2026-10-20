@@ -329,3 +329,13 @@ Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games
 - `sub_D326`: host regression passed in [run 39497063113](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497063113).
 - `sub_D35B`: host regression passed in [run 39497203936](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497203936).
 - The 3DS build workflow for the newest source changes is still running; do not mark the new helpers fully validated until it completes.
+
+
+### Exact RAM-level translation added: `sub_DA7A` at CPU `$DA7A`
+
+- The assembly initializes X to `$03` and loops downward until X reaches zero, so only slots 3, 2, and 1 are processed; slot 0 is excluded.
+- A slot is skipped when `ram_00A8_obj,X` is zero.
+- For an active slot, it adds `ram_0060,X` to the low coordinate byte `ram_0080_obj,X`. The low-byte addition wraps at 8 bits and increments `ram_0084_obj,X` when the addition carries.
+- It then subtracts the global byte `ram_0060` from that low-byte result. If this subtraction borrows, it decrements `ram_0084_obj,X`. This order matters: the increment and decrement are separate operations and may cancel.
+- Finally, it subtracts the same global `ram_0060` byte from `ram_0390_obj,X`, with 8-bit wraparound.
+- Native helper: `nesSubDA7AUpdateScrollSlots`. Its regression test compares it with a separate instruction-level reference over 65,536 deterministic patterns. This helper does not claim to implement the full race/scroll system; callers and global state remain separate work.
