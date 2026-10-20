@@ -72,3 +72,5 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Confirm the exhaustive `sub_DA15` test passed in CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829) and the native 3DS build passed in run [39495627228](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495627228).
 - [ ] Trace control flow and callers around every writer above; establish slot identity and initialization/reset sequences before translating any stateful behavior.
 - [ ] Check indirect or alias writes to these RAM addresses and cross-check the RAM symbol declarations/memory map.
+
+- [x] Trace `sub_DA7A`'s opponent-only scroll-relative coordinate correction, `sub_DB95`'s opponent-slot reset path, and `sub_E96C`'s per-frame Y-delta application; record the confirmed facts and remaining uncertainties in `REFERENCE_MAPPING.md`.
