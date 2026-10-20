@@ -305,3 +305,11 @@ A full index of all 177 `sub_*` labels found in `Excitebike/bank_FF.asm` is main
 ### Latest exact routine: `sub_D310`
 
 Host regression workflow [39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809) passed after adding the byte-level timer helper and 65,536 input vectors. The matching 3DS build is still running at the time of this documentation update.
+
+
+### Exact translation added: `sub_D326` at CPU `$D326`
+
+- The routine compares bit 1 of RAM `$0018` and `$0019`; if those bits differ, it sets the carry flag.
+- It then performs `ROR` in sequence across RAM `$0018–$001F`, with each byte's low bit feeding the next byte's high bit.
+- Native helper: `nesSubD326RotateInputBits`.
+- Regression test compares the implementation against an independent carry-chain reference over all 65,536 combinations of the first two bytes and generated patterns for the remaining six bytes. CI must pass before marking the helper validated.
