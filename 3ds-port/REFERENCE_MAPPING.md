@@ -484,3 +484,14 @@ Source inspected directly in `Excitebike/bank_FF.asm` at the matching CPU addres
 ## Fidelity gate — placeholder physics disabled
 
 The native `bikePhysicsUpdate` and `collisionResolve` entry points are now inert until the original player's movement and collision paths are identified and translated. The former arbitrary speed/temperature increments and track-position clamp were not source-backed and must not run in a fidelity-target build. The debug scaffold may still launch, but it is not a playable port.
+
+
+## `sub_E96C` — verified `loc_E96E` sub-block only (2026-10-21)
+
+Source: `Excitebike/bank_FF.asm`, CPU `$E96E-$E97D` (ROM offset `$00297E-$00298D`). This is deliberately a block-level translation, **not** a claim that the whole `sub_E96C` routine is ported.
+
+- `LDX #$03` at `$E96C` starts the caller's loop at slot 3; the routine later decrements X and processes slots 3, 2, 1, 0.
+- At `$E96E-$E976`, `ram_0058_obj,X == $15` or `$14` branches past the Y update.
+- Otherwise `$E978-$E97D` performs `LDA ram_obj_pos_Y_lo,X; CLC; ADC ram_00DC_obj,X; STA ram_obj_pos_Y_lo,X`. This is unsigned 8-bit addition modulo 256 with carry intentionally discarded; the carry is not consumed by the next block because the next instructions overwrite flags.
+- C helper: `nesLocE96EApplyVerticalDelta`, using four-byte arrays for `$0058`, Y-low, and `$00DC`. Exhaustive host regression covers all 256³ combinations for one slot and verifies skip states and the other slots' byte-wrap behavior.
+- Not yet connected to `gameUpdate`: the full `sub_E96C` path also depends on `sub_DD06`, collision/state handling, the `$E53D` Y thresholds, and the final player input branch at `$EA07-$EA43`. Those dependencies must be translated and verified before integration.
