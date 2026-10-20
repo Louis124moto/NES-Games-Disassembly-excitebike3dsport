@@ -223,3 +223,6 @@ Implementation: `3ds-port/include/nes_routines.h` and `3ds-port/source/nes_routi
 - The function is intentionally not wired into `bike_physics.c`: the native scaffold does not yet model the original four object slots or their RAM layout, and the meaning/lifetime of the source fields still needs to be established. Integrating it into the current placeholder model would imply a relationship that has not been proven.
 
 Verification status: source translation committed; CI build and a byte-for-byte exhaustive comparison against an independent 6502 reference calculation are still required. No fidelity claim is made until those checks pass.
+
+
+Automated regression test: `3ds-port/tests/test_nes_routines.c` implements a separate instruction-by-instruction 6502 reference and compares all `256 × 256 × 256 = 16,777,216` possible input triples. Workflow: `.github/workflows/test-nes-routines.yml`. The workflow was added and its first CI run is pending; do not mark the exhaustive test as passed until Actions reports success.
