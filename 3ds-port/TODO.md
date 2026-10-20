@@ -120,16 +120,12 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_E4C8` and `sub_E52C` at byte level, including wrapped subtraction, loop bounds, packed index scratch byte, and the source-commented `$000B` initialization bug.
 - [ ] Verify the new overlap routine tests and Nintendo 3DS build in CI before marking the batch validated.
 
-- [x] Correct `sub_E4AD` to write all 12 sprite Y bytes at four-byte strides, matching its 6502 loop.
-- [ ] Re-run host regression and 3DS build after correcting `sub_E4AD`.
 
 - [x] Translate `sub_E456` with reverse object-order traversal, `$70-$8F` cleanup gate, `$F0/$F8` thresholds, and the exact opponent-reset helper.
 - [x] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI (host suite run `39504720602` and 3DS build run `39504884005` succeeded).
 
-- [x] Correct E4AD test expectations for all twelve writes and E456 group offsets after inspecting the first failing CI run.
-- [ ] Re-run host tests after correcting the culling test expectations.
 
-- [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; corrected the model back to exactly three writes (Y=0,4,8) rather than inferring write count from the routine label/comment.
+- [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; the correct model writes exactly three OAM Y bytes at offsets 0, 4, and 8.
 - [x] Re-run host regression after restoring the literal E4AD loop bound (run `39504720602` succeeded).
 
 - [x] Model `sub_E26A`'s gate and sprite-command parameters from the literal instructions and `$D90B` three-byte table.
@@ -174,3 +170,5 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Keep source translation status separate from fidelity/test status; compilation alone does not prove instruction-level equivalence.
 - [ ] Compare every existing routine against its exact ASM control flow, flags, indexed RAM effects, and dependencies; correct discrepancies before claiming faithful coverage.
 - [ ] Translate remaining routines in dependency order, prioritizing long gameplay/state routines before audio/data decoders where practical.
+
+- [x] Remove contradictory historical TODO entries that incorrectly said `sub_E4AD` writes twelve OAM bytes; the literal ASM loop bound and regression test establish three writes.
