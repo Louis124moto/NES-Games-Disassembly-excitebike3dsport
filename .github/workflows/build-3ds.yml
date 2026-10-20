@@ -35,7 +35,7 @@ jobs:
           test -s 3ds-port/build/excitebike3ds.elf
           test ! -e 3ds-port/excitebike3ds.3dsx
           test ! -e 3ds-port/excitebike3ds.elf
-          file 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
+          ls -lh 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
