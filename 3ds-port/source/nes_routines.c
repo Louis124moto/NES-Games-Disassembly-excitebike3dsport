@@ -676,6 +676,23 @@ void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){
 uint8_t nesLocE2D0CountdownReachedOne(uint8_t countdown){return (uint8_t)(countdown==1u);}
 /* sub_E2F6: exact preconditions before wheel-sprite writes. */
 uint8_t nesSubE2F6ShouldDrawWheel(uint8_t x,const uint8_t r36c[4],const uint8_t r94[4],const uint8_t r90[4],const uint8_t rbc[4],const uint8_t r84[4],const uint8_t r80[4]){if(x>3u||r36c[x]==0u||(uint8_t)(r94[x]|r90[x])==0u||rbc[x]!=0u)return 0u;if((r84[x]&1u)==0u)return 0u;return (uint8_t)(r80[x]>=0x10u);}
+void nesSubE2F6DrawWheelSprites(uint8_t x,uint8_t yOffset,const uint8_t ram036C[4],
+    const uint8_t ram0094[4],const uint8_t ram0090[4],const uint8_t ram00BC[4],
+    const uint8_t ram0084[4],const uint8_t ram0080[4],const uint8_t ram008C[4],
+    uint8_t ram003F,uint8_t oam[256]){
+    uint8_t xx,yy,t0=0xF6u,t1=0xF7u,attr;
+    if(x>3u||ram036C[x]==0u||(uint8_t)(ram0094[x]|ram0090[x])==0u||ram00BC[x]!=0u||
+       (ram0084[x]&1u)==0u||ram0080[x]<0x10u)return;
+    xx=(uint8_t)(ram0080[x]+0xF9u);oam[(uint8_t)(0x97u+yOffset)]=xx;
+    xx=(uint8_t)(xx+0xF8u);oam[(uint8_t)(0x9Bu+yOffset)]=xx;
+    yy=(uint8_t)(ram008C[x]+0x08u);oam[(uint8_t)(0x98u+yOffset)]=yy;
+    yy=(uint8_t)(yy+0x08u);oam[(uint8_t)(0x94u+yOffset)]=yy;
+    if((ram003F&0x04u)!=0u){t0=0xF7u;t1=0xF6u;}
+    oam[(uint8_t)(0x95u+yOffset)]=t0;oam[(uint8_t)(0x99u+yOffset)]=t1;
+    attr=(uint8_t)(ram036C[x]&0x02u);
+    oam[(uint8_t)(0x96u+yOffset)]=attr;oam[(uint8_t)(0x9Au+yOffset)]=attr;
+    if(ram0094[x]==0u)oam[(uint8_t)(0x98u+yOffset)]=0xF8u;
+}
 /* sub_E1F9 state-only return selection, including the $000E side effect. */
 uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp){uint8_t a,y;if(x>3u||temp==NULL)return 0u;*temp=0u;a=r9c[x];if(a!=0u&&a!=5u){y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;if(r36[x]!=0u)y=(uint8_t)(y-1u);return (uint8_t)(y|0x10u);}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
 /* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
