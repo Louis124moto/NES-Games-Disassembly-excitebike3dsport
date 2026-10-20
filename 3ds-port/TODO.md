@@ -18,7 +18,7 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Add a basic top-screen debug/status view and bottom-screen console initialization.
 - [x] Document local build requirements and commands.
 - [x] Document the fidelity target, technical constraints, and original-source-to-native-module mapping.
-- [x] Compile the modular architecture successfully once (CI run 39492052328); re-run after the output-directory change.
+- [x] Compile the modular architecture successfully after the output-directory change (CI run 39493444147; `.3dsx` and `.elf` artifacts uploaded).
 - [x] Verify the application and controls/screen layout on real hardware (user-confirmed working; this does not validate NES gameplay fidelity).
 
 - [x] Record the first verified temperature-meter/overheat routine trace from `sub_E359_display_temperature_meter_with_sprites` (CPU `$E359`, ROM offset `$002369`): update is skipped when `ram_0052_track_finished_flag` is nonzero; it derives an index from `ram_005C_obj & $C0` and race state, compares `ram_03B6` against `tbl_D8FB`, and adjusts the fractional/coarse pair `ram_03B5`/`ram_03B6` using `tbl_D8F7` or subtracts `$0B` on the cooling path. At coarse value `$1A`, a state-dependent branch can set the danger indicator. This is a partial trace, not a complete model of heat input/cooling.
