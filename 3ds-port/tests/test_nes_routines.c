@@ -467,8 +467,106 @@ static int testBatchF871F885(void) {
     puts("PASS: sub_F871/F885 indexed ROM reads, zero exit and address wrap."); return 0;
 }
 
+
+static int testBatchC1FDC229(void) {
+    uint8_t table[256], ram[2048]; unsigned i;
+    for(i=0;i<256u;i++) table[i]=(uint8_t)(i^0x5Au);
+    for(i=0;i<2048u;i++) ram[i]=0xCCu;
+    nesSubC1FDInitializeRam(table,ram);
+    for(i=0;i<=0x1Eu;i++) if(ram[0x580u+i]!=table[i]||ram[0x5A3u+i]!=table[i]) return 1;
+    if(ram[0x6E0]!=1u||ram[0x6E1]!=0x40u||ram[0x7AE]!=0x40u||ram[0x7AF]!=9u||ram[0x5CE]!=0xA5u||ram[0x5CF]!=0x5Au) return 2;
+    nesSubC229InitializeRows(ram);
+    if(ram[0x5A0]!=0x0Au||ram[0x5A1]!=0u||ram[0x5A2]!=0u||ram[0x5C3]!=0x0Au||ram[0x5C4]!=0u||ram[0x5C5]!=0u) return 3;
+    return 0;
+}
+static int testBatchC32F(void) {
+    uint8_t ram=0xD5u,ppu=0u; nesSubC32FMaskPpuCtrl(&ram,&ppu);
+    return (ram==0x55u&&ppu==0x55u)?0:1;
+}
+static int testBatchC53Family(void) {
+    uint8_t ram[2048]={0},r2=0u,r5=0u,r6=0u,r7=0u;
+    uint8_t idx=nesSubCB06ComputeTableIndex(2u,0u,0u);
+    ram[0x580u+idx]=0x12u;ram[0x581u+idx]=0x34u;ram[0x582u+idx]=0x56u;
+    nesSubC53ESelectTableEntry(2u,0u,0u,ram,&r5,&r6,&r7);
+    if(r5!=0x12u||r6!=0x34u||r7!=0x56u)return 1;
+    nesSubC53ASelectTableEntry(2u,0u,0u,&r2,ram,&r5,&r6,&r7);
+    return (r2==2u&&r5==0x12u&&r6==0x34u&&r7==0x56u)?0:2;
+}
+static int testBatchC716C726(void) {
+    uint8_t d,e,f,g,h;
+    nesSubC716ConfigureLoop(&d,&e,&f,&g,&h);
+    if(d!=0x40u||e!=0x60u||f!=0u||g!=0x28u||h!=0x28u)return 1;
+    nesSubC726ConfigureLoop(&d,&e,&f,&g,&h);
+    return (d==0u&&e==0xE0u&&f==5u&&g==0x14u&&h==0x14u)?0:2;
+}
+static int testBatchDC97(void) {
+    uint8_t bc[4]={1u,2u,0x80u,4u},py[4]={3u,4u,0x7Fu,8u},c1=0u,c2=0u;
+    uint8_t a=nesSubDC97SubtractObjectY(0x20u,2u,bc,py,&c1);
+    uint8_t b=nesSubDC9ASubtractObjectY(0x20u,2u,bc,py,&c2);
+    return (a==b&&c1==c2&&a==(uint8_t)(0x20u-0x80u-0x7Fu))?0:1;
+}
+static int testBatchEC25EC5D(void) {
+    uint8_t oam[256]={0},tbl[256];unsigned i;for(i=0;i<256u;i++)tbl[i]=(uint8_t)(i+7u);
+    nesSubEC25WriteSprite(0x22u,3u,tbl,oam);
+    if(oam[0x30]!=0x22u||oam[0x31]!=0xCAu||oam[0x32]!=0u||oam[0x33]!=10u)return 1;
+    nesSubEC5DWriteSprite(0x10u,4u,tbl,oam);
+    return (oam[0x30]==0xF8u&&oam[0x28]==0xF8u&&oam[0x2C]==0xF8u&&oam[0x33]==11u)?0:2;
+}
+static int testBatchEC3B(void) {
+    uint8_t ram[2048];unsigned i;for(i=0;i<2048u;i++)ram[i]=(uint8_t)(i^0xA5u);
+    /* Use a disjoint expected source snapshot to verify the full 256-byte copy. */
+    uint8_t expected[256];for(i=0;i<256u;i++)expected[i]=ram[0x5E0u+i];
+    nesSubEC3BCopyPageDescending(ram);
+    for(i=0;i<256u;i++)if(ram[0x6E0u+i]!=expected[i])return 1;
+    return 0;
+}
+static int testBatchEC75(void) {
+    uint8_t b0[4]={0x10u,0x20u,0x30u,0x40u},c0[4]={0u,0u,2u,0u},tbl[256]={0};
+    uint8_t x[4]={9u,9u,9u,9u},y[4]={0u,0u,0u,0u},bc[4]={0u,0u,0u,0u};
+    tbl[2]=0x1Au;nesSubEC75InitializeObjectPositions(b0,c0,tbl,x,y,bc);
+    return (x[0]==0x0Au&&x[1]==0u&&x[2]==0u&&y[0]==0x1Au&&y[2]==0x30u&&y[3]==0x10u&&bc[0]==0x20u)?0:1;
+}
+static int testBatchF681(void) {
+    static uint8_t memory[65536];uint8_t ram[2048]={0},xo=0u,yo=0u;unsigned i;
+    for(i=0;i<65536u;i++)memory[i]=(uint8_t)((i*13u)^0x5Au);
+    nesSubF681CopyCommandBytes(0xFFFCu,0x0Cu,0xFEu,memory,ram,&xo,&yo);
+    if(xo!=0x0Fu||yo!=(uint8_t)(0xFEu+3u))return 1;
+    for(i=0;i<3u;i++)if(ram[0x030Fu-1u+i] != memory[(uint16_t)(0xFFFCu+(uint8_t)(0xFFu+i))])return 2;
+    return 0;
+}
+static int testBatchF821F86B(void) {
+    uint8_t ram[2048]={0},tbl[256]={0},audio[16]={0};unsigned i;
+    if(nesSubF821InitializeBufferAndAdvance(0xE0u,ram)!=0xE1u||ram[0x6C0]!=0x40u||ram[0xB7]!=0xE1u||ram[0xC5]!=0u)return 1;
+    for(i=0;i<256u;i++)tbl[i]=(uint8_t)(i+1u);
+    nesSubF86BWriteAudioRegisters(0x80u,0x9Cu,3u,tbl,0x77u,audio);
+    return (audio[0]==0x80u&&audio[1]==0x9Cu&&audio[2]==5u&&audio[3]==0x0Bu)?0:2;
+}
+static int testBatchF889(void) {
+    uint8_t tbl[256],audio[16];unsigned i;for(i=0;i<256u;i++)tbl[i]=1u;for(i=0;i<16u;i++)audio[i]=0xAAu;
+    tbl[0x11]=0u;nesSubF889WriteThirdAudioTimer(0x10u,tbl,0x66u,audio);
+    if(audio[10]!=0xAAu||audio[11]!=0xAAu)return 1;
+    tbl[0x11]=0x22u;tbl[0x10]=0x31u;nesSubF889WriteThirdAudioTimer(0x10u,tbl,0x66u,audio);
+    return (audio[10]==0x22u&&audio[11]==0x39u)?0:2;
+}
+static int testBatchC94B(void) {
+    uint8_t length=0x10u,table[257],ram[267];uint8_t x=0u;unsigned i;
+    for(i=0;i<257u;i++)table[i]=(uint8_t)(i^0xA5u);for(i=0;i<267u;i++)ram[i]=0xCCu;
+    nesSubC94BBuildCommand(&length,0xFEu,table,ram,&x);
+    if(x!=0x10u||length!=0x1Au)return 1;
+    if(ram[0x11]!=table[0xFE]||ram[0x12]!=table[0xFF]||ram[0x13]!=0x07u||ram[0x15]!=0xFBu||ram[0x18]!=0xFBu||ram[0x1B]!=0u)return 2;
+    return 0;
+}
+static int testBatchC64E653(void) {
+    uint8_t a=0x91u,ao=0u,r7=0xFFu,rc=0xFFu,w[2]={0u,0u};
+    nesSubC64EControllerDelay(a,&ao,&r7,&rc,w);
+    if(ao!=a||r7!=0u||rc!=0u||w[0]!=4u||w[1]!=0xFFu)return 1;
+    nesSubC653ControllerDelay(a,&ao,&r7,&rc,w);
+    return (ao==a&&r7==0u&&rc==0u&&w[0]==4u&&w[1]==0xFFu)?0:2;
+}
+
 int main(void)
 {
+    if(testBatchC1FDC229()!=0||testBatchC32F()!=0||testBatchC53Family()!=0||testBatchC716C726()!=0||testBatchDC97()!=0||testBatchEC25EC5D()!=0||testBatchEC3B()!=0||testBatchEC75()!=0||testBatchF681()!=0||testBatchF821F86B()!=0||testBatchF889()!=0||testBatchC94B()!=0||testBatchC64E653()!=0) { fputs("FAIL: 21-routine exact ASM batch\\n",stderr); return 1; }
     if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\n",stderr); return 1; }
     if(testSubD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
     if(testSubD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
