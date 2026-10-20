@@ -591,11 +591,11 @@ static int testBatchC94B(void) {
     return 0;
 }
 static int testBatchC64E653(void) {
-    uint8_t a=0x91u,ao=0u,r7=0xFFu,rc=0xFFu,w[2]={0u,0u};
-    nesSubC64EControllerDelay(a,&ao,&r7,&rc,w);
-    if(ao!=a||r7!=0u||rc!=0u||w[0]!=4u||w[1]!=0xFFu)return 1;
-    nesSubC653ControllerDelay(a,&ao,&r7,&rc,w);
-    return (ao==a&&r7==0u&&rc==0u&&w[0]==4u&&w[1]==0xFFu)?0:2;
+    uint8_t a=0x91u,ao=0u,r7=0xFFu,rc=0xFFu,w[2]={0u,0u},loops[2]={0u,0u};
+    nesSubC64EControllerDelay(a,&ao,&r7,&rc,w,loops);
+    if(ao!=a||r7!=0u||rc!=0u||w[0]!=4u||w[1]!=0xFFu||loops[0]!=0x34u||loops[1]!=0x34u)return 1;
+    nesSubC653ControllerDelay(a,&ao,&r7,&rc,w,loops);
+    return (ao==a&&r7==0u&&rc==0u&&w[0]==4u&&w[1]==0xFFu&&loops[0]==0x6Au&&loops[1]==0x6Au)?0:2;
 }
 
 int main(void)
