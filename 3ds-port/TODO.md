@@ -95,3 +95,8 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Validate host-side regression tests for `sub_D326` and `sub_D35B`: [D326 test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497063113), [D35B test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497203936).
 - [ ] Confirm the newest 3DS build after adding `sub_D35B`; keep all native helper translations separate from gameplay until integrated through verified call order.
+
+
+- [x] Translate `sub_DA58` with the original add/carry side effect and validate against the byte-level reference.
+- [x] Translate `sub_E091` and `sub_E098`, preserving the `CMP #$E7` branch threshold and carry state on the ADC path.
+- [ ] Await host regression and native 3DS build for the DA58/E091/E098 batch before marking the batch fully validated.
