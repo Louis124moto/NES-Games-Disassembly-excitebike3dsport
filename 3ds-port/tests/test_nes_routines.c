@@ -93,8 +93,23 @@ static int testSubE4C8Exact(void)
     return 0;
 }
 
+static int testSubE456Exact(void){
+    uint8_t oam[256]={0},oi[4]={0x10u,0x20u,0x30u,0x40u},off[3]={0u,0x30u,0x60u};
+    NesSpriteCullState s={0};
+    s.ram0088[0]=0u;s.ram0088[1]=1u;s.ram0088[2]=2u;s.ram0088[3]=3u;
+    s.ram0084[1]=1u;s.ram0080[1]=0x50u;
+    s.ram0084[2]=0u;s.ram0080[2]=0x80u;s.ram00A8[2]=9u;s.ram0058[2]=9u;s.ram0370[2]=9u;
+    s.ram0084[3]=0u;s.ram0080[3]=0xFAu;
+    nesSubE456CullObjectSprites(oam,&s,oi,off);
+    if(s.ram00A8[2]!=0u||s.ram0058[2]!=0u||s.ram0370[2]!=0u||s.ram03A6_flag!=1u)return 1;
+    if(oam[0x50]!=0xF8u||oam[0x54]!=0xF8u||oam[0x5Cu]!=0xF8u)return 1;
+    if(oam[0x70]!=0u)return 1;
+    puts("PASS: sub_E456 culling, opponent reset, and 12-byte sprite hiding.");
+    return 0;
+}
 int main(void)
 {
+    if(testSubE456Exact()) { fputs("FAIL: sub_E456 reference test\\n",stderr); return 1; }
     if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\\n",stderr); return 1; }
     unsigned int x, y, z;
     unsigned long checked = 0;
