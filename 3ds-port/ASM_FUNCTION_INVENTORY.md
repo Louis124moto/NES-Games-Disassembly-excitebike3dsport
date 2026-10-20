@@ -220,3 +220,15 @@ Translate routines in dependency order rather than blindly copying address order
 
 | `sub_D0AB` | Implemented | `nesSubD0ABComputeVerticalBands` |
 | `sub_DFB2` | Implemented | `nesSubDFB2SelectBand` |
+
+
+| `sub_D000` | Implemented | `nesSubD000ShouldSetupObject` |
+| `sub_D11F` | Implemented | `nesSubD11FInitializeUpdateBuffer` |
+| `sub_D255` | Implemented | `nesSubD255HideAllSprites` |
+| `sub_D2FF` | Implemented | `nesSubD2FFAdvanceBufferIndex` |
+| `sub_E70B` | Implemented | `nesSubE70BUpdateObjectOffsets` |
+| `sub_E80D` | Implemented | `nesSubE80DPreparePointer` |
+| `sub_E803` | Implemented | `nesSubE803ReadData` |
+| `sub_E7FF` | Implemented | `nesSubE7FFReadObjectData` |
+| `sub_E7FC` | Implemented | `nesSubE7FCReadObjectBandData` |
+| `sub_E836` | Implemented | `nesSubE836UpdateObjectDifferences` |
