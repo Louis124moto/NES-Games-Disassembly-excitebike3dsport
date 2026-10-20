@@ -586,7 +586,7 @@ static int testSubDA6A(void)
 
 static int testSubDCA0(void)
 {
-    unsigned int x, index, finished, flags, mode;
+    unsigned int x, index, finished, flags;
     unsigned long checked = 0u;
     for (x = 0; x < 4u; ++x) {
         for (index = 0; index < 256u; ++index) {
@@ -625,6 +625,7 @@ static int testSubDB50(void)
     unsigned int x, scenario;
     uint8_t d8d5[256], d8cd[16];
     unsigned int i;
+    unsigned long checked = 0u;
     for (i = 0; i < 256u; ++i) d8d5[i] = (uint8_t)(i ^ 0xA5u);
     for (i = 0; i < 16u; ++i) d8cd[i] = (uint8_t)(i * 7u);
     for (x = 0; x < 4u; ++x) {
