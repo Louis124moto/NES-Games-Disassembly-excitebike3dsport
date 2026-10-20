@@ -110,18 +110,18 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DA9F` | `sub_DA9F` | Pending | — |
 | `$DAE3` | `sub_DAE3` | Pending | calls: sub_DB95_clear_opponent_bike_data, sub_E7FF; ; in |
 | `$DB50` | `sub_DB50` | Pending | — |
-| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Pending | — |
+| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DBC4` | `sub_DBC4` | Pending | — |
-| `$DBFE` | `sub_DBFE` | Pending | — |
+| `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
 | `$DC97` | `sub_DC97` | Pending | — |
-| `$DC9A` | `sub_DC9A` | Pending | — |
+| `$DC9A` | `sub_DC9A` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCA0` | `sub_DCA0` | Pending | — |
-| `$DCDE` | `sub_DCDE` | Pending | — |
+| `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCF2` | `sub_DCF2` | Pending | — |
 | `$DD06` | `sub_DD06` | Pending | — |
-| `$DD38` | `sub_DD38` | Pending | — |
-| `$DD6F` | `sub_DD6F` | Pending | — |
+| `$DD38` | `sub_DD38` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
+| `$DD6F` | `sub_DD6F` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DD8D` | `sub_DD8D` | Pending | — |
 | `$DDD1` | `sub_DDD1` | Pending | — |
 | `$DE31` | `sub_DE31` | Pending | — |
