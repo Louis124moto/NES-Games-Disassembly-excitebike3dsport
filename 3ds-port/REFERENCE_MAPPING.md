@@ -372,3 +372,7 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 
 - **`sub_DFA4` (`$DFA4`)**: stores incoming X as the divisor, clears X, then repeatedly increments X and executes `SEC; SBC divisor` until the subtraction result has N=1 (the `BPL` loop condition). It then decrements X and performs `ADC divisor` using the carry left by the terminating SBC. The C helper exposes both final X and A and deliberately preserves byte wrapping and the N-flag termination condition; divisor zero is excluded because the original routine would not terminate for ordinary inputs.
 - **`sub_DFA2` (`$DFA2`)**: loads X with `$0A` and falls through to `sub_DFA4`; represented by the same exact helper with divisor `$0A`.
+
+
+- **`sub_D0AB` (`$D0AB`)**: processes X=3 down to 0; subtracts `$10` from each Y-position byte, then repeatedly decrements Y and subtracts `$08` while the resulting N flag is clear, stopping if Y reaches zero. Stores the final Y in the corresponding `ram_0360` slot.
+- **`sub_DFB2` (`$DFB2`)**: if `ram_009C_obj,X` is nonzero, stores zero. Otherwise scans `tbl_D913` using the 6502 CMP result's N bit, resets Y to zero after five entries, and adds two to a nonzero Y only when `ram_00A4_obj,X == 1`. The table is passed in as the original five bytes.
