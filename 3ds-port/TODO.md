@@ -26,7 +26,8 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Trace the exact outer object-state dispatch loop (`sub_D918`/`sub_D924`) and the observed branch logic of dispatch target `$D933`; record that target meanings remain partially unresolved.
 - [x] Trace the exact outer loop and sequence-table access in `sub_E733`/`sub_E73B`; explicitly distinguish object-path handling from player acceleration.
 - [x] Resolve the exact pointer values for dispatch states `$00-$05` from `tbl_D8FF_lo`/`tbl_D905_hi`; document only state behavior directly supported by the visible instructions.
-- [ ] Trace every reachable state handler and every writer of `ram_009C_obj,X`, then map persistent RAM data flow for acceleration, heat/cooling, jumping/landing, collisions, and course progression before implementing those systems.
+- [x] Trace visible branch and byte-operation behavior for dispatch states `$02-$05` and `sub_DA15`; record unresolved variable semantics separately.
+- [ ] Trace every writer of `ram_009C_obj,X` and the producers of `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`; establish player-slot identity before implementing gameplay.
 
 ## Phase 3 — Playable prototype
 
