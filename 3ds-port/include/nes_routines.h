@@ -1,0 +1,19 @@
+#ifndef EXCITEBIKE_NES_ROUTINES_H
+#define EXCITEBIKE_NES_ROUTINES_H
+
+#include <stdint.h>
+
+/*
+ * Exact byte-level translation of bank_FF.asm sub_DA15 ($DA15).
+ *
+ * Inputs are the three RAM bytes read by the original routine:
+ *   ram_0390_obj,X
+ *   ram_0080_obj,X
+ *   ram_obj_pos_Y_lo,X
+ *
+ * This helper is deliberately separate from the placeholder bike physics.
+ * It does not assign a gameplay meaning to the resulting RAM byte.
+ */
+uint8_t nesSubDA15DerivedY(uint8_t ram0390, uint8_t ram0080, uint8_t ramY);
+
+#endif
