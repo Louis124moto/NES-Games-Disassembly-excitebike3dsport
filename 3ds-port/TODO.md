@@ -180,3 +180,17 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - Keep hypotheses explicitly marked until verified from instructions, tables, callers, or repeatable tests.
 - Prefer completing the original game's features before optimization.
 - Keep optional 3DS enhancements isolated from the faithful baseline.
+
+
+## Follow-up work — 2026-10-21
+
+- [x] Added a temporary native diagnostic menu overlay in `source/menus.c`. It is explicitly not claimed to reproduce the original NES title/menu flow; the original `bank_FF.asm` menu path still needs tracing.
+- [x] Added `tools/nes_chr_to_ppm.py`, a dependency-free 2bpp CHR inspection utility, plus graphics-pipeline notes in `assets/README.md`. Its grayscale output is diagnostic only, not a game texture or palette-faithful rendering.
+- [x] Added exhaustive regression vectors for `sub_CFDB` and `sub_CFEA`, plus broad high-byte and boundary-low-byte coverage for `sub_CFCB`, to the host test source.
+- [ ] Run the updated host regression suite and fix any mismatches; the new test code is not marked passed until CI or a local run confirms it.
+- [ ] Run the 3DS build on the same revision and verify the `.3dsx` and `.elf` artifacts.
+- [ ] Continue source audit of the 20-entry batch, including caller/dependency checks; no translation is considered gameplay-integrated solely because a unit test passes.
+- [ ] Trace the original menu state machine and graphics/palette paths before replacing the diagnostic overlay with the faithful menu.
+- [ ] Validate the CHR inspection script against a known-good raw tile fixture, then connect palette-correct source tiles to the 3DS renderer.
+
+**Integrity rule:** the original NES disassembly remains unchanged. This follow-up adds tooling, test coverage, and a clearly labelled diagnostic overlay; it does not establish a playable or fidelity-verified port.
