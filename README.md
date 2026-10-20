@@ -1,31 +1,49 @@
-# Excitebike 3DS — faithful port in progress
+# Excitebike 3DS — faithful NES port
 
-A Nintendo 3DS homebrew project aiming to reproduce the original NES **Excitebike** as faithfully as practical. The original 6502 disassembly is the reference for translating game logic into native C code for the 3DS's ARM11 processor.
+A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excitebike** as faithfully as possible, including its gameplay rules, course data, opponents, menus, scoring, sound, and relevant timing and hardware-visible behavior.
 
-> **Status: work in progress.** The 3DS application and porting infrastructure exist, and a subset of NES routines has C implementations and host-side regression tests. This is **not yet a complete or faithful playable port**. The current application still contains scaffolding; matching a routine's address/name does not prove its implementation is correct.
+The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-## Current progress
+> **Current status: early porting / source-translation stage. This is not yet a playable faithful port.** The native application scaffold and build infrastructure exist, and multiple routines have C translations and regression coverage. A newly added batch of 20 ASM entry translations is present in source, headers, and the host-test runner, but execution of that batch's tests and a corresponding 3DS build are still pending. No full-game equivalence result is claimed.
 
-The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md), and source-to-RAM/routine notes are in [`3ds-port/REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md).
+## Project goals
 
-The current routine inventory reports:
+- Reproduce the original NES game, including observable 6502 behavior and hardware-dependent effects where relevant.
+- Preserve the original disassembly and assets in the existing source tree; implement the 3DS port separately.
+- Translate by routine or block when equivalence to the original instruction sequence can be demonstrated.
+- Analyze each NES-specific hardware interaction individually and model its observable effects explicitly.
+- Finish the original game's core features before optional enhancements or performance polish.
+- Keep any 3DS-specific enhancements optional and disabled by default unless they are proven not to alter the faithful baseline.
+- Target both the original Nintendo 3DS and New Nintendo 3DS.
+- Distribute a homebrew `.3dsx` build; this project does not currently target a CIA release.
 
-- 165 unique `sub_XXXX` labels scanned in `Excitebike/bank_FF.asm`.
-- 85 labels with a C function at the same address/name (about **51.5% nominal label coverage**).
-- 80 labels without a matching C function in that inventory.
+## Progress dashboard
 
-**These numbers measure name/address matching only. They are not a correctness score, do not mean 51.5% of the game is implemented, and do not establish test coverage or integration into gameplay.** Each translation still needs instruction-by-instruction review, side-effect checks, regression tests, and game-level comparison.
+Counts below deliberately distinguish inventory, implementation, test execution, gameplay integration, and fidelity validation. They are not interchangeable.
+
+| Measure | Current evidence-based status |
+|---|---|
+| Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`. This includes helpers, aliases, and labels that may not be standalone routines. |
+| Newly documented translations | 20 ASM entries in the batch dated 2026-10-21 have C implementations and header declarations. This is a batch count, **not** a reconciled project-wide total. |
+| Latest batch in test runner | A dedicated regression group is wired into `3ds-port/tests/test_nes_routines.c`. |
+| Latest batch tests executed | **Not yet confirmed.** Do not count the batch as test-passing until the test executable actually runs successfully. |
+| Latest batch 3DS build | **Pending confirmation** for the current code revision. |
+| Latest batch integrated into gameplay | No integration has been demonstrated for this batch. |
+| Full-game fidelity | Not achieved. There is no documented end-to-end scenario comparison establishing a complete faithful game. |
+
+A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
 ## Repository layout
 
-- `Excitebike/` — original NES disassembly, assets, and assembly scripts.
-- `_scripts/` — shared build helpers used by the NES assembly scripts.
-- `3ds-port/source/` — native C homebrew and translated NES routines.
-- `3ds-port/include/` — native port interfaces.
+- `Excitebike/` — original NES disassembly, source assets, and assembly scripts. Preserve these sources unchanged.
+- `_scripts/` — shared build helpers.
+- `3ds-port/source/` — native C application and translated NES routines.
+- `3ds-port/include/` — native port interfaces and routine declarations.
 - `3ds-port/tests/` — host-side routine regression tests.
-- `3ds-port/TODO.md` — roadmap, remaining routine inventory, and verification gates.
-- `3ds-port/REFERENCE_MAPPING.md` — notes connecting NES routines, RAM locations, and native code.
-- `.github/workflows/` — automated build and test workflows.
+- `3ds-port/TODO.md` — phase roadmap, task gates, batch log, and current priorities.
+- `3ds-port/ASM_FUNCTION_INVENTORY.md` — per-label inventory and translation status.
+- `3ds-port/REFERENCE_MAPPING.md` — source-to-native notes, RAM mapping, trace evidence, and unresolved interpretations.
+- `.github/workflows/` — automated test and Nintendo 3DS build workflows.
 
 ## Build the original NES disassembly
 
@@ -37,46 +55,80 @@ sh Excitebike/assemble.sh
 ```
 
 **Windows**
+```bat
+Excitebike\assemble.bat
+```
 
-Run `Excitebike/assemble.bat`.
-
-These commands assemble the NES version; they do not build the Nintendo 3DS application.
+These commands assemble the original NES project; they do not build the 3DS homebrew.
 
 ## Build the Nintendo 3DS homebrew
 
-Install devkitPro with devkitARM and libctru, then run from the repository root:
+Install devkitPro with devkitARM and libctru using the official [devkitPro getting-started guide](https://devkitpro.org/wiki/Getting_Started). Run from the repository root:
 
 ```sh
 make -C 3ds-port
 ```
 
-The build output is placed under `3ds-port/build/`, including `excitebike3ds.3dsx` and `excitebike3ds.elf` when the build succeeds.
+A successful build should produce:
+
+- `3ds-port/build/excitebike3ds.3dsx`
+- `3ds-port/build/excitebike3ds.elf`
+
+The intended distributable is the `.3dsx` homebrew. Build success alone does not prove the app is playable or faithful.
+
+## Architecture and current limitations
+
+The native project has modules/interfaces for game state, input, rendering, bike physics, collision, track, audio, and menus. The application scaffold has previously been reported to launch on real 3DS hardware, but its display and module structure are not a faithful game implementation.
+
+Placeholder physics must not be presented as original game behavior. In particular, `sub_E733/sub_E73B` is an object-position and track-event path, not the player's acceleration model. The player update path and player-slot identity must be established from the disassembly before implementing player physics.
 
 ## Fidelity requirements
 
-A faithful translation must preserve the original 6502 behavior, including:
+Translations must preserve observable behavior, including where relevant:
 
-- 8-bit wraparound and carry/borrow propagation;
-- status-flag behavior where it affects later instructions;
-- register and RAM side effects;
-- branches, calls, lookup tables, and 16-bit address behavior;
-- routine-specific edge cases and interactions with the game state.
+- 8-bit wraparound, carry/borrow propagation, and 16-bit address behavior;
+- status flags and their effects on later branches;
+- registers, stack behavior, RAM writes, scratch variables, and aliasing;
+- entry points, call order, loop bounds, lookup-table access, and branch conditions;
+- timing and effects associated with PPU/APU, controller input, vblank, and other NES-specific hardware;
+- edge cases, initialization, reset paths, and interactions with the surrounding game state.
 
-Host-side tests help validate routines in isolation. They do not replace building the 3DS application, testing on hardware/emulator, or comparing complete gameplay scenarios against the original NES game. Work is marked complete only when the relevant evidence is recorded in the task tracker.
+For a block-level translation, document the exact ASM address range and the boundaries/dependencies not yet translated. Hardware interactions should be modeled through explicit interfaces or observable outputs rather than silently omitted.
+
+## Verification policy
+
+Use these states consistently:
+
+1. **Analyzed** — the relevant assembly and dependencies have been inspected; confirmed facts and hypotheses are distinguished.
+2. **Translated** — native C implementation exists and is declared where appropriate.
+3. **Tested** — relevant host regression tests have actually executed and passed.
+4. **Build-verified** — the same code revision builds for the 3DS and produces the expected artifacts.
+5. **Integrated** — the implementation is connected through a verified call/update path.
+6. **Fidelity-verified** — tests or reproducible scenarios compare the relevant observable behavior against the original NES reference.
+
+Only claim the states supported by evidence. Host tests do not replace hardware/build validation, and isolated routine tests do not establish complete-game fidelity. Record CI run links and code revisions in the task tracker when available.
+
+## Current next priorities
+
+1. Establish player-slot identity and initialization/update paths by tracing the relevant RAM writers, callers, and indirect writes.
+2. Trace the actual player input and movement path, then prioritize acceleration, braking, overheating/cooling, jumping, posture, landing, and crashes.
+3. Finish and validate each translation batch: run host tests, correct mismatches, build the 3DS target, and compare boundary cases against the assembly.
+4. Integrate validated routines in batches only after their dependencies and call order are understood.
+5. Reconstruct course/terrain data and rendering, opponents, race progression, scoring/results, menus, and audio.
+6. Compare complete gameplay scenarios against the original NES version; document any known differences.
+7. Test on both original 3DS and New 3DS hardware, then optimize and prepare a versioned `.3dsx` release.
+
+The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
 
 ## Upstream source and credits
 
 The original disassembly originates from [NES Games Disassembly](https://github.com/cyneprepou4uk/NES-Games-Disassembly). Preserve relevant upstream credits and follow the original project's applicable terms when reusing or redistributing its work.
 
-## Contributing
+## Contribution rules
 
-Please focus contributions on the Excitebike 3DS port. When translating a routine, include the source label/address, preserve observable 6502 behavior, add regression tests for edge cases, and document what was actually built and tested. Clearly distinguish confirmed source behavior from hypotheses.
-
-
-## Faithful-port ASM translation progress — 2026-10-21
-
-A new batch of 20 entry-level translations has been added to `3ds-port/source/nes_routines.c`, declared in `3ds-port/include/nes_routines.h`, and covered by `testBatchAdditional20` in `3ds-port/tests/test_nes_routines.c`.
-
-The batch covers object flag comparisons, command-buffer writes, RAM clearing, PPU-status polling, controller reads, scroll-register writes, and sprite setup. PPU hardware effects are represented as explicit outputs; the two polling routines accept a finite status trace so host tests cannot hang when a trace never reaches the original loop's exit condition.
-
-The regression test source has been updated, but this batch has **not yet been compiled or executed in this environment**. Do not treat it as runtime-verified until the native test target and the 3DS build both pass.
+- Keep the original NES source unchanged.
+- Use consistent technical English for C comments, identifiers, and documentation.
+- Record the source label, CPU address/ROM offset where known, dependencies, register/flag inputs and outputs, memory effects, and unresolved assumptions.
+- Add tests for branch paths and boundary cases; use independent instruction-level references where practical.
+- Do not mark a task complete until its required tests, build, integration, and fidelity evidence have been recorded.
+- Keep optional 3DS enhancements separate from the faithful baseline.
