@@ -1507,7 +1507,7 @@ void nesSubC94BBuildCommand(uint8_t *ram0300, uint8_t tableIndex,
 
 static void nesControllerDelayEffect(uint8_t originalA, uint8_t count,
                                      uint8_t *aOut, uint8_t *ram0007, uint8_t *ram000C,
-                                     uint8_t controllerWrites[2])
+                                     uint8_t controllerWrites[2], uint8_t delayIterations[2])
 {
     if (aOut != NULL) *aOut = originalA; /* PHA ... PLA preserves the input A. */
     if (ram0007 != NULL) *ram0007 = 0u;   /* DEC loop reaches zero. */
@@ -1516,17 +1516,20 @@ static void nesControllerDelayEffect(uint8_t originalA, uint8_t count,
         controllerWrites[0] = 0x04u;
         controllerWrites[1] = 0xFFu;
     }
-    (void)count; /* Delay iteration count is count iterations in each loop; no cycle emulation. */
+    if (delayIterations != NULL) {
+        delayIterations[0] = count;
+        delayIterations[1] = count;
+    } /* Each DEC/BNE loop executes count times; instruction-cycle timing is not simulated. */
 }
 
 void nesSubC64EControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
-                               uint8_t *ram000C, uint8_t controllerWrites[2])
+                               uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2])
 {
-    nesControllerDelayEffect(a, 0x34u, aOut, ram0007, ram000C, controllerWrites);
+    nesControllerDelayEffect(a, 0x34u, aOut, ram0007, ram000C, controllerWrites, delayIterations);
 }
 
 void nesSubC653ControllerDelay(uint8_t a, uint8_t *aOut, uint8_t *ram0007,
-                               uint8_t *ram000C, uint8_t controllerWrites[2])
+                               uint8_t *ram000C, uint8_t controllerWrites[2], uint8_t delayIterations[2])
 {
-    nesControllerDelayEffect(a, 0x6Au, aOut, ram0007, ram000C, controllerWrites);
+    nesControllerDelayEffect(a, 0x6Au, aOut, ram0007, ram000C, controllerWrites, delayIterations);
 }
