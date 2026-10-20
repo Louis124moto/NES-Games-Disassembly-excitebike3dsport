@@ -1010,3 +1010,39 @@ void nesOfsE87909Apply(uint8_t x, const uint8_t ram00C8[4], const uint8_t ram00D
     }
     ram00D8[x] = 0x40u;
 }
+
+/* Exact effects of dispatch entry ofs_002_E8BF_0E: A4=0 and A0=0. */
+void nesOfsE8BF0EReset(uint8_t x, uint8_t ram00A4[4], uint8_t ram00A0[4])
+{
+    if (x < 4u) { ram00A4[x] = 0u; ram00A0[x] = 0u; }
+}
+
+/* Exact effects of ofs_002_E8C6_0F: A4=1, then increment if Y-low < $20. */
+void nesOfsE8C60FSetStateFromY(uint8_t x, uint8_t yLow, uint8_t ram00A4[4])
+{
+    if (x < 4u) ram00A4[x] = (uint8_t)(1u + (yLow < 0x20u ? 1u : 0u));
+}
+
+/* Exact effects of ofs_002_E8E3_01: A=1 then branch to store A in A0,X. */
+void nesOfsE8E301SetA0(uint8_t x, uint8_t ram00A0[4])
+{
+    if (x < 4u) ram00A0[x] = 1u;
+}
+
+/* Exact effects of ofs_002_E8F5_14: jump to E84F with A=$30. */
+void nesOfsE8F514SetPair30(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    if (x < 4u) { ram00BC[x] = 0x30u; ram00E4[x] = 0x30u; }
+}
+
+/* Exact effects of ofs_002_E8FA_10: jump to E84F with A=$10. */
+void nesOfsE8FA10SetPair10(uint8_t x, uint8_t ram00BC[4], uint8_t ram00E4[4])
+{
+    if (x < 4u) { ram00BC[x] = 0x10u; ram00E4[x] = 0x10u; }
+}
+
+/* Exact effects of ofs_002_E963_00: clear CC, D4 and B4 for slot X. */
+void nesOfsE96300ClearThree(uint8_t x, uint8_t ram00CC[4], uint8_t ram00D4[4], uint8_t ram00B4[4])
+{
+    if (x < 4u) { ram00CC[x] = 0u; ram00D4[x] = 0u; ram00B4[x] = 0u; }
+}
