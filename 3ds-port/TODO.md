@@ -210,3 +210,13 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Add host regression tests for these five routines. Test results are pending CI; no gameplay integration is claimed.
 - [ ] Wait for both the host-test workflow and native 3DS build on this batch; inspect failures and correct them before counting the batch as verified.
 - [ ] Continue tracing and translating additional self-contained ASM routines; only count routines as verified after the source mapping, tests, and CI pass.
+
+
+## Second exact-helper batch — 2026-10-21
+
+- [x] Translate `sub_E7FC` and `sub_E7FF` data-index loads.
+- [x] Translate `sub_E80D`'s six-entry pointer low/high tables exactly (`$E54E-$E559`).
+- [x] Translate `sub_E803` indexed RAM read with 6502 8-bit Y/page-crossing semantics represented over RAM `$0400-$07FF`.
+- [x] Translate the decision/write behavior of dispatch entry `ofs_002_E818_07`, including `CMP #$07` followed by `BPL` sign-flag semantics.
+- [x] Add regression tests for these helpers; CI validation remains pending.
+- [ ] Do not mark either batch verified until the newest host test workflow and 3DS build both pass.
