@@ -1747,9 +1747,17 @@ static int testBatchAdditional20(void)
     if(strobe[0]!=1u||strobe[1]!=0u)return 19;
     if(nesLocC4FCComputeScaledValue(10u,20u,2u,&f)!=15u||f!=15u)return 20;
     if(nesLocC4FCComputeScaledValue(30u,10u,0u,&f)!=14u||f!=14u)return 21;
-    nesLocC92CPrepareTableSelection(0x37u,0x82u,&x0,&x1); if(x0!=0x82u||x1!=0x37u)return 22;
-    if(nesSubC935CopyPreparedBytes(1u,source7,buf)!=8u)return 23;
-    for(i=0u;i<7u;++i)if(buf[5u+i]!=source7[i])return 24;
+    {
+        uint8_t cpuRam[2048]={0}, r2=0u,r3=0u,r5=0u,r6=0u,r7=0u;
+        cpuRam[0x5A9u]=0xA1u;cpuRam[0x5AAu]=0xA2u;cpuRam[0x5ABu]=0xA3u;
+        nesSubC92CSelectTableEntry(0x37u,2u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=2u||r3!=0x37u||r5!=0xA1u||r6!=0xA2u||r7!=0xA3u)return 22;
+    }
+    source7[1]=0xA2u; source7[4]=0xB4u;
+    if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
+    if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
+       source7[4]!=0xB4u||source7[5]!=6u||source7[6]!=8u)return 24;
+    for(i=0u;i<7u;++i)if(buf[5u+i]!=source7[i])return 30;
     for(i=0u;i<256u;++i) { ram[i]=0x3Du; oam[i]=0x3Du; table256[i]=0x3Bu; }
     if(nesSubECC9CheckSpriteBytes(9u,ram,oam,table256,table256)!=0u)return 25;
     table256[9u]=0u; if(nesSubECC9CheckSpriteBytes(9u,ram,oam,table256,table256)!=1u)return 26;
