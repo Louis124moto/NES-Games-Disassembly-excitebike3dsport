@@ -57,4 +57,17 @@ void nesSubDB95ClearOpponentBikeData(uint8_t x, uint8_t ram00A8[4],
     uint8_t ram039C[4], uint8_t ram00DC[4], uint8_t ram0070[4],
     uint8_t ram0370[4]);
 
+/* Exact translations from bank_FF.asm. */
+void nesSubDA6AUpdateScroll(uint8_t *scrollX, uint8_t delta, uint8_t *baseNametable);
+void nesSubDB50SetupObject(uint8_t x, uint8_t y, uint8_t trackFinished,
+                           uint8_t ram0084[4], uint8_t ram001B[4],
+                           uint8_t ram0070[4], uint8_t ram0078[4],
+                           uint8_t ram0074[4], uint8_t ram0080[4],
+                           uint8_t ram0094Player, uint8_t ram0090Player,
+                           uint8_t ram0070Global[4], const uint8_t tblD8D5[256],
+                           const uint8_t tblD8CD[16]);
+void nesSubDCA0SetupSpriteHeight(uint8_t x, uint8_t ram00D4[4],
+    uint8_t trackFinished, uint8_t ram0098Player, uint8_t ram009CPlayer,
+    uint8_t ram0058Player, uint8_t ram00A4[4], uint8_t tblD88B[256],
+    uint8_t ram0368[4]);
 #endif
