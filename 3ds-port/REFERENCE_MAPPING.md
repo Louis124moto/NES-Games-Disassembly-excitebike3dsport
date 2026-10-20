@@ -435,3 +435,8 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 
 - Implements the `$D8F7/$D8FB` table-driven fractional/coarse temperature update, including byte carry/borrow, cooling subtraction `$0B`, the finish/latch blink paths, overheat timer/latch writes, `$00FC` flag OR, and the four sprite records written to OAM `$02F0-$02FF`.
 - The helper exposes the source RAM values as parameters; it does not claim to reproduce the rest of the full game loop or the surrounding PPU timing.
+
+
+## Wheel sprites — $E2F6
+
+- Expanded the previous precondition-only model into the full OAM-writing path. It preserves the gate order, byte-wrapped X offsets `$F9/$F8`, Y offsets `$08/$08`, tile swap controlled by `ram_003F & $04`, attribute bit `$02`, and the second-wheel hide write `$F8` when `ram_0094,X` is zero.
