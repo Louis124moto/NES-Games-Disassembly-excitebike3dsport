@@ -418,3 +418,9 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 - `sub_E456` iterates sorted object slots in reverse order, skips slot zero, seeds three culling flags from `ram_0084,X`, and either clears opponent-bike RAM for a Y position in `$70-$8F` when bit 0 is clear or adjusts group flags at Y thresholds `$F0/$F8`.
 - `sub_E49B` tests bit 0 of each of three group flags; each clear flag invokes `sub_E4AD`.
 - `sub_E4AD` forms the OAM byte offset by adding the selected `tbl_D8DC_spr_index` entry to the OAM base and writes `$F8` at offsets 0, 4, and 8, then exits when Y reaches `$0C`. The routine label says “hide 4 sprites”, but the instruction loop writes exactly three Y bytes per call.
+
+
+## Special object sprite preparation — $E26A
+
+- Models the original early-return gates: `$039C+$03` nonzero, `ram_0084,X != $02`, `ram_0390,X < $F8`, and `ram_0390,X >= ram_0080,X`.
+- On the taken path, preserves the 8-bit `SEC/SBC` result `$A8 - ram_006C,X`, table byte from the three-entry `$D90B` table, `$22` attribute, OAM base, OR of the existing `$000B` scratch value with `$20` when `ram_00A4,X` is nonzero, and the Y-index XOR `$03` when Y is nonzero. The final `loc_D1C7` renderer remains a separate dependency.
