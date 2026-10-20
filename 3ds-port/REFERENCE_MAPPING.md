@@ -456,3 +456,9 @@ The latest batch CI confirms the host regression suite and native 3DS build pass
 ## Finish countdown — entry $E2AF / labels $E2BD and $E2D0
 
 - Adds a combined state transition for the code beginning at `$E2AF`: low-byte subtract and borrow into `$03BE`, finish-flag/timer blink behavior, exact early RTS for finish values other than 0/1, and the `$03BE == 1` countdown sprite command (`$50`, `$32`, OAM base `$C0`, and `$D8E5` tile). Return code 2 explicitly represents the original branch into the shared `$E2F6` tail rather than pretending it is an independent RTS helper.
+
+
+## Object sprite setup — $E1A3
+
+- Translates the caller-side parameter setup around `sub_E1F9`: loads `$0080,X/$008C,X`, performs the 23-entry `$D892/$D8A9` lookups, applies the `$16` special case (save OAM base to `$039F`, add `$0C` to OAM pointer and `$08` to Y, change attribute `$33` to `$23`), and writes the exact conditional overlay tile bytes for `$000E` values 1 or 2.
+- The call into `loc_D1C7` remains represented by the returned render-type and command fields; the renderer itself is still a separate dependency.
