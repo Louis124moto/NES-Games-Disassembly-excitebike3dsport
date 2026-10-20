@@ -247,3 +247,31 @@ Source scanned: `Excitebike/bank_FF.asm` on branch `nes-game`. This inventory re
 - State transitions are written from multiple subsystems (object update, initialization/reset, and race logic); following only the state handlers would miss valid transitions.
 - `ram_00DC_obj,X` is directly accumulated into object Y at `$E97B`; preserve 8-bit signed/two's-complement behavior when its producer is translated.
 - This scan is instruction-based, not a full control-flow/data-flow proof. Next trace each writer's containing routine and caller, then trace initialization paths and identify when slot 0 is the player versus opponent slots. Do not wire these fields into native bike physics until that work is documented.
+
+## Follow-up trace: position update, opponent reset, and vertical correction
+
+### `sub_DA7A` — CPU `$DA7A`, ROM offset `$001A8A`
+
+- Starts with `X = $03`; processes slots 3, 2, and 1. Slot 0 is deliberately excluded by the loop's `DEX / BNE` exit condition.
+- For each slot with `ram_00A8_obj,X != 0`, it adds `ram_0060,X` to `ram_0080_obj,X`, increments `ram_0084_obj,X` on carry, then subtracts the global `ram_0060` and decrements the high byte on borrow.
+- In the same loop, `ram_0390_obj,X` is reduced by the global `ram_0060` using 8-bit subtraction.
+- This proves that `ram_0080_obj,X` and `ram_0084_obj,X` form a low/high-byte pair updated with carry/borrow in this opponent-only routine. The routine applies a scroll-relative coordinate correction. Do not substitute ordinary signed arithmetic: carry and wrap are observable.
+- Since slot 0 is excluded here while slots 1–3 are processed, slot 0 has a distinct update path. This supports—but by itself does not prove for every game state—the hypothesis that slot 0 is the player and slots 1–3 are opponents.
+
+### `sub_DB95_clear_opponent_bike_data` — CPU `$DB95`, ROM offset `$001BA5`
+
+- Explicit comment says `X = 01 02 03`; this routine clears per-slot fields for opponent slots, including `ram_obj_pos_Y_lo,X`, `ram_00BC_obj,X`, `ram_0094_obj,X`, `ram_009C_obj,X`, `ram_00DC_obj,X`, and `ram_0370_obj,X`, among others.
+- This is a verified reset path for slots 1–3. It is called by `sub_DAE3`, which then repopulates position/appearance fields for a selected opponent. It explains several direct writers in the RAM inventory as reset/setup writes rather than frame-to-frame physics.
+- `sub_DBC4` uses this reset path for slot 3 when its state/position conditions allow it; otherwise its alternate branch respawns slot 3 via `sub_DAE3`.
+
+### `sub_E96C` — CPU `$E96C`, ROM offset `$00297C`
+
+- Iterates slots 3 through 0. Except for object animation states `$14` and `$15`, it adds `ram_00DC_obj,X` to `ram_obj_pos_Y_lo,X` and stores the low byte back.
+- The value in `ram_00DC_obj,X` is therefore a per-frame vertical-position delta in this path. The code later changes/clears that value based on Y bounds, object state, and the race-start flag; values `$01` and `$FF` can act as upward/downward one-byte deltas depending on the branch.
+- Preserve modulo-256 arithmetic and branch order. It is unsafe to replace this with a continuous floating-point velocity model without proving the equivalent state transitions.
+
+### Updated confidence
+
+- **Confirmed:** `ram_009C_obj,X` selects the `$D924` state-dispatch handler; `ram_00DC_obj,X` is added to Y in `sub_E96C`; `sub_DA7A` performs scroll-relative low/high-byte correction for slots 1–3; `sub_DB95` resets opponent slots 1–3.
+- **Strong inference, not yet a global proof:** slot 0 is the player slot and slots 1–3 are opponents. The fixed-slot initialization and multiple opponent-only loops support this, but all race/menu initialization paths still need tracing.
+- **Not yet established:** the full gameplay meaning of `ram_0390_obj,X`, the full semantics of `ram_0094_obj,X`, and the timing/conditions connecting these routines in each race state.
