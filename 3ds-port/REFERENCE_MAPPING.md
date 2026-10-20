@@ -225,4 +225,25 @@ Implementation: `3ds-port/include/nes_routines.h` and `3ds-port/source/nes_routi
 Verification status: source translation committed; CI build and a byte-for-byte exhaustive comparison against an independent 6502 reference calculation are still required. No fidelity claim is made until those checks pass.
 
 
-Automated regression test: `3ds-port/tests/test_nes_routines.c` implements a separate instruction-by-instruction 6502 reference and compares all `256 × 256 × 256 = 16,777,216` possible input triples. Workflow: `.github/workflows/test-nes-routines.yml`. The workflow was added and its first CI run is pending; do not mark the exhaustive test as passed until Actions reports success.
+Automated regression test: `3ds-port/tests/test_nes_routines.c` implements a separate instruction-by-instruction 6502 reference and compares all `256 × 256 × 256 = 16,777,216` possible input triples. Workflow: `.github/workflows/test-nes-routines.yml`. CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829) succeeded; the 3DS build workflow [39495627228](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495627228) also succeeded.
+
+## Writer inventory: object-state and position RAM
+
+Source scanned: `Excitebike/bank_FF.asm` on branch `nes-game`. This inventory records direct write instructions and their source locations; it is not yet a complete semantic interpretation. Indexed writes use X as the original object slot unless the instruction explicitly uses a fixed address. The surrounding branches and call paths still need to be traced before these fields can be named as physics variables.
+
+| RAM symbol | Direct writers found | Initial interpretation / caution |
+|---|---|---|
+| `ram_0390_obj,X` | `$D93D` INC; `$D9A7` DEC; `$DA98` STA; `$DE10` STA | State-dependent value is incremented/decremented and also assigned in collision/transition paths. It participates in `sub_DA15`'s derived Y calculation; its gameplay meaning is not proven. |
+| `ram_0080_obj` / `,X` | `$C5E3` STA fixed slot 0; `$C8BD` STA indexed; `$DA8C` STA indexed; `$DAF1` STA indexed | Byte is initialized and updated in object setup/movement routines. Do not assume it is bike speed: the source uses it in several object-position and state comparisons. |
+| `ram_0094_obj,X` | `$CE37` INC; `$CE55` STA; `$CE7D` DEC; `$DB3E` STA; `$DBAA` clear/reset; `$DD02` INC | Appears in object update and movement paths, and is checked by state `$05`; semantic role remains unresolved. |
+| `ram_00DC_obj,X` | `$CF85`, `$D96B`, `$D973`, `$D9ED`, `$DA05`, `$DBBC`, `$E9E1`, `$EA03` STA; fixed-slot stores at `$DDBA`, `$E0DA`, `$EA3B` | Also added to `ram_obj_pos_Y_lo,X` at `$E97B`; can be a signed byte/delta in that path, so do not label it as a generic flag. |
+| `ram_00BC_obj,X` | `$DB2A`, `$DB9B`, `$E7E2`, `$E84F`, `$E876`, `$E95E`, `$E9AF`, `$EC87` STA; shared/fixed-slot fields `+$01`/`+$02` also initialized and changed in setup/control paths | Used with Y-position and object-state logic; slot 1–3 entries overlap with shared setup/control fields, so array interpretation must be checked against the RAM map. |
+| `ram_0370_obj,X` | `$C89D` fixed slot 0 initialized from X; `$DBC0` indexed STA; `$D9CF`, `$DBF8` fixed slot 3 STA | Gates state `$01`/`$03` handlers and other branches. Its values appear to be lifecycle/state gates, but exact meanings are not assigned yet. |
+| `ram_009C_obj,X` | `$D94E`, `$D975`, `$D9C4`, `$D9F3` INC; `$DA12`, `$DBAE`, `$DE1C` STA; fixed slot 0 `$DDC9`; fixed slot 3 `$E0DD` | Confirmed dispatch index in `sub_D924`, selecting the state-handler pointer tables. The writers increment transitions, reset a slot, and initialize selected states; not every write is part of the same race path. |
+
+### Trace conclusions and next analysis gate
+
+- The state index `ram_009C_obj,X` is the strongest currently confirmed state-machine field because `sub_D924` indexes the low/high dispatch tables with it.
+- State transitions are written from multiple subsystems (object update, initialization/reset, and race logic); following only the state handlers would miss valid transitions.
+- `ram_00DC_obj,X` is directly accumulated into object Y at `$E97B`; preserve 8-bit signed/two's-complement behavior when its producer is translated.
+- This scan is instruction-based, not a full control-flow/data-flow proof. Next trace each writer's containing routine and caller, then trace initialization paths and identify when slot 0 is the player versus opponent slots. Do not wire these fields into native bike physics until that work is documented.
