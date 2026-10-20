@@ -168,7 +168,7 @@ static int testSubE2AFCountdownExact(void){
     puts("PASS: countdown decrement/borrow, finish blink, and draw-command branch.");return 0;
 }
 static int testSubE1A3Exact(void){
-    uint8_t z[4]={0u},r9c[4]={1u,0u,0u,0u},r36[4]={0u},rac[4]={3u},r80[4]={0u,0x20u,0u,0u},r8c[4]={0u,0x30u,0u,0u};
+    uint8_t z[4]={0u},r9c[4]={0u,1u,0u,0u},r36[4]={0u},rac[4]={3u},r80[4]={0u,0x20u,0u,0u},r8c[4]={0u,0x30u,0u,0u};
     uint8_t d892[23],d8a9[23],oam[256]={0},ram039C3=0xFFu,temp=0xFFu,render=0u;NesPreparedSpriteCommand out={0};
     for(unsigned i=0;i<23u;i++){d892[i]=(uint8_t)(0x40u+i);d8a9[i]=(uint8_t)(0x80u+i);}
     if(!nesSubE1A3PrepareObjectSprite(1u,0x20u,r80,r8c,r9c,z,z,r36,rac,z,z,z,z,z,z,z,0u,0u,d892,d8a9,oam,&ram039C3,&temp,&render,&out))return 1;
