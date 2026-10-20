@@ -83,3 +83,5 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Create a full checklist of all 177 `sub_*` labels in `ASM_FUNCTION_INVENTORY.md`; distinguish inventory status from actual port completion.
 - [x] Validate `sub_D310` host regression against the independent reference: [workflow run 39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809) passed.
 - [ ] Confirm the 3DS build for the new timer helper, then continue with the next self-contained assembly routine.
+
+- [x] Translate sub_D326's eight-byte ROR carry chain into `nesSubD326RotateInputBits`; host regression and 3DS build are pending CI.
