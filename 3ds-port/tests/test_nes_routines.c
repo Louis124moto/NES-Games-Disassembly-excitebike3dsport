@@ -101,10 +101,10 @@ static int testSubE456Exact(void){
     s.ram0084[2]=0u;s.ram0080[2]=0x80u;s.ram00A8[2]=9u;s.ram0058[2]=9u;s.ram0370[2]=9u;
     s.ram0084[3]=0u;s.ram0080[3]=0xFAu;
     nesSubE456CullObjectSprites(oam,&s,oi,off);
-    if(s.ram00A8[2]!=0u||s.ram0058[2]!=0u||s.ram0370[2]!=0u||s.ram03A6_flag!=1u)return 1;
-    if(oam[0x40]!=0xF8u||oam[0x44]!=0xF8u||oam[0x48]!=0xF8u||oam[0x30]!=0xF8u||oam[0x38]!=0xF8u)return 1;
-    if(oam[0x70]!=0u)return 1;
-    puts("PASS: sub_E456 culling, opponent reset, and 12-byte sprite hiding.");
+    if(s.ram00A8[2]!=0u||s.ram0058[2]!=0u||s.ram0370[2]!=0u||s.ram03A6_flag!=1u){fprintf(stderr,"E456 state fail: A8=%u 58=%u 370=%u flag=%u\\n",s.ram00A8[2],s.ram0058[2],s.ram0370[2],s.ram03A6_flag);return 1;}
+    if(oam[0x40]!=0xF8u||oam[0x44]!=0xF8u||oam[0x48]!=0xF8u||oam[0x30]!=0xF8u||oam[0x38]!=0xF8u){fprintf(stderr,"E456 OAM fail: %02X %02X %02X %02X %02X\\n",oam[0x40],oam[0x44],oam[0x48],oam[0x30],oam[0x38]);return 2;}
+    if(oam[0x70]!=0u){fprintf(stderr,"E456 unexpected OAM[70]=%02X\\n",oam[0x70]);return 3;}
+    puts("PASS: sub_E456 culling, opponent reset, and three-write sprite groups.");
     return 0;
 }
 int main(void)
