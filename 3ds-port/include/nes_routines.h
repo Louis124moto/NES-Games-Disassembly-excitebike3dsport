@@ -118,6 +118,10 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram03F1);
 
 
+void nesSubE359UpdateTemperatureMeter(uint8_t finished,uint8_t ram005C,uint8_t raceStarted,
+    uint8_t *timer003C,uint8_t *fraction003B5,uint8_t *coarse003B6,
+    uint8_t *overheatLatch,uint8_t *ram00FC,uint8_t oam[256]);
+
 typedef struct NesPreparedSpriteCommand {
     uint8_t scratch0, scratch1, scratch2, scratch3, scratch4, scratchB, transformY;
 } NesPreparedSpriteCommand;
