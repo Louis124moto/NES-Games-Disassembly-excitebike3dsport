@@ -503,7 +503,7 @@ static int testBatchDC97(void) {
     uint8_t bc[4]={1u,2u,0x80u,4u},py[4]={3u,4u,0x7Fu,8u},c1=0u,c2=0u;
     uint8_t a=nesSubDC97SubtractObjectY(0x20u,2u,bc,py,&c1);
     uint8_t b=nesSubDC9ASubtractObjectY(0x20u,2u,bc,py,&c2);
-    return (a==b&&c1==c2&&a==(uint8_t)(0x20u-0x80u-0x7Fu))?0:1;
+    return (a==b&&c1==c2&&a==0x20u)?0:1;
 }
 static int testBatchEC25EC5D(void) {
     uint8_t oam[256]={0},tbl[256];unsigned i;for(i=0;i<256u;i++)tbl[i]=(uint8_t)(i+7u);
@@ -531,7 +531,7 @@ static int testBatchF681(void) {
     for(i=0;i<65536u;i++)memory[i]=(uint8_t)((i*13u)^0x5Au);
     nesSubF681CopyCommandBytes(0xFFFCu,0x0Cu,0xFEu,memory,ram,&xo,&yo);
     if(xo!=0x0Fu||yo!=(uint8_t)(0xFEu+3u))return 1;
-    for(i=0;i<3u;i++)if(ram[0x030Fu-1u+i] != memory[(uint16_t)(0xFFFCu+(uint8_t)(0xFFu+i))])return 2;
+    for(i=0;i<3u;i++)if(ram[0x030Fu+i] != memory[(uint16_t)(0xFFFCu+(uint8_t)(0xFFu+i))])return 2;
     return 0;
 }
 static int testBatchF821F86B(void) {
