@@ -157,7 +157,7 @@ void nesSubE2F6DrawWheelSprites(uint8_t x,uint8_t yOffset,const uint8_t ram036C[
     const uint8_t ram0084[4],const uint8_t ram0080[4],const uint8_t ram008C[4],
     uint8_t ram003F,uint8_t oam[256]);
 uint8_t nesSubE2F6ShouldDrawWheel(uint8_t x,const uint8_t r36c[4],const uint8_t r94[4],const uint8_t r90[4],const uint8_t rbc[4],const uint8_t r84[4],const uint8_t r80[4]);
-uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp);
+uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *ram039C3,uint8_t *temp);
 void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags);
 
 uint8_t nesSubE52CCheckVerticalOverlap(uint8_t x, uint8_t y, const uint8_t ram008c[4]);
