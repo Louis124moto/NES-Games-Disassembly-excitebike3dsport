@@ -72,4 +72,4 @@ void nesSubDCA0SetupSpriteHeight(uint8_t x, uint8_t ram00D4[4],
 /* Exact translation of shared entry loc_DCC7 ($DCC7). */
 void nesLocDCC7ApproachValue(uint8_t x, uint8_t target, uint8_t duration,
                              uint8_t timers[4], uint8_t values[4]);
-#endif
+/* Exact translations from bank_FF.asm. */\nvoid nesSubDA58UpdateObjectFraction(uint8_t x, uint8_t ram0094[4],\n                                    uint8_t ram0060[4], uint8_t ram0090[4],\n                                    uint8_t ram0394[4]);\nuint8_t nesSubE091AdjustValue(uint8_t value);\nuint8_t nesSubE098AdjustValue(uint8_t value);\n\n#endif
