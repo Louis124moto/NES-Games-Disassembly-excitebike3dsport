@@ -584,3 +584,24 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
         }
     }
 }
+
+/* sub_E16C: exact Y offsets reached by its DEC Y / BPL loop. */
+void nesSubE16CWriteSpriteStrip(uint8_t oam[256],uint8_t address,uint8_t firstTile){oam[(uint8_t)(address+6u)]=0x60u;oam[(uint8_t)(address+5u)]=firstTile;oam[(uint8_t)(address+2u)]=0x60u;oam[(uint8_t)(address+1u)]=(uint8_t)(firstTile-1u);}
+/* sub_E3F4: initialize object order and sort four indices by unsigned Y. */
+void nesSubE3F4SortObjectsByY(uint8_t order[4],const uint8_t y[4],uint8_t active3,uint8_t y3){uint8_t yy[4],i,p;for(i=0;i<4u;i++){order[i]=i;yy[i]=y[i];}if(active3)yy[3]=y3;for(p=3u;p>0u;p--)for(i=0;i<p;i++)if(yy[order[i]]>=yy[order[i+1u]]){uint8_t t=order[i];order[i]=order[i+1u];order[i+1u]=t;}}
+/* sub_E4AD: writes $F8 to three OAM Y bytes, each four bytes apart. */
+void nesSubE4ADHideFourSprites(uint8_t oam[256],uint8_t index,uint8_t offset){uint8_t b=(uint8_t)(index+offset);oam[b]=0xF8u;oam[(uint8_t)(b+4u)]=0xF8u;oam[(uint8_t)(b+8u)]=0xF8u;}
+/* sub_E49B: X=0..2; call the group hider only if bit 0 is clear. */
+void nesSubE49BHideSelectedSpriteGroups(uint8_t oam[256],uint8_t index,const uint8_t flags[3],const uint8_t offsets[3]){uint8_t x;for(x=0;x<3u;x++)if((flags[x]&1u)==0u)nesSubE4ADHideFourSprites(oam,index,offsets[x]);}
+/* sub_E2AF: SEC/SBC low byte; borrow decrements the high byte. */
+void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta){uint8_t old=*lo;*lo=(uint8_t)(old-delta);if(old<delta)*hi=(uint8_t)(*hi-1u);}
+/* loc_E2BD: toggle only when finish flag is exactly 1 and timer is zero. */
+void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){if(finished==1u&&timer==0u)*blink=(uint8_t)(*blink^1u);}
+/* loc_E2D0: LDY RAM03BE / DEY / BNE. */
+uint8_t nesLocE2D0CountdownReachedOne(uint8_t countdown){return (uint8_t)(countdown==1u);}
+/* sub_E2F6: exact preconditions before wheel-sprite writes. */
+uint8_t nesSubE2F6ShouldDrawWheel(uint8_t x,const uint8_t r36c[4],const uint8_t r94[4],const uint8_t r90[4],const uint8_t rbc[4],const uint8_t r84[4],const uint8_t r80[4]){if(x>3u||r36c[x]==0u||(uint8_t)(r94[x]|r90[x])==0u||rbc[x]!=0u)return 0u;if((r84[x]&1u)==0u)return 0u;return (uint8_t)(r80[x]>=0x10u);}
+/* sub_E1F9 state-only return selection, including the $000E side effect. */
+uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_t rbc[4],const uint8_t r370[4],const uint8_t r36[4],const uint8_t rac[4],const uint8_t r98[4],const uint8_t rb0[4],const uint8_t r58[4],const uint8_t rb8[4],const uint8_t r90[4],const uint8_t r94[4],const uint8_t rdc[4],uint8_t finished,uint8_t frameFlags,uint8_t *temp){uint8_t a,y;if(x>3u||temp==NULL)return 0u;*temp=0u;a=r9c[x];if(a!=0u&&a!=5u){y=(rbc[x]!=0u||r370[x]!=0u)?2u:6u;if(r36[x]!=0u)y=(uint8_t)(y-1u);return (uint8_t)(y|0x10u);}if(finished==1u&&rac[x]==0x0Au){*temp=2u;return 2u;}if((uint8_t)(r98[x]|rb0[x])!=0u)return rac[x];if(r58[x]!=0u&&(r58[x]!=0x0Du||rb8[x]<0x20u))return rac[x];if((uint8_t)(r90[x]|r94[x])==0u){*temp=(uint8_t)(*temp+1u);return rac[x];}if(rac[x]!=6u)return rac[x];if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:0x14u;return (rdc[x]&0x80u)!=0u?0x15u:0x14u;}
+/* loc_E3AA: Y is inherited from the prior CMP; model it as an explicit input. */
+void nesLocE3AAUpdateHeatFlags(uint8_t heat,uint8_t priorY,uint8_t *timer,uint8_t *latch,uint8_t *flags){uint8_t x=0u;if(heat>=0x20u){*timer=heat;*latch=heat;}if(heat>=0x1Au&&(uint8_t)(priorY-1u)==0u)x=0xB0u;*flags=(uint8_t)(*flags|x);}
