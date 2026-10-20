@@ -363,3 +363,8 @@ Regression tests compare these helpers against independent instruction-level ref
 - **`loc_DCC7` (`$DCC7`)**: shared non-label-prefixed entry takes target in A and duration in Y. If the indexed timer is nonzero, it returns without changes. Otherwise it stores the duration and moves `ram_00AC_obj,X` one unsigned byte step toward the target, with the original DEC/DEC/INC sequence retained for the greater-than case.
 
 The host tests exercise byte boundaries and branch cases. These helpers remain isolated translations; the complete caller paths and game-state integration are still in progress.
+
+
+- **`sub_DA58` (`$DA58`)**: copies `ram_0094_obj,X` to `ram_0060_obj,X`, adds `ram_0090_obj,X` to `ram_0394_obj,X` modulo 256, and increments the copied `ram_0060_obj,X` byte only when that addition carries. The X index is limited to 0–3 in the C helper.
+- **`sub_E091` (`$E091`)**: returns A unchanged for A >= `$E7`; otherwise adds `$0C`. The CMP carry is clear on the ADC path, so the addition is exactly +12 modulo 256.
+- **`sub_E098` (`$E098`)**: same threshold as `sub_E091`, but adds `$02` when A < `$E7`.
