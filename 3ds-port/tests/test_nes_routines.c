@@ -48,6 +48,7 @@ static int testSubDB95(void);
 static int testSubDA6A(void);
 static int testSubDB50(void);
 static int testSubDCA0(void);
+static int testLocDCC7(void);
 
 
 int main(void)
@@ -85,6 +86,7 @@ int main(void)
     if (testSubDA6A() != 0) return 1;
     if (testSubDB50() != 0) return 1;
     if (testSubDCA0() != 0) return 1;
+    if (testLocDCC7() != 0) return 1;
     return 0;
 }
 
@@ -666,5 +668,46 @@ static int testSubDB50(void)
         }
     }
     printf("PASS: sub_DB50 matched branch/table reference for %lu cases.\n", checked);
+    return 0;
+}
+
+
+static int testLocDCC7(void)
+{
+    unsigned int x, target, current, timerMode;
+    unsigned long checked = 0u;
+    for (x = 0; x < 4u; ++x) {
+        for (target = 0; target < 256u; ++target) {
+            for (current = 0; current < 256u; ++current) {
+                for (timerMode = 0; timerMode < 2u; ++timerMode) {
+                    uint8_t timers[4] = {0u, 0u, 0u, 0u};
+                    uint8_t values[4] = {0u, 0u, 0u, 0u};
+                    uint8_t duration = (uint8_t)(target ^ 0xA7u);
+                    uint8_t expectedTimer = timerMode ? 1u : duration;
+                    uint8_t expected = (uint8_t)current;
+                    unsigned int i;
+                    for (i = 0; i < 4u; ++i) {
+                        timers[i] = 0u;
+                        values[i] = (uint8_t)(0x31u + i);
+                    }
+                    timers[x] = timerMode ? 1u : 0u;
+                    values[x] = (uint8_t)current;
+                    if (timerMode == 0u && current != target) {
+                        if (current > target) expected = (uint8_t)(expected - 1u);
+                        else expected = (uint8_t)(expected + 1u);
+                    }
+                    nesLocDCC7ApproachValue((uint8_t)x, (uint8_t)target, duration, timers, values);
+                    if (values[x] != expected ||
+                        timers[x] != (timerMode ? 1u : duration)) {
+                        fprintf(stderr, "loc_DCC7 mismatch: x=%u target=%02X current=%02X timerMode=%u\n",
+                                x, target, current, timerMode);
+                        return 1;
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: loc_DCC7 matched %lu timer/target/value cases.\n", checked);
     return 0;
 }
