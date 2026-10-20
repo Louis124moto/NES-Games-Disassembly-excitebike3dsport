@@ -376,3 +376,14 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 
 - **`sub_D0AB` (`$D0AB`)**: processes X=3 down to 0; subtracts `$10` from each Y-position byte, then repeatedly decrements Y and subtracts `$08` while the resulting N flag is clear, stopping if Y reaches zero. Stores the final Y in the corresponding `ram_0360` slot.
 - **`sub_DFB2` (`$DFB2`)**: if `ram_009C_obj,X` is nonzero, stores zero. Otherwise scans `tbl_D913` using the 6502 CMP result's N bit, resets Y to zero after five entries, and adds two to a nonzero Y only when `ram_00A4_obj,X == 1`. The table is passed in as the original five bytes.
+
+
+## Batch 2026-10-20 — additional routine translations
+
+- `sub_D000` ($D000): exact gate for the jump to `sub_DB50`; returns whether the call occurs and the Y value, including INY only when `ram_001A,X == $C0`.
+- `sub_D11F` ($D11F): exact byte writes to RAM $0300-$0312, including the X countdown and its final zero.
+- `sub_D255` ($D255): writes $F8 to every byte of OAM; the 8-bit Y loop covers all 256 bytes.
+- `sub_D2FF` ($D2FF): models INX/CMP $3F and the overflow path's RAM clear and two stack-byte discards.
+- `sub_E70B` ($E70B): reproduces SBC result N/Z branches and the six-bit wrap of `ram_00E0,X`.
+- `sub_E80D`, `sub_E803`, `sub_E7FF`, `sub_E7FC`: the six-page pointer lookup and each successive entry point, with the original Y/data-index behavior.
+- `sub_E836` ($E836): processes X=3 down to 0, skips nonzero `ram_00B0,X`, and delegates the subtraction to the shared `sub_DC97/sub_DC9A` model.
