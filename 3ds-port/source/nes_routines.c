@@ -616,6 +616,23 @@ void nesSubE456CullObjectSprites(uint8_t oam[256],NesSpriteCullState *s,
         nesSubE49BHideSelectedSpriteGroups(oam,oamIndex[row],flags,spriteOffset);
     }
 }
+uint8_t nesSubE26APrepareSpecialSprite(uint8_t x,uint8_t ram039C3,
+    const uint8_t ram0084[4],const uint8_t ram0390[4],const uint8_t ram0080[4],
+    const uint8_t ram006C[4],const uint8_t ram00A4[4],const uint8_t ram0398[4],
+    const uint8_t tblD90B[3],uint8_t ram000B,NesPreparedSpriteCommand *out){
+    uint8_t y;
+    if(x>3u||out==NULL||ram039C3==0u||ram0084[x]==2u||ram0390[x]>=0xF8u||ram0390[x]<ram0080[x])return 0u;
+    y=ram0398[x];
+    if(y>=3u)return 0u;
+    out->scratch0=ram0390[x];
+    out->scratch1=(uint8_t)(0xA8u-ram006C[x]);
+    out->scratch2=tblD90B[y];
+    out->scratch3=0x22u;
+    out->scratch4=ram039C3;
+    out->scratchB=(uint8_t)(ram000B|(ram00A4[x]!=0u?0x20u:0u));
+    out->transformY=(uint8_t)(y==0u?0u:(y^0x03u));
+    return 1u;
+}
 void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta){uint8_t old=*lo;*lo=(uint8_t)(old-delta);if(old<delta)*hi=(uint8_t)(*hi-1u);}
 /* loc_E2BD: toggle only when finish flag is exactly 1 and timer is zero. */
 void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){if(finished==1u&&timer==0u)*blink=(uint8_t)(*blink^1u);}
