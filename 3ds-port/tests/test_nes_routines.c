@@ -6,6 +6,8 @@
 static int testSubDA58(void);
 static int testSubE091(void);
 static int testSubE098(void);
+static int testSubDFA4(void);
+static int testSubDFA2(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
@@ -94,6 +96,8 @@ int main(void)
     if (testSubDA58() != 0) return 1;
     if (testSubE091() != 0) return 1;
     if (testSubE098() != 0) return 1;
+    if (testSubDFA4() != 0) return 1;
+    if (testSubDFA2() != 0) return 1;
     return 0;
 }
 
@@ -781,5 +785,63 @@ static int testSubE098(void)
         }
     }
     puts("PASS: sub_E098 matched all 256 CMP/ADC input values.");
+    return 0;
+}
+
+
+/* Independent 6502 register/flag reference for sub_DFA4. */
+static void referenceSubDFA4(uint8_t inputA, uint8_t divisor,
+                             uint8_t *outX, uint8_t *outA)
+{
+    uint8_t a = inputA;
+    uint8_t x = 0u;
+    uint8_t carry;
+    do {
+        uint16_t difference;
+        x = (uint8_t)(x + 1u);
+        difference = (uint16_t)a - (uint16_t)divisor;
+        a = (uint8_t)difference;
+        carry = (uint8_t)(difference <= 0xFFu);
+    } while ((a & 0x80u) == 0u);
+    x = (uint8_t)(x - 1u);
+    a = (uint8_t)((uint16_t)a + (uint16_t)divisor + (uint16_t)carry);
+    *outX = x;
+    *outA = a;
+}
+
+static int testSubDFA4(void)
+{
+    unsigned int a, divisor;
+    unsigned long checked = 0u;
+    for (a = 0; a < 256u; ++a) {
+        for (divisor = 1; divisor < 256u; ++divisor) {
+            uint8_t expectedX, expectedA, actualX = 0u, actualA = 0u;
+            referenceSubDFA4((uint8_t)a, (uint8_t)divisor, &expectedX, &expectedA);
+            nesSubDFA4((uint8_t)a, (uint8_t)divisor, &actualX, &actualA);
+            if (actualX != expectedX || actualA != expectedA) {
+                fprintf(stderr, "sub_DFA4 mismatch: A=%02X divisor=%02X expected X/A=%02X/%02X actual=%02X/%02X\n",
+                        a, divisor, expectedX, expectedA, actualX, actualA);
+                return 1;
+            }
+            ++checked;
+        }
+    }
+    printf("PASS: sub_DFA4 matched instruction-level reference for %lu input pairs.\n", checked);
+    return 0;
+}
+
+static int testSubDFA2(void)
+{
+    unsigned int a;
+    for (a = 0; a < 256u; ++a) {
+        uint8_t expectedX, expectedA, actualX = 0u, actualA = 0u;
+        referenceSubDFA4((uint8_t)a, 0x0Au, &expectedX, &expectedA);
+        nesSubDFA2((uint8_t)a, &actualX, &actualA);
+        if (actualX != expectedX || actualA != expectedA) {
+            fprintf(stderr, "sub_DFA2 mismatch: A=%02X\n", a);
+            return 1;
+        }
+    }
+    puts("PASS: sub_DFA2 matched sub_DFA4 with X initialized to $0A for all 256 A values.");
     return 0;
 }
