@@ -387,3 +387,17 @@ The host tests exercise byte boundaries and branch cases. These helpers remain i
 - `sub_E70B` ($E70B): reproduces SBC result N/Z branches and the six-bit wrap of `ram_00E0,X`.
 - `sub_E80D`, `sub_E803`, `sub_E7FF`, `sub_E7FC`: the six-page pointer lookup and each successive entry point, with the original Y/data-index behavior.
 - `sub_E836` ($E836): processes X=3 down to 0, skips nonzero `ram_00B0,X`, and delegates the subtraction to the shared `sub_DC97/sub_DC9A` model.
+
+
+## Lot suivant — 10 entrées ASM modélisées
+
+- `sub_E16C`: writes OAM at offsets 6, 5, 2 and 1.
+- `sub_E3F4`: sort four object indices by unsigned Y, with the slot-3 Y override.
+- `sub_E4AD`: hide sprite Y bytes at strides of four.
+- `sub_E49B`: bit-0-gated sprite-group hiding.
+- `sub_E2AF`: low-byte subtraction with borrow into high byte.
+- `loc_E2BD`: finish blink toggles only for finish flag 1 and zero timer.
+- `loc_E2D0`: DEC-Y equality test.
+- `sub_E2F6`: wheel-sprite gate conditions.
+- `sub_E1F9`: state/return selection and temporary side effect.
+- `loc_E3AA`: heat thresholds; prior Y is an explicit input because ASM preserves it.
