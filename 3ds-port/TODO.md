@@ -452,3 +452,31 @@ Cette section est l’inventaire de référence pour suivre la couverture des la
 - [ ] Pour chaque traduction : documenter registres/flags d’entrée et sortie, accès mémoire, branches, appels, débordements 8/16 bits et effets matériels.
 - [ ] Ajouter des tests pour chaque branche et les valeurs limites ; comparer les résultats aux séquences ASM, pas seulement aux noms de fonctions.
 - [ ] Actualiser ce tableau après chaque lot et n’augmenter le pourcentage « validé » qu’après exécution effective des tests et compilation.
+
+
+## New ASM batch — 2026-10-21
+
+**Implemented in source and declared in the public header (20 entry-level translations):**
+
+- [x] `sub_CFCB` — unsigned object-position comparison and original flag-mask branches.
+- [x] `sub_CFDB` — conditional upper-nibble clear, preserving the zero-value early return.
+- [x] `sub_CFEA` — clear high/low flag field and set comparison bits with the original zero/equal exits.
+- [x] `sub_CE58` — X versus `ram_004C` equality result.
+- [x] `loc_CAFA` — seven `$FE` command bytes, including 8-bit X wrap.
+- [x] `loc_CD13` — eight-byte sprite-template copy to OAM `$C0-$C7`.
+- [x] `loc_D0A6` — indexed object-field store and scratch-A return.
+- [x] `loc_D197` — PPU scroll-register write effect.
+- [x] `loc_EC47` — fixed four-byte sprite write.
+- [x] `loc_CA85` — clear `$0021-$00FF`, preserve `$0042`, and increment the reset `$0049`.
+- [x] `sub_C339` — vblank polling and `ram_for_2000 | $80` write, represented with a finite status trace.
+- [x] `sub_D19B` — PPU-status bit-6 polling and `ram_for_2000 & $F0` write, represented with a finite status trace.
+- [x] `sub_D347` — controller strobe writes and two decoded controller sample streams.
+- [x] `loc_C4FC` — branch-specific 8-bit arithmetic and repeated shift loop.
+- [x] `sub_C92C` — table-index setup and the `sub_C53E/sub_CB06/sub_CB13` selection path.
+- [x] `sub_C935` — decimal conversion through the `sub_DF7F/sub_DFA2` path and seven-byte buffer copy.
+- [x] `sub_ECC9` — four-byte sprite-table check and mismatch result.
+- [x] `bra_C411` — sprite-X store, attribute clear, and `ram_0046` clear.
+- [x] `loc_C3EF` — sprite-Y store.
+- [x] `sub_C409` — table-indexed sprite-X plus fixed tile/attribute/flag writes.
+
+A regression group for the batch is wired into the native test runner. **Execution remains pending** because the repository could not be cloned in this environment; passing tests/builds are not claimed. Next: run the native test target, correct any mismatches, then run the 3DS build and compare all boundary cases against the disassembly.
