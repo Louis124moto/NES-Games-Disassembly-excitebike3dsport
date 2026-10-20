@@ -25,7 +25,8 @@ Tasks are checked only after completion and evidence. The native 3DS port must m
 - [x] Trace the NES controller sampling routine and held/press storage (`sub_D35B`, CPU `$D35B`, ROM offset `$00136B`); record its NES-specific bit and repeat behavior.
 - [x] Trace the exact outer object-state dispatch loop (`sub_D918`/`sub_D924`) and the observed branch logic of dispatch target `$D933`; record that target meanings remain partially unresolved.
 - [x] Trace the exact outer loop and sequence-table access in `sub_E733`/`sub_E73B`; explicitly distinguish object-path handling from player acceleration.
-- [ ] Trace dispatch tables and all reachable state handlers, then map persistent RAM data flow for acceleration, heat/cooling, jumping/landing, collisions, and course progression before implementing those systems.
+- [x] Resolve the exact pointer values for dispatch states `$00-$05` from `tbl_D8FF_lo`/`tbl_D905_hi`; document only state behavior directly supported by the visible instructions.
+- [ ] Trace every reachable state handler and every writer of `ram_009C_obj,X`, then map persistent RAM data flow for acceleration, heat/cooling, jumping/landing, collisions, and course progression before implementing those systems.
 
 ## Phase 3 — Playable prototype
 
