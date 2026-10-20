@@ -1,35 +1,26 @@
-# Excitebike 3DS — native port scaffold
+# Excitebike 3DS — native homebrew port
 
-This directory is the starting point for a **native Nintendo 3DS homebrew port**. It is separate from `../Excitebike/`, which contains the original NES assembly/disassembly project.
+This directory contains the native Nintendo 3DS application. The original NES disassembly remains in `../Excitebike/` and is preserved separately.
 
-## Requirements
+## Requirements and build
 
-- devkitPro with devkitARM
-- libctru
-- 3DS development tools provided by devkitPro
+Install devkitPro with devkitARM and libctru using the official instructions: https://devkitpro.org/wiki/Getting_Started
 
-On Arch Linux, install and configure devkitPro using its official instructions: https://devkitpro.org/wiki/Getting_Started
-
-## Build
-
-From this directory, with the devkitPro environment configured:
+From this directory:
 
 ```sh
 make
+make clean
 ```
 
-The build is expected to produce `excitebike3ds.3dsx` (and a `.elf` build artifact). Copy the `.3dsx` to your SD card to run it with a homebrew launcher.
+The CI build should produce `excitebike3ds.3dsx` and `excitebike3ds.elf`. The `.3dsx` can be copied to an SD card for a homebrew launcher, once the build and launch have been verified.
 
-## Current status
+## Architecture status
 
-This is only the initial application scaffold: it initializes the 3DS graphics/input system and displays a status screen. **It is not yet a playable Excitebike port.** Gameplay, physics, track rendering, audio, menus, and asset conversion still need to be implemented.
+The application now has separate modules for shared game state, input, rendering, bike physics, collision, track, audio, and menus. The current physics and display are scaffolding for testing module boundaries; there is no playable or faithful Excitebike implementation yet.
 
-## Planned layout
+See [TODO.md](TODO.md) for the staged roadmap and [REFERENCE_MAPPING.md](REFERENCE_MAPPING.md) for the fidelity target and plan for mapping original NES routines to native code.
 
-- `source/main.c` — application entry point and main loop
-- `include/` — project headers
-- `assets/` — converted graphics, sound, and track data
-- `build/` — generated files (not committed)
-- `Makefile` — devkitARM/libctru build configuration
+## Fidelity approach
 
-The original NES source remains in the parent repository. Reuse or adapt it only where licensing and technical compatibility permit; NES assembly cannot be compiled directly into a native 3DS application.
+The NES source is 6502 assembly and relies on NES-specific hardware. It cannot be linked directly into a native ARM11/libctru executable. The port will translate verified gameplay logic and data into native modules, then compare behaviour against the original. Any subsystem remains marked incomplete until validated.
