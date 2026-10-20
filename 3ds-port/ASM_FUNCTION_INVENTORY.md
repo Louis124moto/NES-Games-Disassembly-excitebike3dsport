@@ -144,7 +144,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E09F` | `sub_E09F` | Pending | calls: sub_DC97 |
 | `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
 | `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
-| `$E1A3` | `sub_E1A3` | Pending | calls: sub_E1F9 |
+| `$E1A3` | `sub_E1A3` | Command setup + overlay translated; renderer dependency remains | Calls complete `sub_E1F9`; `$D1C7` still separate |
 | `$E1F9` | `sub_E1F9` | Full branch-level translation + expanded regression; CI validation pending | Includes `$000E` and `$039F` side effects and all RTS paths |
 | `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |
 | `$E2F6` | `sub_E2F6` | Full OAM path translated + regression test; CI validation pending | Two wheel sprites and all early-return gates |
