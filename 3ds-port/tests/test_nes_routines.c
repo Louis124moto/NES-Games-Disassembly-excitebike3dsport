@@ -148,8 +148,18 @@ static int testSubE2F6Exact(void){
     if(oam[0x97]!=0u){fprintf(stderr,"E2F6 gate fail: %02X\\n",oam[0x97]);return 4;}
     puts("PASS: sub_E2F6 full wheel-sprite gates and OAM writes.");return 0;
 }
+static int testSubEA44Exact(void){
+    uint8_t r84[4]={1u,1u,0u,0u},r80[4]={0x20u,0xF4u,0u,0u},b0[4]={1u,0u,0u,0u},b4[4]={2u,0u,0u,0u};
+    uint8_t bc[4]={5u,0u,0u,0u},ry[4]={1u,0u,0u,0u},tbl[7]={0xCBu,0xCDu,0xCCu,0xCEu,0xCBu,0xCBu,0xCBu};
+    uint8_t r36[4]={0u,1u,0u,0u},r94[4]={0u,1u,0u,0u},r90[4]={0u},r8c[4]={0u,0x20u,0u,0u},oam[256]={0};
+    nesSubEA44UpdateWheelSprites(oam,r84,r80,b0,b4,bc,ry,tbl,r36,r94,r90,r8c,0u);
+    if(oam[0x94]!=0xB0u||oam[0x95]!=0xCCu||oam[0x96]!=0u||oam[0x97]!=0x2Au)return 1;
+    if(oam[0x9F]!=0xEDu||oam[0xA3]!=0xE5u||oam[0xA0]!=0x28u)return 1;
+    puts("PASS: sub_EA44 special wheel tile path and fallback to sub_E2F6.");return 0;
+}
 int main(void)
 {
+    if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\\n",stderr); return 1; }
     if(testSubE2F6Exact()) { fputs("FAIL: sub_E2F6 reference test\\n",stderr); return 1; }
     if(testSubE359Exact()) { fputs("FAIL: sub_E359 reference test\\n",stderr); return 1; }
     if(testSubE26AExact()) { fputs("FAIL: sub_E26A reference test\\n",stderr); return 1; }
