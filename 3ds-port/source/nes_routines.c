@@ -893,3 +893,53 @@ void nesSubE733UpdateThreeXLowSlots(const uint8_t ram0060[4], uint8_t posXLo[4])
         posXLo[x] = (uint8_t)(posXLo[x] + ram0060[x]);
     }
 }
+
+/* sub_E7FC ($E7FC): LDY $0360,X, then fall through to sub_E7FF. */
+uint8_t nesSubE7FCLoadDataIndex(uint8_t x, const uint8_t ram0360[4])
+{
+    return x < 4u ? ram0360[x] : 0u;
+}
+
+/* sub_E7FF ($E7FF): LDA $00E0,X; STA zero-page data index. */
+uint8_t nesSubE7FFLoadDataIndex(uint8_t x, const uint8_t ram00E0[4])
+{
+    return x < 4u ? ram00E0[x] : 0u;
+}
+
+/* sub_E80D ($E80D): exact pointer tables tbl_E54E_lo / tbl_E554_hi. */
+void nesSubE80DPreparePointer(uint8_t tableIndex, uint8_t *low, uint8_t *high)
+{
+    static const uint8_t lo[6] = {0x00u,0x40u,0x80u,0xC0u,0x00u,0x40u};
+    static const uint8_t hi[6] = {0x04u,0x04u,0x04u,0x04u,0x05u,0x05u};
+    if (tableIndex < 6u && low != NULL && high != NULL) {
+        *low = lo[tableIndex];
+        *high = hi[tableIndex];
+    }
+}
+
+/* sub_E803 ($E803): pointer setup followed by LDA (pointer),Y.
+ * ram0400To07FF represents CPU RAM $0400-$07FF, allowing the same
+ * 8-bit Y addition and page crossing as the 6502 indirect-indexed read. */
+uint8_t nesSubE803ReadIndexedRam(uint8_t tableIndex, uint8_t dataIndex,
+                                const uint8_t ram0400To07FF[1024])
+{
+    static const uint16_t base[6] = {0x000u,0x040u,0x080u,0x0C0u,0x100u,0x140u};
+    if (tableIndex >= 6u || ram0400To07FF == NULL) return 0u;
+    return ram0400To07FF[(uint16_t)(base[tableIndex] + dataIndex)];
+}
+
+/* Exact decision/write effects of dispatch entry ofs_002_E818_07.
+ * CMP #$07 followed by BPL is a signed-N test; preserve that detail. */
+void nesOfsE81807Apply(uint8_t x, uint8_t ram00B0[4], const uint8_t ram00AC[4],
+                       const uint8_t ram0094[4], const uint8_t ram0090[4], uint8_t ram0098[4])
+{
+    uint8_t state;
+    if (x >= 4u || ram00B0[x] != 0u) return;
+    state = ram00AC[x];
+    if ((int8_t)(uint8_t)(state - 0x07u) >= 0) return;
+    state = ram0094[x];
+    if (state < 0x03u) {
+        if (state != 0x02u || (ram0090[x] & 0x80u) == 0u) return;
+    }
+    ram0098[x] = 0xFFu;
+}
