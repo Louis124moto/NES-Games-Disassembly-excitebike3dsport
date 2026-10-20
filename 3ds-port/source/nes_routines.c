@@ -1241,20 +1241,29 @@ void nesSubF6FBAdvanceAudioPhase(uint8_t *ram00B0, uint8_t *ram00B1)
     }
 }
 
-/* sub_F871 shared core. Caller supplies the two ROM bytes selected by Y. */
-void nesSubF871WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne,
-                               uint8_t channelOffset, uint8_t audio4000To400F[16])
+/* sub_F871: A becomes Y; absolute indexed reads use 16-bit address wrap.
+ * For Y=$FF, tbl_FF00+1,Y reads CPU address $0000. */
+void nesSubF871WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256],
+                               uint8_t byteAt0000, uint8_t audio4000To400F[16])
 {
-    if (audio4000To400F == NULL || channelOffset > 8u ||
-        (channelOffset != 0u && channelOffset != 4u && channelOffset != 8u)) return;
-    if (tableHighPlusOne == 0u) return;
-    audio4000To400F[2u + channelOffset] = tableHighPlusOne;
-    audio4000To400F[3u + channelOffset] = (uint8_t)(tableLow | 0x08u);
+    uint8_t y = a;
+    uint8_t highPlusOne;
+    if (tblFF00 == NULL || audio4000To400F == NULL) return;
+    highPlusOne = (y == 0xFFu) ? byteAt0000 : tblFF00[(uint8_t)(y + 1u)];
+    if (highPlusOne == 0u) return;
+    audio4000To400F[2u] = highPlusOne;
+    audio4000To400F[3u] = (uint8_t)(tblFF00[y] | 0x08u);
 }
 
-/* sub_F885 loads X=$04 and enters the shared F873 audio-table writer. */
-void nesSubF885WriteAudioTimer(uint8_t tableLow, uint8_t tableHighPlusOne,
-                               uint8_t audio4000To400F[16])
+/* sub_F885 loads X=$04, then shares the exact F873 table-read sequence. */
+void nesSubF885WriteAudioTimer(uint8_t a, const uint8_t tblFF00[256],
+                               uint8_t byteAt0000, uint8_t audio4000To400F[16])
 {
-    nesSubF871WriteAudioTimer(tableLow, tableHighPlusOne, 4u, audio4000To400F);
+    uint8_t y = a;
+    uint8_t highPlusOne;
+    if (tblFF00 == NULL || audio4000To400F == NULL) return;
+    highPlusOne = (y == 0xFFu) ? byteAt0000 : tblFF00[(uint8_t)(y + 1u)];
+    if (highPlusOne == 0u) return;
+    audio4000To400F[6u] = highPlusOne;
+    audio4000To400F[7u] = (uint8_t)(tblFF00[y] | 0x08u);
 }
