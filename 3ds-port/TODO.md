@@ -105,3 +105,8 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 - [x] Translate `sub_DFA4` with the 6502 N-flag loop condition, byte-wrapped X/A registers, and final ADC carry preserved.
 - [x] Translate `sub_DFA2` as the original `LDX #$0A` entry into `sub_DFA4`.
 - [ ] Await host regression and native 3DS build for the DFA2/DFA4 batch before marking the batch fully validated.
+
+
+- [x] Translate `sub_D0AB` with the original SBC sign-bit branches and four-object loop.
+- [x] Translate `sub_DFB2` with the exact `CMP` N-flag condition and the `tbl_D913` lookup sequence.
+- [ ] Await host regression and native 3DS build for the D0AB/DFB2 batch before marking the batch fully validated.
