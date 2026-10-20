@@ -275,3 +275,9 @@ Source scanned: `Excitebike/bank_FF.asm` on branch `nes-game`. This inventory re
 - **Confirmed:** `ram_009C_obj,X` selects the `$D924` state-dispatch handler; `ram_00DC_obj,X` is added to Y in `sub_E96C`; `sub_DA7A` performs scroll-relative low/high-byte correction for slots 1–3; `sub_DB95` resets opponent slots 1–3.
 - **Strong inference, not yet a global proof:** slot 0 is the player slot and slots 1–3 are opponents. The fixed-slot initialization and multiple opponent-only loops support this, but all race/menu initialization paths still need tracing.
 - **Not yet established:** the full gameplay meaning of `ram_0390_obj,X`, the full semantics of `ram_0094_obj,X`, and the timing/conditions connecting these routines in each race state.
+### Caller placement and frame-order evidence
+
+- `sub_DA7A` is called at CPU `$DA3E` from the `sub_DA2C` loop, after `sub_DA6A` updates the scroll and before `sub_DBFE` adjusts related scroll state. The caller reaches this section through the `ram_03F2` branch at `$C9BB`; therefore the opponent-coordinate correction is conditional, not an unconditional per-frame update.
+- `sub_E96C` is called from the race-update path at `$C9DB`, after `sub_DDD1` and `sub_CD1F`, and before `sub_DE31`, `sub_E836`, and `sub_EA44`. Its vertical delta application has a defined place in the update sequence; translating it elsewhere could change interactions with the following routines.
+- The RAM declaration file `Excitebike/bank_ram.inc` lists contiguous byte symbols for the object arrays (for example `$0080`–`$0083`, `$009C`–`$009F`, `$00BC`–`$00BF`, `$00DC`–`$00DF`, `$0370`–`$0373`, and `$0390`–`$0393`). This confirms the array-shaped layout, but the assembly's fixed-address stores still need to be interpreted in the context of which slots are active.
+
