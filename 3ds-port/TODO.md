@@ -1,482 +1,178 @@
 # Excitebike 3DS — roadmap and task tracker
 
-Tasks are checked only after completion and evidence. The native 3DS port must match the original NES game's behaviour as closely as practical; the original 6502 assembly is a reference to trace and translate, not code that can be compiled directly for ARM11.
+This file is the active project checklist. The original NES disassembly is the reference implementation and must remain unchanged. The port is native C for Nintendo 3DS; 6502 code and NES hardware registers cannot be reused directly as an ARM11/libctru executable.
+
+**Overall status:** not yet a playable faithful port. The application scaffold exists; routine translations are in progress. A translated routine is not automatically tested, build-verified, integrated, or fidelity-verified.
+
+## Status definitions
+
+- **Analyzed:** source instructions and relevant dependencies inspected; confirmed facts separated from hypotheses.
+- **Translated:** native C implementation exists.
+- **Tested:** relevant host regression tests have actually run and passed.
+- **Build-verified:** the same revision successfully built the 3DS target and produced the expected artifacts.
+- **Integrated:** connected through a verified game update/call path.
+- **Fidelity-verified:** observable behavior was compared with the original NES reference using documented tests or scenarios.
+
+Do not promote a task to a later state without evidence. Keep the relevant CI run, revision, and known limits beside the task.
+
+## Progress dashboard
+
+| Measure | Current status |
+|---|---|
+| ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
+| Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
+| Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
+| Latest batch host test execution | **Pending confirmation.** |
+| Latest batch 3DS build | **Pending confirmation.** |
+| Latest batch gameplay integration | Not demonstrated. |
+| End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
+
+A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
 
 ## Phase 1 — Build foundation
 
 - [x] Create the `3ds-port/` project structure.
-- [x] Add an initial C entry point and devkitARM Makefile.
-- [x] Add a GitHub Actions workflow for native 3DS builds and artifact upload.
-- [x] Verify CI produces both `.3dsx` and `.elf` under `3ds-port/build/` (run 39493444147 succeeded; artifact `excitebike3ds-homebrew` uploaded).
-- [x] Launch the build on real 3DS hardware (user-confirmed: it launches and works; gameplay remains the architecture/debug scaffold, not faithful Excitebike).
-- [x] Add a `.gitignore` for generated build output and temporary files.
+- [x] Add a native C entry point and devkitARM Makefile.
+- [x] Add GitHub Actions workflows for the 3DS build and host-side regression tests.
+- [x] Produce `.3dsx` and `.elf` artifacts in earlier successful CI runs, including run [39493444147](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39493444147).
+- [x] Confirm the scaffold launches on real 3DS hardware (user-reported). This confirms launch only, not faithful gameplay.
+- [x] Add ignore rules for generated build output.
+- [x] Document build requirements and commands.
+- [ ] Re-run a clean 3DS build on the latest code revision and record the exact CI run.
 
-## Phase 2 — Application structure and source analysis
+## Phase 2 — Source analysis and architecture
 
-- [x] Define module interfaces for game state, input, rendering, track, bike physics, collision, audio, and menus.
-- [x] Add a central game lifecycle and deterministic module update order.
-- [x] Add a basic top-screen debug/status view and bottom-screen console initialization.
-- [x] Document local build requirements and commands.
-- [x] Document the fidelity target, technical constraints, and original-source-to-native-module mapping.
-- [x] Compile the modular architecture successfully after the output-directory change (CI run 39493444147; `.3dsx` and `.elf` artifacts uploaded).
-- [x] Verify the application and controls/screen layout on real hardware (user-confirmed working; this does not validate NES gameplay fidelity).
+- [x] Define module interfaces for game state, input, rendering, bike physics, collision, track, audio, and menus.
+- [x] Add a central lifecycle and deterministic module update order.
+- [x] Add a debug/status view and bottom-screen console initialization.
+- [x] Create `ASM_FUNCTION_INVENTORY.md` for the 177 `sub_*` labels.
+- [x] Create `REFERENCE_MAPPING.md` to document routine traces, RAM relationships, and uncertainties.
+- [x] Trace the controller sampling/held/press path around `sub_D35B` (CPU `$D35B`, ROM offset `$00136B`).
+- [x] Trace selected object-state dispatch and table paths, including `sub_D918/sub_D924`, `sub_D933`, and `sub_E733/sub_E73B`; some state meanings remain unresolved.
+- [x] Translate `sub_DA15` as a byte-level helper and run an exhaustive comparison for all 16,777,216 three-byte input combinations in CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829).
+- [x] Disable unsupported placeholder movement/physics updates in the fidelity-target build.
+- [ ] Trace all direct, indirect, and alias writers for `ram_009C_obj,X`, `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`.
+- [ ] Establish player-slot identity, initialization/reset behavior, and caller order before implementing stateful player behavior.
+- [ ] Reconcile `ASM_FUNCTION_INVENTORY.md` with actual C entry points, tests, CI evidence, and gameplay integration.
+- [ ] Record a confirmed baseline for the current branch's host tests and 3DS build.
 
-- [x] Record the first verified temperature-meter/overheat routine trace from `sub_E359_display_temperature_meter_with_sprites` (CPU `$E359`, ROM offset `$002369`): update is skipped when `ram_0052_track_finished_flag` is nonzero; it derives an index from `ram_005C_obj & $C0` and race state, compares `ram_03B6` against `tbl_D8FB`, and adjusts the fractional/coarse pair `ram_03B5`/`ram_03B6` using `tbl_D8F7` or subtracts `$0B` on the cooling path. At coarse value `$1A`, a state-dependent branch can set the danger indicator. This is a partial trace, not a complete model of heat input/cooling.
-- [x] Trace the NES controller sampling routine and held/press storage (`sub_D35B`, CPU `$D35B`, ROM offset `$00136B`); record its NES-specific bit and repeat behavior.
-- [x] Trace the exact outer object-state dispatch loop (`sub_D918`/`sub_D924`) and the observed branch logic of dispatch target `$D933`; record that target meanings remain partially unresolved.
-- [x] Trace the exact outer loop and sequence-table access in `sub_E733`/`sub_E73B`; explicitly distinguish object-path handling from player acceleration.
-- [x] Resolve the exact pointer values for dispatch states `$00-$05` from `tbl_D8FF_lo`/`tbl_D905_hi`; document only state behavior directly supported by the visible instructions.
-- [x] Trace visible branch and byte-operation behavior for dispatch states `$02-$05` and `sub_DA15`; record unresolved variable semantics separately.
-- [x] Add a standalone byte-exact C translation of `sub_DA15` in `nes_routines.c`, preserving 6502 carry/borrow semantics; it is not yet connected to placeholder physics.
-- [x] Build the new routine into the 3DS homebrew (run `39495476753` succeeded and uploaded `.3dsx`/`.elf`).
-- [x] Add a host-side exhaustive comparison test and CI workflow for all 256³ input combinations.
-- [x] Confirm the exhaustive-test workflow passes (run `39495633829`, conclusion `success`; compile and all 16,777,216 input comparisons passed).
-- [ ] Trace every writer of `ram_009C_obj,X` and the producers of `ram_0370_obj,X`, `ram_0390_obj,X`, `ram_0080_obj,X`, `ram_0094_obj,X`, `ram_00DC_obj,X`, and `ram_00BC_obj,X`; establish player-slot identity before implementing gameplay.
+## Phase 3 — Player physics and faithful gameplay core
 
-## Phase 3 — Playable prototype
+**Priority:** identify the original player update path first. Do not infer player physics from routines that update other objects.
 
-Do not start until Phase 2's source-analysis gate is complete. This phase uses an explicitly labelled temporary prototype model, not guessed claims of NES fidelity.
+- [ ] Trace player controller input into the player state/update path.
+- [ ] Identify and document the actual acceleration routine, including its callers, input conditions, flags, RAM effects, and frame order.
+- [ ] Translate acceleration and speed limits from verified ASM behavior.
+- [ ] Translate braking and deceleration.
+- [ ] Complete the overheating/cooling model and temperature meter path. `sub_E359` has a documented translation, but its surrounding game-state integration must be verified.
+- [ ] Trace and translate jumping, posture, landing, and crash behavior.
+- [ ] Trace collisions and recovery/reset behavior.
+- [ ] Add branch and boundary regression tests against independent instruction-level references where practical.
+- [ ] Compare deterministic movement/heat/jump scenarios with the original NES game and record any differences.
+- [ ] Integrate each validated batch only after dependencies and call order are known.
 
-- [ ] Draw a test track and ground.
-- [ ] Add a controllable bike placeholder with visible position.
-- [ ] Implement a restartable test course and finish condition.
-- [ ] Replace temporary input/physics with an explicitly documented prototype model.
+### Player-path source-analysis gate
 
-## Phase 4 — Faithful Excitebike implementation
+- [ ] Resolve the player slot from RAM writers, initialization, input handling, and update callers.
+- [ ] Document which routines are player-only, opponent-only, or shared.
+- [ ] Trace indirect writes and shared scratch variables that affect the player state.
+- [ ] Record CPU address, ROM offset when known, entry/exit state, branch conditions, memory effects, and unresolved hypotheses for each priority routine.
 
-- [ ] Map original disassembly routines, RAM variables, timing, and track data to native code.
-- [ ] Reproduce acceleration, braking, overheating/cooling, jumping, posture, landing, and crashes from verified source behaviour.
-- [ ] Reproduce track layouts, ramps, terrain, and course selection.
-- [ ] Reproduce opponents, race progression, scoring, and results.
-- [ ] Reproduce menus and sound/music using technically and legally suitable assets.
-- [ ] Compare scenarios against the original NES game and document known differences.
+## Phase 4 — Track, opponents, race flow, and presentation
 
-## Phase 5 — 3DS polish and release
+- [ ] Reconstruct course selection and original track/course data.
+- [ ] Reproduce terrain, ramps, track layout, and track-dependent effects.
+- [ ] Reproduce opponent behavior and opponent state transitions.
+- [ ] Reproduce race progression, timers, finish conditions, scoring, and results.
+- [ ] Reproduce original menus and pause/unpause behavior.
+- [ ] Reproduce sprite/OAM command generation and rendering behavior through an explicit 3DS renderer.
+- [ ] Reproduce sound effects and music with technically and legally suitable source assets/data.
+- [ ] Compare representative complete races and menu flows against the original NES version.
 
-- [ ] Optimize rendering, memory use, and frame pacing for original 3DS hardware.
-- [ ] Test controls and layout on original 3DS and New 3DS where available.
-- [ ] Test clean builds and document known limitations.
+## Phase 5 — Original and New Nintendo 3DS compatibility
+
+- [ ] Verify controls and screen layout on original 3DS hardware.
+- [ ] Verify controls and screen layout on New Nintendo 3DS hardware.
+- [ ] Check frame pacing, memory use, rendering limits, and audio timing on both targets.
+- [ ] Keep enhancements specific to the 3DS optional and separate from the faithful baseline.
+- [ ] Verify that optional features do not change baseline gameplay when disabled.
+
+## Phase 6 — Release
+
+- [ ] Perform a clean build from documented prerequisites.
+- [ ] Run all host regression tests and the 3DS build on the same commit.
+- [ ] Record known limitations and any differences from the NES reference.
 - [ ] Produce a versioned `.3dsx` release and release notes.
+- [ ] Verify the distributed artifact launches on supported hardware.
+- [ ] Do not claim a faithful release until core gameplay, menus, courses, opponents, scoring, and audio have passed documented comparison.
 
-## Fidelity and progress rules
+## Verified history and routine-level notes
 
-- Preserve the original NES disassembly on its existing branch.
-- Translate logic and data for the 3DS; do not assume 6502 assembly can be linked into an ARM11 homebrew.
-- Distinguish confirmed source facts from hypotheses; record source labels, ROM offsets, and confidence.
-- Mark fidelity tasks complete only after comparing behaviour with the original.
-- The current modules are scaffolding, not a playable or faithful port.
+This section records selected evidence already present in the repository. It does not imply that every routine is integrated into the game.
 
-## Source-analysis checkpoint (2026-10-20)
+- [x] Earlier native build and artifact upload succeeded in CI run [39493444147](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39493444147).
+- [x] `sub_DA15` exhaustive comparison passed in CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829).
+- [x] Earlier host regression and 3DS build checks are recorded for batches including `sub_DA7A`, `sub_D310`, `sub_D326`, `sub_D35B`, and multiple object/sprite helpers. Consult `REFERENCE_MAPPING.md` and the linked workflow runs for the exact scope and revision.
+- [x] `sub_E359` has a documented temperature-meter/overheat translation and prior host/build CI evidence. Full gameplay-level heat behavior remains subject to integration and scenario comparison.
+- [x] A block-level translation of `loc_E96E` from within `sub_E96C` is documented and has exhaustive host regression coverage for the modeled byte inputs. The whole `sub_E96C` path is not thereby complete or integrated.
+- [ ] Reconcile older checklist entries that still say tests/builds are pending against the actual latest workflow runs before changing their status.
 
-- [x] Scan `bank_FF.asm` for direct write instructions affecting `ram_0390_obj`, `ram_0080_obj`, `ram_0094_obj`, `ram_00DC_obj`, `ram_00BC_obj`, `ram_0370_obj`, and `ram_009C_obj`; record writer addresses and interpretation limits in `REFERENCE_MAPPING.md`.
-- [x] Confirm the exhaustive `sub_DA15` test passed in CI run [39495633829](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495633829) and the native 3DS build passed in run [39495627228](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39495627228).
-- [ ] Trace control flow and callers around every writer above; establish slot identity and initialization/reset sequences before translating any stateful behavior.
-- [ ] Check indirect or alias writes to these RAM addresses and cross-check the RAM symbol declarations/memory map.
+## Batch log — 2026-10-21: 20 ASM entry translations
 
-- [x] Trace `sub_DA7A`'s opponent-only scroll-relative coordinate correction, `sub_DB95`'s opponent-slot reset path, and `sub_E96C`'s per-frame Y-delta application; record the confirmed facts and remaining uncertainties in `REFERENCE_MAPPING.md`.
-- [x] Record caller placement and surrounding frame-order for `sub_DA7A` and `sub_E96C`, including the `ram_03F2` gate and the adjacent update calls.
+**Source/header/test wiring is present; execution and build verification remain pending.** The latest batch has not been counted as test-passing or gameplay-integrated.
 
-- [x] Translate the byte-level logic of sub_D310 into nesSubD310DecreaseAllTimers, preserving 8-bit wraparound, BPL's negative-flag condition, selected timer ranges, and nonzero-only decrements.
-- [ ] Verify the expanded host regression test and 3DS build in GitHub Actions before marking the timer helper validated.
-- [x] Translate `sub_DA7A` as a byte-exact helper and add instruction-level reference tests.
-- [x] Translate six additional RAM-level routines: `sub_DBFE`, `sub_DC9A` (with its `$DC97` load entry), `sub_DCDE`, `sub_DD38`, `sub_DD6F`, and `sub_DB95`; add regression tests.
-- [x] Host regression suite passed and Nintendo 3DS build passed for the six-routine code revision `730a1048`; later commits only update documentation/inventory.
-- [x] Translate `sub_DA6A`, `sub_DB50`, `sub_DCA0`, and shared entry `loc_DCC7`; add regression coverage.
-- [x] Host regression suite passed on code revision `a7537aff`; the Nintendo 3DS compile and artifact checks also passed on that revision.
-- [ ] Continue translating the remaining `sub_*` routines systematically, preserving incoming flags, branch behavior, indexed slot bounds, and byte wraparound.
-
-- [x] Create a full checklist of all 177 `sub_*` labels in `ASM_FUNCTION_INVENTORY.md`; distinguish inventory status from actual port completion.
-- [x] Validate `sub_D310` host regression against the independent reference: [workflow run 39496864809](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39496864809) passed.
-- [x] Confirm host-test and 3DS-build CI for `sub_DA7A`.
-
-- [x] Translate sub_D326's eight-byte ROR carry chain into `nesSubD326RotateInputBits`; host regression and 3DS build are pending CI.
-
-- [x] Translate sub_D35B's portable controller decode and A-button press suppression; host regression and 3DS build pending CI.
-
-- [x] Validate host-side regression tests for `sub_D326` and `sub_D35B`: [D326 test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497063113), [D35B test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39497203936).
-- [ ] Confirm the newest 3DS build after adding `sub_D35B`; keep all native helper translations separate from gameplay until integrated through verified call order.
-
-
-- [x] Translate `sub_DA58` with the original add/carry side effect and validate against the byte-level reference.
-- [x] Translate `sub_E091` and `sub_E098`, preserving the `CMP #$E7` branch threshold and carry state on the ADC path.
-- [ ] Await host regression and native 3DS build for the DA58/E091/E098 batch before marking the batch fully validated.
-
-
-- [x] Translate `sub_DFA4` with the 6502 N-flag loop condition, byte-wrapped X/A registers, and final ADC carry preserved.
-- [x] Translate `sub_DFA2` as the original `LDX #$0A` entry into `sub_DFA4`.
-- [ ] Await host regression and native 3DS build for the DFA2/DFA4 batch before marking the batch fully validated.
-
-
-- [x] Translate `sub_D0AB` with the original SBC sign-bit branches and four-object loop.
-- [x] Translate `sub_DFB2` with the exact `CMP` N-flag condition and the `tbl_D913` lookup sequence.
-- [ ] Await host regression and native 3DS build for the D0AB/DFB2 batch before marking the batch fully validated.
-
-- [x] Translate and test `sub_D000`, `sub_D11F`, `sub_D255`, `sub_D2FF`, `sub_E70B`, `sub_E80D`, `sub_E803`, `sub_E7FF`, `sub_E7FC`, and `sub_E836` at RAM/register level.
-- [ ] Confirm host regression and Nintendo 3DS build for this batch before marking fully validated.
-
-- [x] Add state-level models for E16C, E3F4, E4AD, E49B, E2AF, E2BD, E2D0, E2F6, E1F9 and E3AA.
-- [ ] Verify host tests and Nintendo 3DS build for this batch.
-
-- [x] Translate `sub_E4C8` and `sub_E52C` at byte level, including wrapped subtraction, loop bounds, packed index scratch byte, and the source-commented `$000B` initialization bug.
-- [ ] Verify the new overlap routine tests and Nintendo 3DS build in CI before marking the batch validated.
-
-
-- [x] Translate `sub_E456` with reverse object-order traversal, `$70-$8F` cleanup gate, `$F0/$F8` thresholds, and the exact opponent-reset helper.
-- [x] Verify `sub_E456` regression tests and the Nintendo 3DS build in CI (host suite run `39504720602` and 3DS build run `39504884005` succeeded).
-
-
-- [x] Re-check the literal `CPY #$0C` loop in `sub_E4AD`; the correct model writes exactly three OAM Y bytes at offsets 0, 4, and 8.
-- [x] Re-run host regression after restoring the literal E4AD loop bound (run `39504720602` succeeded).
-
-- [x] Model `sub_E26A`'s gate and sprite-command parameters from the literal instructions and `$D90B` three-byte table.
-- [x] Validate `sub_E26A` host test and 3DS build (host run `39504865406` and 3DS build run `39504884005` succeeded).
-
-
-## Whole-project status snapshot (2026-10-20)
-
-- The native app architecture and repeatable `.3dsx`/`.elf` CI build work, and the user previously confirmed the scaffold launches on 3DS.
-- The current source scan detects 51 C routine/helper definitions against 177 original `sub_*` labels. Inventory status is not a completion percentage: helpers and state models count as definitions, and several translations are not integrated into gameplay. A translated label is not automatically fidelity-verified.
-- The port is still **not a playable faithful Excitebike implementation**. Bike physics, course data/rendering, opponent/race flow, menus, and audio need verified translation and integration. Do not claim a global completion percentage based only on the routine count.
-
-- [x] Translate `sub_E359` temperature arithmetic and OAM output using the literal `$D8F7/$D8FB` table bytes.
-- [x] Validate `sub_E359` host regression and 3DS build in CI (host run `39505218389`; 3DS build run `39505237364`).
-
-- [x] Complete `sub_E2F6` through its OAM writes, including tile swap, attribute bit, wrapped coordinates, and conditional hide of the second wheel.
-- [x] Validate the full `sub_E2F6` host regression and 3DS build (host run `39505508682`; 3DS build run `39505373018`).
-
-- [x] Translate `sub_EA44`'s four-slot sprite dispatch, thresholds, table lookup, and shared-SBC path; pass inherited zero-page scratch explicitly.
-- [x] Validate `sub_EA44` host regression and 3DS build (host run `39505657843`; 3DS build run `39505675306`).
-
-- [x] Replace the partial `sub_E1F9` model with the complete branch/return logic, including `$0036,X` timer semantics and `$039F` side effect.
-- [x] Validate expanded `sub_E1F9` regression and 3DS build (host run `39505926103`; 3DS build run `39506181543`).
-
-- [x] Combine the `$E2AF-$E2F3` countdown state path into one model with explicit low/high borrow, finish blink, and render-command output.
-- [x] Validate the combined countdown regression and 3DS build (host run `39506181462`; 3DS build run `39506181543`).
-
-- [x] Translate `sub_E1A3`'s `$D892/$D8A9` lookups, `$16` special pointer/attribute adjustment, and conditional overlay-tile loop.
-- [x] Validate `sub_E1A3` host regression and 3DS build (host run `39506455129`; 3DS build run `39506426121`).
-
-
-## Batch 2026-10-20 — 10 priority routines/entries reviewed
-
-- [x] Add or complete `sub_E4C8`/`sub_E52C`, `sub_E456`, `sub_E26A`, `sub_E359`, `sub_E2F6`, `sub_EA44`, the `$E2AF` countdown path, and `sub_E1A3` command setup.
-- [x] Replace the partial `sub_E1F9` approximation with its full branch-level logic and correct the literal `$E4AD` loop to its three writes at Y=`$00/$04/$08`.
-- [x] Host regression run `39506455129` and Nintendo 3DS build run `39506455082` both passed at code/test revision `b0d89905`; subsequent commits in this section change documentation only.
-
-
-## Audit pass — 2026-10-20
-
-- [x] Re-scan `nes_routines.c` and reconcile inventory rows that were still marked `Pending` despite having a matching C definition.
-- [x] Keep source translation status separate from fidelity/test status; compilation alone does not prove instruction-level equivalence.
-- [ ] Compare every existing routine against its exact ASM control flow, flags, indexed RAM effects, and dependencies; correct discrepancies before claiming faithful coverage.
-- [ ] Translate remaining routines in dependency order, prioritizing long gameplay/state routines before audio/data decoders where practical.
-
-- [x] Remove contradictory historical TODO entries that incorrectly said `sub_E4AD` writes twelve OAM bytes; the literal ASM loop bound and regression test establish three writes.
-
-
-### Audit snapshot details
-
-- ASM inventory: 177 original `sub_*` entries.
-- C source: 51 function/helper definitions detected by source scan.
-- Inventory after reconciliation: 134 rows remain marked pending, 17 have a matching C definition but need their status/test coverage reconciled, and 26 have other statuses. These are tracking categories, not a percentage of playable game completion.
-- Largest unported gameplay/state candidates by ASM instruction count include `sub_EB17` (~135 instructions), `sub_E96C` (~106), `sub_D260` (~88), `sub_DFD5` (~85), `sub_D018` (~76), and `sub_D1C7` (~73). Exact counts are a rough source scan, not an estimate of implementation effort.
-- The first full audit pass found at least one real documentation/implementation mistake in the E4AD sprite-hide loop: the literal `CPY #$0C` loop writes three bytes (offsets 0, 4, 8), not twelve. The C code and regression expectation were corrected, and the subsequent host test run passed.
-- Next work should translate the larger object/race-state routines with explicit RAM state and tests for branch conditions and byte wraparound; then integrate the helpers into the native frame loop. Audio/PPU-heavy routines are later because they depend on memory-mapped hardware behavior.
-
-
-## Fidelity gate update — 2026-10-20
-
-- [x] Disable the native placeholder speed/temperature increments and arbitrary track-position clamp; they were not justified by the NES source.
-- [x] Inspect and document `sub_E733` / `sub_E73B` directly from `bank_FF.asm`; distinguish the object/track-event path from player acceleration.
-- [ ] Trace the actual player-slot movement, acceleration, braking, heat, jump/landing, and crash state path from callers and all relevant RAM writers before enabling native physics.
-- [ ] Translate the traced state path with explicit 8-bit/carry/branch behavior and independent regression tests before reconnecting it to `gameUpdate`.
-
-
-## Verified routine fragment — 2026-10-21
-
-- [x] Translate the literal `$E96E-$E97D` block from `sub_E96C` into `nesLocE96EApplyVerticalDelta` in `nes_routines.c`, which is part of the native 3DS codebase. Preserve the `$14/$15` state skips, four-slot traversal, and 8-bit Y-plus-delta wrap; do not describe this fragment as a complete `sub_E96C` port.
-- [x] Add an independent exhaustive host reference test for all 16,777,216 `(state, Y, delta)` inputs for slot 0, while checking the remaining slots' expected effects.
-- [ ] Confirm the new exhaustive host test and native 3DS build pass in GitHub Actions before calling this fragment validated.
-- [ ] Translate and test the rest of `sub_E96C`, including the exact `sub_DD06` side effects, `$E53D` threshold loop, and `$EA07-$EA43` controller branch, before integrating this fragment into live gameplay.
-
-
-## Batch of exact RAM helpers — 2026-10-21
-
-- [x] Translate `sub_E84F` ($E84F): store A to RAM `$00BC,X` and `$00E4,X`.
-- [x] Translate `sub_E86F` ($E86F): store `$00E4,X - A` to `$00BC,X`, modulo 256.
-- [x] Translate `sub_E893` ($E893): store A to `$00D4,X` and `$00B4,X`; return `$00C8,X - $00D0,X`.
-- [x] Translate `sub_E73B` ($E73B): add `$0060,X` to X-low with 8-bit wrap and no high-byte carry.
-- [x] Translate `sub_E733` ($E733): execute the X-low update for slots 3, 2, 1; preserve the original `BNE` loop's omission of slot 0.
-- [x] Add host regression tests for these five routines. Test results are pending CI; no gameplay integration is claimed.
-- [x] Host regression workflow passed after correcting the initial compile failure; the native 3DS build and output checks passed on the corresponding code commit.
-- [ ] Continue tracing and translating additional self-contained ASM routines; only count routines as verified after the source mapping, tests, and CI pass.
-
-
-## Second exact-helper batch — 2026-10-21
-
-- [x] Translate `sub_E7FC` and `sub_E7FF` data-index loads.
-- [x] Translate `sub_E80D`'s six-entry pointer low/high tables exactly (`$E54E-$E559`).
-- [x] Translate `sub_E803` indexed RAM read with 6502 8-bit Y/page-crossing semantics represented over RAM `$0400-$07FF`.
-- [x] Translate the decision/write behavior of dispatch entry `ofs_002_E818_07`, including `CMP #$07` followed by `BPL` sign-flag semantics.
-- [x] Add regression tests for these helpers; CI validation remains pending.
-- [ ] Do not mark either batch verified until the newest host test workflow and 3DS build both pass.
-
-
-## Batch of 21 exact RAM-level routines / dispatch entries — 2026-10-21
-
-- [x] `sub_E84F`, `sub_E86F`, `sub_E893`, `sub_E73B`, `sub_E733` translated into the native C routine module.
-- [x] `sub_E7FC`, `sub_E7FF`, `sub_E80D` pointer-byte table, and `sub_E803` indexed RAM read translated; existing pointer resolver kept under its original non-conflicting name.
-- [x] Dispatch entries `ofs_002_E818_07`, `ofs_002_E845_04`, `ofs_002_E854_05`, `ofs_002_E85D_02`, `ofs_002_E86A_03`, and `ofs_002_E879_09` translated.
-- [x] Dispatch entries `ofs_002_E8BF_0E`, `ofs_002_E8C6_0F`, `ofs_002_E8E3_01`, `ofs_002_E8F5_14`, `ofs_002_E8FA_10`, and `ofs_002_E963_00` translated.
-- [x] Added host regression coverage for the new helpers, including byte-wrap arithmetic, slot isolation, lookup-table values, branch flags, and state-write behavior.
-- [x] Host regression workflow passed on code commit `1e290e35`; the native 3DS build, output-location check, and artifact upload also passed on that same code commit. Final workflow cleanup was still running at last poll.
-- [ ] These helpers are not yet wired into live gameplay; full caller state and call-graph effects must be traced before integration.
-
-
-## Batch — 2026-10-21: command-stream and PPU-write fragments
-
-- [x] Translate the pre-dispatch setup of `sub_D0F4`: copy seven bytes from RAM `$03D9-$03DF` into `$03D1-$03D7`, then apply the literal writes `$03D0=$17`, `$03D2=$FB`, `$03D5=$FB`; expose source pointer `$2356` and data pointer `$03D0`.
-- [x] Model `sub_D1A9` as an explicit status-read count and the two `$2005` writes of zero.
-- [x] Model `sub_D1B3` as explicit `$2000` control and `$2005` scroll write effects in source order; no direct PPU access is performed by the portable helper.
-- [ ] Validate these new tests in host CI and compile the native 3DS target before marking this batch verified.
-- [ ] These are portable source fragments only; the generic command decoder at `loc_D2A3` and PPU backend are not completed by this batch.
-
-
-## Batch — 2026-10-21: 20 exact bank_FF.asm helpers
-
-- [x] Added 20 source-level translations: `sub_C333`, `sub_C3AF`, `sub_C3B1`, `sub_C621`, `sub_C68A`, `sub_C971`, `sub_CA1B`, `sub_CB13`, `sub_CFE3`, `sub_CF8B`, `sub_C62D`, `sub_D24F`, `sub_ECBF`, `sub_F676`, `sub_F6FB`, `sub_F826`, `sub_F82E`, `sub_F839`, `sub_F871`, and `sub_F885`.
-- [x] Added batch regression coverage including all 256 accumulator values for the carry/wrap helpers and full 256-byte page-copy verification.
-- [x] Refined `sub_F871`/`sub_F885` to model the `Y`-indexed ROM reads, the zero-byte early exit, and 16-bit address wrap when `Y=$FF`.
-- [ ] Host tests and native 3DS compilation must pass before this batch is marked validated.
-- [ ] PPU/APU/controller register accesses are modeled as explicit output effects; these helpers do not directly emulate NES hardware or connect all effects to live gameplay.
-
-
-## Batch — 2026-10-21: 20 additional ASM-to-C translations
-
-- [x] Added 20 new translations: `sub_C1FD`, `sub_C229`, `sub_C32F`, `sub_C53A`, `sub_C53E`, `sub_C716`, `sub_C726`, `sub_CB06`, `sub_DC97`, `sub_EC25`, `sub_EC3B`, `sub_EC5D`, `sub_EC75`, `sub_F681`, `sub_F821`, `sub_F86B`, `sub_F889`, `sub_C94B`, `sub_C64E`, and `sub_C653`.
-- [x] Added regression cases for RAM initialization, exact copy order, indexed reads/writes, 8-bit subtraction carry, command-buffer writes, and audio-register effects.
-- [ ] Host regression tests and native 3DS build must pass before this batch can be marked validated.
-- [ ] Delay-loop helpers preserve final RAM/register effects but do not emulate CPU cycle timing. These helpers remain effect-level translations and are not yet fully connected to live gameplay.
-
-
-## New exact ASM translations
-- [x] `sub_EC99` (`$EC99`): translated the nonzero-delta path, exact `$08` threshold, `$00B9` reset, and calls to the existing `$F6FB` / `$ECBF` helpers.
-- [ ] Run host regression and native 3DS builds for the `sub_EC99` addition before counting it as validated.
-
-## Audit global des routines ASM — 2026-10-21
-
-Cette section est l’inventaire de référence pour suivre la couverture des labels `sub_XXXX` dans `Excitebike/bank_FF.asm`. Les cases « présente » signifient uniquement qu’une fonction C dont le nom porte la même adresse existe dans `nes_routines.c` ; elles ne prouvent ni l’équivalence complète instruction par instruction, ni les tests, ni l’intégration au jeu. Ne pas compter une routine comme validée avant comparaison de son bloc ASM complet, vérification de ses appels/effets RAM et tests.
-
-- [x] Inventaire automatisé des labels `sub_XXXX` de l’ASM : 165 labels uniques.
-- [x] Inventaire des fonctions C existantes : 102 fonctions détectées par le motif de déclaration.
-- [ ] Audit instruction-par-instruction de chaque fonction existante et correction des écarts.
-- [ ] Exécuter les tests natifs avec les avertissements traités comme erreurs.
-- [ ] Compiler la cible Nintendo 3DS et corriger les erreurs.
-- [ ] Vérifier l’intégration au chemin de jeu réel ; les fragments C isolés ne prouvent pas que le jeu les appelle.
-- [ ] Vérifier l’état des workflows CI sur le commit courant avant d’indiquer « validé ».
-
-### Labels ASM avec une fonction C de même adresse (85/165, couverture nominale 51.5 %)
-
-- [x] `sub_C1FD` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C229` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C32F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C333` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C3AF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C3B1` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C53A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C53E` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C621` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C62D` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C64E` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C653` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C68A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C716` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C726` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C94B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_C971` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_CA1B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_CB06` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_CB13` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_CF8B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_CFE3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D000` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D0AB` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D0F4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D11F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D1A9` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D1B3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D2FF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D326` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_D35B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DA15` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DA58` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DA6A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DA7A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DB50` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DBFE` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DC97` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DC9A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DCA0` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DCDE` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DD38` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DD6F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DFA2` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DFA4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_DFB2` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E091` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E098` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E16C` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E1A3` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E1F9` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E26A` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E2F6` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E3F4` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E456` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E4C8` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E52C` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E70B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E733` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E73B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E7FC` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E7FF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E803` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E836` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E84F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E86F` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_E893` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EA44` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EC25` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EC3B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EC5D` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EC75` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_EC99` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_ECBF` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F676` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F681` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F6FB` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F821` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F826` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F839` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F86B` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F871` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F885` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_F889` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-- [x] `sub_FF53` — fonction C de même adresse présente ; fidélité et tests restent à auditer.
-
-### Labels ASM sans fonction C de même adresse (80)
-
-- [ ] `sub_C27F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C2A9` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C318` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C339` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C409` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C522` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C639` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C66E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C6A5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C6C8` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C6D1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C739` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C792` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C7DE` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C92C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_C935` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CA08` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CA9B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CC15` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CC6B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CCCA` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CD1F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CD59` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CDEE` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CE29` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CE58` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CE5C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CED0` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CF0C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CF47` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CF6A` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CF88` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CF96` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CFCB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CFDB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_CFEA` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D018` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D0C6` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D13F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D14E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D19B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D1C7` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D23B` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D260` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D3C1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D918` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_D924` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DA26` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DA9F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DAE3` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DBC4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DC1A` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DCF2` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DD06` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DD8D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DDD1` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DE31` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DEBB` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DEE2` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DF30` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DF7F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_DFD5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_E09F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_E17F` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_E794` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_E927` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_E96C` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_EAC5` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_EB17` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_ECC9` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_ECE4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F4FF` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F64E` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F68D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F755` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F844` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_F8D4` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_FA74` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_FC3D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-- [ ] `sub_FC8D` — lire le bloc ASM complet et ses dépendances ; déterminer si c’est une routine autonome, une entrée de dispatch ou un alias avant traduction.
-
-### Priorités pour la suite
-
-- [ ] Traiter en premier les routines manquantes ayant un corps substantiel et des dépendances déjà traduites ; ne pas privilégier les stubs ou les entrées de dispatch sans les qualifier.
-- [ ] Pour chaque traduction : documenter registres/flags d’entrée et sortie, accès mémoire, branches, appels, débordements 8/16 bits et effets matériels.
-- [ ] Ajouter des tests pour chaque branche et les valeurs limites ; comparer les résultats aux séquences ASM, pas seulement aux noms de fonctions.
-- [ ] Actualiser ce tableau après chaque lot et n’augmenter le pourcentage « validé » qu’après exécution effective des tests et compilation.
-
-
-## New ASM batch — 2026-10-21
-
-**Implemented in source and declared in the public header (20 entry-level translations):**
-
-- [x] `sub_CFCB` — unsigned object-position comparison and original flag-mask branches.
-- [x] `sub_CFDB` — conditional upper-nibble clear, preserving the zero-value early return.
-- [x] `sub_CFEA` — clear high/low flag field and set comparison bits with the original zero/equal exits.
-- [x] `sub_CE58` — X versus `ram_004C` equality result.
-- [x] `loc_CAFA` — seven `$FE` command bytes, including 8-bit X wrap.
+- [x] `sub_CFCB` — unsigned object-position comparison and flag-mask branches.
+- [x] `sub_CFDB` — conditional upper-nibble clear and zero early return.
+- [x] `sub_CFEA` — comparison flags and zero/equal exits.
+- [x] `sub_CE58` — object-index equality result.
+- [x] `loc_CAFA` — seven `$FE` command bytes with 8-bit X wrap.
 - [x] `loc_CD13` — eight-byte sprite-template copy to OAM `$C0-$C7`.
 - [x] `loc_D0A6` — indexed object-field store and scratch-A return.
-- [x] `loc_D197` — PPU scroll-register write effect.
+- [x] `loc_D197` — explicit PPU scroll-register write effect.
 - [x] `loc_EC47` — fixed four-byte sprite write.
-- [x] `loc_CA85` — clear `$0021-$00FF`, preserve `$0042`, and increment the reset `$0049`.
-- [x] `sub_C339` — vblank polling and `ram_for_2000 | $80` write, represented with a finite status trace.
-- [x] `sub_D19B` — PPU-status bit-6 polling and `ram_for_2000 & $F0` write, represented with a finite status trace.
+- [x] `loc_CA85` — RAM clear over `$0021-$00FF`, preserving `$0042` and incrementing `$0049` after reset.
+- [x] `sub_C339` — vblank polling represented with a finite status trace.
+- [x] `sub_D19B` — PPU-status bit-6 polling represented with a finite status trace.
 - [x] `sub_D347` — controller strobe writes and two decoded controller sample streams.
-- [x] `loc_C4FC` — branch-specific 8-bit arithmetic and repeated shift loop.
-- [x] `sub_C92C` — table-index setup and the `sub_C53E/sub_CB06/sub_CB13` selection path.
-- [x] `sub_C935` — decimal conversion through the `sub_DF7F/sub_DFA2` path and seven-byte buffer copy.
-- [x] `sub_ECC9` — four-byte sprite-table check and mismatch result.
+- [x] `loc_C4FC` — branch-specific 8-bit arithmetic and shift loop.
+- [x] `sub_C92C` — table-index setup and selection path through `sub_C53E/sub_CB06/sub_CB13`.
+- [x] `sub_C935` — decimal conversion path and seven-byte buffer copy.
+- [x] `sub_ECC9` — four-byte sprite-table comparison.
 - [x] `bra_C411` — sprite-X store, attribute clear, and `ram_0046` clear.
 - [x] `loc_C3EF` — sprite-Y store.
-- [x] `sub_C409` — table-indexed sprite-X plus fixed tile/attribute/flag writes.
+- [x] `sub_C409` — table-indexed sprite-X and fixed tile/attribute/flag writes.
 
-A regression group for the batch is wired into the native test runner. **Execution remains pending** because the repository could not be cloned in this environment; passing tests/builds are not claimed. Next: run the native test target, correct any mismatches, then run the 3DS build and compare all boundary cases against the disassembly.
+Next steps for this batch:
+
+- [ ] Run the dedicated host regression group; record the command/workflow, result, and commit.
+- [ ] Fix any discrepancies against the original ASM and extend tests for uncovered branches/boundaries.
+- [ ] Run the Nintendo 3DS build on the same revision and verify `.3dsx` and `.elf` artifacts.
+- [ ] Review PPU/controller polling abstractions to ensure their modeled behavior and timing assumptions are explicit.
+- [ ] Trace callers/dependencies and integrate only after validation.
+- [ ] Compare relevant behavior with the NES reference before marking fidelity verified.
+
+## Per-routine completion checklist
+
+For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.md` or `REFERENCE_MAPPING.md`:
+
+- [ ] ASM source label, CPU address, and ROM offset where known.
+- [ ] Exact entry point and translated instruction/block range.
+- [ ] Inputs and outputs, including A/X/Y, carry/negative/zero flags, stack, and scratch state where relevant.
+- [ ] RAM reads/writes, aliases, table bytes, indexed bounds, and side effects.
+- [ ] NES hardware effects and the chosen 3DS representation.
+- [ ] Explicitly labelled hypotheses and unresolved dependencies.
+- [ ] Tests for every branch and relevant boundary; independent reference comparison where practical.
+- [ ] Host tests executed and passing.
+- [ ] 3DS build passed on the same code revision.
+- [ ] Gameplay integration verified through real callers/update order.
+- [ ] Fidelity evidence recorded against the original NES behavior.
+
+## Project-wide invariants
+
+- Preserve the original disassembly and assets; do not modify original NES source files as part of porting.
+- Use consistent technical English for source comments, identifiers, and documentation.
+- Do not describe a state model or partial block translation as a complete routine.
+- Do not treat a function count or matching label name as a measure of game completion.
+- Keep hypotheses explicitly marked until verified from instructions, tables, callers, or repeatable tests.
+- Prefer completing the original game's features before optimization.
+- Keep optional 3DS enhancements isolated from the faithful baseline.
