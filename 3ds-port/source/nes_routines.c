@@ -669,6 +669,19 @@ void nesSubE359UpdateTemperatureMeter(uint8_t finished,uint8_t ram005C,uint8_t r
         }
     }
 }
+uint8_t nesSubE2AFUpdateFinishCountdown(uint8_t delta,uint8_t finished,uint8_t frameTimer,
+    uint8_t *low03BD,uint8_t *high03BE,uint8_t *blink03BB,
+    const uint8_t tblD8E5[2],NesPreparedSpriteCommand *out){
+    uint8_t oldLow;
+    if(low03BD==NULL||high03BE==NULL||blink03BB==NULL||tblD8E5==NULL||out==NULL)return 0u;
+    oldLow=*low03BD;*low03BD=(uint8_t)(oldLow-delta);
+    if(oldLow<delta)*high03BE=(uint8_t)(*high03BE-1u);
+    if(finished!=0u){if(finished!=1u)return 0u;if(frameTimer==0u)*blink03BB=(uint8_t)(*blink03BB^1u);}
+    if(*high03BE!=1u)return 2u;
+    out->scratch0=*low03BD;out->scratch1=0x50u;out->scratch2=tblD8E5[*blink03BB&1u];
+    out->scratch3=0x32u;out->scratch4=0xC0u;out->scratchB=0u;out->transformY=0u;
+    return 1u;
+}
 void nesSubE2AFDecrementCountdown(uint8_t *lo,uint8_t *hi,uint8_t delta){uint8_t old=*lo;*lo=(uint8_t)(old-delta);if(old<delta)*hi=(uint8_t)(*hi-1u);}
 /* loc_E2BD: toggle only when finish flag is exactly 1 and timer is zero. */
 void nesLocE2BDUpdateFinishBlink(uint8_t finished,uint8_t timer,uint8_t *blink){if(finished==1u&&timer==0u)*blink=(uint8_t)(*blink^1u);}
