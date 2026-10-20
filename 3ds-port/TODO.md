@@ -165,4 +165,4 @@ Do not start until Phase 2's source-analysis gate is complete. This phase uses a
 
 - [x] Add or complete `sub_E4C8`/`sub_E52C`, `sub_E456`, `sub_E26A`, `sub_E359`, `sub_E2F6`, `sub_EA44`, the `$E2AF` countdown path, and `sub_E1A3` command setup.
 - [x] Replace the partial `sub_E1F9` approximation with its full branch-level logic and correct the literal `$E4AD` loop to its three writes at Y=`$00/$04/$08`.
-- [x] Host regressions pass for the current source/test revision; the 3DS build succeeded for the same source content. The latest post-test-only build workflow may still be finishing.
+- [x] Host regression run `39506455129` and Nintendo 3DS build run `39506455082` both passed at code/test revision `b0d89905`; subsequent commits in this section change documentation only.
