@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "nes_routines.h"
+#include "nes_routines.h"\n\nstatic int testSubDA58(void);\nstatic int testSubE091(void);\nstatic int testSubE098(void);
 
 /* Independent instruction-by-instruction 6502 reference for sub_DA15. */
 static uint8_t referenceSubDA15(uint8_t ram0390, uint8_t ram0080, uint8_t ramY)
@@ -708,5 +708,72 @@ static int testLocDCC7(void)
         }
     }
     printf("PASS: loc_DCC7 matched %lu timer/target/value cases.\n", checked);
+    return 0;
+}
+
+
+/* Independent arithmetic reference for sub_DA58. */
+static int testSubDA58(void)
+{
+    unsigned int x, fraction, velocity, carryByte;
+    unsigned long checked = 0u;
+    for (x = 0; x < 4u; ++x) {
+        for (fraction = 0; fraction < 256u; ++fraction) {
+            for (velocity = 0; velocity < 256u; ++velocity) {
+                for (carryByte = 0; carryByte < 256u; ++carryByte) {
+                    uint8_t r94[4] = {0x11u,0x22u,0x33u,0x44u};
+                    uint8_t r60[4] = {0x55u,0x66u,0x77u,0x88u};
+                    uint8_t r90[4] = {0u,0u,0u,0u};
+                    uint8_t r394[4] = {0u,0u,0u,0u};
+                    uint8_t expected60, expected394;
+                    unsigned int sum;
+                    r94[x] = (uint8_t)carryByte;
+                    r90[x] = (uint8_t)velocity;
+                    r394[x] = (uint8_t)fraction;
+                    sum = velocity + fraction;
+                    expected60 = (uint8_t)(carryByte + (sum > 0xFFu ? 1u : 0u));
+                    expected394 = (uint8_t)sum;
+                    nesSubDA58UpdateObjectFraction((uint8_t)x, r94, r60, r90, r394);
+                    if (r60[x] != expected60 || r394[x] != expected394) {
+                        fprintf(stderr, "sub_DA58 mismatch: x=%u fraction=%u velocity=%u base=%u\n",
+                                x, fraction, velocity, carryByte);
+                        return 1;
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: sub_DA58 matched byte/carry reference for %lu cases.\n", checked);
+    return 0;
+}
+
+static int testSubE091(void)
+{
+    unsigned int value;
+    for (value = 0; value < 256u; ++value) {
+        uint8_t expected = (uint8_t)value;
+        if (value < 0xE7u) expected = (uint8_t)(value + 0x0Cu);
+        if (nesSubE091AdjustValue((uint8_t)value) != expected) {
+            fprintf(stderr, "sub_E091 mismatch: value=%02X\n", value);
+            return 1;
+        }
+    }
+    puts("PASS: sub_E091 matched all 256 CMP/ADC input values.");
+    return 0;
+}
+
+static int testSubE098(void)
+{
+    unsigned int value;
+    for (value = 0; value < 256u; ++value) {
+        uint8_t expected = (uint8_t)value;
+        if (value < 0xE7u) expected = (uint8_t)(value + 0x02u);
+        if (nesSubE098AdjustValue((uint8_t)value) != expected) {
+            fprintf(stderr, "sub_E098 mismatch: value=%02X\n", value);
+            return 1;
+        }
+    }
+    puts("PASS: sub_E098 matched all 256 CMP/ADC input values.");
     return 0;
 }
