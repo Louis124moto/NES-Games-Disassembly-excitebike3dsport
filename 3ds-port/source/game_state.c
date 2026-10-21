@@ -28,4 +28,5 @@ void gameStateReset(GameState *state)
     state->menu_ram0044 = 0u;
     state->menu_ram004A = 0u;
     state->menu_ram03F7 = 0u;
+    state->menu_sprite_y = 0x48u; /* tbl_C08B_spr_Y[1] */
 }
