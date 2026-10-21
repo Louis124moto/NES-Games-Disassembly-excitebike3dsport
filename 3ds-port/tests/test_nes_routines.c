@@ -803,9 +803,24 @@ static int testSubD310MenuTimers(void)
     return 0;
 }
 
+static int testState13Completion(void)
+{
+    uint8_t source[256], destination[256], state;
+    unsigned int i;
+    for (i = 0u; i < 256u; ++i) { source[i] = (uint8_t)(i ^ 0xA5u); destination[i] = 0u; }
+    nesSubEC3BCopy256(source, destination);
+    if (memcmp(source, destination, sizeof(source)) != 0) return 1;
+    state = 13u; nesLocCC6BUpdateMenuState(&state, 0u); if (state != 8u) return 2;
+    state = 8u; nesLocCC6BUpdateMenuState(&state, 1u); if (state != 9u) return 3;
+    state = 0xFFu; nesLocCC6BUpdateMenuState(&state, 1u); if (state != 0u) return 4;
+    puts("PASS: state-13 sub_EC3B copy and loc_CC6B clamp/wrap paths.");
+    return 0;
+}
+
 int main(void)
 {
-    if (testSubD310MenuTimers() != 0) { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
+    if (testState13Completion() != 0) { fputs("FAIL: state-13 completion\n", stderr); return 1; }
+    if (testSubD310MenuTimers() != 0 { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
