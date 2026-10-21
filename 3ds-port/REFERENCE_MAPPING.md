@@ -523,4 +523,9 @@ The native helper `nesSubC3BDConfirmSelection` models the code after `sub_C7DE` 
 - selection equal to 2: increment `ram_0041`;
 - selection equal to 5: shift selection right once (5 becomes 2) and signal the RAM-clear path;
 - other selections above 2: set `ram_0041 = selection + 9` and clear `ram_0042`.
-This is now connected to the native state-8 menu trace. The following states are not yet implemented, and option names/art are intentionally not guessed. Host tests for each branch are wired but not yet confirmed passing.
+This is connected to the native state-8 trace. The choice-5 path now models the clear of CPU RAM $0021–$00FF (for the menu-visible fields), the incremented repeat guard, preserved selection 2, and state 0. The timer-zero branch from `ofs_000_C346_00` then models its writes to the tracked fields and transition to state 2. This still does not implement the destination-state routines or original title graphics. Option names/art remain intentionally unguessed. Host tests are wired but not yet confirmed passing.
+
+
+### CHR extraction tool update — 2026-10-21
+
+`tools/nes_chr_to_ppm.py` now writes a PNG atlas (nearest-neighbour scale), optional JSON per-tile pixel metadata, optional individual 8×8 PNG files, and optional palette application from a 16-byte background or 32-byte PPU palette dump. It supports iNES/NES 2.0 CHR-ROM and explicit verified raw ranges. The Excitebike source may use CHR-RAM and encoded graphics in PRG, so the tool deliberately refuses to guess or auto-decompress unknown streams. The added Python smoke tests and all C tests/builds still require execution evidence.
