@@ -626,10 +626,9 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 
 ### Hardware feedback — atlas color and third-page corruption — 2026-10-21
 
-- [ ] User confirms `chr_atlas.png` tile shapes are correct but wants colors. The current atlas is explicitly a grayscale visualization of 2bpp pixel indices; a single CHR tile does not encode its final NES colors. Implement a clearly labeled palette-preview mode only after mapping tiles to source-verified nametable attributes/palette context; do not assign arbitrary colors and claim fidelity.
-- [ ] User reports the third atlas page appears as pixel noise on physical New Nintendo 3DS. Inspection found a likely framebuffer tile-addressing error in `renderer.c`: the top-screen offset inverted the tile-row coordinate a second time after converting physical X to framebuffer Y. Corrected the address calculation in commit `908e43e8757d02a7973c7a8668308101fec57a10` by using `fbY >> 3` directly.
-- [ ] Rebuild the 3DSX and test pages 1, 2, and 3 on physical New 3DS. This is a source-level fix hypothesis, **not yet hardware-verified**. Check image orientation, tile boundaries, all 960 tiles, and navigation wraparound.
-- [ ] If pixels remain corrupted, inspect framebuffer pixel format/channel order and the 3DS tiled framebuffer layout against libctru's documented layout; do not mask the issue with a generated preview.
+- [x] User confirmed the CHR tile shapes in `chr_atlas.png` were correct but colors were missing. Source-palette color variants were added in the follow-up section below; a standalone CHR tile still has no unique palette assignment.
+- [x] User reported pixel corruption on physical New Nintendo 3DS. The initial tile-row tweak (`908e43e8757d02a7973c7a8668308101fec57a10`) did not resolve it. Inspection of libctru's existing framebuffer implementation identified the actual issue: the renderer incorrectly assumed 8x8-tiled storage. Commit `bd0f3b7a327f231d720e309ca9dfb13eaafaf1ce` replaces it with linear sideways addressing and BGR byte order; rebuild and hardware validation remain pending.
+- [ ] Rebuild the 3DSX and test pages 1, 2, and 3 on physical New 3DS. The corrected addressing is **not yet hardware-verified**. Check image orientation, tile boundaries, all 960 tiles, and navigation wraparound.
 
 
 ### Follow-up after physical-console report — colored atlas and persistent pixel corruption — 2026-10-21
