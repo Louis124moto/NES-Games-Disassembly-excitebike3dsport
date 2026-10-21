@@ -25,9 +25,13 @@ See [TODO.md](TODO.md) for the staged roadmap and [REFERENCE_MAPPING.md](REFEREN
 
 The NES source is 6502 assembly and relies on NES-specific hardware. It cannot be linked directly into a native ARM11/libctru executable. The port will translate verified gameplay logic and data into native modules, then compare behaviour against the original. Any subsystem remains marked incomplete until validated.
 
-## Menu port status (2026-10-21)
+## Menu port status (updated 2026-10-21)
 
-The partial native menu trace is no longer executed by the homebrew. Setup-command effects are partially translated for states 0, 1, 4, 6, 8, and 13; state 7 blocks at its unported `sub_C621` dependency. Transition lists 3, 5, 9, 10, 11, and 12 and the complete race-start path still need source-faithful implementations. State 13 uses the exact shared two-command setup from state 8; its entry wait (`ram_0048=2`, `ram_0044=1`) is translated and tested, but the later `ram_0048==$FF` branch through `sub_EC3B`/`loc_CC6B` is not ported. The app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
+**The menu is not finished yet.** The active runtime remains diagnostic-only: it does not pretend that partial ASM translations are a working menu. Current source-derived work includes the `sub_C2A9` dispatcher trace, the state-2 command-list trace, isolated state-selection helpers (`C455`, `C55E`, `C56A`), table lookup helpers (`C522`, `C53A`, `C5A7`), and a new native translation of `ofs_001_C485_03_05` with branch/arithmetic regression vectors. The latest C485 vectors have been added to the host test suite; their CI result must be checked before calling the translation tested.
+
+The next gate is to finish the **entire interactive menu flow** before starting course implementation: integrate every required setup/transition command in source pointer-table order; preserve timer gates and byte-level state changes; implement the menu's input/confirmation paths; reconstruct title/menu graphics from verified CHR tiles, nametables, attributes, palettes, OAM and timing; then verify the full flow against the original NES version. State 3 and several other transition states remain incomplete, including dependencies such as `sub_C621`, and the state-2 race-start path still has unported data-buffer and track-preparation dependencies. Isolated helpers do not count as a complete menu.
+
+**After the menu passes its end-to-end gate, work on Course 1 only.** Finish the first course's track data, player controls/physics, opponents, collisions, overheating, race start/finish and scoring as one verifiable slice. Do not start courses 2+ until Course 1 is validated against the original. See [TODO.md](TODO.md) for the detailed acceptance gates and decisions still needed.
 
 ### Extract graphics and prepare the native diagnostic atlas
 
