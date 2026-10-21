@@ -52,6 +52,7 @@ int main(void)
     }
     if (!fileStartsWith("test_asset_export_output/chr_atlas.png", pngMagic, sizeof(pngMagic))) return 2;
     if (!pngHasDimensions("test_asset_export_output/chr_atlas.png", 256u, 240u)) return 18;
+    if (!pngHasDimensions("test_asset_export_output/chr_atlas_palette_12_subpalette_0.png", 256u, 240u)) return 20;
     if (!fileStartsWith("test_asset_export_output/ppu_preview_01.png", pngMagic, sizeof(pngMagic))) return 14;
     if (!pngHasDimensions("test_asset_export_output/ppu_preview_01.png", 256u, 240u)) return 19;
     file = fopen("test_asset_export_output/chr_raw.bin", "rb");
@@ -113,10 +114,12 @@ int main(void)
             strstr(manifest, "PPU command streams:") == NULL ||
             strstr(manifest, "chr_atlas.png") == NULL ||
             strstr(manifest, "chr_pixels.ebp") == NULL ||
+            strstr(manifest, "Color variants: chr_atlas_palette_12..18_subpalette_0..3.png") == NULL ||
             strstr(manifest, "Color previews: ppu_preview_01..18.png") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
     (void)unlink("test_asset_export_output/chr_atlas.png");
+    for (i = 12u; i <= 18u; ++i) { unsigned int sub; for (sub = 0u; sub < 4u; ++sub) { char path[160]; (void)snprintf(path, sizeof(path), "test_asset_export_output/chr_atlas_palette_%lu_subpalette_%u.png", (unsigned long)i, sub); (void)unlink(path); } }
     (void)unlink("test_asset_export_output/chr_raw.bin");
     (void)unlink("test_asset_export_output/chr_pixels.bin");
     (void)unlink("test_asset_export_output/chr_pixels.ebp");
