@@ -356,6 +356,10 @@ void nesSubC522SelectOptionTuple(uint8_t ram0043, uint8_t ram0046,
                                 const uint8_t cpuTable[256],
                                 uint8_t *ram0005, uint8_t *ram0006,
                                 uint8_t *ram0007);
+void nesSubC53AReadMenuTuple(uint8_t ram0043, uint8_t ram0046,
+                              uint8_t ram03F2, const uint8_t cpuRam[2048],
+                              uint8_t *ram0002, uint8_t *ram0005,
+                              uint8_t *ram0006, uint8_t *ram0007);
 void nesSubC5A7SelectMenuTableEntry(uint8_t ram0043, uint8_t ram0046,
                                   uint8_t ram03F2, const uint8_t cpuRam[2048],
                                   uint8_t *ram0002, uint8_t *ram0003,
