@@ -352,7 +352,8 @@ void nesSubD347ReadControllers(const uint8_t samples0[8], const uint8_t samples1
 uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A, uint8_t *ram0053);
 uint8_t nesSubECC9CheckSpriteBytes(uint8_t y, const uint8_t ram0540[256], const uint8_t ram0480[256], const uint8_t ram0400[256], const uint8_t ram04C0[256]);
 
-void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram03F2,
+void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
+                                uint8_t ram03F2,
                                 const uint8_t cpuRam[2048], uint8_t *ram0002,
                                 uint8_t *ram0003, uint8_t *ram0005,
                                 uint8_t *ram0006, uint8_t *ram0007);
