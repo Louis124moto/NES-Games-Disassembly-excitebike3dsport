@@ -52,7 +52,7 @@ static void rendererDrawChrAtlas(void)
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     if (tileCount > 960u) tileCount = 960u;
-    bank = assetExtractorGetPalette() % 5u;
+    bank = assetExtractorGetPalette() % 10u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
         const unsigned int tileX = (tile % 50u) * 8u;
@@ -61,7 +61,7 @@ static void rendererDrawChrAtlas(void)
             for (col = 0u; col < 8u; ++col) {
                 const unsigned int x = tileX + col, y = tileY + row;
                 const uint8_t pixel = pixels[tile * 64u + row * 8u + col] & 3u;
-                const uint8_t nesIndex = s_gamePaletteSets[bank][tile % 2u][pixel] & 0x3Fu;
+                const uint8_t nesIndex = s_gamePaletteSets[bank / 2u][bank % 2u][pixel] & 0x3Fu;
                 const uint8_t *rgb = s_nesMasterPalette[nesIndex];
                 const size_t offset = framebufferOffset(x, y, height);
                 framebuffer[offset + 0u] = rgb[2];
