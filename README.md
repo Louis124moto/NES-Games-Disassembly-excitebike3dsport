@@ -33,6 +33,10 @@ Counts below deliberately distinguish inventory, implementation, test execution,
 
 A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
+## Runtime integration update — 2026-10-21
+
+The diagnostic screen remains the cold-start view. Pressing START now resets the native menu model and routes subsequent frames through `menusUpdate()`; the CHR atlas is suppressed in menu mode. The menu-related C modules are included in the 3DSX target. This is an integration milestone only: the current `menusRender()` still emits a textual ASM-state trace and does **not** draw the original NES title screen. Menu state transitions, setup command lists, PPU data reconstruction, and fidelity validation remain incomplete; B currently returns to diagnostics as an explicit escape hatch.
+
 ## Current menu/graphics work
 
 The native menu currently translates input/state behavior for ASM states 0, 1, and 8, including `sub_C7DE`, `sub_C3AF/sub_C3B1`, the state-8 choice branches, choice-5 RAM clearing, cursor-table coordinates, and timer projection. The setup sequencer is still only partially ported: states 0/1/8 have source-derived command lists, but state 2 and destination states 9/10/12 do not have complete setup lists. State 13 shares the verified state-8 setup and its entry wait is translated; the later `$FF` branch still depends on unported `sub_EC3B`/`loc_CC6B`. Therefore the title-to-selector input trace is **not a finished menu port**, and state 2 deliberately does not launch placeholder gameplay. Option names and authentic title-screen layout are not inferred from numeric selection indices.
