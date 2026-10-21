@@ -36,7 +36,7 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Extract and display raw CHR/pattern data from iNES/NES 2.0 CHR-ROM or a standalone raw CHR file; report CHR-RAM as requiring runtime PPU capture. The atlas is currently limited to 960 decoded tiles.
 - [ ] Trace active palette selection and all live-state write paths; seven source-defined palette command streams are now replayed with `sub_D3C1` semantics and exported, but their active assignment for each game state is not yet proven.
 - [x] Replay and export 18 source PPU command streams from `tbl_C0F6` indices 1–17 plus index 25 (D631), with nametable snapshots, palette snapshots, and per-byte write masks.
-- [x] Export one 256x240 RGB PNG preview per replayed source PPU snapshot using the native CHR/nametable/attribute/palette compositor; hatch tiles with missing or unverified inputs. Host regression coverage checks the PNG signature and manifest entry.
+- [x] Export one 256x240 RGB PNG preview per replayed source PPU snapshot using the native CHR/nametable/attribute/palette compositor; hatch tiles with missing or unverified inputs. Regression tests check PNG signature, dimensions, and manifest entry; current revision still needs execution.
 - [x] Add a self-describing `chr_pixels.ebp` EBPX v1 tile pack: 16-byte little-endian header plus 64 one-byte 2bpp pixel indices per tile; keep `chr_pixels.bin` unchanged for compatibility and add header/payload regression assertions.
 - [ ] Trace which source command stream is selected by each active game state; determine from the full ASM whether any compressed/generated PRG graphics exist beyond the verified static PPU lists. The checked-in source header confirms mapper 0, 16 KiB PRG, 8 KiB CHR-ROM for canonical Excitebike; the runtime does not yet identify arbitrary ROMs as Excitebike.
 - [ ] Validate the color PPU preview export on the host and on physical New Nintendo 3DS hardware, including PNG dimensions/palette correctness and output paths.
@@ -609,3 +609,16 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 - [ ] Verify the C renderer tests and 3DSX build on the exact revision.
 - [ ] Populate nametable/attributes/palette from the original ASM's actual PPU writes and enable the readiness flag only after that data is valid.
 - [ ] Add sprite/OAM, scrolling and bank-switch handling before claiming a faithful title screen.
+
+### Extractor follow-up — 2026-10-21 (implementation updated; validation pending)
+
+- [x] Add `extracted/chr_pixels.ebp`, EBPX v1 with a 16-byte little-endian header and 64 decoded pixel-index bytes per tile; preserve `chr_pixels.bin` compatibility.
+- [x] Export 18 color PNG previews by composing the source CHR with static source PPU nametable/attribute/palette snapshots; hatch data marked unknown by source write masks.
+- [x] Make preview rendering tolerate out-of-range tile IDs in incomplete snapshots by sanitizing only the temporary render input; preserve original snapshot bytes and hatch the corresponding output tiles.
+- [x] Extend host regression source to check EBPX header/payload and PNG signature/dimensions.
+- [x] Update root README, native-port README, and this TODO to distinguish static command-list previews from complete live frames.
+- [ ] Execute the updated host suite and 3DS build on the exact current revision; no result is claimed until a workflow reports it.
+- [ ] Test the updated `.3dsx` on a physical New Nintendo 3DS, including export paths, cache hit/miss, re-extraction, malformed input, and repeated navigation.
+- [ ] Continue source audit of active palette/stream selection, runtime ROM identity, dynamic PPU writes, OAM/sprites, scrolling, and generated/compressed graphics. Do not open Stage 2 until all Stage 1 gates are evidenced and accepted.
+
+**Latest implementation revision before this note:** `662ca49b6da9c43807fca4ed32f72a146b376088` (test additions; documentation commits may move HEAD). The GitHub-connected editing tools accepted the changes, but the host test suite and a 3DS build were not run from this environment. The prior CI evidence recorded above applies to older revision `9ffec940bf211957b229dae8f4f04ff00dc027fd` only and does not validate these changes. **Stage 1 remains NOT ACCEPTED; Stage 2 remains blocked.**
