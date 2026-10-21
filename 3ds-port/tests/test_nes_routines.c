@@ -2160,6 +2160,20 @@ static int testBatchAdditional20(void)
             if(ramCopy[0x05E0u+i]!=(uint8_t)(i^0xA5u))return 49;
         if(ramCopy[0x05DFu]!=0u||ramCopy[0x07E0u]!=0u)return 50;
     }
+    {
+        uint8_t state44=0u,state48=0u,fb=0x22u,state41=3u;
+        nesLocC43DHandleMenuState(&state44,&state48,&fb,&state41,0u);
+        if(state44!=1u||state48!=1u||fb!=0x22u||state41!=3u)return 51;
+        state44=1u; state48=0x22u; fb=0x11u; state41=5u;
+        nesLocC43DHandleMenuState(&state44,&state48,&fb,&state41,0u);
+        if(state44!=1u||state48!=0x22u||fb!=0x11u||state41!=5u)return 52;
+        state44=1u; state48=0xFFu; fb=0u; state41=8u;
+        nesLocC43DHandleMenuState(&state44,&state48,&fb,&state41,0u);
+        if(fb!=0x40u||state41!=8u)return 53; /* INC then clamp at 8. */
+        state41=8u; state48=0xFFu; fb=0u;
+        nesLocC43DHandleMenuState(&state44,&state48,&fb,&state41,1u);
+        if(fb!=0x40u||state41!=9u)return 54; /* $004B nonzero disables clamp. */
+    }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
     if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
