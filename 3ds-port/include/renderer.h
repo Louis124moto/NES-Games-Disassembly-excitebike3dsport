@@ -8,6 +8,7 @@ void rendererBeginFrame(void);
 void rendererDraw(const GameState *state);
 void rendererEndFrame(void);
 void rendererSetGameStarted(int started);
+void rendererSetMenuActive(int active);
 void rendererExit(void);
 
 #endif
