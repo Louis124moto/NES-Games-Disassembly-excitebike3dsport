@@ -197,7 +197,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Connect the verified state model to a pixel renderer and compare selection/confirmation timing against the NES reference.
 - [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
 
-**Current menu status:** one shared ASM input helper has been translated; the full title/main-menu state machine and authentic visual reconstruction are still incomplete. The new helper is not yet wired to a playable menu.
+**Current menu status:** CPU-side traces now cover states 0, 1, and 8, their shared input helper, cursor coordinate tables, key remapping, confirmation branches, RAM-clear helper, and tracked timer cadence. This is still not a full faithful port: original startup/PPU setup, audio behavior, and destination states 9/12/13 remain incomplete; tests are not yet executed.
 
 
 ## Main-menu implementation update — 2026-10-21
