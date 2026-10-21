@@ -495,3 +495,22 @@ Source: `Excitebike/bank_FF.asm`, CPU `$E96E-$E97D` (ROM offset `$00297E-$00298D
 - Otherwise `$E978-$E97D` performs `LDA ram_obj_pos_Y_lo,X; CLC; ADC ram_00DC_obj,X; STA ram_obj_pos_Y_lo,X`. This is unsigned 8-bit addition modulo 256 with carry intentionally discarded; the carry is not consumed by the next block because the next instructions overwrite flags.
 - C helper: `nesLocE96EApplyVerticalDelta`, using four-byte arrays for `$0058`, Y-low, and `$00DC`. Exhaustive host regression covers all 256³ combinations for one slot and verifies skip states and the other slots' byte-wrap behavior.
 - Not yet connected to `gameUpdate`: the full `sub_E96C` path also depends on `sub_DD06`, collision/state handling, the `$E53D` Y thresholds, and the final player input branch at `$EA07-$EA43`. Those dependencies must be translated and verified before integration.
+
+
+## Main-menu source trace — 2026-10-21
+
+### `sub_C7DE` (CPU `$C7DE`, ROM offset `$0007EE`)
+
+- Entry: A contains a selection bound (observed callers pass `$03`, `$05`, or `$06`); the routine reads `ram_btn_press` and `ram_0042`.
+- `ram_btn_press AND #$3C` determines whether Select/Start/Up/Down input is relevant. With no relevant bits, the routine clears `ram_0049` and returns with X=0.
+- A relevant input sets `ram_0031_timer=$5D`. A nonzero `ram_0049` suppresses another action for that call.
+- Select or Down increments Y; if Y reaches the bound, Y wraps to 1. Up decrements Y; if the result is negative, Y wraps to bound-1. Cursor movement sets `ram_00FF=1` in the original path.
+- If no Select/Down/Up branch applies, the helper sets X=4 and `ram_0030_timer=4` (the Start/confirm path). It then stores Y to `ram_0042` and increments `ram_0049`.
+- Native helper `nesSubC7DEMenuInput` models the cursor, repeat guard, timers, changed flag and X return. The unit tests are wired but execution has not yet been confirmed.
+
+### Menu-state dispatch observations
+
+- `tbl_C000` dispatches `ram_0041` through state-indexed routines, including `ofs_000_C346_00`, `ofs_000_C395_01`, `ofs_000_C3BD_08`, `ofs_000_C99A_02`, and `ofs_000_CB2C_03`.
+- `ofs_000_C395_01` filters `ram_btn_press`, calls `sub_C7DE` with bound 5, copies the current selection from `ram_0042` to `ram_0043` on an action, then advances `ram_0041`.
+- `ofs_000_C3BD_08` calls `sub_C7DE` with bound 6. Its selection branches include `ram_03F2` updates, state transitions, and a RAM clear path. The meanings of all displayed choices are not yet proven; do not label them based on guesswork.
+- The menu's exact text/art is not established by these control-flow routines alone. It requires tracing the associated PPU/nametable data, CHR tiles, palette/attribute writes and render timing. The native diagnostic renderer is not a faithful replacement.
