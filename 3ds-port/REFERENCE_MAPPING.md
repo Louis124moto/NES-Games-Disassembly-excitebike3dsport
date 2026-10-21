@@ -648,3 +648,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - `sub_CB13` returns `$20` immediately when `$0002 == 5`; otherwise its DEY/BPL loop adds `$03` once for each original Y unit. It ORs `$10` when `$0046 != 0`. Then `sub_CB06` adds `$23` when `$03F2 != 0`.
 - The previous native helper omitted `$0046` and used an incorrect loop count. Its signature and implementation now model the flag, special state, and offsets; regression vectors cover all three paths.
 - This fixes the table-index dependency only. `ofs_001_C485_03_05` still depends on comparisons, `sub_C522/sub_C53A`, and downstream branch effects; state 3 remains disabled until that complete dependency chain is translated and tested.
+
+
+## State-3 option tuple lookup — `sub_C522` (2026-10-21)
+
+- `sub_C522` copies `$0043` into scratch `$0002`, calls `sub_CB13`, and reads the three consecutive bytes at `tbl_C091,Y` into `$0005-$0007`.
+- `nesSubC522SelectOptionTuple` now mirrors the `sub_CB13` index rules, including the `$0043 == 5` special offset `$20` and the `$0046`-controlled `ORA #$10` path. Regression vectors cover both branches.
+- This is a verified helper, not completion of `ofs_001_C485_03_05`; its comparisons and later branches remain to be ported before state 3 can be enabled.
