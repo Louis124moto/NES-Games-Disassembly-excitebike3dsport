@@ -281,3 +281,27 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Replace CLI/debug cursor output with the original PPU/CHR-backed screen layout only after nametable, palette, attribute, sprite, and timing paths are verified against the ASM.
 
 **Fidelity rule:** the currently active homebrew runtime remains in diagnostic-only mode. A menu or gameplay screen must not be re-enabled just because its input/state trace exists; source-derived rendering and all required dependencies must be present first.
+
+## Source-trace continuation — `sub_E96C` vertical object-state update (2026-10-21)
+
+Source inspected directly in `Excitebike/bank_FF.asm`, CPU `$E96C-$EA43`, ROM offsets `$00297C-$002A55`. This trace narrows the next gameplay-core task; it is **not** a complete native translation.
+
+- The loop initializes X to 3 and decrements through 0, so all four object slots are visited in descending order.
+- At `$E96E-$E97D`, states `$14` and `$15` skip the initial Y update. Other states apply `Y = (Y + ram_00DC_obj[X]) mod 256`; the 6502 carry is discarded.
+- At `$E97F-$E989`, the updated Y is compared against four entries `tbl_E53D[3..0]`. An exact match clears `ram_00DC_obj[X]` and bypasses the rest of that slot's vertical-state logic.
+- Otherwise `ram_00A4_obj[X]` selects behavior. Zero bypasses the initial state-1 transition; value 1 can transition to 4 when Y is below `$20`. Depending on `ram_0058_obj[X]`, the code clears `ram_00BC_obj[X]`, calls `sub_DD06`, and decrements `ram_00A4_obj[X]`. Other values have additional state-specific handling.
+- The normal path clamps low Y values below `$08` through `bra_E9E9`, raises Y to `$07` when `ram_009C_obj[X]` is zero, and otherwise preserves Y unless it is below `$02`, in which case it becomes `$01`. Values from `$08` through `$39` continue; values `$3A` or above are clamped to `$39`.
+- At `$E9D2-$E9E1`, when both `ram_009C_obj[X]` and `ram_03E0_obj[X]` are zero, the vertical delta is toggled by the source's conditional `LDA #$FF` / `EOR #$FE` sequence. If the old delta is zero it becomes `$01`; otherwise the stored result is `old_delta XOR $FE`. Preserve this exact byte behavior rather than replacing it with a signed negation.
+- After all four slots, `$EA07-$EA43` checks the race-start flag and several shared state fields, then handles player-input-related state. The presence of this tail alone does **not** prove which object slot is the player.
+
+### Dependencies and next actions
+
+- [x] Record the exact loop bounds, threshold-table comparison, Y clamps, and byte-level delta update from the ASM.
+- [ ] Inspect the full `tbl_E53D` bytes and trace every writer/caller affecting the tested object arrays.
+- [ ] Inspect `sub_DD06` and document its complete register, flag, RAM, and call-order effects before translating this stateful path.
+- [ ] Resolve player-slot identity from initialization, direct/indirect RAM writers, controller input, and update callers; do not infer it from slot 0 or from this routine's tail.
+- [ ] Extend the existing `nesLocE96EApplyVerticalDelta` helper only when the surrounding state transitions and dependencies can be represented faithfully, then add branch/boundary tests against the ASM.
+- [ ] Keep this routine out of gameplay integration until the full path and dependencies have evidence-backed tests.
+
+The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first Y-delta block (`$E96E-$E97D`). Its exhaustive test does not establish equivalence for the rest of `sub_E96C`.
+
