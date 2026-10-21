@@ -3,14 +3,8 @@
 #include <3ds.h>
 #include "renderer.h"
 #include "asset_extractor.h"
-#include "nes_chr_assets.h"
 
-/*
- * libctru's top-screen framebuffer is BGR8 in rotated memory order.
- * This is a diagnostic tile atlas only, not the original NES menu layout.
- */
-static int s_runtimeAtlasWasShown;
-
+/* Diagnostic CHR atlas only; no placeholder game/menu is rendered. */
 static void rendererDrawChrAtlas(void)
 {
     static const uint8_t shades[4] = {0u, 85u, 170u, 255u};
@@ -20,28 +14,12 @@ static void rendererDrawChrAtlas(void)
     size_t tileCount = 0u;
     unsigned int tile, row, col;
 
-    if (assetExtractorIsActive()) {
-        pixels = assetExtractorGetPixels(&tileCount);
-    } else {
-#if NES_CHR_TILE_COUNT > 0
-        pixels = &nesChrPixels[0][0];
-        tileCount = NES_CHR_TILE_COUNT;
-#endif
-    }
-
+    if (!assetExtractorIsActive()) return;
+    pixels = assetExtractorGetPixels(&tileCount);
     framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width < 240u || height < 400u) return;
-    if (assetExtractorIsActive() && (pixels == NULL || tileCount == 0u)) {
-        memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-        s_runtimeAtlasWasShown = 0;
-        return;
-    }
-    if (!assetExtractorIsActive() && s_runtimeAtlasWasShown) {
-        memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-        s_runtimeAtlasWasShown = 0;
-    }
+    memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     if (pixels == NULL || tileCount == 0u) return;
-    if (assetExtractorIsActive()) s_runtimeAtlasWasShown = 1;
     if (tileCount > 960u) tileCount = 960u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
@@ -75,18 +53,13 @@ void rendererBeginFrame(void)
 
 void rendererDraw(const GameState *state)
 {
-    if (assetExtractorIsActive()) {
-        printf("BUILT-IN NES CHR EXTRACTOR\n");
-        printf("==========================\n");
-        printf("%s\n", assetExtractorGetStatus());
-        printf("ROM path: sdmc:/3ds/excitebike3ds/rom.nes\n");
-        printf("Y: close/return   X: reload   B: close\n");
-        printf("Displays raw CHR tiles, not the original menu layout.\n");
-        return;
-    }
     (void)state;
-    printf("EXCITEBIKE 3DS - FAITHFUL PORT WORKSPACE\n");
-    printf("========================================\n");
+    if (!assetExtractorIsActive()) return;
+    printf("DIAGNOSTIC CHR VIEWER (not gameplay)\n");
+    printf("%s\n", assetExtractorGetStatus());
+    printf("ROM: sdmc:/3ds/excitebike3ds/rom.nes\n");
+    printf("Y: close/return   X: reload   B: close\n");
+    printf("Raw CHR patterns only; no NES screen layout is emulated.\n");
 }
 
 void rendererEndFrame(void)
