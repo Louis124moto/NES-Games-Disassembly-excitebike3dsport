@@ -774,8 +774,29 @@ static int testBatchAdditional20Boundaries(void)
     return 0;
 }
 
+static int testSubD310MenuTimers(void)
+{
+    uint8_t frame=0u, timer30=4u, timer31=0x38u;
+    unsigned int i;
+    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
+    if(frame!=0x0Au || timer30!=3u || timer31!=0x37u) {
+        fputs("sub_D310 menu timer initial tick mismatch\n",stderr); return 1;
+    }
+    for(i=0u;i<10u;++i) nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
+    if(timer30!=3u || timer31!=0x37u) {
+        fputs("sub_D310 menu timer divider mismatch\n",stderr); return 2;
+    }
+    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
+    if(timer30!=2u || timer31!=0x36u) {
+        fputs("sub_D310 menu timer rollover mismatch\n",stderr); return 3;
+    }
+    puts("PASS: sub_D310 timer projection for menu $0030/$0031.");
+    return 0;
+}
+
 int main(void)
 {
+    if (testSubD310MenuTimers() != 0) { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
