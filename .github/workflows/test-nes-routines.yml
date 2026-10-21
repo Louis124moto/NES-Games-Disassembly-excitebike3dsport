@@ -11,8 +11,6 @@ on:
       - "3ds-port/include/nes_chr_decode.h"
       - "3ds-port/source/nes_ppu_render.c"
       - "3ds-port/include/nes_ppu_render.h"
-      - "3ds-port/source/nes_ppu_render.c"
-      - "3ds-port/include/nes_ppu_render.h"
       - "3ds-port/tests/test_nes_chr_decode.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
@@ -20,8 +18,11 @@ on:
       - "3ds-port/source/nes_routines.c"
       - "3ds-port/include/nes_routines.h"
       - "3ds-port/tests/**"
+      - "3ds-port/tools/**"
       - "3ds-port/source/nes_chr_decode.c"
       - "3ds-port/include/nes_chr_decode.h"
+      - "3ds-port/source/nes_ppu_render.c"
+      - "3ds-port/include/nes_ppu_render.h"
       - ".github/workflows/test-nes-routines.yml"
   workflow_dispatch:
 
