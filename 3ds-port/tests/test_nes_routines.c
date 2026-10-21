@@ -2113,6 +2113,44 @@ static int testBatchAdditional20(void)
         nesSubC522SelectOptionTuple(0xFFu,0u,optionTable,&v5,&v6,&v7);
         if(v5!=optionTable[0]||v6!=optionTable[1]||v7!=optionTable[2])return 41;
     }
+    {
+        uint8_t ramMenu[65536], tblC091[258];
+        memset(ramMenu,0,sizeof(ramMenu));
+        memset(tblC091,0,sizeof(tblC091));
+        ramMenu[0x0041u]=8u;
+        ramMenu[0x0068u]=1u; ramMenu[0x0069u]=2u; ramMenu[0x006Au]=3u;
+        ramMenu[0x0580u]=1u; ramMenu[0x0581u]=2u; ramMenu[0x0582u]=3u;
+        nesSubC485UpdateMenuSelection(ramMenu,tblC091);
+        if(ramMenu[0x0053u]!=1u||ramMenu[0x0045u]!=0x18u||
+           ramMenu[0x0049u]!=1u||ramMenu[0x0040u]!=1u||ramMenu[0x0044u]!=0u)return 45;
+
+        /* A candidate tuple greater than $0068-$006A is replaced in $0580. */
+        memset(ramMenu,0,sizeof(ramMenu));
+        ramMenu[0x0041u]=8u;
+        ramMenu[0x0068u]=1u; ramMenu[0x0069u]=2u; ramMenu[0x006Au]=3u;
+        ramMenu[0x0580u]=2u; ramMenu[0x0581u]=0u; ramMenu[0x0582u]=0u;
+        nesSubC485UpdateMenuSelection(ramMenu,tblC091);
+        if(ramMenu[0x0053u]!=1u||ramMenu[0x0580u]!=1u||
+           ramMenu[0x0581u]!=2u||ramMenu[0x0582u]!=3u)return 46;
+
+        /* If the first tuple is lower, state < 8 compares the ROM tuple. */
+        memset(ramMenu,0,sizeof(ramMenu));
+        ramMenu[0x0041u]=0u;
+        ramMenu[0x0068u]=1u; ramMenu[0x0069u]=0u; ramMenu[0x006Au]=0u;
+        ramMenu[0x0580u]=0u; ramMenu[0x0581u]=0u; ramMenu[0x0582u]=0u;
+        tblC091[0]=2u;
+        nesSubC485UpdateMenuSelection(ramMenu,tblC091);
+        if(ramMenu[0x0053u]!=2u)return 47;
+
+        /* State >= 8 skips sub_C522; this exercises C4DC-C510 byte math. */
+        memset(ramMenu,0,sizeof(ramMenu));
+        ramMenu[0x0041u]=8u; ramMenu[0x03F8u]=1u;
+        ramMenu[0x0068u]=2u; ramMenu[0x0069u]=1u; ramMenu[0x006Au]=0u;
+        ramMenu[0x0580u]=1u; ramMenu[0x0581u]=0u; ramMenu[0x0582u]=0u;
+        nesSubC485UpdateMenuSelection(ramMenu,tblC091);
+        if(ramMenu[0x0053u]!=130u||ramMenu[0x0008u]!=60u||
+           ramMenu[0x0009u]!=2u)return 48;
+    }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
     if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
