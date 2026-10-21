@@ -288,10 +288,8 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
          * ram_0048 and 1 to ram_0044. The later ram_0048 == $FF branch
          * depends on sub_EC3B/loc_CC6B and remains explicitly unported.
          */
-        if (state->menu_ram0044 == 0u) {
-            state->menu_ram0048 = 2u;
-            state->menu_ram0044 = 1u;
-        }
+        (void)nesSubC41CState13Entry(&state->menu_ram0044,
+                                      &state->menu_ram0048);
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
     } else {
@@ -322,12 +320,13 @@ void menusRender(const GameState *state)
                (unsigned int)state->menu_ram0044);
         if (state->menu_asm_state != 0u &&
             state->menu_asm_state != 1u &&
-            state->menu_asm_state != 8u) {
+            state->menu_asm_state != 8u &&
+            state->menu_asm_state != 13u) {
             printf("Setup command list for state %u is not ported yet.\n",
                    (unsigned int)state->menu_asm_state);
         }
         if (state->show_help)
-            printf("Only setup command lists for states 0, 1 and 8 are reconstructed.\n");
+            printf("Setup command lists are reconstructed for states 0, 1, 8 and 13 only.\n");
         return;
     }
     if (state->menu_asm_state == 0u) {
