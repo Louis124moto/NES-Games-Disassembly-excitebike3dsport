@@ -42,6 +42,8 @@ static const uint8_t s_gamePaletteSets[5][2][4] = {
 };
 
 static PrintConsole s_bottomConsole;
+static char s_lastLog[512];
+static int s_logInitialized;
 
 static void rendererDrawChrAtlas(void)
 {
@@ -85,31 +87,43 @@ void rendererInit(void)
     consoleInit(GFX_TOP, NULL);
     consoleInit(GFX_BOTTOM, &s_bottomConsole);
     consoleSelect(&s_bottomConsole);
+    s_logInitialized = 0;
+    s_lastLog[0] = '\0';
 }
 
 void rendererBeginFrame(void)
 {
     consoleSelect(&s_bottomConsole);
-    consoleClear();
 }
 
 void rendererDraw(const GameState *state)
 {
+    char logText[512];
     size_t tileCount = 0u;
     (void)state;
     (void)assetExtractorGetPixels(&tileCount);
-    printf("EXCITEBIKE 3DS / ASSET LOG\n");
-    printf("------------------------------\n");
-    printf("CHR: %.42s\n", assetExtractorGetStatus());
-    printf("Tiles: %lu / 960\n", (unsigned long)tileCount);
-    printf("ROM: rom.nes beside 3DSX\n");
-    printf("Cache: extracted/chr_pixels.bin\n");
-    printf("Viewer: %s\n", assetExtractorIsActive() ? "OPEN" : "closed");
-    printf("L/R: NES palette %u/10\n", assetExtractorGetPalette() + 1u);
-    printf("Y: toggle atlas\n");
-    printf("X: retry extraction (atlas open)\n");
-    printf("B: close atlas\n");
-    printf("Raw CHR; palette mapping is preview.\n");
+    (void)snprintf(logText, sizeof(logText),
+        "EXCITEBIKE 3DS / ASSET LOG\n"
+        "------------------------------\n"
+        "CHR: %.36s\n"
+        "Tiles: %lu / 960\n"
+        "ROM: rom.nes beside 3DSX\n"
+        "Cache: extracted/chr_pixels.bin\n"
+        "Atlas: %s\n"
+        "L/R: palette %u/10\n"
+        "Y: toggle atlas\n"
+        "X: retry extraction\n"
+        "B: close atlas\n"
+        "CHR tiles are raw patterns.\n",
+        assetExtractorGetStatus(), (unsigned long)tileCount,
+        assetExtractorIsActive() ? "OPEN" : "closed",
+        assetExtractorGetPalette() + 1u);
+    if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
+        consoleClear();
+        fputs(logText, stdout);
+        (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
+        s_logInitialized = 1;
+    }
 }
 
 void rendererEndFrame(void)
