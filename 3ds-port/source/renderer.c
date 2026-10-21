@@ -3,6 +3,7 @@
 #include <3ds.h>
 #include "renderer.h"
 #include "asset_extractor.h"
+#include "menus.h"
 
 /*
  * gfxGetFramebuffer reports the top screen as 240x400 memory coordinates,
@@ -28,6 +29,7 @@ static PrintConsole s_bottomConsole;
 static char s_lastLog[512];
 static int s_logInitialized;
 static int s_gameStarted;
+static int s_menuActive;
 
 static void rendererDrawChrAtlas(void)
 {
@@ -41,7 +43,7 @@ static void rendererDrawChrAtlas(void)
     /* On libctru top-screen framebuffer dimensions are 240x400. */
     if (framebuffer == NULL || width != 240u || height != 400u) return;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-    if (!assetExtractorIsActive() || s_gameStarted) return;
+    if (!assetExtractorIsActive() || s_gameStarted || s_menuActive) return;
 
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
@@ -95,8 +97,14 @@ void rendererDraw(const GameState *state)
 {
     char logText[512];
     size_t tileCount = 0u;
-    (void)state;
     (void)assetExtractorGetPixels(&tileCount);
+    if (s_menuActive && state != NULL) {
+        consoleClear();
+        menusRender(state);
+        s_logInitialized = 0;
+        return;
+    }
+    (void)state;
     if (s_gameStarted) {
         (void)snprintf(logText, sizeof(logText),
             "EXCITEBIKE 3DS\n"
@@ -151,4 +159,10 @@ void rendererSetGameStarted(int started)
 void rendererExit(void)
 {
     gfxExit();
+}
+
+void rendererSetMenuActive(int active)
+{
+    s_menuActive = active != 0;
+    s_logInitialized = 0;
 }
