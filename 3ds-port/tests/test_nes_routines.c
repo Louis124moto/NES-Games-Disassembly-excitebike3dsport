@@ -702,10 +702,28 @@ static int testBatchAdditional20Boundaries(void)
     return 0;
 }
 
+static int testSubCFE3MaskFlags(void)
+{
+    unsigned int value;
+    for (value = 0u; value < 256u; ++value) {
+        uint8_t actual = (uint8_t)value;
+        uint8_t expected = (uint8_t)(value & 0xF0u);
+        nesSubCFE3MaskFlags(&actual);
+        if (actual != expected) {
+            fprintf(stderr, "sub_CFE3 mismatch: input=%02X actual=%02X expected=%02X\n",
+                    value, actual, expected);
+            return 1;
+        }
+    }
+    puts("PASS: sub_CFE3 preserves the upper nibble and clears the lower nibble for all 256 inputs.");
+    return 0;
+}
+
 int main(void)
 {
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\\n", stderr); return 1; }
     if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: additional 20 ASM comparison/flag boundaries\n", stderr); return 1; }
+    if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
     if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
