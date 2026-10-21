@@ -288,8 +288,13 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
          * ram_0048 and 1 to ram_0044. The later ram_0048 == $FF branch
          * depends on sub_EC3B/loc_CC6B and remains explicitly unported.
          */
-        (void)nesSubC41CState13Entry(&state->menu_ram0044,
-                                      &state->menu_ram0048);
+        if (nesSubC41CState13Entry(&state->menu_ram0044,
+                                   &state->menu_ram0048) != 0u) {
+            /* ofs_000_C41C_0D: copy $05E0 page to $06E0, set $00FB=$40, then loc_CC6B. */
+            nesSubEC3BCopy256(state->menu_ram05E0, state->menu_ram06E0);
+            state->menu_ram00FB = 0x40u;
+            nesLocCC6BUpdateMenuState(&state->menu_asm_state, state->menu_ram004B);
+        }
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
     } else {
@@ -353,7 +358,7 @@ void menusRender(const GameState *state)
     } else if (state->menu_asm_state == 13u) {
         printf("State 13 entry: ram_0048=%02X ram_0044=%02X\n",
                (unsigned int)state->menu_ram0048, (unsigned int)state->menu_ram0044);
-        printf("Waiting path is translated; ram_0048==$FF needs sub_EC3B/loc_CC6B.\n");
+        printf("State-13 entry wait and $FF completion branch are translated.\n");
     } else {
         printf("ASM destination state %u reached; its native path is not ported.\n",
                (unsigned int)state->menu_asm_state);
