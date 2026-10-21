@@ -16,7 +16,7 @@ static void rendererDrawChrAtlas(void)
         GFX_TOP, GFX_LEFT, &width, &height);
     unsigned int tile, row, col;
 
-    if (framebuffer == NULL || width < 400u || height < 240u) return;
+    if (framebuffer == NULL || width < 240u || height < 400u) return;
     for (tile = 0u; tile < NES_CHR_TILE_COUNT && tile < 960u; ++tile) {
         const unsigned int tileX = (tile % 32u) * 8u;
         const unsigned int tileY = (tile / 32u) * 8u;
