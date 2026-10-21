@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "asset_export.h"
+#include "nes_ppu_commands.h"
 
 #define STBIW_ASSERT(x) ((void)0)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -67,10 +68,11 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                      char *status, size_t statusCapacity)
 {
     char rawPath[512], pixelPath[512], pngPath[512], manifestPath[512];
-    char manifest[768];
+    char manifest[1024];
     struct stat st;
     FILE *file;
     int manifestLength;
+    size_t paletteIndex;
     if (status != NULL && statusCapacity > 0u) status[0] = '\0';
     if (directory == NULL || rawChr == NULL || rawChrBytes == 0u ||
         pixels == NULL || tileCount == 0u || tileCount > 960u) {
@@ -100,6 +102,30 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         if (status != NULL && statusCapacity > 0u)
             (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
         return 0;
+    }
+    for (paletteIndex = 0u; paletteIndex < NES_EXCITEBIKE_PALETTE_STREAM_COUNT; ++paletteIndex) {
+        char palettePath[512], maskPath[512], streamPath[512];
+        uint8_t palette[32], mask[32];
+        const uint8_t *stream;
+        const char *sourceLabel = NULL;
+        size_t streamSize = 0u, writes = 0u;
+        char fileName[48];
+        (void)snprintf(fileName, sizeof(fileName), "ppu_palette_%lu.bin", (unsigned long)(paletteIndex + 12u));
+        if (!makePath(palettePath, sizeof(palettePath), directory, fileName)) return 0;
+        (void)snprintf(fileName, sizeof(fileName), "ppu_palette_%lu_mask.bin", (unsigned long)(paletteIndex + 12u));
+        if (!makePath(maskPath, sizeof(maskPath), directory, fileName)) return 0;
+        (void)snprintf(fileName, sizeof(fileName), "ppu_palette_%lu_stream.bin", (unsigned long)(paletteIndex + 12u));
+        if (!makePath(streamPath, sizeof(streamPath), directory, fileName)) return 0;
+        stream = nesExcitebikePaletteStream(paletteIndex, &streamSize, &sourceLabel);
+        if (stream == NULL || nesExcitebikePaletteSnapshot(paletteIndex, palette, mask, &writes) != NES_PPU_COMMAND_OK ||
+            !writeBytes(palettePath, palette, sizeof(palette)) ||
+            !writeBytes(maskPath, mask, sizeof(mask)) || !writeBytes(streamPath, stream, streamSize)) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "Could not export source-derived palette command stream.");
+            return 0;
+        }
+        (void)sourceLabel;
+        (void)writes;
     }
     manifestLength = snprintf(manifest, sizeof(manifest),
         "Excitebike 3DS native CHR export\n"
