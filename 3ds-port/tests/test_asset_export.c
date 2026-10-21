@@ -49,6 +49,8 @@ int main(void)
             memcmp(actual, pixels, sizeof(pixels)) != 0) { fclose(file); return 6; }
     }
     fclose(file);
+    if (!fileStartsWith("test_asset_export_output/ppu_palette_12.bin", (const unsigned char *)"\x29\x27\x22\x30", 4u)) return 9;
+    if (!fileStartsWith("test_asset_export_output/ppu_palette_12_stream.bin", (const unsigned char *)"\x3F\x00\x08", 3u)) return 10;
     file = fopen("test_asset_export_output/manifest.txt", "rb");
     if (file == NULL) return 7;
     {
