@@ -2,6 +2,7 @@
 #define EXCITEBIKE_GAME_STATE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     int speed;
@@ -16,6 +17,14 @@ typedef struct {
     BikeState bike;
     bool paused;
     bool show_help;
+
+    /* Partial, source-derived menu input model for ASM state 8 / sub_C7DE. */
+    uint8_t menu_selection;
+    uint8_t menu_repeat_guard;
+    uint8_t menu_timer30;
+    uint8_t menu_timer31;
+    uint8_t menu_selection_changed;
+    uint8_t menu_action_x;
 } GameState;
 
 void gameStateReset(GameState *state);
