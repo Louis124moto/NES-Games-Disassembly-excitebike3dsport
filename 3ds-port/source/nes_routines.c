@@ -2232,3 +2232,16 @@ void nesSubC56ASetState04(uint8_t *ram0033, uint8_t *ram0045)
     *ram0033 = 0x04u;
     *ram0045 = 0x04u;
 }
+
+
+/* Exact entry ofs_001_C455_03_03 ($C455). CMP uses unsigned BCS:
+ * states >= $08 select $08; otherwise flag $0046 chooses $07 or preserves $0045. */
+void nesSubC455SelectState(uint8_t ram0041, uint8_t ram0046,
+                           uint8_t *ram0045)
+{
+    if (ram0041 >= 0x08u) {
+        *ram0045 = 0x08u;
+    } else if (ram0046 != 0u) {
+        *ram0045 = 0x07u;
+    }
+}
