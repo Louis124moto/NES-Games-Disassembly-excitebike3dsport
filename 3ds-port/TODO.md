@@ -28,7 +28,7 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
 | Latest batch host test execution | **Passed** in [CI run 39525039178](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039178) (revision `2fb6e14`). |
 | Latest batch 3DS build | **Passed** in [CI run 39525039042](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039042) (revision `2fb6e14`). |
-| Latest batch gameplay integration | Not demonstrated. |
+| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Finish the complete menu first; then implement and validate Course 1 only. Courses 2+ are explicitly deferred. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
@@ -59,6 +59,33 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [ ] Establish player-slot identity, initialization/reset behavior, and caller order before implementing stateful player behavior.
 - [ ] Reconcile `ASM_FUNCTION_INVENTORY.md` with actual C entry points, tests, CI evidence, and gameplay integration.
 - [ ] Record a confirmed baseline for the current branch's host tests and 3DS build.
+
+## Immediate priority — finish the complete menu, then Course 1 only
+
+**Execution order is mandatory:** do not begin the course implementation until the menu has passed its end-to-end acceptance gate. Do not implement courses 2+ in parallel with Course 1.
+
+### Menu completion gate
+
+- [ ] Finish and integrate `ofs_001_C485_03_05` and validate its newly added regression vectors in CI. Its C translation and tests are present; CI verification is still pending.
+- [ ] Finish the remaining state-3 dependencies and command path, including `sub_C485`, the correct table/ROM data reads, and any callers affected by its RAM side effects.
+- [ ] Implement all required setup lists and transitions from `tbl_C01C_index`, `tbl_C02A_lo`, `tbl_C033_hi`, and `tbl_C000` in the original order; preserve the `$0040` alternate dispatch path, `$0030` timer gate, `$0044` wrap behavior, and `$C318` cleanup.
+- [ ] Finish state handlers and input/confirmation behavior, including currently incomplete states and the `sub_C621` dependency; do not enable a state whose dependencies remain partial.
+- [ ] Complete the race-start boundary needed to leave the menu correctly, including the full `C820/C875` dependency chain, without silently treating track initialization as a menu-only routine.
+- [ ] Reconstruct the original title/menu output from verified CHR indices, nametable data, attributes, palettes, OAM/sprite ordering, scroll and frame timing. The grayscale CHR atlas is diagnostic only.
+- [ ] Verify menu input, timers, transitions, selection/confirmation, and exit-to-race behavior against the original NES game.
+- [ ] Mark the menu complete only after an end-to-end scenario is repeatable and the exact revision's host tests and 3DS build pass.
+
+### Course 1 gate — start only after the menu is complete
+
+- [ ] Trace and reproduce **Course 1 only**, using the original course-selection/start path and the original course data.
+- [ ] Implement the minimum full faithful race slice for Course 1: player controls and physics, course geometry/ramps, opponents, collisions/crashes, overheating/cooling, timers, finish detection and results/scoring, following the source's actual update order.
+- [ ] Compare Course 1 from race start through results with the original NES version; record remaining differences.
+- [ ] Do not implement or port courses 2+ until Course 1 passes its documented acceptance checks.
+
+### Decisions to confirm with the user
+
+- [ ] Confirm what counts as “Course 1 complete”: full original race through results (including all opponents and scoring), or an earlier player-on-track milestone before the full race.
+- [ ] Confirm whether menu acceptance must include the exact original title/menu graphics and transitions, or whether functional input/navigation may be validated first while graphics are completed before the menu is declared done. The fidelity baseline remains unchanged; this question only determines test order.
 
 ## Phase 3 — Player physics and faithful gameplay core
 
