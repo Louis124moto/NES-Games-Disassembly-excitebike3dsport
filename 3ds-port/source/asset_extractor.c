@@ -188,6 +188,7 @@ void assetExtractorInit(const char *executablePath)
     const char *slash = NULL;
     size_t directoryLength = 0u;
     size_t i;
+    int pathValid = 1;
 
     /* Keep rom.nes beside the launched .3dsx; never depend on a fixed folder. */
     if (executablePath != NULL) {
@@ -205,12 +206,13 @@ void assetExtractorInit(const char *executablePath)
         memcpy(s_cachePath + directoryLength, "extracted/chr_pixels.bin", sizeof("extracted/chr_pixels.bin"));
     } else {
         (void)snprintf(s_status, sizeof(s_status), "Executable path too long; place rom.nes beside the 3DSX.");
+        pathValid = 0;
     }
 
     s_active = 0;
     s_attempted = 0;
     s_tileCount = 0u;
-    setStatus("Press Y to load/extract CHR texture data.");
+    if (pathValid) setStatus("Press Y to load/extract CHR texture data.");
 }
 
 void assetExtractorUpdate(unsigned int pressedKeys)
