@@ -248,3 +248,14 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] `loc_CC6B` translated: increment `$0041`; if `$004B` is zero, clamp states at or above 9 to state 8; otherwise preserve the incremented byte, including 8-bit wrap.
 - [x] State-13 handler runs this path when `$0048==$FF`, writes `$40` to `$00FB`, and uses the modeled `$004B` value.
 - [ ] Overall menu-to-game path remains incomplete: state 2's six-command setup and destination handlers for states 9, 10, and 12 are not ported.
+
+
+## Runtime fidelity cleanup — 2026-10-21
+
+- [x] Disable the partial menu trace in the homebrew runtime; do not present numbered placeholder options as the original title menu.
+- [x] Disable generic bike physics, collision, track, and audio scaffolding from the active runtime; these modules are not yet a verified translation of Excitebike's ASM.
+- [x] Keep only the separately labelled diagnostic CHR viewer available from the runtime while the faithful baseline is incomplete.
+- [ ] Port and validate the complete ASM setup lists, destination handlers, PPU writes, authentic title assets/layout, gameplay loop, and sound before enabling any game screen.
+- [ ] Run host tests and the 3DS build on the exact cleanup commit; do not infer build success from historical runs.
+
+**Runtime behavior after cleanup:** without opening the diagnostic viewer, the application intentionally displays no invented menu or gameplay. This is a temporary fidelity safeguard, not a completed port.
