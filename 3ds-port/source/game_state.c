@@ -23,4 +23,9 @@ void gameStateReset(GameState *state)
     state->menu_timer31 = 0u;
     state->menu_selection_changed = 0u;
     state->menu_action_x = 0u;
+    state->menu_ram0040 = 0u;
+    state->menu_ram0043 = 0u;
+    state->menu_ram0044 = 0u;
+    state->menu_ram004A = 0u;
+    state->menu_ram03F7 = 0u;
 }
