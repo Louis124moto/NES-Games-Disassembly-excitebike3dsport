@@ -2217,3 +2217,18 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
     nesC046BuildPpuCommand(ram, 0x08u);
     return 0u;
 }
+
+
+/* Exact shared entry ofs_001_C55E_* ($C55E): LDA #$06; STA $0045; RTS. */
+void nesSubC55ESetState06(uint8_t *ram0045)
+{
+    *ram0045 = 0x06u;
+}
+
+/* Exact entry ofs_001_C56A_03_02 ($C56A): timer $0033 := $04,
+ * then shared bra_C56E stores A=$04 in $0045. */
+void nesSubC56ASetState04(uint8_t *ram0033, uint8_t *ram0045)
+{
+    *ram0033 = 0x04u;
+    *ram0045 = 0x04u;
+}
