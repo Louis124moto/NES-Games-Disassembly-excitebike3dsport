@@ -8,7 +8,7 @@
  * Source-derived subset of sub_C2A9's command sequencer. The command-list
  * prelude (sub_C318) runs once after reset/state changes; command index 0 is
  * then selected from the original tbl_C01C_index/tbl_C02A/tbl_C033 sequence.
- * Only the menu setup lists for states 0, 1, and 8 are translated here.
+ * Only the menu setup lists for states 0, 1, 8, and 13 are translated here.
  */
 static int menusRunSetupSequence(GameState *state)
 {
@@ -44,7 +44,7 @@ static int menusRunSetupSequence(GameState *state)
         if (state->menu_ram0044 > 2u) return 1;
     } else if (state->menu_asm_state == 1u) {
         if (state->menu_ram0044 > 3u) return 1;
-    } else if (state->menu_asm_state == 8u) {
+    } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
         if (state->menu_ram0044 > 2u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
@@ -104,7 +104,7 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 8u) {
+    } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
         if (commandIndex == 0u) {
             /* ofs_001_C582_08_01 */
             state->menu_ram0045 = 0x11u;
@@ -119,7 +119,7 @@ static int menusRunSetupSequence(GameState *state)
         }
     }
 
-    /* Other command lists (notably states 2, 9, 10, 12, and 13) are pending. */
+    /* Other command lists (notably states 2, 9, 10, and 12) are pending. */
     state->menu_action_x = 0u;
     state->menu_selection_changed = 0u;
     return 1;
