@@ -182,24 +182,36 @@ void rendererDraw(const GameState *state)
     (void)state;
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 1u) {
         uint8_t palette[32], written[32];
-        size_t writes = 0u, index;
+        size_t writes = 0u, index, used;
         const char *sourceLabel = NULL;
         size_t streamSize = 0u;
         (void)nesExcitebikePaletteStream(assetExtractorGetPaletteIndex(), &streamSize, &sourceLabel);
         (void)nesExcitebikePaletteSnapshot(assetExtractorGetPaletteIndex(), palette, written, &writes);
-        consoleSelect(&s_bottomConsole);
-        consoleClear();
-        fputs("EXCITEBIKE 3DS / SOURCE PPU PALETTE\\n", stdout);
-        fputs("------------------------------\\n", stdout);
-        (void)printf("Source: %s\\nWrites replayed: %lu\\n", sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes);
-        fputs("Values: ", stdout);
-        for (index = 0u; index < 32u; ++index) {
-            (void)printf("%02X%s", palette[index], (index % 8u == 7u) ? "\\n       " : " ");
+        used = (size_t)snprintf(logText, sizeof(logText),
+            "EXCITEBIKE 3DS / SOURCE PPU PALETTE\n"
+            "------------------------------\n"
+            "Source: %s\nWrites replayed: %lu\n"
+            "Values: ", sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes);
+        for (index = 0u; index < 32u && used < sizeof(logText); ++index) {
+            const int writtenCount = snprintf(logText + used, sizeof(logText) - used,
+                "%02X%s", palette[index], (index % 8u == 7u) ? "\n       " : " ");
+            if (writtenCount < 0 || (size_t)writtenCount >= sizeof(logText) - used) break;
+            used += (size_t)writtenCount;
         }
-        fputs("\\nMask marks addresses written by this source list.\\n", stdout);
-        fputs("This preset is not necessarily the active live-game palette.\\n", stdout);
-        fputs("D-pad left/right: palette; up/down: simple/advanced\\nA: export; B: back\\n", stdout);
-        s_logInitialized = 0;
+        if (used < sizeof(logText)) {
+            (void)snprintf(logText + used, sizeof(logText) - used,
+                "\nMask marks source-written addresses.\n"
+                "Preset does not identify the active live-game palette.\n"
+                "D-pad left/right: palette; up/down: simple/advanced\n"
+                "A: export; B: back\n");
+        }
+        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
+            consoleSelect(&s_bottomConsole);
+            consoleClear();
+            fputs(logText, stdout);
+            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
+            s_logInitialized = 1;
+        }
         return;
     }
     if (s_gameStarted) {
@@ -219,14 +231,15 @@ void rendererDraw(const GameState *state)
             "------------------------------\n"
             "CHR: %.36s\n"
             "Tiles: %lu / 960\n"
-            "ROM: rom.nes beside 3DSX\n"
-            "Exports: extracted/chr_raw.bin + chr_pixels.bin\n"
-            "PNG: extracted/chr_atlas.png; see manifest.txt\n"
+            "Source: rom.nes or CHR_ROM.chr\n"
+            "Exports: CHR, pixels, PNG + 7 source palettes\n"
             "Atlas: %s\n"
-            "Page: %lu/%lu (D-pad left/right)\n"
+            "View: %s; page %lu/%lu\n"
+            "D-pad left/right: page/palette\n"
+            "D-pad up/down: simple/advanced\n"
             "A: open/export; B: close/re-extract\n"
             "START: menu locked until Stage 1 passes\n"
-            "Atlas is grayscale 2bpp indices, not game colors.\n",
+            "Atlas uses grayscale indices, not game colors.\n",
             assetExtractorGetStatus(), (unsigned long)tileCount,
             assetExtractorIsActive() ? "OPEN" : "closed",
             assetExtractorGetViewMode() == 0u ? "CHR atlas" : "palette diagnostics",
