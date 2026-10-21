@@ -9,18 +9,21 @@
 
 /*
  * Runtime CHR extraction/cache for the 3DS homebrew.
- * Put a legally obtained classic iNES ROM named rom.nes beside the launched
- * .3dsx. The path is derived from argv[0], not from a fixed SD-card folder.
+ * Prefer rom.nes beside the launched .3dsx. If it is absent, accept a verified
+ * raw CHR dump named CHR_ROM.chr. The path derives from argv[0], not a fixed folder.
  *
  * Decoded pixel indices are persisted beside the .3dsx at:
  *   extracted/chr_pixels.bin
  *
  * The cache stores decoded 2bpp pixel indices, not a reconstructed title
- * screen. Nametable/attribute layout, palette selection, compressed PRG
- * graphics, and PPU timing still require source tracing.
+ * screen. Raw CHR fallback cannot provide palettes, nametables, sprites/OAM,
+ * compressed PRG graphics, or PPU timing.
  */
 #define EXTRACTOR_PATH_CAPACITY 512u
 static char s_romPath[EXTRACTOR_PATH_CAPACITY] = "rom.nes";
+static char s_rawChrPath[EXTRACTOR_PATH_CAPACITY] = "CHR_ROM.chr";
+static char s_sourcePath[EXTRACTOR_PATH_CAPACITY] = "rom.nes";
+static int s_sourceIsRaw;
 static char s_cachePath[EXTRACTOR_PATH_CAPACITY] = "extracted/chr_cache.bin";
 static char s_exportDirectory[EXTRACTOR_PATH_CAPACITY] = "extracted";
 #define EXTRACTOR_MAX_TILES 960u
@@ -54,9 +57,29 @@ static void ensureExtractorDirectories(void)
 }
 
 /* FNV-1a hash of the complete ROM, so a cache from another ROM is rejected. */
-static int computeRomFingerprint(uint32_t *fingerprint)
+static void selectSourcePath(void)
 {
     FILE *file = fopen(s_romPath, "rb");
+    if (file != NULL) {
+        fclose(file);
+        (void)snprintf(s_sourcePath, sizeof(s_sourcePath), "%s", s_romPath);
+        s_sourceIsRaw = 0;
+        return;
+    }
+    file = fopen(s_rawChrPath, "rb");
+    if (file != NULL) {
+        fclose(file);
+        (void)snprintf(s_sourcePath, sizeof(s_sourcePath), "%s", s_rawChrPath);
+        s_sourceIsRaw = 1;
+        return;
+    }
+    (void)snprintf(s_sourcePath, sizeof(s_sourcePath), "%s", s_romPath);
+    s_sourceIsRaw = 0;
+}
+
+static int computeRomFingerprint(uint32_t *fingerprint)
+{
+    FILE *file = fopen(s_sourcePath, "rb");
     uint8_t chunk[1024];
     uint32_t hash = 2166136261u;
     size_t got;
@@ -173,8 +196,9 @@ static int exportCurrentRomAssets(void)
     char exportStatus[160];
     NesChrDecodeResult result;
 
-    file = fopen(s_romPath, "rb");
-    if (file == NULL) { setStatus("Cannot export: ROM not found beside the 3DSX."); return 0; }
+    selectSourcePath();
+    file = fopen(s_sourcePath, "rb");
+    if (file == NULL) { setStatus("No rom.nes or CHR_ROM.chr found beside the 3DSX."); return 0; }
     if (fseek(file, 0, SEEK_END) != 0 || (fileSize = ftell(file)) < 16L ||
         fseek(file, 0, SEEK_SET) != 0 || (unsigned long)fileSize > (unsigned long)EXTRACTOR_MAX_ROM_BYTES) {
         fclose(file); setStatus("Cannot export: ROM size is invalid or exceeds the 8 MiB limit."); return 0;
@@ -186,9 +210,17 @@ static int exportCurrentRomAssets(void)
         free(rom); fclose(file); setStatus("Cannot export: could not read complete ROM."); return 0;
     }
     fclose(file);
-    result = nesChrGetRawData(rom, romSize, &rawChr, &rawChrBytes);
-    if (result != NES_CHR_DECODE_OK) {
-        free(rom); setStatus(nesChrDecodeError(result)); return 0;
+    if (s_sourceIsRaw) {
+        if (romSize == 0u || (romSize % 16u) != 0u) {
+            free(rom); setStatus("Raw CHR file size must be a non-empty multiple of 16 bytes."); return 0;
+        }
+        rawChr = rom;
+        rawChrBytes = romSize;
+    } else {
+        result = nesChrGetRawData(rom, romSize, &rawChr, &rawChrBytes);
+        if (result != NES_CHR_DECODE_OK) {
+            free(rom); setStatus(nesChrDecodeError(result)); return 0;
+        }
     }
     if (!assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
                           s_tileCount, exportStatus, sizeof(exportStatus))) {
@@ -215,9 +247,10 @@ static void loadChrRom(void)
     s_tileCount = 0u;
     memset(s_pixels, 0, sizeof(s_pixels));
 
-    file = fopen(s_romPath, "rb");
+    selectSourcePath();
+    file = fopen(s_sourcePath, "rb");
     if (file == NULL) {
-        (void)snprintf(s_status, sizeof(s_status), "ROM not found beside the 3DSX: %s", s_romPath);
+        (void)snprintf(s_status, sizeof(s_status), "No rom.nes or CHR_ROM.chr beside the 3DSX.");
         return;
     }
     if (fseek(file, 0, SEEK_END) != 0 || (fileSize = ftell(file)) < 16L ||
@@ -258,13 +291,22 @@ static void loadChrRom(void)
         s_romFingerprint = hash;
     }
 
-    result = nesChrDecodeInes(rom, romSize, &s_pixels[0][0],
-                              EXTRACTOR_MAX_TILES, &s_tileCount);
+    if (s_sourceIsRaw) {
+        rawChr = rom;
+        rawChrBytes = romSize;
+        result = nesChrDecodeRaw(rom, romSize, &s_pixels[0][0],
+                                 EXTRACTOR_MAX_TILES, &s_tileCount);
+    } else {
+        result = nesChrDecodeInes(rom, romSize, &s_pixels[0][0],
+                                  EXTRACTOR_MAX_TILES, &s_tileCount);
+        if (result == NES_CHR_DECODE_OK) {
+            const NesChrDecodeResult rawResult = nesChrGetRawData(rom, romSize, &rawChr, &rawChrBytes);
+            if (rawResult != NES_CHR_DECODE_OK) result = rawResult;
+        }
+    }
     if (result == NES_CHR_DECODE_OK) {
-        const NesChrDecodeResult rawResult = nesChrGetRawData(rom, romSize, &rawChr, &rawChrBytes);
-        if (rawResult != NES_CHR_DECODE_OK) result = rawResult;
-        else exportOk = assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
-                                         s_tileCount, exportStatus, sizeof(exportStatus));
+        exportOk = assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
+                                   s_tileCount, exportStatus, sizeof(exportStatus));
     }
     free(rom);
     if (result != NES_CHR_DECODE_OK) {
@@ -305,13 +347,15 @@ void assetExtractorInit(const char *executablePath)
         }
     }
     if (slash != NULL) directoryLength = (size_t)(slash - executablePath) + 1u;
-    if (directoryLength + sizeof("rom.nes") <= sizeof(s_romPath) && directoryLength + sizeof("extracted/chr_cache.bin") <= sizeof(s_cachePath) && directoryLength + sizeof("extracted") <= sizeof(s_exportDirectory)) {
+    if (directoryLength + sizeof("rom.nes") <= sizeof(s_romPath) && directoryLength + sizeof("CHR_ROM.chr") <= sizeof(s_rawChrPath) && directoryLength + sizeof("extracted/chr_cache.bin") <= sizeof(s_cachePath) && directoryLength + sizeof("extracted") <= sizeof(s_exportDirectory)) {
         if (directoryLength > 0u) {
             memcpy(s_romPath, executablePath, directoryLength);
+            memcpy(s_rawChrPath, executablePath, directoryLength);
             memcpy(s_cachePath, executablePath, directoryLength);
             memcpy(s_exportDirectory, executablePath, directoryLength);
         }
         memcpy(s_romPath + directoryLength, "rom.nes", sizeof("rom.nes"));
+        memcpy(s_rawChrPath + directoryLength, "CHR_ROM.chr", sizeof("CHR_ROM.chr"));
         memcpy(s_cachePath + directoryLength, "extracted/chr_cache.bin", sizeof("extracted/chr_cache.bin"));
         memcpy(s_exportDirectory + directoryLength, "extracted", sizeof("extracted"));
     } else {
@@ -330,7 +374,8 @@ void assetExtractorInit(const char *executablePath)
          * the viewer first. A opens/exports; B closes/retries; D-pad pages.
          */
         s_attempted = 1;
-        setStatus("Checking CHR cache and ROM...");
+        selectSourcePath();
+        setStatus("Checking CHR cache and source data...");
         if (computeRomFingerprint(&s_romFingerprint)) {
             if (!loadExtractedCache()) loadChrRom();
             else (void)exportCurrentRomAssets();
