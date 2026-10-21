@@ -831,6 +831,9 @@ static int testState2SetupCommands(void)
     ram[0x0041u]=0x08u; ram[0x0045u]=0u;
     nesSubC046Command1(ram);
     if(ram[0x0045u]!=0x12u)return 2;
+    ram[0x0041u]=0x07u; ram[0x0043u]=0xEEu;
+    nesSubC046Command1(ram);
+    if(ram[0x0045u]!=0x06u)return 17; /* ADC wraps to zero: BNE falls through C55E. */
 
     memset(ram,0xA5,sizeof(ram));
     nesSubC046Command2(ram);
