@@ -11,7 +11,7 @@ static void rendererDrawChrAtlas(void)
 {
 #if NES_CHR_TILE_COUNT > 0
     static const uint8_t shades[4] = {0u, 85u, 170u, 255u};
-    unsigned int width = 0u, height = 0u;
+    u16 width = 0u, height = 0u;
     uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(
         GFX_TOP, GFX_LEFT, &width, &height);
     unsigned int tile, row, col;
