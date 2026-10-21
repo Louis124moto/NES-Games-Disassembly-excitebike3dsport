@@ -28,6 +28,11 @@ typedef struct {
     uint8_t menu_timer31;
     uint8_t menu_selection_changed;
     uint8_t menu_action_x;
+    uint8_t menu_ram0040;
+    uint8_t menu_ram0043;
+    uint8_t menu_ram0044;
+    uint8_t menu_ram004A;
+    uint8_t menu_ram03F7;
 } GameState;
 
 void gameStateReset(GameState *state);
