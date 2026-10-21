@@ -856,14 +856,19 @@ static int testState2SetupCommands(void)
 
     memset(ram,0,sizeof(ram));
     ram[0x0034u]=3u; ram[0x03F2u]=1u; ram[0x0019u]=0x03u;
-    if(nesSubC046Command6InitPrefix(ram)!=1u)return 13;
+    if(nesSubC046Command6InitPrefix(ram)!=0u)return 13;
     if(ram[0x0047u]!=1u||ram[0x0040u]!=1u||ram[0x0034u]!=3u||
        ram[0x00E8u]!=0x34u||ram[0x00E9u]!=0x14u||ram[0x03F1u]!=0xA0u||
        ram[0x03B4u]!=0x80u||ram[0x03B0u]!=0x80u||ram[0x03BDu]!=0xFFu||
        ram[0x0370u]!=1u||ram[0x03BEu]!=2u)return 14;
-    if(ram[0x00B8u]!=0x0Eu||ram[0x00B9u]!=0x1Au||ram[0x00Bau]!=0x26u)return 15;
-    if(ram[0x0080u]!=0x38u||ram[0x0081u]!=0x48u||ram[0x0082u]!=0x58u)return 16;
-    puts("PASS: state-2 setup command RAM effects; C875 prefix explicitly reports unresolved dependencies.");
+    if(ram[0x00B8u]!=0x0Eu||ram[0x00B9u]!=0x1Au||ram[0x00Bau]!=0x26u||
+       ram[0x00BBu]!=0x32u)return 15;
+    if(ram[0x0080u]!=0x38u||ram[0x0081u]!=0x48u||ram[0x0082u]!=0x58u||
+       ram[0x0083u]!=0x68u)return 16;
+    if(ram[0x0300u]!=0x14u||ram[0x0315u]!=0x24u||ram[0x0316u]!=0xCFu||
+       ram[0x0317u]!=0x07u||ram[0x0319u]!=0xFBu||ram[0x031Cu]!=0xFBu||
+       ram[0x031Fu]!=0u)return 18;
+    puts("PASS: all six state-2 setup commands, including C875's PPU command-buffer path.");
     return 0;
 }
 
