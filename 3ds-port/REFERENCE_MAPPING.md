@@ -677,3 +677,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - `ofs_001_C485_03_05` at CPU `$C485` (ROM offset `$000495`) now has a native C translation in `nesSubC485UpdateMenuSelection` and four regression scenarios. This is translation/test wiring only; check CI before marking it tested, and do not treat it as integrated into the menu sequencer.
 - The routine's RAM-table and ROM-table triple comparisons are unsigned lexicographic comparisons, following the 6502's first non-equal `CMP` and carry branch. Its value calculation preserves byte wrap and carry paths, including the overflow jump to `bra_C50B` and the `$000A` shift loop.
 - Open decisions recorded in TODO: whether Course 1 acceptance requires the entire original race through results, and whether visual menu validation should be tested in parallel with functional navigation or after it. These do not authorize approximating the faithful baseline.
+
+
+## State-handler buffer dependency `sub_C621` (2026-10-21)
+
+- Source at CPU `$C621` starts X at zero, copies `$06E0,X` to `$05E0,X`, then decrements X and loops while nonzero. The first access is index 0, followed by `$FF` down through `$01`, for exactly 256 bytes.
+- `nesSubC621CopyRaceData` preserves that byte-sized index sequence. A regression vector checks every copied byte and adjacent memory boundaries.
+- This removes the isolated translation gap, not the menu-state integration gap. The callers and resulting state behavior still require source-traced integration and end-to-end validation.
