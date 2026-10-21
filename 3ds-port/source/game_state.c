@@ -14,4 +14,10 @@ void gameStateReset(GameState *state)
     state->bike.crashed = false;
     state->paused = false;
     state->show_help = true;
+    state->menu_selection = 1u;
+    state->menu_repeat_guard = 0u;
+    state->menu_timer30 = 0u;
+    state->menu_timer31 = 0u;
+    state->menu_selection_changed = 0u;
+    state->menu_action_x = 0u;
 }
