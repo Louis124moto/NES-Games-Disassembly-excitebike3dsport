@@ -8,6 +8,8 @@ static int testDecodePlanesAndOffset(void)
     uint8_t rom[16u + 16384u + 8192u];
     uint8_t pixels[2u * 64u];
     size_t count = 0u;
+    const uint8_t *raw = NULL;
+    size_t rawBytes = 0u;
     unsigned int i;
     memset(rom, 0, sizeof(rom));
     memcpy(rom, "NES\x1A", 4u);
@@ -18,6 +20,8 @@ static int testDecodePlanesAndOffset(void)
     memset(&rom[16u + 16384u + 24u], 0, 8u);
     if (nesChrDecodeInes(rom, sizeof(rom), pixels, 2u, &count) != NES_CHR_DECODE_OK || count != 2u)
         return 1;
+    if (nesChrGetRawData(rom, sizeof(rom), &raw, &rawBytes) != NES_CHR_DECODE_OK ||
+        rawBytes != 8192u || raw != &rom[16u + 16384u]) return 4;
     for (i = 0u; i < 64u; ++i) if (pixels[i] != 0u) return 2;
     for (i = 0u; i < 64u; ++i) if (pixels[64u + i] != 1u) return 3;
     return 0;
