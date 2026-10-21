@@ -820,6 +820,19 @@ static int testState13Completion(void)
 
 
 
+static int testSubC55EC56A(void)
+{
+    uint8_t state = 0xA5u;
+    uint8_t timer = 0xA5u;
+    nesSubC55ESetState06(&state);
+    if (state != 0x06u || timer != 0xA5u) return 1;
+    state = 0xA5u;
+    nesSubC56ASetState04(&timer, &state);
+    if (timer != 0x04u || state != 0x04u) return 2;
+    puts("PASS: menu command entries C55E and C56A preserve exact state/timer writes.");
+    return 0;
+}
+
 static int testState2SetupCommands(void)
 {
     static uint8_t ram[65536];
@@ -885,6 +898,7 @@ static int testState2SetupCommands(void)
 
 int main(void)
 {
+    if (testSubC55EC56A() != 0) { fputs("FAIL: menu commands C55E/C56A\\n", stderr); return 1; }
     {
         int state2Result = testState2SetupCommands();
         if (state2Result != 0) {
