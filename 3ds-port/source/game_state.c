@@ -23,7 +23,9 @@ void gameStateReset(GameState *state)
     state->menu_timer20 = 0u;
     state->menu_timer30 = 0u;
     state->menu_timer31 = 0u; /* initialized by ofs_001_C2BD_00_01 */
+    state->menu_timer33 = 0u;
     state->menu_timer34 = 0u;
+    memset(state->menu_ram0300, 0, sizeof(state->menu_ram0300));
     state->menu_sequence_preface_pending = 1u;
     state->menu_selection_changed = 0u;
     state->menu_action_x = 0u;
