@@ -23,9 +23,10 @@ static char s_romPath[EXTRACTOR_PATH_CAPACITY] = "rom.nes";
 static char s_cachePath[EXTRACTOR_PATH_CAPACITY] = "extracted/chr_pixels.bin";
 #define EXTRACTOR_MAX_TILES 960u
 #define EXTRACTOR_MAX_ROM_BYTES (8u * 1024u * 1024u)
-#define EXTRACTOR_CACHE_HEADER_SIZE 10u
+#define EXTRACTOR_CACHE_HEADER_SIZE 14u
 
-static const uint8_t s_cacheMagic[8] = {'E', 'B', 'C', 'H', 'R', '0', '1', 0};
+static const uint8_t s_cacheMagic[8] = {'E', 'B', 'C', 'H', 'R', '0', '2', 0};
+static uint32_t s_romFingerprint;
 static uint8_t s_pixels[EXTRACTOR_MAX_TILES][64];
 static size_t s_tileCount;
 static int s_active;
@@ -51,7 +52,31 @@ static void ensureExtractorDirectories(void)
     (void)mkdir(directory, 0777);
 }
 
-/* File format: 8-byte magic, uint16 little-endian tile count, 64 bytes/tile. */
+/* FNV-1a hash of the complete ROM, so a cache from another ROM is rejected. */
+static int computeRomFingerprint(uint32_t *fingerprint)
+{
+    FILE *file = fopen(s_romPath, "rb");
+    uint8_t chunk[1024];
+    uint32_t hash = 2166136261u;
+    size_t got;
+    if (file == NULL) return 0;
+    while ((got = fread(chunk, 1u, sizeof(chunk), file)) > 0u) {
+        size_t i;
+        for (i = 0u; i < got; ++i) {
+            hash ^= chunk[i];
+            hash *= 16777619u;
+        }
+    }
+    if (ferror(file)) {
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *fingerprint = hash;
+    return 1;
+}
+
+/* File format v2: magic, uint16 tile count, uint32 ROM fingerprint, decoded pixels. */
 static int loadExtractedCache(void)
 {
     FILE *file;
@@ -69,6 +94,17 @@ static int loadExtractedCache(void)
     }
 
     s_tileCount = (size_t)header[8] | ((size_t)header[9] << 8);
+    {
+        const uint32_t cachedFingerprint = (uint32_t)header[10] |
+            ((uint32_t)header[11] << 8u) | ((uint32_t)header[12] << 16u) |
+            ((uint32_t)header[13] << 24u);
+        if (cachedFingerprint != s_romFingerprint) {
+            s_tileCount = 0u;
+            fclose(file);
+            return 0;
+        }
+    }
+
     if (s_tileCount == 0u || s_tileCount > EXTRACTOR_MAX_TILES) {
         s_tileCount = 0u;
         fclose(file);
@@ -112,6 +148,10 @@ static int saveExtractedCache(void)
     memcpy(header, s_cacheMagic, sizeof(s_cacheMagic));
     header[8] = (uint8_t)(s_tileCount & 0xFFu);
     header[9] = (uint8_t)((s_tileCount >> 8) & 0xFFu);
+    header[10] = (uint8_t)(s_romFingerprint & 0xFFu);
+    header[11] = (uint8_t)((s_romFingerprint >> 8u) & 0xFFu);
+    header[12] = (uint8_t)((s_romFingerprint >> 16u) & 0xFFu);
+    header[13] = (uint8_t)((s_romFingerprint >> 24u) & 0xFFu);
 
     file = fopen(s_cachePath, "wb");
     if (file == NULL) return 0;
@@ -151,6 +191,15 @@ static void loadChrRom(void)
     }
 
     romSize = (size_t)fileSize;
+    {
+        uint32_t hash = 2166136261u;
+        size_t i;
+        for (i = 0u; i < romSize; ++i) {
+            hash ^= rom[i];
+            hash *= 16777619u;
+        }
+        s_romFingerprint = hash;
+    }
     rom = (uint8_t *)malloc(romSize);
     if (rom == NULL) {
         fclose(file);
@@ -224,7 +273,11 @@ void assetExtractorInit(const char *executablePath)
          */
         s_attempted = 1;
         setStatus("Checking CHR cache and ROM...");
-        if (!loadExtractedCache()) loadChrRom();
+        if (computeRomFingerprint(&s_romFingerprint)) {
+            if (!loadExtractedCache()) loadChrRom();
+        } else {
+            loadChrRom();
+        }
     }
 }
 
