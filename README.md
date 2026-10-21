@@ -1,5 +1,40 @@
 # Excitebike 3DS — faithful NES port
 
+## Mandatory development order and acceptance gates
+
+**The goal is a complete faithful Excitebike port, not merely a graphics viewer or a loosely similar game.** The original NES disassembly and its observable runtime behavior are the source of truth. The motorcycle's behavior and physics, as well as the rest of the game, must be faithful; visual resemblance alone is insufficient.
+
+### Required order — do not skip or overlap gates
+
+1. **Stage 1 — extractor:** finish, test, and validate the integrated native extractor before beginning the original menu. Extract and inspect every recoverable graphics/data class supported by the verified source path. Show raw CHR tiles in a tile atlas, provide an actual NES-rendered view when all required PPU data is known, and export useful formats to the SD card. Include diagnostics for banks, palettes, tile indices, nametables/attributes, sprites/OAM, and PPU state/address. Do not fabricate missing data.
+2. **Stage 2 — original menu:** only after Stage 1 is accepted, reconstruct the original menu using source-confirmed CHR, palette RAM writes, nametable/attribute data, sprite/OAM state, bank changes, and relevant timing. Preserve original layout, colors, transitions, and controller behavior.
+3. **Stage 3 — first race:** only after Stage 2 is accepted, implement the first course in the original startup/gameplay order. Trace and reproduce track rendering/data, player and opponent state, controller input, motorcycle acceleration/braking/overheating/cooling/jumping/posture/landing/crashes, collisions, timing, scoring, and race transitions from the ASM. Do not substitute generic or plausible physics for the original.
+4. **Stage 4 onward — remaining game:** proceed through the next original gameplay/menu/result flow in source order. Define the next stage from the disassembly only after the current stage passes its acceptance gate. Do not skip ahead to later courses or features to hide unfinished earlier work.
+
+### What “100% validated” means for a stage
+
+A stage remains **in progress** until all relevant criteria below are satisfied and evidence is recorded:
+- assembly/data path and dependencies traced; confirmed facts separated from unknowns;
+- implementation integrated into the actual 3DSX runtime, not just isolated test helpers;
+- regression tests cover normal paths, branch paths, boundaries, and relevant hardware/state interactions;
+- host tests pass and a 3DS build succeeds for the exact same commit;
+- reproducible comparisons against the original NES behavior pass for every behavior within the stage's stated scope;
+- runtime behavior is tested on New Nintendo 3DS hardware where hardware validation is relevant;
+- output, limitations, test commands/results, commit, and CI links are recorded in the TODO.
+
+A successful compile, unit test, screenshot, or launch by itself is **not** 100% fidelity validation. If a criterion is blocked or cannot be proven, the stage stays unaccepted; document the missing evidence and keep working on that stage. Never begin the next stage while the current one is unaccepted.
+
+### Extractor and UI requirements
+
+- The extractor is native code compiled into the 3DSX; no Python or PC-side preprocessor is required for normal 3DS operation.
+- Run the extraction workflow at startup before the original menu; allow explicit re-extraction and SD-card export. Keep raw-data viewing and composed-screen viewing distinct.
+- Use the D-pad and A/B controls; use a minimal image-centric interface with a switch between simple viewing and advanced diagnostics. The top screen displays the selected image/view; the bottom screen holds controls and status/technical details.
+- Analyze all supported source data, including compressed or generated graphics where the ASM confirms how they are produced. If a format or graphics path is not understood, continue analysis and label it as unresolved instead of guessing.
+- Use actual PPU RAM writes as the source of palette truth. Build the rendered screen progressively from proven source behavior; show missing/unknown parts explicitly rather than inventing them.
+- Export useful image and binary representations, including PNG and source data such as CHR/palette/nametable where available. Store exports on the SD card; the 3DSX must also work without a PC tool.
+- Prioritize complete, accurate extraction even when it is slow. Optimize blocking/incremental behavior only after correctness is established.
+- Keep features disabled until their full required inputs and source behavior are validated.
+
 A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excitebike** as faithfully as possible, including its gameplay rules, course data, opponents, menus, scoring, sound, and relevant timing and hardware-visible behavior.
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
