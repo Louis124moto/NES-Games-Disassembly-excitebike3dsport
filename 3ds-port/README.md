@@ -17,7 +17,7 @@ The CI build should produce `build/excitebike3ds.3dsx` and `build/excitebike3ds.
 
 ## Architecture status
 
-The application now has separate modules for shared game state, input, rendering, bike physics, collision, track, audio, and menus. The current physics and display are scaffolding for testing module boundaries; there is no playable or faithful Excitebike implementation yet.
+The application now has separate modules for shared game state, input, rendering, bike physics, collision, track, audio, and menus. The runtime deliberately does not execute the partial menu trace or generic bike/track scaffolding. Until the source-derived menu, PPU rendering, and gameplay dependencies are complete, the homebrew shows no invented game screen; only the explicitly diagnostic CHR viewer can be opened with Y.
 
 See [TODO.md](TODO.md) for the staged roadmap and [REFERENCE_MAPPING.md](REFERENCE_MAPPING.md) for the fidelity target and plan for mapping original NES routines to native code.
 
@@ -27,7 +27,7 @@ The NES source is 6502 assembly and relies on NES-specific hardware. It cannot b
 
 ## Menu port status (2026-10-21)
 
-The current implementation is a native state/input trace, not a completed faithful menu. ASM states 0, 1, and 8 have partial setup command lists and input branches. State 2 and destination states 9, 10, and 12 still need their exact command lists and side effects. State 13 uses the exact shared two-command setup from state 8; its entry wait (`ram_0048=2`, `ram_0044=1`) is translated and tested, but the later `ram_0048==$FF` branch through `sub_EC3B`/`loc_CC6B` is not ported. The app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
+The partial native menu trace is no longer executed by the homebrew. ASM states 0, 1, and 8 have partial setup command lists and input branches. State 2 and destination states 9, 10, and 12 still need their exact command lists and side effects. State 13 uses the exact shared two-command setup from state 8; its entry wait (`ram_0048=2`, `ram_0044=1`) is translated and tested, but the later `ram_0048==$FF` branch through `sub_EC3B`/`loc_CC6B` is not ported. The app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
 
 ### Extract graphics and prepare the native diagnostic atlas
 
@@ -46,7 +46,7 @@ python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'
 make -C 3ds-port
 ```
 
-Latest verification on `2fb6e14470a604c32785e7e4f6c3bc68392ddfbd`: Python extractor tests, host C routine regression tests, runtime iNES decoder tests, and the state-13 entry test passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039178)). The matching 3DS build and artifact checks also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039042)). These checks do not establish that the menu is visually or behaviorally complete.
+Historical verification on `2fb6e14470a604c32785e7e4f6c3bc68392ddfbd` (before disabling the placeholder runtime): Python extractor tests, host C routine regression tests, runtime iNES decoder tests, and the state-13 entry test passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039178)). The matching 3DS build and artifact checks also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039042)). These checks do not establish that the menu is visually or behaviorally complete.
 
 ### Built-in runtime CHR extractor (on the 3DS)
 
