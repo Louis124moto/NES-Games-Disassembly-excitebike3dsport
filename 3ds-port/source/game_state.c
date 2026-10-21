@@ -40,6 +40,9 @@ void gameStateReset(GameState *state)
     state->menu_ram03F3 = 0u;
     state->menu_ram0046 = 0u;
     state->menu_ram0048 = 0u;
+    state->menu_ram004B = 0u;
+    memset(state->menu_ram05E0, 0, sizeof(state->menu_ram05E0));
+    memset(state->menu_ram06E0, 0, sizeof(state->menu_ram06E0));
     state->menu_ram03F8 = 0u;
     state->menu_ram0045 = 0u;
     state->menu_ram00FB = 0u;
