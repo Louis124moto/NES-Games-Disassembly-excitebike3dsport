@@ -51,6 +51,22 @@ int main(void)
             memcmp(actual, pixels, sizeof(pixels)) != 0) { fclose(file); return 6; }
     }
     fclose(file);
+    if (!fileStartsWith("test_asset_export_output/chr_pixels.ebp", (const unsigned char *)"EBPX", 4u)) return 15;
+    file = fopen("test_asset_export_output/chr_pixels.ebp", "rb");
+    if (file == NULL) return 16;
+    {
+        unsigned char header[16], firstPixels[64];
+        if (fread(header, 1u, sizeof(header), file) != sizeof(header) ||
+            memcmp(header, "EBPX", 4u) != 0 || header[4] != 1u || header[5] != 0u ||
+            header[6] != 16u || header[7] != 0u || header[8] != 0xC0u ||
+            header[9] != 0x03u || header[10] != 0u || header[11] != 0u ||
+            header[12] != 8u || header[13] != 8u || header[14] != 1u ||
+            fread(firstPixels, 1u, sizeof(firstPixels), file) != sizeof(firstPixels) ||
+            memcmp(firstPixels, pixels, sizeof(firstPixels)) != 0) {
+            fclose(file); return 17;
+        }
+    }
+    fclose(file);
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12.bin", (const unsigned char *)"\x29\x27\x22\x30", 4u)) return 9;
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12_stream.bin", (const unsigned char *)"\x3F\x00\x08", 3u)) return 10;
     {
@@ -77,12 +93,14 @@ int main(void)
         if (strstr(manifest, "Palette presets:") == NULL ||
             strstr(manifest, "PPU command streams:") == NULL ||
             strstr(manifest, "chr_atlas.png") == NULL ||
+            strstr(manifest, "chr_pixels.ebp") == NULL ||
             strstr(manifest, "Color previews: ppu_preview_01..18.png") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
     (void)unlink("test_asset_export_output/chr_atlas.png");
     (void)unlink("test_asset_export_output/chr_raw.bin");
     (void)unlink("test_asset_export_output/chr_pixels.bin");
+    (void)unlink("test_asset_export_output/chr_pixels.ebp");
     for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
         char path[128];
         (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_preview_%02lu.png", (unsigned long)i);
