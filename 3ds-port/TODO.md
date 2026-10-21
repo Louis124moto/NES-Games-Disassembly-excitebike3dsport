@@ -269,3 +269,15 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Translate commands 4 and 5 (`$0045=$17` and `$0045=$0E`).
 - [x] Translate command 6 through RTS at `$C970`: conditional `tbl_C158` path, course-table lookups, numeric conversion, and both PPU command-buffer records; add host regression.
 - [ ] Connect the six verified state-2 command handlers to the sequencer only after checking the state-2 preconditions and interaction with states 9/10/12.
+
+
+## ASM menu port — source audit (2026-10-21)
+
+- [x] Re-check the real setup-list pointer tables `tbl_C01C_index`, `tbl_C02A_lo`, `tbl_C033_hi` and state dispatch `tbl_C000` against `Excitebike/bank_FF.asm`.
+- [x] Confirm `off_C046_02` contains six commands: `C551`, `C869`, `C820`, `C5A3`, `C566`, `C875`.
+- [ ] Do not classify `off_C046_02` as a pure menu list: `C820` initializes PPU/data buffers and `C875` initializes race objects and proceeds into track-data preparation. Its transitive calls (`sub_D13F`, `sub_C522`, `sub_C53A`, `sub_C935`, `sub_DF7F`, and related data tables) must be ported as part of the real race-start path, not replaced with guessed menu behavior.
+- [ ] Port remaining menu transition setup lists `off_C052_03`, `off_C05C_04`, `off_C070_06`, `off_C07A_07`, and `off_C076_08`, preserving each command's exact side effects and wait/timer behavior.
+- [ ] Port state handlers `ofs_000_CB2C_03`, `ofs_000_C465_04_07`, `ofs_000_C43D_0C` and their called routines before enabling any interactive native menu.
+- [ ] Replace CLI/debug cursor output with the original PPU/CHR-backed screen layout only after nametable, palette, attribute, sprite, and timing paths are verified against the ASM.
+
+**Fidelity rule:** the currently active homebrew runtime remains in diagnostic-only mode. A menu or gameplay screen must not be re-enabled just because its input/state trace exists; source-derived rendering and all required dependencies must be present first.
