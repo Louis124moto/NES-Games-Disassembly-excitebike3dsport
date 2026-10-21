@@ -11,11 +11,13 @@
  */
 static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
 {
-    const unsigned int fbX = screenY;       /* 0..239 */
-    const unsigned int fbY = 399u - screenX; /* 0..399 */
-    const unsigned int flippedY = 399u - fbY;
-    return ((((fbX >> 3u) * 50u) + (flippedY >> 3u)) * 64u
-            + (fbX & 7u) * 8u + (flippedY & 7u)) * 3u;
+    /* libctru exposes the rotated top framebuffer as 240x400.
+       Physical screen (x,y) maps to framebuffer (y, 399-x). */
+    const unsigned int fbX = screenY;
+    const unsigned int fbY = 399u - screenX;
+    const unsigned int tileY = 49u - (fbY >> 3u);
+    return ((((fbX >> 3u) * 50u) + tileY) * 64u
+            + (fbX & 7u) * 8u + (fbY & 7u)) * 3u;
 }
 
 /* 64-colour NES master-palette RGB approximation, indexed by NES colour code. */
