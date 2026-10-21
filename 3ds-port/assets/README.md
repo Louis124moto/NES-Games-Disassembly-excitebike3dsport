@@ -46,3 +46,22 @@ python3 3ds-port/tools/nes_chr_to_c.py game.nes 3ds-port/include/nes_chr_assets.
 ```
 
 The tool reuses the same CHR-ROM parsing and tile decoder as the PNG extractor. It emits source code, not a ROM dump, and the 3DS app draws the decoded tile indices directly from the generated header. The default checked-in header has zero tiles, so no fabricated art is displayed until a real source asset is supplied. This atlas is a diagnostic texture view only: the title screen still needs the original nametable, attribute/palette data, tile placement, and PPU update sequence before it can be called faithful.
+
+
+## One-command extraction pipeline
+
+From the repository root, use the orchestrator to create the atlas, per-tile metadata, C header, and optional individual tile images together:
+
+```sh
+python3 3ds-port/tools/extract_nes_assets.py game.nes --tiles
+```
+
+For a verified raw CHR range in a file with CHR-RAM or another layout:
+
+```sh
+python3 3ds-port/tools/extract_nes_assets.py game.nes --chr-offset 0x4000 --chr-size 0x2000 --install-header
+```
+
+The offset and size above are examples only; derive them from the actual ROM/disassembly before use. Outputs default to `3ds-port/build/extracted-assets/`, which is generated build data. `--install-header` explicitly installs the generated C header for the native diagnostic renderer. No ROM or dump is embedded in the repository.
+
+The extractor does not reconstruct compressed PRG graphics, nametable/attribute layout, exact game palettes unless supplied, OAM ordering, or PPU timing. Those are still required before the title screen can be called faithful.
