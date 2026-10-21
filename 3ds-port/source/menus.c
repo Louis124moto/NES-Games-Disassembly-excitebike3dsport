@@ -32,8 +32,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         state->menu_ram0043 = 0u;
         state->menu_ram004A = 0u;
         state->menu_ram03F7 = 0x0Fu;
-        state->menu_ram0040 = 0u;
-        state->menu_ram0044 = 0u;
+        nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
         state->menu_asm_state = 2u;
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
