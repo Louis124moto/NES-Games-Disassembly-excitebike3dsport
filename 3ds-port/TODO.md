@@ -204,7 +204,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 
 - [x] Added a native C model of `sub_C7DE` cursor input and repeat-guard behavior, with host tests wired.
 - [x] Added a native C model of the confirmation branches from `ofs_000_C3BD_08`: selection 1/2 increments the state, selection 3/4 maps to states 12/13 and clears the selection, and selection 5 requests the source's RAM-clear path and sets the selection to 2.
-- [x] Connected the state-8 input and confirmation model to the native menu trace screen. The current screen displays option indices only; it does not invent menu labels or claim to reproduce original NES artwork.
+- [x] Connected states 0, 1, and 8 to the native menu trace screen, including source-derived cursor coordinates. The screen displays option indices only; it does not invent menu labels or claim to reproduce original NES artwork.
 - [x] Upgraded `tools/nes_chr_to_ppm.py` to write PNG atlases, optionally export per-tile PNGs and JSON pixel metadata, decode iNES/NES 2.0 CHR-ROM, accept explicit verified raw CHR ranges, and apply a supplied NES palette dump.
 - [x] Added Python smoke tests for bitplane order, raw input, and PNG signature.
 - [ ] Run the Python extractor tests and host C suite; new tests are wired but not yet confirmed passing.
