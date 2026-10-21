@@ -1992,6 +1992,8 @@ void nesSubC485UpdateMenuSelection(uint8_t ram[65536], const uint8_t tblC091[258
 calculate_value:
             ram000A = ram[0x03F8u];
             ram0009 = (uint8_t)(ram000A << 1u);
+            ram[0x000Au] = ram000A;
+            ram[0x0009u] = ram0009;
             y = (uint8_t)(ram[0x0068u] - ram[0x0005u]);
             a = 0u;
             for (;;) {
