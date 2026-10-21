@@ -40,9 +40,8 @@ def main() -> int:
     ]
     for index, pixels in enumerate(tiles):
         lines.append(f"    /* tile 0x{index:04X} */")
-        for row in range(8):
-            vals = ", ".join(f"{p}u" for p in pixels[row * 8:(row + 1) * 8])
-            lines.append(f"    {{{vals}}}" + ("," if row != 7 or index != len(tiles) - 1 else ""))
+        vals = ", ".join(f"{p}u" for p in pixels)
+        lines.append(f"    {{{vals}}}" + ("," if index != len(tiles) - 1 else ""))
     lines.extend(["};", "", "#endif", ""])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(lines), encoding="utf-8")
