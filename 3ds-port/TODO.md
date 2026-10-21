@@ -187,9 +187,11 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Trace the shared input/cursor helper `sub_C7DE` at CPU `$C7DE` (ROM offset `$0007EE`): reads `ram_btn_press`, masks `$3C`, sets `ram_0031_timer=$5D` when a relevant input is present, uses `ram_0049` as a repeat guard, and applies one-based cursor wrap behavior.
 - [x] Add a native C model of those helper side effects and host tests for up/down/select, wrapping, repeat suppression, idle reset, and Start's four-frame timer effect.
 - [ ] Run the host suite and confirm the new helper tests pass.
-- [ ] Trace the complete state flow around `ofs_000_C346_00`, `ofs_000_C395_01`, and `ofs_000_C3BD_08`, including every caller, state transition, menu option meaning, and source tile/nametable data.
+- [x] Trace the exact selection branches in `ofs_000_C3BD_08`: choices 1/2 reach state 9, choices 3/4 reach states 12/13, and choice 5 maps selection 5 to 2 before clearing RAM $0021–$00FF.
+- [x] Model the choice-5 RAM-clear side effects that affect the menu trace, then model state 0's timer-zero transition into state 2 from `ofs_000_C346_00`.
+- [ ] Trace every caller and fully validate state transitions, especially the initialization path after states 9/12/13.
 - [ ] Reconstruct the original menu visuals from the original tile data, palette/attribute writes, sprite coordinates, and PPU upload path. Do not invent menu labels or pretend a diagnostic overlay is the original menu.
-- [ ] Connect the verified menu state machine to the native 3DS renderer and input path, then compare selection and confirm/cancel behavior against the NES reference.
+- [ ] Connect the verified state model to a pixel renderer and compare selection/confirmation timing against the NES reference.
 - [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
 
 **Current menu status:** one shared ASM input helper has been translated; the full title/main-menu state machine and authentic visual reconstruction are still incomplete. The new helper is not yet wired to a playable menu.
@@ -200,9 +202,11 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Added a native C model of `sub_C7DE` cursor input and repeat-guard behavior, with host tests wired.
 - [x] Added a native C model of the confirmation branches from `ofs_000_C3BD_08`: selection 1/2 increments the state, selection 3/4 maps to states 12/13 and clears the selection, and selection 5 requests the source's RAM-clear path and sets the selection to 2.
 - [x] Connected the state-8 input and confirmation model to the native menu trace screen. The current screen displays option indices only; it does not invent menu labels or claim to reproduce original NES artwork.
-- [x] Added `tools/nes_chr_to_ppm.py` for source CHR tile inspection and documented the palette/PPU work still required.
+- [x] Upgraded `tools/nes_chr_to_ppm.py` to write PNG atlases, optionally export per-tile PNGs and JSON pixel metadata, decode iNES/NES 2.0 CHR-ROM, accept explicit verified raw CHR ranges, and apply a supplied NES palette dump.
+- [x] Added Python smoke tests for bitplane order, raw input, and PNG signature.
+- [ ] Run the Python extractor tests and host C suite; new tests are wired but not yet confirmed passing.
 - [ ] Run the host suite; the new tests are wired but not yet confirmed passing.
 - [ ] Build the 3DS target on this same revision and verify both `.3dsx` and `.elf`.
 - [ ] Trace the exact menu option meanings and title-screen PPU/nametable/palette path before replacing index labels with authentic content.
-- [ ] Implement and test destination states 9, 12, and 13 and the full RAM-clear/reset path from the original ASM.
+- [ ] Implement and test destination states 9, 12, and 13 and their complete callers/dependencies; only the state-8 choice branches and state-0 timer-zero path are currently modeled.
 - [ ] Verify menu navigation, confirm behavior, sound, timing, and title visuals against the NES reference.
