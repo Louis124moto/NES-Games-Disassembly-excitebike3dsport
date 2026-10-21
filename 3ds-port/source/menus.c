@@ -282,6 +282,18 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_selection_changed = 0u;
             /* ram_0042=2 is preserved; ram_03F2 lives outside the cleared page. */
         }
+    } else if (state->menu_asm_state == 13u) {
+        /*
+         * ofs_000_C41C_0D entry path: with ram_0044 == 0, write 2 to
+         * ram_0048 and 1 to ram_0044. The later ram_0048 == $FF branch
+         * depends on sub_EC3B/loc_CC6B and remains explicitly unported.
+         */
+        if (state->menu_ram0044 == 0u) {
+            state->menu_ram0048 = 2u;
+            state->menu_ram0044 = 1u;
+        }
+        state->menu_action_x = 0u;
+        state->menu_selection_changed = 0u;
     } else {
         /* Other dispatch states require their own verified ASM blocks. */
         state->menu_action_x = 0u;
@@ -339,6 +351,10 @@ void menusRender(const GameState *state)
     } else if (state->menu_asm_state == 2u) {
         printf("State 2: original ASM dispatches to the gameplay loop.\n");
         printf("Native gameplay is still a separate incomplete subsystem.\n");
+    } else if (state->menu_asm_state == 13u) {
+        printf("State 13 entry: ram_0048=%02X ram_0044=%02X\n",
+               (unsigned int)state->menu_ram0048, (unsigned int)state->menu_ram0044);
+        printf("Waiting path is translated; ram_0048==$FF needs sub_EC3B/loc_CC6B.\n");
     } else {
         printf("ASM destination state %u reached; its native path is not ported.\n",
                (unsigned int)state->menu_asm_state);
