@@ -9,7 +9,6 @@ int main(int argc, char **argv)
     gameInit();
     while (aptMainLoop()) {
         gameUpdate();
-        if (hidKeysDown() & KEY_START) break;
         gameRender();
     }
     gameExit();
