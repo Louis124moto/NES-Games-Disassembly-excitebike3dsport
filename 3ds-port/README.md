@@ -65,3 +65,17 @@ The inspector validates the iNES magic and header lengths, accounts for the opti
 ### Latest menu routine batch
 
 The setup prelude now models the side effects visible in the source: all 256 OAM bytes become `$F8`, both `$2000` and `$2400` nametable blocks are initialized to `$FC` for 960 bytes and zero for the 64-byte attribute region, scroll resets to zero, PPU mask is disabled, and PPU control becomes `$10`. The host regression suite has a test for these exact memory effects. State 2's six-command list is still incomplete; commands C820 and C875 have deep data-buffer/race-start dependencies and must not be treated as ordinary menu rendering. States 3, 5, 7 (blocked at sub_C621), 9, 10, 11, and 12 remain incomplete. State 13's setup, entry wait, and `$FF` completion branch (`sub_EC3B`/`loc_CC6B`) are translated and host-tested. The main menu is not yet fidelity-complete.
+
+## Runtime extraction log on the bottom screen
+
+At startup, the homebrew now checks `extracted/chr_pixels.bin` first and falls back to extracting CHR-ROM from `rom.nes` when the cache is missing or invalid. The bottom-screen console remains visible even when the atlas viewer is closed and reports the status, decoded tile count, expected file locations, and viewer state.
+
+- **Y** — open/close the top-screen grayscale CHR atlas.
+- **X** — retry ROM extraction and refresh the cache while the atlas is open.
+- **B** — close the atlas.
+- **ROM location** — `rom.nes` in the same directory as the launched `.3dsx`.
+- **Cache location** — `extracted/chr_pixels.bin` beside the `.3dsx`.
+
+A message saying “Loaded … CHR tiles from extracted cache” means the cache passed its format and pixel-index checks. “Extracted … CHR tiles; cache saved” means the current ROM was decoded and the cache write succeeded. Any file/decoder error is shown on the bottom screen. The log is designed to make failures visible, but the `.3dsx` argument path and SD-card I/O still require verification on the target 3DS/homebrew launcher.
+
+This remains a CHR-pattern diagnostic tool, not a reconstructed title screen: authentic menu layout, palettes, nametable/attribute data, sprite ordering, and PPU timing remain menu-completion tasks. See [TODO.md](TODO.md) for the acceptance checklist.
