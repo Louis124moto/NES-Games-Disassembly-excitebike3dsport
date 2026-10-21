@@ -72,18 +72,16 @@ NesChrDecodeResult nesChrGetRawData(const uint8_t *rom, size_t romSize,
     return NES_CHR_DECODE_OK;
 }
 
-NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
-                                    uint8_t *pixels, size_t maxTiles,
-                                    size_t *tileCount)
+static NesChrDecodeResult decodeChrBytes(const uint8_t *chr, size_t chrBytes,
+                                                uint8_t *pixels, size_t maxTiles,
+                                                size_t *tileCount)
 {
-    const uint8_t *chr;
-    size_t chrBytes, availableTiles, count, tile, row, col;
-    NesChrDecodeResult result;
+    size_t availableTiles, count, tile, row, col;
     if (tileCount != NULL) *tileCount = 0u;
-    if (rom == NULL || pixels == NULL || tileCount == NULL || maxTiles == 0u)
+    if (chr == NULL || pixels == NULL || tileCount == NULL || maxTiles == 0u)
         return NES_CHR_DECODE_INVALID_ARGUMENT;
-    result = nesChrGetRawData(rom, romSize, &chr, &chrBytes);
-    if (result != NES_CHR_DECODE_OK) return result;
+    if (chrBytes == 0u || (chrBytes % 16u) != 0u)
+        return NES_CHR_DECODE_INVALID_RAW_SIZE;
     availableTiles = chrBytes / 16u;
     count = availableTiles < maxTiles ? availableTiles : maxTiles;
     for (tile = 0u; tile < count; ++tile) {
@@ -103,6 +101,28 @@ NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
     return count == 0u ? NES_CHR_DECODE_NO_TILES : NES_CHR_DECODE_OK;
 }
 
+NesChrDecodeResult nesChrDecodeRaw(const uint8_t *chr, size_t chrBytes,
+                                   uint8_t *pixels, size_t maxTiles,
+                                   size_t *tileCount)
+{
+    return decodeChrBytes(chr, chrBytes, pixels, maxTiles, tileCount);
+}
+
+NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
+                                    uint8_t *pixels, size_t maxTiles,
+                                    size_t *tileCount)
+{
+    const uint8_t *chr;
+    size_t chrBytes;
+    NesChrDecodeResult result;
+    if (tileCount != NULL) *tileCount = 0u;
+    if (rom == NULL || pixels == NULL || tileCount == NULL || maxTiles == 0u)
+        return NES_CHR_DECODE_INVALID_ARGUMENT;
+    result = nesChrGetRawData(rom, romSize, &chr, &chrBytes);
+    if (result != NES_CHR_DECODE_OK) return result;
+    return decodeChrBytes(chr, chrBytes, pixels, maxTiles, tileCount);
+}
+
 const char *nesChrDecodeError(NesChrDecodeResult result)
 {
     switch (result) {
@@ -114,6 +134,7 @@ const char *nesChrDecodeError(NesChrDecodeResult result)
     case NES_CHR_DECODE_CHR_RAM: return "ROM uses CHR-RAM; runtime PPU capture is required.";
     case NES_CHR_DECODE_TRUNCATED_ROM: return "Header sizes exceed ROM file length.";
     case NES_CHR_DECODE_NO_TILES: return "No complete CHR tiles found.";
+    case NES_CHR_DECODE_INVALID_RAW_SIZE: return "Raw CHR file must be a non-empty multiple of 16 bytes.";
     case NES_CHR_DECODE_OUTPUT_TOO_SMALL: return "Output buffer too small.";
     default: return "Unknown decoder error.";
     }
