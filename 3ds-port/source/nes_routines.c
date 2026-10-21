@@ -1763,6 +1763,22 @@ void nesSubEC3BCopy256(const uint8_t source[256], uint8_t destination[256])
     memcpy(destination, source, 256u);
 }
 
+/* Exact ofs_000_C43D_0C state handler and its loc_CC6B transition. */
+void nesLocC43DHandleMenuState(uint8_t *ram0044, uint8_t *ram0048,
+                               uint8_t *ram00FB, uint8_t *ram0041, uint8_t ram004B)
+{
+    if (ram0044 == NULL || ram0048 == NULL) return;
+    if (*ram0044 == 0u) {
+        *ram0048 = 1u;
+        *ram0044 = 1u;
+        return;
+    }
+    if (*ram0048 != 0xFFu) return;
+    if (ram00FB != NULL) *ram00FB = 0x40u;
+    /* loc_CC6B begins with sub_C3AF: INC $0041, then optional clamp. */
+    if (ram0041 != NULL) nesLocCC6BUpdateMenuState(ram0041, ram004B);
+}
+
 /* loc_CC6B: INC $0041; if $004B is zero, clamp states >= 9 to state 8. */
 void nesLocCC6BUpdateMenuState(uint8_t *ram0041, uint8_t ram004B)
 {
