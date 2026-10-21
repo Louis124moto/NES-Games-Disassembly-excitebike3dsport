@@ -1,3 +1,4 @@
+#include <string.h>
 #include "game_state.h"
 
 void gameStateReset(GameState *state)
@@ -45,4 +46,7 @@ void gameStateReset(GameState *state)
     state->menu_scroll_x = 0u;
     state->menu_scroll_y = 0u;
     state->menu_ppu_ctrl = 0u;
+    state->menu_ppu_mask = 0u;
+    memset(state->menu_oam, 0xF8, sizeof(state->menu_oam));
+    memset(state->menu_ppu_nametables, 0, sizeof(state->menu_ppu_nametables));
 }
