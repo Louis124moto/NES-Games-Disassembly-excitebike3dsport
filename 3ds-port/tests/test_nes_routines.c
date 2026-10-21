@@ -2174,6 +2174,17 @@ static int testBatchAdditional20(void)
         nesLocC43DHandleMenuState(&state44,&state48,&fb,&state41,1u);
         if(fb!=0x40u||state41!=9u)return 54; /* $004B nonzero disables clamp. */
     }
+    {
+        uint8_t romC12C[260]={0}, low=0u, high=0u;
+        const uint8_t lows[4]={0x3Bu,0x77u,0xA4u,0x6Bu};
+        const uint8_t highs[4]={0xCBu,0xCBu,0xCBu,0xCCu};
+        for(i=0u;i<4u;++i) { romC12C[i]=lows[i]; romC12C[4u+i]=highs[i]; }
+        for(i=0u;i<4u;++i) {
+            const uint16_t target=(uint16_t)((uint16_t)lows[i]|((uint16_t)highs[i]<<8u));
+            if(nesSubCB2CDispatchAddress((uint8_t)i,romC12C,&low,&high)!=target||
+               low!=lows[i]||high!=highs[i])return 55;
+        }
+    }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
     if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
