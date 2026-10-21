@@ -514,3 +514,13 @@ Source: `Excitebike/bank_FF.asm`, CPU `$E96E-$E97D` (ROM offset `$00297E-$00298D
 - `ofs_000_C395_01` filters `ram_btn_press`, calls `sub_C7DE` with bound 5, copies the current selection from `ram_0042` to `ram_0043` on an action, then advances `ram_0041`.
 - `ofs_000_C3BD_08` calls `sub_C7DE` with bound 6. Its selection branches include `ram_03F2` updates, state transitions, and a RAM clear path. The meanings of all displayed choices are not yet proven; do not label them based on guesswork.
 - The menu's exact text/art is not established by these control-flow routines alone. It requires tracing the associated PPU/nametable data, CHR tiles, palette/attribute writes and render timing. The native diagnostic renderer is not a faithful replacement.
+
+
+### `ofs_000_C3BD_08` — main-menu confirmation branches
+
+The native helper `nesSubC3BDConfirmSelection` models the code after `sub_C7DE` returns nonzero X:
+- selection below 2: copy selection to `ram_03F2`, increment `ram_0041`;
+- selection equal to 2: increment `ram_0041`;
+- selection equal to 5: shift selection right once (5 becomes 2) and signal the RAM-clear path;
+- other selections above 2: set `ram_0041 = selection + 9` and clear `ram_0042`.
+This is now connected to the native state-8 menu trace. The following states are not yet implemented, and option names/art are intentionally not guessed. Host tests for each branch are wired but not yet confirmed passing.
