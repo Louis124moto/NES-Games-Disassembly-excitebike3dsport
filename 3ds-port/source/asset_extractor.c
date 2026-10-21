@@ -18,8 +18,9 @@
  * screen. Nametable/attribute layout, palette selection, compressed PRG
  * graphics, and PPU timing still require source tracing.
  */
-#define EXTRACTOR_ROM_PATH "sdmc:/3ds/excitebike3ds/rom.nes"
-#define EXTRACTOR_CACHE_PATH "sdmc:/3ds/excitebike3ds/extracted/chr_pixels.bin"
+#define EXTRACTOR_PATH_CAPACITY 512u
+static char s_romPath[EXTRACTOR_PATH_CAPACITY] = "rom.nes";
+static char s_cachePath[EXTRACTOR_PATH_CAPACITY] = "extracted/chr_pixels.bin";
 #define EXTRACTOR_MAX_TILES 960u
 #define EXTRACTOR_MAX_ROM_BYTES (8u * 1024u * 1024u)
 #define EXTRACTOR_CACHE_HEADER_SIZE 10u
@@ -38,9 +39,14 @@ static void setStatus(const char *message)
 
 static void ensureExtractorDirectories(void)
 {
-    (void)mkdir("sdmc:/3ds", 0777);
-    (void)mkdir("sdmc:/3ds/excitebike3ds", 0777);
-    (void)mkdir("sdmc:/3ds/excitebike3ds/extracted", 0777);
+    char directory[EXTRACTOR_PATH_CAPACITY];
+    size_t length = strlen(s_cachePath);
+    if (length >= sizeof(directory)) return;
+    memcpy(directory, s_cachePath, length + 1u);
+    while (length > 0u && directory[length - 1u] != '/' && directory[length - 1u] != '\\\\') --length;
+    if (length == 0u) return;
+    directory[length - 1u] = '\\0';
+    (void)mkdir(directory, 0777);
 }
 
 /* File format: 8-byte magic, uint16 little-endian tile count, 64 bytes/tile. */
@@ -51,7 +57,7 @@ static int loadExtractedCache(void)
     size_t expectedBytes;
     size_t readBytes;
 
-    file = fopen(EXTRACTOR_CACHE_PATH, "rb");
+    file = fopen(s_cachePath, "rb");
     if (file == NULL) return 0;
 
     if (fread(header, 1u, sizeof(header), file) != sizeof(header) ||
@@ -105,7 +111,7 @@ static int saveExtractedCache(void)
     header[8] = (uint8_t)(s_tileCount & 0xFFu);
     header[9] = (uint8_t)((s_tileCount >> 8) & 0xFFu);
 
-    file = fopen(EXTRACTOR_CACHE_PATH, "wb");
+    file = fopen(s_cachePath, "wb");
     if (file == NULL) return 0;
     ok = fwrite(header, 1u, sizeof(header), file) == sizeof(header) &&
          fwrite(&s_pixels[0][0], 1u, pixelBytes, file) == pixelBytes;
@@ -125,9 +131,9 @@ static void loadChrRom(void)
     s_tileCount = 0u;
     memset(s_pixels, 0, sizeof(s_pixels));
 
-    file = fopen(EXTRACTOR_ROM_PATH, "rb");
+    file = fopen(s_romPath, "rb");
     if (file == NULL) {
-        setStatus("ROM not found: sdmc:/3ds/excitebike3ds/rom.nes");
+        (void)snprintf(s_status, sizeof(s_status), "ROM not found beside the 3DSX: %s", s_romPath);
         return;
     }
     if (fseek(file, 0, SEEK_END) != 0 || (fileSize = ftell(file)) < 16L ||
@@ -177,8 +183,30 @@ static void loadChrRom(void)
     }
 }
 
-void assetExtractorInit(void)
+void assetExtractorInit(const char *executablePath)
 {
+    const char *slash = NULL;
+    size_t directoryLength = 0u;
+    size_t i;
+
+    /* Keep rom.nes beside the launched .3dsx; never depend on a fixed folder. */
+    if (executablePath != NULL) {
+        for (i = 0u; executablePath[i] != '\\0'; ++i) {
+            if (executablePath[i] == '/' || executablePath[i] == '\\\\') slash = &executablePath[i];
+        }
+    }
+    if (slash != NULL) directoryLength = (size_t)(slash - executablePath) + 1u;
+    if (directoryLength + sizeof("rom.nes") <= sizeof(s_romPath) && directoryLength + sizeof("extracted/chr_pixels.bin") <= sizeof(s_cachePath)) {
+        if (directoryLength > 0u) {
+            memcpy(s_romPath, executablePath, directoryLength);
+            memcpy(s_cachePath, executablePath, directoryLength);
+        }
+        memcpy(s_romPath + directoryLength, "rom.nes", sizeof("rom.nes"));
+        memcpy(s_cachePath + directoryLength, "extracted/chr_pixels.bin", sizeof("extracted/chr_pixels.bin"));
+    } else {
+        (void)snprintf(s_status, sizeof(s_status), "Executable path too long; place rom.nes beside the 3DSX.");
+    }
+
     s_active = 0;
     s_attempted = 0;
     s_tileCount = 0u;
