@@ -32,7 +32,7 @@ export DEPSDIR := $(CURDIR)/$(BUILD)
 # Do not link unfinished menu/gameplay scaffolding into the active homebrew.
 # Keep the source files in the repository for continued ASM translation/tests.
 EXCLUDED_RUNTIME_C := menus.c bike_physics.c collision.c track.c audio.c game_state.c nes_routines.c
-CFILES := $(filter-out $(EXCLUDED_RUNTIME_C),$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CFILES := $(filter-out $(EXCLUDED_RUNTIME_C),$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
