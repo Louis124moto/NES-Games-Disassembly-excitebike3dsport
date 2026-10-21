@@ -588,3 +588,16 @@ The source table mapping is `tbl_C01C_index` → `tbl_C02A_lo/tbl_C033_hi` → p
 - `sub_EC3B` at CPU `$EC3B` / ROM `$002C4B`: copies 256 bytes from `$05E0-$06DF` to `$06E0-$07DF`; the indexed X loop wraps through all byte values.
 - `loc_CC6B` at CPU `$CC6B` / ROM `$000C7B`: increments `$0041`; if `$004B` is nonzero, returns immediately; otherwise states >=9 are replaced with 8.
 - The native model includes the branch and host tests the copy, clamp, no-clamp, and 8-bit wrap. This is branch-level completion, not completion of states 2/9/10/12.
+
+
+## State-2 setup list `off_C046_02` — first translation batch (2026-10-21)
+
+The six pointers in the original list are translated in their original order:
+1. `ofs_001_C551_02_01`: sets `$0045=$12`, adds `$0043` only when `$0041<$08` (8-bit ADC).
+2. `ofs_001_C869_02_02`: clears CPU RAM `$004D-$00EF` inclusive.
+3. `ofs_001_C820_02_03`: models the lasting RAM effects of `sub_D13F` followed by the original clears and fills: `$00/$01/$45/$4B`, `$0340-$03EF`, `$0400-$047F=$3B`, `$0480-$057F=$3D`, sprite bytes `$0200/$0201/$0203`, and `$00E8-$00EB`. The scratch bytes `$02-$05` are the final values left by the third `sub_ECE4` call.
+4. `ofs_001_C5A3_02_04`: sets `$0045=$17`.
+5. `ofs_001_C566_02_05`: sets `$0045=$0E`.
+6. `ofs_001_C875_02_06`: the native helper currently covers the instruction-level initialization prefix `$C875-$C8DE`, including timer, flags, player/opponent start-position arrays, and initial object fields. It explicitly returns “dependencies remain” because the rest of the original routine builds PPU command buffers through `sub_C522`, `sub_C53A`, `sub_C935` and related ROM/RAM tables; those downstream effects are not claimed complete.
+
+Host regression checks the byte ranges and untouched sentinels. This is a partial source translation batch, not a completed state-2 transition. The helper is kept out of the active homebrew runtime while the global faithful-runtime gate remains closed.
