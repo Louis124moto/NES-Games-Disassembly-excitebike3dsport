@@ -50,7 +50,7 @@ Historical verification on `2fb6e14470a604c32785e7e4f6c3bc68392ddfbd` (before di
 
 ### Built-in runtime CHR extractor (on the 3DS)
 
-The homebrew now includes a runtime inspector; the Python scripts are optional PC-side tools, not a runtime dependency. Copy a legally obtained **classic iNES** ROM with CHR-ROM to `sdmc:/3ds/excitebike3ds/rom.nes` on the SD card (create the `3ds/excitebike3ds` folders if needed), then launch the homebrew and press **Y**.
+The homebrew now includes a runtime inspector; the Python scripts are optional PC-side tools, not a runtime dependency. Copy a legally obtained **classic iNES** ROM with CHR-ROM named `rom.nes` into the **same SD-card folder as `excitebike3ds.3dsx`**. Launch the homebrew and press **Y**. The extractor derives this path from the launched `.3dsx` path, so it does not require a fixed `sdmc:/3ds/excitebike3ds/` folder. The decoded cache is saved beside it at `extracted/chr_pixels.bin`.
 
 - **Y**: open/close the extractor
 - **X**: reload the ROM from the SD card
