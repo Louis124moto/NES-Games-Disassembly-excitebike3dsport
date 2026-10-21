@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void assetExtractorInit(void);
+void assetExtractorInit(const char *executablePath);
 void assetExtractorUpdate(unsigned int pressedKeys);
 int assetExtractorIsActive(void);
 const uint8_t *assetExtractorGetPixels(size_t *tileCount);
