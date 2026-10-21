@@ -1745,6 +1745,18 @@ uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048)
 }
 
 /* sub_EC3B: X starts at zero, wraps through $FF, and exits when X returns to zero. */
+/* sub_C621: LDX #$00; copy $06E0,X -> $05E0,X; DEX/BNE.
+ * The source starts at X=0, then visits $FF down through $01. */
+void nesSubC621CopyRaceData(uint8_t ram[65536])
+{
+    uint8_t x = 0u;
+    if (ram == NULL) return;
+    do {
+        ram[0x05E0u + x] = ram[0x06E0u + x];
+        x = (uint8_t)(x - 1u);
+    } while (x != 0u);
+}
+
 void nesSubEC3BCopy256(const uint8_t source[256], uint8_t destination[256])
 {
     if (source == NULL || destination == NULL) return;
