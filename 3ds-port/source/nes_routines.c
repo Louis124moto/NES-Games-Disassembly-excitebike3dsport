@@ -1652,7 +1652,7 @@ void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *
 /*
  * sub_C7DE: source-level menu cursor/input helper.
  * NES controller bits: Select=$20, Start=$10, Up=$08, Down=$04.
- * The exclusive bound matches the ASM: valid selections are 1..count-1.
+ * The exclusive bound and asymmetric wrap match the ASM; selection 0 is valid.
  * This models this helper's RAM effects, not the complete menu state machine.
  */
 uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
