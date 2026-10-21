@@ -54,13 +54,13 @@ Historical verification on `2fb6e14470a604c32785e7e4f6c3bc68392ddfbd` (before di
 
 ### Built-in runtime CHR extractor (on the 3DS)
 
-The homebrew now includes a runtime inspector; the Python scripts are optional PC-side tools, not a runtime dependency. Copy a legally obtained **classic iNES** ROM with CHR-ROM named `rom.nes` into the **same SD-card folder as `excitebike3ds.3dsx`**. Launch the homebrew and press **Y**. The extractor derives this path from the launched `.3dsx` path, so it does not require a fixed `sdmc:/3ds/excitebike3ds/` folder. The decoded cache is saved beside it at `extracted/chr_pixels.bin`.
+The homebrew now includes a runtime inspector; the Python scripts are optional PC-side tools, not a runtime dependency. Copy a legally obtained iNES or supported NES 2.0 ROM with CHR-ROM named `rom.nes` into the **same SD-card folder as `excitebike3ds.3dsx`**. Launch the homebrew and press **Y**. The extractor derives this path from the launched `.3dsx` path, so it does not require a fixed `sdmc:/3ds/excitebike3ds/` folder. The decoded cache is saved beside it at `extracted/chr_pixels.bin`.
 
 - **Y**: open/close the extractor
 - **X**: reload the ROM from the SD card
 - **B**: close the extractor and return to the menu
 
-The inspector validates the iNES magic and header lengths, accounts for the optional 512-byte trainer, checks the PRG/CHR ranges against the file size, and decodes up to 960 raw 2bpp CHR tiles for a grayscale atlas. It reports errors instead of reading beyond the ROM. This first runtime version does not yet support NES 2.0 headers, CHR-RAM snapshots, compressed graphics in PRG, PPU palette/nametable mapping, or original menu reconstruction. Do not rename a random file to `rom.nes` and assume it is compatible.
+The inspector validates the iNES magic and header lengths, accounts for the optional 512-byte trainer, checks the PRG/CHR ranges against the file size, and decodes up to 960 raw 2bpp CHR tiles for a grayscale atlas. It reports errors instead of reading beyond the ROM. The runtime decoder now supports standard NES 2.0 ROM-size fields and exponent/multiplier size fields within the 8 MiB runtime input limit. CHR-RAM snapshots, compressed graphics in PRG, PPU palette/nametable mapping, and original menu reconstruction are still unsupported. Do not rename a random file to `rom.nes` and assume it is compatible.
 
 ### Latest menu routine batch
 
@@ -79,3 +79,8 @@ At startup, the homebrew now checks `extracted/chr_pixels.bin` first and falls b
 A message saying “Loaded … CHR tiles from extracted cache” means the cache passed its format and pixel-index checks. “Extracted … CHR tiles; cache saved” means the current ROM was decoded and the cache write succeeded. Any file/decoder error is shown on the bottom screen. The log is designed to make failures visible, but the `.3dsx` argument path and SD-card I/O still require verification on the target 3DS/homebrew launcher.
 
 This remains a CHR-pattern diagnostic tool, not a reconstructed title screen: authentic menu layout, palettes, nametable/attribute data, sprite ordering, and PPU timing remain menu-completion tasks. See [TODO.md](TODO.md) for the acceptance checklist.
+
+
+### Fixes for the 3DS hardware report (2026-10-21)
+
+The bottom-screen log is now intentionally short, with one action per line, to avoid wrapping text beyond the visible console area. The top-screen atlas renderer now uses the 3DS 8×8 tiled framebuffer layout rather than treating the framebuffer as linear memory; it also clears the screen when the viewer is closed. NES 2.0 size decoding and a regression case have been added. The latest CI results must be checked before these fixes are considered validated, and a real-console run is still required.
