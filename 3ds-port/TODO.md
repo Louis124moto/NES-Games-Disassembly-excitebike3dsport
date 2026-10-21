@@ -66,6 +66,7 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [x] Include `menus.c`, `game_state.c`, and `nes_routines.c` in the native build target so menu code is no longer silently excluded.
 - [x] Route menu-mode rendering to the menu-state diagnostic and suppress the CHR atlas while menu mode is active.
 - [ ] Reconstruct the original title screen from source-verified CHR/nametable/attribute/palette data; current `menusRender()` is still a textual state trace, not the original NES image.
+- [x] Remove the invented B-to-diagnostic escape and X-help toggle from menu mode; map A/B/Select/Start/d-pad to NES controller bit positions.
 - [ ] Complete all menu setup/dispatch states and transitive routine dependencies before claiming faithful menu navigation.
 - [ ] Run host regressions and a clean 3DSX build on this integration revision; runtime wiring is not yet build-verified in this commit.
 
