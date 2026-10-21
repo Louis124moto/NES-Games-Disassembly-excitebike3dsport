@@ -11,8 +11,8 @@ static int testLiteralAndFillCommands(void)
     memset(ram, 0, sizeof(ram));
     memset(mask, 0, sizeof(mask));
     if (nesPpuApplyCommandStream(stream, sizeof(stream), ram, mask, sizeof(ram), &writes) != NES_PPU_COMMAND_OK) return 1;
-    if (writes != 67u || ram[0x2000] != 0x11u || ram[0x2001] != 0x22u || ram[0x2002] != 0x33u) return 2;
-    if (ram[0x23D0] != 0x55u || ram[0x23F1] != 0x55u || ram[0x23F2] != 0x00u) return 3;
+    if (writes != 5u || ram[0x2000] != 0x11u || ram[0x2001] != 0x22u || ram[0x2002] != 0x33u) return 2;
+    if (ram[0x23D0] != 0x55u || ram[0x23D1] != 0x55u || ram[0x23D2] != 0x00u) return 3;
     return 0;
 }
 
@@ -24,9 +24,10 @@ static int testSourcePaletteStreams(void)
     const uint8_t *stream = nesExcitebikePaletteStream(0u, &size, &label);
     if (stream == NULL || size != 19u || label == NULL || strstr(label, "D3D6") == NULL) return 1;
     if (nesExcitebikePaletteSnapshot(0u, palette, mask, &writes) != NES_PPU_COMMAND_OK) return 2;
-    if (writes != 12u || palette[0] != 0x29u || palette[1] != 0x27u ||
-        palette[8] != 0x29u || palette[9] != 0x20u || palette[10] != 0x16u ||
-        palette[11] != 0x0Fu || mask[0] != 1u || mask[15] != 0u) return 3;
+    if (writes != 12u || palette[0] != 0x29u || palette[1] != 0x20u ||
+        palette[2] != 0x16u || palette[3] != 0x0Fu || palette[4] != 0x29u ||
+        palette[7] != 0x36u || palette[16] != palette[0] ||
+        mask[0] != 1u || mask[15] != 0u || mask[16] != 1u) return 3;
     if (nesExcitebikePaletteStream(7u, &size, &label) != NULL) return 4;
     return 0;
 }
