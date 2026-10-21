@@ -88,6 +88,57 @@ static void rendererDrawChrAtlas(void)
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     if (!assetExtractorIsActive() || s_gameStarted) return;
 
+    if (assetExtractorGetViewMode() == 2u) {
+        size_t writes = 0u, tile, pixelX, pixelY;
+        const size_t streamIndex = assetExtractorGetPpuStreamIndex();
+        if (nesExcitebikePpuSnapshot(streamIndex, s_sourceNametable, s_sourceNametableMask,
+                                     s_sourcePalette, s_sourcePaletteMask, &writes) != NES_PPU_COMMAND_OK) return;
+        memcpy(s_sourceNametableView, s_sourceNametable, sizeof(s_sourceNametableView));
+        memcpy(s_sourceAttributes, s_sourceNametable + 0x3C0u, sizeof(s_sourceAttributes));
+        memcpy(s_sourcePaletteView, s_sourcePalette, sizeof(s_sourcePaletteView));
+        for (tile = 0u; tile < NES_PPU_NAMETABLE_BYTES; ++tile) {
+            const size_t tileX = tile % 32u;
+            const size_t tileY = tile / 32u;
+            const size_t attributeIndex = 0x3C0u + (tileY / 4u) * 8u + (tileX / 4u);
+            const unsigned int shift = (unsigned int)(((tileY & 2u) << 1u) | (tileX & 2u));
+            const unsigned int paletteGroup = (s_sourceAttributes[(tileY / 4u) * 8u + (tileX / 4u)] >> shift) & 3u;
+            size_t entry;
+            s_unknownTiles[tile] = (uint8_t)(s_sourceNametableMask[tile] == 0u ||
+                                               s_sourceNametableMask[attributeIndex] == 0u);
+            if (s_sourceNametableView[tile] >= tileCount) {
+                s_sourceNametableView[tile] = 0u;
+                s_unknownTiles[tile] = 1u;
+            }
+            for (entry = 0u; entry < 4u; ++entry) {
+                if (s_sourcePaletteMask[paletteGroup * 4u + entry] == 0u)
+                    s_unknownTiles[tile] = 1u;
+            }
+        }
+        if (nesPpuRenderNametable(&s_pixels[0][0], tileCount, s_sourceNametableView,
+                                  s_sourceAttributes, s_sourcePaletteView,
+                                  s_sourcePpuRgb, sizeof(s_sourcePpuRgb)) != NES_PPU_RENDER_OK) {
+            memset(s_unknownTiles, 1, sizeof(s_unknownTiles));
+        }
+        for (pixelY = 0u; pixelY < 240u; ++pixelY) {
+            for (pixelX = 0u; pixelX < 256u; ++pixelX) {
+                const size_t tileIndex = (pixelY / 8u) * 32u + pixelX / 8u;
+                const size_t sourceOffset = (pixelY * 256u + pixelX) * 3u;
+                const size_t destOffset = topFramebufferOffset((unsigned int)pixelX + 72u, (unsigned int)pixelY);
+                if (s_unknownTiles[tileIndex] != 0u) {
+                    const uint8_t shade = ((pixelX / 2u + pixelY / 2u) & 1u) != 0u ? 192u : 64u;
+                    framebuffer[destOffset] = shade;
+                    framebuffer[destOffset + 1u] = shade;
+                    framebuffer[destOffset + 2u] = shade;
+                } else {
+                    framebuffer[destOffset] = s_sourcePpuRgb[sourceOffset];
+                    framebuffer[destOffset + 1u] = s_sourcePpuRgb[sourceOffset + 1u];
+                    framebuffer[destOffset + 2u] = s_sourcePpuRgb[sourceOffset + 2u];
+                }
+            }
+        }
+        return;
+    }
+
     if (assetExtractorGetViewMode() == 1u) {
         uint8_t palette[32], written[32];
         size_t writes = 0u, index;
@@ -180,6 +231,39 @@ void rendererDraw(const GameState *state)
         return;
     }
     (void)state;
+    if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 2u) {
+        size_t writes = 0u, i, nametableWritten = 0u, attributeWritten = 0u, paletteWritten = 0u;
+        const char *sourceLabel = NULL;
+        size_t streamSize = 0u;
+        const size_t streamIndex = assetExtractorGetPpuStreamIndex();
+        (void)nesExcitebikePpuStream(streamIndex, &streamSize, &sourceLabel);
+        (void)nesExcitebikePpuSnapshot(streamIndex, s_sourceNametable, s_sourceNametableMask,
+                                       s_sourcePalette, s_sourcePaletteMask, &writes);
+        for (i = 0u; i < 960u; ++i) if (s_sourceNametableMask[i] != 0u) ++nametableWritten;
+        for (i = 0u; i < 64u; ++i) if (s_sourceNametableMask[0x3C0u + i] != 0u) ++attributeWritten;
+        for (i = 0u; i < 32u; ++i) if (s_sourcePaletteMask[i] != 0u) ++paletteWritten;
+        (void)snprintf(logText, sizeof(logText),
+            "EXCITEBIKE 3DS / SOURCE PPU SNAPSHOT\\n"
+            "------------------------------\\n"
+            "Source: %s\\nWrites replayed: %lu\\n"
+            "Nametable bytes written: %lu/960\\n"
+            "Attribute bytes written: %lu/64\\n"
+            "Palette addresses written: %lu/32\\n"
+            "Hatched tiles contain missing source data or unknown palette entries.\\n"
+            "This is a replayed command list, not a live game frame.\\n"
+            "D-pad left/right: PPU stream; up/down: change view\\n"
+            "A: export; B: back\\n",
+            sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes,
+            (unsigned long)nametableWritten, (unsigned long)attributeWritten, (unsigned long)paletteWritten);
+        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
+            consoleSelect(&s_bottomConsole);
+            consoleClear();
+            fputs(logText, stdout);
+            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
+            s_logInitialized = 1;
+        }
+        return;
+    }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 1u) {
         uint8_t palette[32], written[32];
         size_t writes = 0u, index, used;
@@ -252,7 +336,7 @@ void rendererDraw(const GameState *state)
             "Atlas uses grayscale indices, not game colors.\n",
             assetExtractorGetStatus(), (unsigned long)tileCount,
             assetExtractorIsActive() ? "OPEN" : "closed",
-            assetExtractorGetViewMode() == 0u ? "CHR atlas" : "palette diagnostics",
+            assetExtractorGetViewMode() == 0u ? "CHR atlas" : (assetExtractorGetViewMode() == 1u ? "palette diagnostics" : "PPU snapshots"),
             (unsigned long)(assetExtractorGetPage() + 1u),
             (unsigned long)((tileCount + 374u) / 375u));
     }
