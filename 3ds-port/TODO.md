@@ -189,7 +189,10 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Run the host suite and confirm the new helper tests pass.
 - [x] Trace the exact selection branches in `ofs_000_C3BD_08`: choices 1/2 reach state 9, choices 3/4 reach states 12/13, and choice 5 maps selection 5 to 2 before clearing RAM $0021–$00FF.
 - [x] Model the choice-5 RAM-clear side effects that affect the menu trace, then model state 0's timer-zero transition into state 2 from `ofs_000_C346_00`.
-- [ ] Trace every caller and fully validate state transitions, especially the initialization path after states 9/12/13.
+- [x] Translate the state-0 three-entry selector in `ofs_000_C346_00`, including the `ram_0042`-dependent state 1/8 branch and cursor-Y table `tbl_C080_spr_Y`.
+- [x] Translate the state-1 five-entry selector in `ofs_000_C395_01`, including LEFT/RIGHT-to-vertical remapping, cursor-X table `tbl_C083_spr_X`, and `sub_C411` side effects.
+- [x] Connect the existing `sub_D310` timer routine to the menu's `$20/$30/$31` timer state, preserving the 10-frame divider.
+- [ ] Trace every caller and fully validate the startup/display setup and state transitions, especially destination states 9/12/13.
 - [ ] Reconstruct the original menu visuals from the original tile data, palette/attribute writes, sprite coordinates, and PPU upload path. Do not invent menu labels or pretend a diagnostic overlay is the original menu.
 - [ ] Connect the verified state model to a pixel renderer and compare selection/confirmation timing against the NES reference.
 - [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
