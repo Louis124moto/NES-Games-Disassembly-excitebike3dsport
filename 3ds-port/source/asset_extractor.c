@@ -280,10 +280,6 @@ static void loadChrRom(void)
                            "Extracted %lu CHR tiles; cache and SD exports saved.",
                            (unsigned long)s_tileCount);
         } else if (cacheOk) {
-        (void)snprintf(s_status, sizeof(s_status),
-                       "Extracted %lu CHR tiles; cache saved, SD export failed (A to retry).",
-                       (unsigned long)s_tileCount);
-    } else {
             (void)snprintf(s_status, sizeof(s_status),
                            "Extracted %lu CHR tiles; cache saved, SD export failed (A to retry).",
                            (unsigned long)s_tileCount);
