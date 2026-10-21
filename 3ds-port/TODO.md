@@ -187,7 +187,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Trace the shared input/cursor helper `sub_C7DE` at CPU `$C7DE` (ROM offset `$0007EE`): reads `ram_btn_press`, masks `$3C`, sets `ram_0031_timer=$5D` when a relevant input is present, uses `ram_0049` as a repeat guard, and applies one-based cursor wrap behavior.
 - [x] Add a native C model of those helper side effects and host tests for up/down/select, wrapping, repeat suppression, idle reset, and Start's four-frame timer effect.
 - [ ] Run the host suite and confirm the new helper tests pass.
-- [x] Trace the exact selection branches in `ofs_000_C3BD_08`: choices 1/2 reach state 9, choices 3/4 reach states 12/13, and choice 5 maps selection 5 to 2 before clearing RAM $0021–$00FF.
+- [x] Trace the exact selection branches in `ofs_000_C3BD_08`: selection indices 0/1 reach state 9, indices 3/4 reach states 12/13, and choice 5 maps selection 5 to 2 before clearing RAM $0021–$00FF.
 - [x] Model the choice-5 RAM-clear side effects that affect the menu trace, then model state 0's timer-zero transition into state 2 from `ofs_000_C346_00`.
 - [x] Translate the state-0 three-entry selector in `ofs_000_C346_00`, including the `ram_0042`-dependent state 1/8 branch and cursor-Y table `tbl_C080_spr_Y`.
 - [x] Translate the state-1 five-entry selector in `ofs_000_C395_01`, including LEFT/RIGHT-to-vertical remapping, cursor-X table `tbl_C083_spr_X`, and `sub_C411` side effects.
@@ -211,5 +211,5 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Run the host suite; the new tests are wired but not yet confirmed passing.
 - [ ] Build the 3DS target on this same revision and verify both `.3dsx` and `.elf`.
 - [ ] Trace the exact menu option meanings and title-screen PPU/nametable/palette path before replacing index labels with authentic content.
-- [ ] Implement and test destination states 9, 12, and 13 and their complete callers/dependencies; only the state-8 choice branches and state-0 timer-zero path are currently modeled.
+- [ ] Implement and test destination states 9, 12, and 13 and their complete callers/dependencies; states 0/1/8 are modeled at CPU-control-flow level, but startup/display setup and destination-state behavior remain incomplete.
 - [ ] Verify menu navigation, confirm behavior, sound, timing, and title visuals against the NES reference.
