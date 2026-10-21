@@ -44,7 +44,7 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Export source-replayed nametable/attribute snapshots and write masks for all 18 static command streams in the source table.
 - [ ] Add dynamic active-state selection, CHR bank context, OAM/sprite capture, and any further verified runtime data formats.
 - [ ] Validate cold start, cache hit/miss, re-extraction, stale-cache rejection, malformed/unsupported input, bounds, output correctness, and repeated navigation.
-- [ ] Run the complete host test suite and a 3DS build on the exact same commit; record links and commit SHA.
+- [x] Run the complete host test suite and a 3DS build on the exact same commit; record links and commit SHA (commit `9ffec940bf211957b229dae8f4f04ff00dc027fd`).
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
@@ -86,6 +86,7 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Add host regression tests for raw-byte preservation, decoded pixels, PNG signature, source PPU command-list semantics, palette mirror behavior, all seven source palette snapshots, and explicit limits.
 - [x] Keep the original menu path locked while the extractor stage is not accepted.
 - [x] Add a source-derived PPU command-list interpreter and export seven verified palette command streams from `bank_FF.asm` D3D6–D450.
+- [x] Add a third diagnostic preview that composes source PPU snapshots and hatches tiles whose nametable bytes, attribute bytes, or required palette entries are unknown.
 - [x] Export 18 source PPU update streams (table indices 1–17 plus index 25/D631) with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
 - [ ] Trace which palette list is active in each game state; complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
 - [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
@@ -94,9 +95,8 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
 
 **Evidence available at the time of this log:**
-- Host regression workflow passed at commit `377c548c2f8dfc97470b0617df5324ea73d28824`, including CHR decoding, native PNG/binary export, seven palette streams, and 18 source PPU snapshot exports: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594834025
-- 3DS build passed at source revision `3c41a1ecf3d5303fb2c715db7ef540fca2b01ee7`, including native source PPU stream snapshots: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594756480
-- A newer build is pending for a test-only change; the runtime source is unchanged from the successful build revision.
+- Host regression workflow passed at commit `9ffec940bf211957b229dae8f4f04ff00dc027fd`, including CHR decoding, native PNG/binary export, source PPU command interpretation, seven palette streams, and 18 PPU snapshot exports: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39596598754
+- 3DS build passed at the exact same commit, including the three-view extractor UI and partial PPU preview: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39596598792
 - No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity. The PPU preview uses direct CHR tile indices. The checked-in source header confirms mapper 0 and 8 KiB CHR-ROM for canonical Excitebike, but runtime identity validation and active palette/stream selection remain unverified.
 - No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity.
 
