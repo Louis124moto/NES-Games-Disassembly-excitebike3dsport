@@ -1634,14 +1634,64 @@ void nesSubCFCBCompareObjectPosition(uint8_t ram0094, uint8_t ram0078,
         *ram005C = (uint8_t)(*ram005C & 0x0Fu);
 }
 
+/* sub_CFE3: LDA #$F0; AND ram_005C_obj,X; STA ram_005C_obj,X. */
+void nesSubCFE3MaskFlags(uint8_t *ram005C)
+{
+    if (ram005C != NULL) *ram005C = (uint8_t)(*ram005C & 0xF0u);
+}
+
+/* sub_CFEA calls sub_CFE3 before adding the unsigned comparison marker. */
 void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *ram005C)
 {
-    uint8_t flags;
     if (ram005C == NULL) return;
-    flags = (uint8_t)(*ram005C & 0xF0u);
+    nesSubCFE3MaskFlags(ram005C);
     if (ram007C != 0u && ram007C != ram00AC)
-        flags = (uint8_t)(flags | (ram007C < ram00AC ? 1u : 2u));
-    *ram005C = flags;
+        *ram005C = (uint8_t)(*ram005C | (ram007C < ram00AC ? 1u : 2u));
+}
+
+/*
+ * sub_C7DE: source-level menu cursor/input helper.
+ * NES controller bits: Select=$20, Start=$10, Up=$08, Down=$04.
+ * The exclusive bound matches the ASM: valid selections are 1..count-1.
+ * This models this helper's RAM effects, not the complete menu state machine.
+ */
+uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
+                            uint8_t *selection, uint8_t *repeatGuard,
+                            uint8_t *timer30, uint8_t *timer31,
+                            uint8_t *selectionChanged)
+{
+    uint8_t y;
+    if (selection == NULL || repeatGuard == NULL || timer30 == NULL ||
+        timer31 == NULL || selectionChanged == NULL || count < 2u)
+        return 0u;
+
+    y = *selection;
+    *selectionChanged = 0u;
+    if ((buttonPress & 0x3Cu) == 0u) {
+        *repeatGuard = 0u;
+        return 0u;
+    }
+
+    *timer31 = 0x5Du;
+    if (*repeatGuard != 0u) return 0u;
+
+    if ((buttonPress & 0x20u) != 0u || (buttonPress & 0x04u) != 0u) {
+        y = (uint8_t)(y + 1u);
+        if (y >= count) y = 1u;
+        *selectionChanged = 1u;
+    } else if ((buttonPress & 0x08u) != 0u) {
+        y = (uint8_t)(y - 1u);
+        if ((y & 0x80u) != 0u) y = (uint8_t)(count - 1u);
+        *selectionChanged = 1u;
+    } else {
+        *timer30 = 4u;
+    }
+
+    *selection = y;
+    *repeatGuard = (uint8_t)(*repeatGuard + 1u);
+    return ((buttonPress & 0x20u) != 0u ||
+            (buttonPress & 0x04u) != 0u ||
+            (buttonPress & 0x08u) != 0u) ? 0u : 4u;
 }
 
 uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C)
