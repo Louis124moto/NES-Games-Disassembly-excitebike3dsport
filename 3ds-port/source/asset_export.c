@@ -133,7 +133,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Decoded pixels: chr_pixels.bin (%lu tiles, 64 2bpp indices per tile; runtime cap 960 tiles)\n"
         "Preview: chr_atlas.png (256x240 RGB; 32x30 tiles; grayscale index visualization)\n"
         "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
-        "Palette: NOT APPLIED; active palette requires confirmed PPU RAM writes\n"
+        "Palette presets: ppu_palette_12..18.bin replay source PPU write lists; mask and stream binaries are included\n"
+        "Presets are not a claim about which palette is active in a live menu state\n"
         "Nametable/attributes/OAM: NOT CAPTURED by this export\n"
         "Unknown/compressed PRG graphics: NOT CLAIMED EXTRACTED\n",
         (unsigned long)rawChrBytes, (unsigned long)tileCount);
