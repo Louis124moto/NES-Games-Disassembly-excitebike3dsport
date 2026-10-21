@@ -259,3 +259,14 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Run host tests and the 3DS build on the exact cleanup commit; do not infer build success from historical runs.
 
 **Runtime behavior after cleanup:** without opening the diagnostic viewer, the application intentionally displays no invented menu or gameplay. This is a temporary fidelity safeguard, not a completed port.
+
+
+## State-2 setup list — 2026-10-21
+
+- [x] Translate command 1 `ofs_001_C551_02_01` and test its conditional add.
+- [x] Translate command 2 `ofs_001_C869_02_02` and test exact inclusive clear range.
+- [x] Translate command 3 `ofs_001_C820_02_03` lasting RAM effects, including scratch bytes and fill ranges.
+- [x] Translate commands 4 and 5 (`$0045=$17` and `$0045=$0E`).
+- [x] Translate the exact initialization prefix of command 6 (`$C875-$C8DE`) and add host regression.
+- [ ] Finish command 6 after `$C8DE`: port conditional `tbl_C158`/division path, `sub_C522`, `sub_C53A`, `sub_C935`, and their lookup/PPU-buffer dependencies before calling the six-command list complete.
+- [ ] Connect the verified state-2 list to the sequencer only after command 6's full side effects and dependency order are represented.
