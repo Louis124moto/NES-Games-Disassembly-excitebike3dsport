@@ -306,7 +306,7 @@ void rendererDraw(const GameState *state)
             (void)snprintf(logText + used, sizeof(logText) - used,
                 "\n# = written by this source list; - = untouched.\n"
                 "Preset does not identify the active live-game palette.\n"
-                "D-pad left/right: palette; up/down: simple/advanced\n"
+                "D-pad left/right: palette; up/down: change view\n"
                 "A: export; B: back\n");
         }
         if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
@@ -336,11 +336,11 @@ void rendererDraw(const GameState *state)
             "CHR: %.36s\n"
             "Tiles: %lu / 960\n"
             "Source: rom.nes or CHR_ROM.chr\n"
-            "Exports: CHR, pixels, PNG + 7 source palettes\n"
+            "Exports: CHR, PNG, 7 palettes + 17 PPU snapshots\n"
             "Atlas: %s\n"
             "View: %s; page %lu/%lu\n"
             "D-pad left/right: page/palette\n"
-            "D-pad up/down: simple/advanced\n"
+            "D-pad up/down: atlas/palette/PPU view\n"
             "A: open/export; B: close/re-extract\n"
             "START: menu locked until Stage 1 passes\n"
             "Atlas uses grayscale indices, not game colors.\n",
