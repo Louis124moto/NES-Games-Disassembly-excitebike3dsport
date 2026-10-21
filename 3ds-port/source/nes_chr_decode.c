@@ -45,7 +45,7 @@ NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
     if (rom == NULL || pixels == NULL || tileCount == NULL || maxTiles == 0u)
         return NES_CHR_DECODE_INVALID_ARGUMENT;
     if (romSize < 16u) return NES_CHR_DECODE_SHORT_HEADER;
-    if (memcmp(rom, "NES\\x1A", 4u) != 0) return NES_CHR_DECODE_BAD_MAGIC;
+    if (memcmp(rom, "NES\x1A", 4u) != 0) return NES_CHR_DECODE_BAD_MAGIC;
 
     if (!checkedChrSize(rom, &chrBytes))
         return NES_CHR_DECODE_UNSUPPORTED_NES2;
