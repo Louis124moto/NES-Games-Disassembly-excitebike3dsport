@@ -9,5 +9,6 @@ void assetExtractorUpdate(unsigned int pressedKeys);
 int assetExtractorIsActive(void);
 const uint8_t *assetExtractorGetPixels(size_t *tileCount);
 const char *assetExtractorGetStatus(void);
+unsigned int assetExtractorGetPalette(void);
 
 #endif
