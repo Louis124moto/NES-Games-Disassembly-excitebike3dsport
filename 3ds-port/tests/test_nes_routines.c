@@ -868,7 +868,18 @@ static int testState2SetupCommands(void)
     if(ram[0x0300u]!=0x14u||ram[0x0315u]!=0x24u||ram[0x0316u]!=0xCFu||
        ram[0x0317u]!=0x07u||ram[0x0319u]!=0xFBu||ram[0x031Cu]!=0xFBu||
        ram[0x031Fu]!=0u)return 18;
-    puts("PASS: all six state-2 setup commands, including C875's PPU command-buffer path.");
+
+    /* C8E0 alternate-mode branch and C53A's additive $23 RAM-table offset. */
+    memset(ram,0,sizeof(ram));
+    ram[0x0041u]=0x08u; ram[0x0043u]=0x04u; ram[0x0046u]=1u;
+    ram[0x03F2u]=1u; ram[0x03F3u]=42u; ram[0x03F8u]=0x20u;
+    ram[0x05AFu]=2u; ram[0x05B0u]=3u; ram[0x05B1u]=4u;
+    if(nesSubC046Command6InitPrefix(ram)!=0u)return 19;
+    if(ram[0x0300u]!=0x1Bu||ram[0x0306u]!=4u||ram[0x0307u]!=2u)return 20;
+    if(ram[0x0301u+0x1Bu]!=0x24u||ram[0x0302u+0x1Bu]!=0xCFu||
+       ram[0x0303u+0x1Bu]!=0x07u||ram[0x0305u+0x1Bu]!=0xFBu||
+       ram[0x0308u+0x1Bu]!=0xFBu||ram[0x030Bu+0x1Bu]!=0u)return 21;
+    puts("PASS: all six state-2 setup commands, including normal/alternate C875 PPU command-buffer paths.");
     return 0;
 }
 
