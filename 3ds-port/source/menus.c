@@ -8,7 +8,7 @@
  * Source-derived subset of sub_C2A9's command sequencer. The command-list
  * prelude (sub_C318) runs once after reset/state changes; command index 0 is
  * then selected from the original tbl_C01C_index/tbl_C02A/tbl_C033 sequence.
- * Only the menu setup lists for states 0, 1, 8, and 13 are translated here.
+ * Menu setup lists are translated command-by-command where all transitive effects are known. Unsupported commands remain blocked rather than replaced with guessed behavior.
  */
 static int menusRunSetupSequence(GameState *state)
 {
@@ -46,6 +46,12 @@ static int menusRunSetupSequence(GameState *state)
         if (state->menu_ram0044 > 3u) return 1;
     } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
         if (state->menu_ram0044 > 2u) return 1;
+    } else if (state->menu_asm_state == 4u) {
+        if (state->menu_ram0044 > 4u) return 1;
+    } else if (state->menu_asm_state == 6u) {
+        if (state->menu_ram0044 > 3u) return 1;
+    } else if (state->menu_asm_state == 7u) {
+        if (state->menu_ram0044 > 3u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
     }
@@ -104,6 +110,62 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
+    } else if (state->menu_asm_state == 4u) {
+        if (commandIndex == 0u) { /* ofs_001_C55E_04_01 */
+            state->menu_ram0045 = 0x06u;
+            return 1;
+        }
+        if (commandIndex == 1u) { /* ofs_001_C571_04_02 */
+            state->menu_ram0045 = 0x09u;
+            return 1;
+        }
+        if (commandIndex == 2u) { /* ofs_001_C5AC_04_03 */
+            static const uint8_t command[6] = {0x04u, 0x21u, 0x6Fu, 0x01u, 0x00u, 0x00u};
+            unsigned int i;
+            state->menu_timer34 = 0x12u;
+            for (i = 0u; i < 6u; ++i) state->menu_ram0300[i] = command[i];
+            state->menu_ram0300[4] = (uint8_t)(state->menu_ram0043 + 1u);
+            return 1;
+        }
+        if (commandIndex == 3u) { /* ofs_001_C514_04_04 */
+            state->menu_ram0045 = 0x18u;
+            return 1;
+        }
+    } else if (state->menu_asm_state == 6u) {
+        if (commandIndex == 0u) { /* ofs_001_C55E_06_01 */
+            state->menu_ram0045 = 0x06u;
+            return 1;
+        }
+        if (commandIndex == 1u) { /* ofs_001_C575_06_02 */
+            state->menu_ram0043 = 0x05u;
+            state->menu_sprite_y = 0xA0u; /* tbl_C080_spr_Y[2] */
+            state->menu_sprite_x = 0x60u; /* tbl_C088_spr_X[2] */
+            state->menu_sprite_tile = 0xFAu;
+            state->menu_sprite_attribute = 0u;
+            state->menu_ram0046 = 0u;
+            state->menu_ram0045 = 0x0Fu;
+            return 1;
+        }
+        if (commandIndex == 2u) { /* ofs_001_C514_06_03 */
+            state->menu_ram0045 = 0x18u;
+            return 1;
+        }
+    } else if (state->menu_asm_state == 7u) {
+        if (commandIndex == 0u) { /* ofs_001_C869_07_01 */
+            state->menu_repeat_guard = 0u;
+            state->menu_ram0040 = 0u;
+            state->menu_ram0044 = 0u;
+            return 1;
+        }
+        if (commandIndex == 1u) { /* ofs_001_C586_07_02 depends on sub_C621 */
+            return 1; /* wait here; do not invent sub_C621's state changes */
+        }
+        if (commandIndex == 2u) { /* ofs_001_C518_07_03 */
+            state->menu_repeat_guard = 1u;
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
+            return 1;
+        }
     } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
         if (commandIndex == 0u) {
             /* ofs_001_C582_08_01 */
@@ -119,7 +181,7 @@ static int menusRunSetupSequence(GameState *state)
         }
     }
 
-    /* Other command lists (notably states 2, 9, 10, and 12) are pending. */
+    /* Other command lists and transitive routines are still pending; do not execute unknown commands. */
     state->menu_action_x = 0u;
     state->menu_selection_changed = 0u;
     return 1;
@@ -325,13 +387,16 @@ void menusRender(const GameState *state)
                (unsigned int)state->menu_ram0044);
         if (state->menu_asm_state != 0u &&
             state->menu_asm_state != 1u &&
+            state->menu_asm_state != 4u &&
+            state->menu_asm_state != 6u &&
+            state->menu_asm_state != 7u &&
             state->menu_asm_state != 8u &&
             state->menu_asm_state != 13u) {
             printf("Setup command list for state %u is not ported yet.\n",
                    (unsigned int)state->menu_asm_state);
         }
         if (state->show_help)
-            printf("Setup command lists are reconstructed for states 0, 1, 8 and 13 only.\n");
+            printf("Only source-verified command effects are applied; incomplete transitive routines remain blocked.\n");
         return;
     }
     if (state->menu_asm_state == 0u) {
