@@ -286,3 +286,6 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 | `tbl_C083_spr_X` | `menusUpdate` state 1 cursor table | Source bytes copied from ASM |
 | `tbl_C08B_spr_Y` | `menusUpdate` state 8 cursor table | Source bytes copied from ASM |
 | `sub_D310` | Existing `nesSubD310DecreaseAllTimers` | Integrated for the tracked menu timer bytes |
+
+
+| `sub_D310` menu projection | `nesSubD310DecreaseMenuTimers` | Reuses tested 10-frame divider for menu timer bytes `$30/$31`; menu-specific regression vectors added, execution pending |
