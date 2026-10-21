@@ -329,6 +329,9 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
 void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030, uint8_t *ram0031, uint8_t *ram0034);
 void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);
+void nesSubC318InitializePpu(uint8_t oam[256], uint8_t nametables[2048],
+                             uint8_t *scrollX, uint8_t *scrollY,
+                             uint8_t *ppuCtrl, uint8_t *ppuMask);
 void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
                                 uint8_t *ram0042, uint8_t *ram03F2,
                                 uint8_t *clearRamRequested,
