@@ -9,8 +9,10 @@
  * Runtime routing:
  * - cold boot remains the diagnostic/CHR-inspector screen;
  * - START leaves diagnostics and enters the source-derived menu state machine;
+ * - once in menu mode, controller edges are passed to the ASM-derived dispatcher;
  * - menu updates are now in the active 3DSX frame loop.
  *
+ * No extra menu controls are invented: B is not a diagnostic escape in menu mode.
  * The native menu model is still incomplete and menusRender currently reports
  * its state rather than reproducing the original PPU image. Do not describe
  * this integration point as a faithful title-screen implementation.
@@ -41,13 +43,6 @@ void gameUpdate(void)
             return;
         }
         assetExtractorUpdate(s_input.pressed);
-        return;
-    }
-
-    /* B is retained as an explicit escape hatch back to diagnostics. */
-    if ((s_input.pressed & KEY_B) != 0u) {
-        s_menuActive = 0;
-        rendererSetMenuActive(0);
         return;
     }
 
