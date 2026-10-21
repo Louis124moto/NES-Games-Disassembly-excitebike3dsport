@@ -6,6 +6,7 @@
 #include "asset_extractor.h"
 #include "asset_export.h"
 #include "nes_chr_decode.h"
+#include "nes_ppu_commands.h"
 
 /*
  * Runtime CHR extraction/cache for the 3DS homebrew.
