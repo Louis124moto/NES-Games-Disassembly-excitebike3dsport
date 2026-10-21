@@ -154,6 +154,12 @@ static const uint8_t s_ppuStream17[] = {
     0x17, 0x10, 0x00
 };
 
+static const uint8_t s_ppuStream18[] = {
+    0x22, 0x8e, 0x05, 0x0e, 0x1b, 0x1b, 0x18, 0x1b, 0x00
+};
+
+
+
 typedef struct {
     const uint8_t *bytes;
     size_t size;
@@ -177,7 +183,8 @@ static const PpuStream s_ppuStreams[NES_EXCITEBIKE_PPU_STREAM_COUNT] = {
     {s_ppuStream14, sizeof(s_ppuStream14), "_off_000_D524_0E"},
     {s_ppuStream15, sizeof(s_ppuStream15), "_off_000_D7FA_0F"},
     {s_ppuStream16, sizeof(s_ppuStream16), "_off_000_D623_10"},
-    {s_ppuStream17, sizeof(s_ppuStream17), "_off_000_D614_11"}
+    {s_ppuStream17, sizeof(s_ppuStream17), "_off_000_D614_11"},
+    {s_ppuStream18, sizeof(s_ppuStream18), "_off_000_D631_19 (tbl_C0F6 index 25)"}
 };
 
 typedef struct {
