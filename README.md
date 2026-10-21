@@ -160,7 +160,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 
 ### Current runtime behavior
 
-- Put either a legally obtained `rom.nes` iNES/NES 2.0 ROM or the project’s raw `CHR_ROM.chr` dump beside the launched `.3dsx`. The iNES file takes precedence if both are present.
+- Put either a legally obtained Excitebike `rom.nes` iNES/NES 2.0 ROM or the project’s raw `CHR_ROM.chr` dump beside the launched `.3dsx`. The iNES file takes precedence if both are present. The decoder can inspect other CHR-ROM files, but the embedded PPU command lists and palette presets are Excitebike-specific.
 - On startup, the app checks the ROM fingerprint and cache, then extracts or reloads CHR-ROM tile pixels.
 - Exports are written beside the app in `extracted/`: raw CHR, decoded pixels, grayscale PNG atlas, seven source palette snapshots/masks/streams, 18 PPU command streams, 18 nametable/palette snapshots with write masks, and `manifest.txt`.
 - The internal decoded cache is `extracted/chr_cache.bin`; it is distinct from the exported pixel data.
