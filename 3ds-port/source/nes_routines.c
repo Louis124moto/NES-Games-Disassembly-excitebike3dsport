@@ -1744,7 +1744,12 @@ void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
 
     selection = *ram0042;
     if (selection < 2u) {
+        /*
+         * ASM path C3CD-C3D2 performs INC ram_0041 at C3D0 and then
+         * reaches loc_C3AF, which increments it a second time.
+         */
         *ram03F2 = selection;
+        nesSubC3AFIncrementState(ram0041);
         nesSubC3AFIncrementState(ram0041);
         nesSubC3B1ResetFrameFlags(ram0040, ram0044);
     } else if (selection == 2u) {
