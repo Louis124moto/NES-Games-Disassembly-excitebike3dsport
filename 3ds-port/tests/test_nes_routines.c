@@ -833,6 +833,23 @@ static int testSubC55EC56A(void)
     return 0;
 }
 
+static int testSubC455SelectState(void)
+{
+    uint8_t state = 0xA5u;
+    nesSubC455SelectState(0x07u, 0u, &state);
+    if (state != 0xA5u) return 1;
+    nesSubC455SelectState(0x07u, 1u, &state);
+    if (state != 0x07u) return 2;
+    state = 0xA5u;
+    nesSubC455SelectState(0x08u, 0u, &state);
+    if (state != 0x08u) return 3;
+    state = 0xA5u;
+    nesSubC455SelectState(0xFFu, 0u, &state);
+    if (state != 0x08u) return 4;
+    puts("PASS: C455 menu state selection, unsigned threshold, and untouched-byte path.");
+    return 0;
+}
+
 static int testState2SetupCommands(void)
 {
     static uint8_t ram[65536];
@@ -898,6 +915,7 @@ static int testState2SetupCommands(void)
 
 int main(void)
 {
+    if (testSubC455SelectState() != 0) { fputs("FAIL: menu command C455\\n", stderr); return 1; }
     if (testSubC55EC56A() != 0) { fputs("FAIL: menu commands C55E/C56A\\n", stderr); return 1; }
     {
         int state2Result = testState2SetupCommands();
