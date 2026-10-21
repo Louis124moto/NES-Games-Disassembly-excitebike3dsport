@@ -86,7 +86,7 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Add host regression tests for raw-byte preservation, decoded pixels, PNG signature, source PPU command-list semantics, palette mirror behavior, all seven source palette snapshots, and explicit limits.
 - [x] Keep the original menu path locked while the extractor stage is not accepted.
 - [x] Add a source-derived PPU command-list interpreter and export seven verified palette command streams from `bank_FF.asm` D3D6–D450.
-- [x] Export 18 source PPU update streams from `tbl_C0F6` indices 1–17 with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
+- [x] Export 18 source PPU update streams (table indices 1–17 plus index 25/D631) with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
 - [ ] Trace which palette list is active in each game state; complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
 - [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
 - [ ] Finish UI and error-path tests, including malformed headers, missing source, failed writes, stale cache, repeated extraction, palette navigation, and viewer mode changes.
@@ -94,7 +94,7 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
 
 **Evidence available at the time of this log:**
-- Host regression workflow passed at commit `377c548c2f8dfc97470b0617df5324ea73d28824`, including CHR decoding, native PNG/binary export, seven palette streams, and 17 source PPU snapshot exports: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594834025
+- Host regression workflow passed at commit `377c548c2f8dfc97470b0617df5324ea73d28824`, including CHR decoding, native PNG/binary export, seven palette streams, and 18 source PPU snapshot exports: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594834025
 - 3DS build passed at source revision `3c41a1ecf3d5303fb2c715db7ef540fca2b01ee7`, including native source PPU stream snapshots: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594756480
 - A newer build is pending for a test-only change; the runtime source is unchanged from the successful build revision.
 - No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity. The PPU preview uses direct CHR tile indices. The checked-in source header confirms mapper 0 and 8 KiB CHR-ROM for canonical Excitebike, but runtime identity validation and active palette/stream selection remain unverified.
