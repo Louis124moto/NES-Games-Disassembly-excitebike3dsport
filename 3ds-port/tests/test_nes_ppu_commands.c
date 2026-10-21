@@ -28,7 +28,13 @@ static int testSourceNametableStreams(void)
     if (nesExcitebikePpuSnapshot(0u, nametable, mask, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) return 2;
     if (writes == 0u || nametable[0x3D0u] != 0x55u || nametable[0x3EFu] != 0x55u ||
         mask[0x3D0u] != 1u || mask[0x3EFu] != 1u) return 3;
-    if (nesExcitebikePpuStream(NES_EXCITEBIKE_PPU_STREAM_COUNT, &streamSize, &label) != NULL) return 4;
+    stream = nesExcitebikePpuStream(17u, &streamSize, &label);
+    if (stream == NULL || streamSize != 9u || strstr(label, "D631") == NULL) return 4;
+    if (nesExcitebikePpuSnapshot(17u, nametable, mask, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) return 5;
+    if (nametable[0x28Eu] != 0x0Eu || nametable[0x28Fu] != 0x1Bu ||
+        nametable[0x290u] != 0x1Bu || nametable[0x291u] != 0x18u ||
+        nametable[0x292u] != 0x1Bu || mask[0x28Eu] == 0u) return 6;
+    if (nesExcitebikePpuStream(NES_EXCITEBIKE_PPU_STREAM_COUNT, &streamSize, &label) != NULL) return 7;
     return 0;
 }
 
