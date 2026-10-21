@@ -6,6 +6,8 @@
 
 #define NES_PPU_ADDRESS_SPACE 0x4000u
 #define NES_EXCITEBIKE_PALETTE_STREAM_COUNT 7u
+#define NES_EXCITEBIKE_PPU_STREAM_COUNT 17u
+#define NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES 0x1000u
 
 typedef enum {
     NES_PPU_COMMAND_OK = 0,
@@ -31,5 +33,14 @@ const uint8_t *nesExcitebikePaletteStream(size_t index, size_t *streamSize,
 NesPpuCommandResult nesExcitebikePaletteSnapshot(size_t index, uint8_t palette[32],
                                                   uint8_t writtenMask[32],
                                                   size_t *writeCount);
+
+/* Static PPU command lists at bank_FF.asm table C0F6 indices 1..17. */
+const uint8_t *nesExcitebikePpuStream(size_t index, size_t *streamSize,
+                                      const char **sourceLabel);
+NesPpuCommandResult nesExcitebikePpuSnapshot(size_t index,
+                                              uint8_t nametable[ NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES ],
+                                              uint8_t nametableMask[ NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES ],
+                                              uint8_t palette[32], uint8_t paletteMask[32],
+                                              size_t *writeCount);
 
 #endif
