@@ -91,6 +91,7 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [ ] Implement the source-faithful `sub_C2A9` setup dispatcher: preserve the `$0040` alternate dispatch path, `$0030` timer gate, `tbl_C01C_index` mapping, `$0044` byte increment/wrap, indirect pointer reads, and the `$C318` list-transition cleanup. The command-list trace is now documented; native integration is not yet done.
 - [ ] Finish the source-derived menu setup sequencer before expanding gameplay: connect the six tested state-2 setup commands (`C551`, `C869`, `C820`, `C5A3`, `C566`, `C875`) to persistent NES RAM state; do not treat isolated helper tests as menu integration.
 - [ ] Trace and translate setup command lists for states 3/4/5/6/7/8/12 and destination states 9/10/12, preserving pointer-table order, timer gating, and the `$0044` command index.
+- [ ] Translate and test the remaining state-3 setup entries (`C455`, `C5A7`, `C485`) and their dependencies (`C53A`, `C522`, `C92C`, and any indirect table reads) before enabling state 3 in the native sequencer. `C55E` and `C56A` are now translated with regression vectors, but not yet integrated.
 - [ ] Trace the actual title/menu PPU command streams, nametable/attribute writes, palettes, OAM ordering, scroll, and frame timing; connect extracted CHR patterns to their exact tile indices and palette use.
 - [ ] Reproduce original menus and pause/unpause behavior.
 - [ ] Reproduce sprite/OAM command generation and rendering behavior through an explicit 3DS renderer.
