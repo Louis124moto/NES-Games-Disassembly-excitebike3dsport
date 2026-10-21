@@ -495,3 +495,14 @@ Source: `Excitebike/bank_FF.asm`, CPU `$E96E-$E97D` (ROM offset `$00297E-$00298D
 - Otherwise `$E978-$E97D` performs `LDA ram_obj_pos_Y_lo,X; CLC; ADC ram_00DC_obj,X; STA ram_obj_pos_Y_lo,X`. This is unsigned 8-bit addition modulo 256 with carry intentionally discarded; the carry is not consumed by the next block because the next instructions overwrite flags.
 - C helper: `nesLocE96EApplyVerticalDelta`, using four-byte arrays for `$0058`, Y-low, and `$00DC`. Exhaustive host regression covers all 256³ combinations for one slot and verifies skip states and the other slots' byte-wrap behavior.
 - Not yet connected to `gameUpdate`: the full `sub_E96C` path also depends on `sub_DD06`, collision/state handling, the `$E53D` Y thresholds, and the final player input branch at `$EA07-$EA43`. Those dependencies must be translated and verified before integration.
+
+
+## Follow-up source audit — comparison and flag helpers (2026-10-21)
+
+The following routines were cross-read against `Excitebike/bank_FF.asm`. This is source review, not a claim that the new/expanded host tests have executed.
+
+- `sub_CFCB` — CPU `$CFCB`, ROM offset `$000FDB`. Starts with `LDY #$80`; compares `ram_0094_obj,X` to `ram_0078,X` using unsigned 6502 `CMP/BCC/BNE`. If the high byte is equal, it compares `ram_0090_obj,X` with `ram_0074,X`. The less-than path ORs `$80` into `ram_005C_obj,X`; the other path enters `sub_CFDB`. The C helper models the resulting flag-byte effect, not all CPU registers/flags.
+- `sub_CFDB` — CPU `$CFDB`, ROM offset `$000FEB`. Reads `ram_0094_obj,X`; zero returns without changing `ram_005C_obj,X`. Nonzero selects mask `$0F` and ANDs the object flag byte. The C helper preserves this zero early exit and mask behavior.
+- `sub_CFEA` — CPU `$CFEA`, ROM offset `$000FFA`. Calls `sub_CFE3` (`A=$F0`, AND with `ram_005C_obj,X`, preserving the upper nibble and clearing the lower nibble), sets `Y=1`, then returns if `ram_007C_obj,X` is zero or equal to `ram_00AC_obj,X`. Otherwise it ORs `1` for unsigned less-than or `2` for unsigned greater-than into the flag byte. The C helper matches this modeled byte effect.
+- Host test coverage was expanded for `sub_CFDB` over every flag byte and `ram_0094` byte, for all high-byte pairs in `sub_CFCB` plus low-byte edge comparisons, and exhaustively over A/operand/initial-flag bytes for `sub_CFEA`. The test code is wired into `test_nes_routines.c`; **execution is pending** and must be confirmed by a host test run before status is upgraded.
+- None of these helper translations is yet proven gameplay-integrated or end-to-end fidelity-verified.
