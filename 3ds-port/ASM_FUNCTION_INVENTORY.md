@@ -28,7 +28,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$C522` | `sub_C522` | Pending | calls: sub_CB13 |
 | `$C53A` | `sub_C53A` | Pending | — |
 | `$C53E` | `sub_C53E` | Pending | calls: sub_CB06 |
-| `$C621` | `sub_C621` | Pending | — |
+| `$C621` | `nesSubC621CopyRaceData` | Translated + regression vector: 256-byte `$06E0-$07DF` to `$05E0-$06DF` copy in original X order; CI pending, menu integration pending | — |
 | `$C62D` | `sub_C62D` | Pending | — |
 | `$C639` | `sub_C639` | Pending | — |
 | `$C64E` | `sub_C64E` | Pending | — |
