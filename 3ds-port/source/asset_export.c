@@ -248,11 +248,6 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
             }
         }
     }
-    {
-        if (status != NULL && statusCapacity > 0u)
-            (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
-        return 0;
-    }
     for (paletteIndex = 0u; paletteIndex < NES_EXCITEBIKE_PALETTE_STREAM_COUNT; ++paletteIndex) {
         char palettePath[512], maskPath[512], streamPath[512];
         uint8_t palette[32], mask[32];
