@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <3ds.h>
 #include "renderer.h"
 #include "asset_extractor.h"
@@ -8,6 +9,8 @@
  * libctru's top-screen framebuffer is BGR8 in rotated memory order.
  * This is a diagnostic tile atlas only, not the original NES menu layout.
  */
+static int s_runtimeAtlasWasShown;
+
 static void rendererDrawChrAtlas(void)
 {
     static const uint8_t shades[4] = {0u, 85u, 170u, 255u};
@@ -25,10 +28,20 @@ static void rendererDrawChrAtlas(void)
         tileCount = NES_CHR_TILE_COUNT;
 #endif
     }
-    if (pixels == NULL || tileCount == 0u) return;
 
     framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width < 240u || height < 400u) return;
+    if (assetExtractorIsActive() && (pixels == NULL || tileCount == 0u)) {
+        memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+        s_runtimeAtlasWasShown = 0;
+        return;
+    }
+    if (!assetExtractorIsActive() && s_runtimeAtlasWasShown) {
+        memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+        s_runtimeAtlasWasShown = 0;
+    }
+    if (pixels == NULL || tileCount == 0u) return;
+    if (assetExtractorIsActive()) s_runtimeAtlasWasShown = 1;
     if (tileCount > 960u) tileCount = 960u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
