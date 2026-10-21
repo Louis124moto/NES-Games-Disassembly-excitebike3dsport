@@ -4,13 +4,15 @@ on:
   push:
     branches:
       - "**"
+    paths-ignore:
+      - "3ds-port/build/**"
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -46,3 +48,10 @@ jobs:
             3ds-port/build/excitebike3ds.elf
           if-no-files-found: error
           retention-days: 14
+
+      - name: Commit 3DS build outputs to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Build: update 3DS binaries"
+          file_pattern: 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
