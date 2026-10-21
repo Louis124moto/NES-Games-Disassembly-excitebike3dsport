@@ -23,12 +23,9 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
      * are zero in this menu-only trace.
      */
     if (!state->paused) {
-        uint8_t timers[29] = {0};
-        timers[0x30u - 0x21u] = state->menu_timer30;
-        timers[0x31u - 0x21u] = state->menu_timer31;
-        nesSubD310DecreaseAllTimers(&state->menu_timer20, timers);
-        state->menu_timer30 = timers[0x30u - 0x21u];
-        state->menu_timer31 = timers[0x31u - 0x21u];
+        nesSubD310DecreaseMenuTimers(&state->menu_timer20,
+                                    &state->menu_timer30,
+                                    &state->menu_timer31);
     }
 
     if (heldKeys & KEY_SELECT) nesButtons |= 0x20u;
@@ -162,15 +159,25 @@ void menusRender(const GameState *state)
            (unsigned int)state->menu_ram03F2,
            (unsigned int)state->menu_clear_ram_requested);
 
-    if (state->menu_asm_state == 8u) {
+    printf("cursor X/Y: %02X/%02X\n", (unsigned int)state->menu_sprite_x, (unsigned int)state->menu_sprite_y);
+    if (state->menu_asm_state == 0u) {
+        for (i = 0u; i < 3u; ++i) {
+            printf("%c Title option %u [ASM label unresolved]\n",
+                   i == (unsigned int)state->menu_selection ? '>' : ' ', i);
+        }
+        printf("UP/DOWN or SELECT: move; START: confirm\n");
+    } else if (state->menu_asm_state == 1u) {
+        for (i = 0u; i < 5u; ++i) {
+            printf("%c Selector option %u [ASM label unresolved]\n",
+                   i == (unsigned int)state->menu_selection ? '>' : ' ', i);
+        }
+        printf("LEFT/RIGHT: move; START: confirm\n");
+    } else if (state->menu_asm_state == 8u) {
         for (i = 0u; i <= 5u; ++i) {
             printf("%c Option %u [ASM label unresolved]\n",
-                   i == (unsigned int)state->menu_selection ? '>' : ' ',
-                   i);
+                   i == (unsigned int)state->menu_selection ? '>' : ' ', i);
         }
         printf("UP/DOWN or SELECT: move; START: source confirm branch\n");
-    } else if (state->menu_asm_state == 0u) {
-        printf("State 0: source reset/entry transition pending next update.\n");
     } else if (state->menu_asm_state == 2u) {
         printf("State 2: original ASM dispatches to the gameplay loop.\n");
         printf("Native gameplay is still a separate incomplete subsystem.\n");
