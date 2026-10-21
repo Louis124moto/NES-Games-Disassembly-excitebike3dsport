@@ -55,7 +55,7 @@ int main(void)
         char manifest[768];
         const size_t n = fread(manifest, 1u, sizeof(manifest)-1u, file);
         manifest[n] = '\0';
-        if (strstr(manifest, "Palette: NOT APPLIED") == NULL ||
+        if (strstr(manifest, "Palette presets:") == NULL ||
             strstr(manifest, "chr_atlas.png") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
@@ -63,6 +63,27 @@ int main(void)
     (void)unlink("test_asset_export_output/chr_raw.bin");
     (void)unlink("test_asset_export_output/chr_pixels.bin");
     (void)unlink("test_asset_export_output/manifest.txt");
+    (void)unlink("test_asset_export_output/ppu_palette_12.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_12_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_12_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_13.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_13_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_13_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_14.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_14_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_14_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_15.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_15_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_15_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_16.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_16_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_16_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_17.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_17_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_17_stream.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_18.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_18_mask.bin");
+    (void)unlink("test_asset_export_output/ppu_palette_18_stream.bin");
     (void)rmdir(dir);
     puts("PASS: native CHR raw/pixel/PNG/manifest export and honest palette metadata.");
     return 0;
