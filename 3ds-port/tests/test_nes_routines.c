@@ -820,7 +820,7 @@ static int testState13Completion(void)
 int main(void)
 {
     if (testState13Completion() != 0) { fputs("FAIL: state-13 completion\n", stderr); return 1; }
-    if (testSubD310MenuTimers() != 0 { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
+    if (testSubD310MenuTimers() != 0) { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
