@@ -8,7 +8,7 @@
  *
  * State 8 is ofs_000_C3BD_08 ($C3BD); state 0 is ofs_000_C346_00
  * ($C346). Selection meanings and original title artwork are deliberately
- * not guessed. The menu receives held controls to match ram_btn_press sampling and the repeat guard; state/reset side effects follow bank_FF.asm.
+ * not guessed. The menu receives per-frame press edges to match ram_btn_press; state/reset side effects follow bank_FF.asm.
  */
 void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKeys)
 {
