@@ -237,7 +237,14 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Implement the exact six-command setup list `off_C046_02` (state 2) and its dependencies before treating the main menu-to-game transition as complete.
 - [x] Port state 13's shared `ofs_001_C582_08_01` / `ofs_001_C518_08_02` setup list.
 - [x] Translate and test the state-13 entry wait (`ofs_000_C41C_0D` sets `$0048=2`, `$0044=1`).
-- [ ] Implement the state-13 `$FF` branch (`sub_EC3B`/`loc_CC6B`), plus setup lists for states 2, 9, 10, and 12 and handlers for states 9, 10, and 12.
+- [x] Translate the state-13 `$FF` branch: `sub_EC3B` copies 256 bytes from `$05E0-$06DF` to `$06E0-$07DF`; `loc_CC6B` increments `$0041` and clamps to state 8 only when `$004B==0`. Host regression covers copy, clamp, no-clamp and 8-bit wrap.\n- [ ] Implement the six-command state-2 setup list and setup lists/handlers for states 9, 10, and 12. These paths include gameplay initialization and must not be stubbed as if they were complete.
 - [ ] Reconstruct palette/attribute/nametable tile placement and compare a real screenshot against the NES reference.
 
 **Runtime extractor limitation:** the built-in viewer extracts raw CHR-ROM patterns only; it does not yet save PNG files or reconstruct the original menu. The Python PC-side pipeline still produces PNG/JSON/C-header files.
+
+## State-13 completion branch — 2026-10-21
+
+- [x] `sub_EC3B` translated as a full 256-byte copy from `$05E0-$06DF` to `$06E0-$07DF`.
+- [x] `loc_CC6B` translated: increment `$0041`; if `$004B` is zero, clamp states at or above 9 to state 8; otherwise preserve the incremented byte, including 8-bit wrap.
+- [x] State-13 handler runs this path when `$0048==$FF`, writes `$40` to `$00FB`, and uses the modeled `$004B` value.
+- [ ] Overall menu-to-game path remains incomplete: state 2's six-command setup and destination handlers for states 9, 10, and 12 are not ported.
