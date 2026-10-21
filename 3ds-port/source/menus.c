@@ -20,6 +20,7 @@ void menusUpdate(GameState *state, unsigned int pressed)
     if (pressed & KEY_UP)     nesButtons |= 0x08u;
     if (pressed & KEY_DOWN)   nesButtons |= 0x04u;
 
+    state->menu_clear_ram_requested = 0u; /* one-frame trace of the ASM clear-RAM branch */
     if (state->menu_asm_state == 8u) {
         state->menu_action_x = nesSubC7DEMenuInput(
             nesButtons, 6u, &state->menu_selection,
