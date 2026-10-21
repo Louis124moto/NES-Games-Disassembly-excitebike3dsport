@@ -657,7 +657,7 @@ static int testSubC3BDConfirmSelection(void)
     uint8_t state, selection, mode, clear;
 
     state=8u; selection=1u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&(uint8_t){0u},&(uint8_t){0u});
     if(state!=9u || selection!=1u || mode!=1u || clear!=0u) {
         fputs("sub_C3BD selection 1 mismatch\n",stderr); return 1;
     }
@@ -682,7 +682,7 @@ static int testSubC3BDConfirmSelection(void)
         fputs("sub_C3BD selection 5 mismatch\n",stderr); return 5;
     }
     state=8u; selection=3u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(0u,&state,&selection,&mode,&clear);
+    nesSubC3BDConfirmSelection(0u,&state,&selection,&mode,&clear,&(uint8_t){0u},&(uint8_t){0u});
     if(state!=8u || selection!=3u || clear!=0u) {
         fputs("sub_C3BD no-action mismatch\n",stderr); return 6;
     }
