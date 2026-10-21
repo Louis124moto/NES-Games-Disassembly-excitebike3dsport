@@ -22,6 +22,8 @@ int main(void)
         0x0F,0x21,0x12,0x23, 0x0F,0x09,0x19,0x29
     };
     size_t i;
+    const int colorResult = testColorLookup();
+    if (colorResult != 0) { fprintf(stderr, "NES color lookup failed: %d\\n", colorResult); return 1; }
     if (pixels == NULL || rgb == NULL) { free(pixels); free(rgb); return 1; }
     memset(nametable, 0, sizeof(nametable));
     memset(attributes, 0, sizeof(attributes));
