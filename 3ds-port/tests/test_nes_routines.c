@@ -106,9 +106,9 @@ static int testSubE456Exact(void){
     s.ram0084[2]=0u;s.ram0080[2]=0x80u;s.ram00A8[2]=9u;s.ram0058[2]=9u;s.ram0370[2]=9u;
     s.ram0084[3]=0u;s.ram0080[3]=0xFAu;
     nesSubE456CullObjectSprites(oam,&s,oi,off);
-    if(s.ram00A8[2]!=0u||s.ram0058[2]!=0u||s.ram0370[2]!=0u||s.ram03A6_flag!=1u){fprintf(stderr,"E456 state fail: A8=%u 58=%u 370=%u flag=%u\\n",s.ram00A8[2],s.ram0058[2],s.ram0370[2],s.ram03A6_flag);return 1;}
-    if(oam[0x40]!=0xF8u||oam[0x44]!=0xF8u||oam[0x48]!=0xF8u||oam[0x30]!=0xF8u||oam[0x38]!=0xF8u){fprintf(stderr,"E456 OAM fail: %02X %02X %02X %02X %02X\\n",oam[0x40],oam[0x44],oam[0x48],oam[0x30],oam[0x38]);return 2;}
-    if(oam[0x70]!=0u){fprintf(stderr,"E456 unexpected OAM[70]=%02X\\n",oam[0x70]);return 3;}
+    if(s.ram00A8[2]!=0u||s.ram0058[2]!=0u||s.ram0370[2]!=0u||s.ram03A6_flag!=1u){fprintf(stderr,"E456 state fail: A8=%u 58=%u 370=%u flag=%u\n",s.ram00A8[2],s.ram0058[2],s.ram0370[2],s.ram03A6_flag);return 1;}
+    if(oam[0x40]!=0xF8u||oam[0x44]!=0xF8u||oam[0x48]!=0xF8u||oam[0x30]!=0xF8u||oam[0x38]!=0xF8u){fprintf(stderr,"E456 OAM fail: %02X %02X %02X %02X %02X\n",oam[0x40],oam[0x44],oam[0x48],oam[0x30],oam[0x38]);return 2;}
+    if(oam[0x70]!=0u){fprintf(stderr,"E456 unexpected OAM[70]=%02X\n",oam[0x70]);return 3;}
     puts("PASS: sub_E456 culling, opponent reset, and three-write sprite groups.");
     return 0;
 }
@@ -141,16 +141,16 @@ static int testSubE2F6Exact(void){
     uint8_t r36[4]={1u,0u,0u,0u},r94[4]={1u,0u,0u,0u},r90[4]={0u},rbc[4]={0u},r84[4]={1u,0u,0u,0u};
     uint8_t r80[4]={0x20u,0u,0u,0u},r8c[4]={0x30u,0u,0u,0u},oam[256]={0};
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x97]!=0x19u||oam[0x9B]!=0x11u||oam[0x98]!=0x38u||oam[0x94]!=0x40u||oam[0x95]!=0xF6u||oam[0x99]!=0xF7u){fprintf(stderr,"E2F6 primary fail: %02X %02X %02X %02X %02X %02X\\n",oam[0x97],oam[0x9B],oam[0x98],oam[0x94],oam[0x95],oam[0x99]);return 1;}
+    if(oam[0x97]!=0x19u||oam[0x9B]!=0x11u||oam[0x98]!=0x38u||oam[0x94]!=0x40u||oam[0x95]!=0xF6u||oam[0x99]!=0xF7u){fprintf(stderr,"E2F6 primary fail: %02X %02X %02X %02X %02X %02X\n",oam[0x97],oam[0x9B],oam[0x98],oam[0x94],oam[0x95],oam[0x99]);return 1;}
     for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,4u,oam);
-    if(oam[0x95]!=0xF7u||oam[0x99]!=0xF6u){fprintf(stderr,"E2F6 swap fail: %02X %02X\\n",oam[0x95],oam[0x99]);return 2;}
+    if(oam[0x95]!=0xF7u||oam[0x99]!=0xF6u){fprintf(stderr,"E2F6 swap fail: %02X %02X\n",oam[0x95],oam[0x99]);return 2;}
     r94[0]=0u;r90[0]=1u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x98]!=0xF8u){fprintf(stderr,"E2F6 hide fail: %02X\\n",oam[0x98]);return 3;}
+    if(oam[0x98]!=0xF8u){fprintf(stderr,"E2F6 hide fail: %02X\n",oam[0x98]);return 3;}
     rbc[0]=1u;for(unsigned i=0;i<256u;i++)oam[i]=0u;
     nesSubE2F6DrawWheelSprites(0u,0u,r36,r94,r90,rbc,r84,r80,r8c,0u,oam);
-    if(oam[0x97]!=0u){fprintf(stderr,"E2F6 gate fail: %02X\\n",oam[0x97]);return 4;}
+    if(oam[0x97]!=0u){fprintf(stderr,"E2F6 gate fail: %02X\n",oam[0x97]);return 4;}
     puts("PASS: sub_E2F6 full wheel-sprite gates and OAM writes.");return 0;
 }
 static int testSubEA44Exact(void){
@@ -198,7 +198,7 @@ static int testLocE96EVerticalDelta(void)
                 nesLocE96EApplyVerticalDelta(states, posY, deltas);
                 if (posY[0] != expected || posY[1] != 0xA5u ||
                     posY[2] != 0x5Au || posY[3] != (uint8_t)0x01u) {
-                    fprintf(stderr, "sub_E96C loc_E96E mismatch: state=%02X y=%02X delta=%02X\\n",
+                    fprintf(stderr, "sub_E96C loc_E96E mismatch: state=%02X y=%02X delta=%02X\n",
                             state, y, delta);
                     return 1;
                 }
@@ -206,7 +206,7 @@ static int testLocE96EVerticalDelta(void)
             }
         }
     }
-    printf("PASS: loc_E96E vertical delta matched byte-level reference for %lu combinations.\\n", checked);
+    printf("PASS: loc_E96E vertical delta matched byte-level reference for %lu combinations.\n", checked);
     return 0;
 }
 
@@ -611,7 +611,7 @@ static int testSubCFE3MaskFlags(void)
         uint8_t actual = (uint8_t)value;
         nesSubCFE3MaskFlags(&actual);
         if (actual != (uint8_t)(value & 0xF0u)) {
-            fprintf(stderr, "sub_CFE3 mismatch: input=%02X actual=%02X\\n", value, actual);
+            fprintf(stderr, "sub_CFE3 mismatch: input=%02X actual=%02X\n", value, actual);
             return 1;
         }
     }
@@ -626,55 +626,55 @@ static int testSubC7DEMenuInput(void)
     selection=4u; guard=0u; timer30=0u; timer31=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
     if(result!=0u || selection!=1u || guard!=1u || timer31!=0x5Du || changed!=1u) {
-        fputs("sub_C7DE down/wrap mismatch\\n",stderr); return 1;
+        fputs("sub_C7DE down/wrap mismatch\n",stderr); return 1;
     }
     selection=2u; guard=1u; timer31=0u; changed=1u;
     result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
     if(result!=0u || selection!=2u || guard!=1u || timer31!=0x5Du || changed!=0u) {
-        fputs("sub_C7DE repeat guard mismatch\\n",stderr); return 2;
+        fputs("sub_C7DE repeat guard mismatch\n",stderr); return 2;
     }
     guard=1u;
     result=nesSubC7DEMenuInput(0x01u,5u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || guard!=0u) { fputs("sub_C7DE idle reset mismatch\\n",stderr); return 3; }
+    if(result!=0u || guard!=0u) { fputs("sub_C7DE idle reset mismatch\n",stderr); return 3; }
     selection=1u; guard=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE up/wrap mismatch\\n",stderr); return 4; }
+    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE up/wrap mismatch\n",stderr); return 4; }
     selection=3u; guard=0u; timer30=0u; changed=1u;
     result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\\n",stderr); return 5; }
+    if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\n",stderr); return 5; }
     for(i=0u;i<1000u;++i) {
         uint8_t press=(i&1u)?0x04u:0x08u;
         guard=0u;
         (void)nesSubC7DEMenuInput(press,6u,&selection,&guard,&timer30,&timer31,&changed);
-        if(selection<1u || selection>5u) { fputs("sub_C7DE range mismatch\\n",stderr); return 6; }
+        if(selection<1u || selection>5u) { fputs("sub_C7DE range mismatch\n",stderr); return 6; }
     }
     return 0;
 }
 
 int main(void)
 {
-    if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\\n", stderr); return 1; }
-    if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\\n", stderr); return 1; }
-    if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\\n", stderr); return 1; }
-    if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
-    if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
-    if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
-    if(testBatchC32F()!=0) { fputs("FAIL: sub_C32F\\n",stderr); return 1; }
-    if(testBatchC53Family()!=0) { fputs("FAIL: sub_C53A/sub_C53E/sub_CB06\\n",stderr); return 1; }
-    if(testBatchC716C726()!=0) { fputs("FAIL: sub_C716/sub_C726\\n",stderr); return 1; }
-    if(testBatchDC97()!=0) { fputs("FAIL: sub_DC97/sub_DC9A\\n",stderr); return 1; }
-    if(testBatchEC25EC5D()!=0) { fputs("FAIL: sub_EC25/sub_EC5D\\n",stderr); return 1; }
-    if(testBatchEC3B()!=0) { fputs("FAIL: sub_EC3B\\n",stderr); return 1; }
-    if(testBatchEC75()!=0) { fputs("FAIL: sub_EC75\\n",stderr); return 1; }
-    if(testBatchF681()!=0) { fputs("FAIL: sub_F681\\n",stderr); return 1; }
-    if(testBatchF821F86B()!=0) { fputs("FAIL: sub_F821/sub_F86B\\n",stderr); return 1; }
-    if(testBatchF889()!=0) { fputs("FAIL: sub_F889\\n",stderr); return 1; }
-    if(testBatchC94B()!=0) { fputs("FAIL: sub_C94B\\n",stderr); return 1; }
-    if(testBatchC64E653()!=0) { fputs("FAIL: sub_C64E/sub_C653\\n",stderr); return 1; }
+    if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
+    if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
+    if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\n", stderr); return 1; }
+    if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\n", stderr); return 1; }
+    if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\n", stderr); return 1; }
+    if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\n",stderr); return 1; }
+    if(testBatchC32F()!=0) { fputs("FAIL: sub_C32F\n",stderr); return 1; }
+    if(testBatchC53Family()!=0) { fputs("FAIL: sub_C53A/sub_C53E/sub_CB06\n",stderr); return 1; }
+    if(testBatchC716C726()!=0) { fputs("FAIL: sub_C716/sub_C726\n",stderr); return 1; }
+    if(testBatchDC97()!=0) { fputs("FAIL: sub_DC97/sub_DC9A\n",stderr); return 1; }
+    if(testBatchEC25EC5D()!=0) { fputs("FAIL: sub_EC25/sub_EC5D\n",stderr); return 1; }
+    if(testBatchEC3B()!=0) { fputs("FAIL: sub_EC3B\n",stderr); return 1; }
+    if(testBatchEC75()!=0) { fputs("FAIL: sub_EC75\n",stderr); return 1; }
+    if(testBatchF681()!=0) { fputs("FAIL: sub_F681\n",stderr); return 1; }
+    if(testBatchF821F86B()!=0) { fputs("FAIL: sub_F821/sub_F86B\n",stderr); return 1; }
+    if(testBatchF889()!=0) { fputs("FAIL: sub_F889\n",stderr); return 1; }
+    if(testBatchC94B()!=0) { fputs("FAIL: sub_C94B\n",stderr); return 1; }
+    if(testBatchC64E653()!=0) { fputs("FAIL: sub_C64E/sub_C653\n",stderr); return 1; }
     if(testBatchC333C3B1()!=0||testBatchC621C68A()!=0||testBatchC971CA1B()!=0||testBatchCB13()!=0||testBatchCFE3D24F()!=0||testBatchCF8BECBF()!=0||testBatchF676F826()!=0||testBatchF82E839()!=0||testBatchC62D()!=0||testBatchF6FB()!=0||testBatchF871F885()!=0) { fputs("FAIL: 20-routine batch\n",stderr); return 1; }
-    if(testD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\\n",stderr); return 1; }
-    if(testD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\\n",stderr); return 1; }
-    if(testD1B3ScrollWrites()!=0) { fputs("FAIL: sub_D1B3 scroll writes\\n",stderr); return 1; }
+    if(testD0F4PrepareCommandStream()!=0) { fputs("FAIL: sub_D0F4 setup\n",stderr); return 1; }
+    if(testD1A9ScrollWrites()!=0) { fputs("FAIL: sub_D1A9 scroll writes\n",stderr); return 1; }
+    if(testD1B3ScrollWrites()!=0) { fputs("FAIL: sub_D1B3 scroll writes\n",stderr); return 1; }
     if(testE8xxConstantAndResetEntries()) { fputs("FAIL: E8BF/E8C6/E8E3/E8F5/E8FA/E963\n",stderr); return 1; }
     if(testE8xxDispatchEntries()) { fputs("FAIL: E845/E854/E85D/E86A/E879 dispatch entries\n",stderr); return 1; }
     if(testE7FCAndE7FF()) { fputs("FAIL: sub_E7FC/E7FF\n",stderr); return 1; }
@@ -687,14 +687,14 @@ int main(void)
     if (testE73BAddXLow()) { fputs("FAIL: sub_E73B\n",stderr); return 1; }
     if (testE733UpdateThreeXLowSlots()) { fputs("FAIL: sub_E733\n",stderr); return 1; }
     if (testLocE96EVerticalDelta() != 0) return 1;
-    if(testSubE1A3Exact()) { fputs("FAIL: sub_E1A3 reference test\\n",stderr); return 1; }
-    if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\\n",stderr); return 1; }
-    if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\\n",stderr); return 1; }
-    if(testSubE2F6Exact()) { fputs("FAIL: sub_E2F6 reference test\\n",stderr); return 1; }
-    if(testSubE359Exact()) { fputs("FAIL: sub_E359 reference test\\n",stderr); return 1; }
-    if(testSubE26AExact()) { fputs("FAIL: sub_E26A reference test\\n",stderr); return 1; }
-    if(testSubE456Exact()) { fputs("FAIL: sub_E456 reference test\\n",stderr); return 1; }
-    if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\\n",stderr); return 1; }
+    if(testSubE1A3Exact()) { fputs("FAIL: sub_E1A3 reference test\n",stderr); return 1; }
+    if(testSubE2AFCountdownExact()) { fputs("FAIL: E2AF countdown reference test\n",stderr); return 1; }
+    if(testSubEA44Exact()) { fputs("FAIL: sub_EA44 reference test\n",stderr); return 1; }
+    if(testSubE2F6Exact()) { fputs("FAIL: sub_E2F6 reference test\n",stderr); return 1; }
+    if(testSubE359Exact()) { fputs("FAIL: sub_E359 reference test\n",stderr); return 1; }
+    if(testSubE26AExact()) { fputs("FAIL: sub_E26A reference test\n",stderr); return 1; }
+    if(testSubE456Exact()) { fputs("FAIL: sub_E456 reference test\n",stderr); return 1; }
+    if(testSubE4C8Exact()) { fputs("FAIL: sub_E4C8 exact reference test\n",stderr); return 1; }
     unsigned int x, y, z;
     unsigned long checked = 0;
 
@@ -1730,7 +1730,7 @@ static int testSubFF53Exact(void)
                     uint8_t actual = nesSubFF53Lookup((uint8_t)a, (uint8_t)carry,
                                                        (uint8_t)offset, memory, &actualY);
                     if (actual != expected || actualY != expectedY) {
-                        fprintf(stderr, "sub_FF53 mismatch A=%02X C=%u offset=%02X Y=%02X/%02X value=%02X/%02X\\n",
+                        fprintf(stderr, "sub_FF53 mismatch A=%02X C=%u offset=%02X Y=%02X/%02X value=%02X/%02X\n",
                                 a, carry, offset, actualY, expectedY, actual, expected);
                         return 1;
                     }
