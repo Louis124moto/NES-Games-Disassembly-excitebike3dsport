@@ -19,6 +19,7 @@ void gameStateReset(GameState *state)
     state->menu_clear_ram_requested = 0u;
     state->menu_selection = 0u;
     state->menu_repeat_guard = 0u;
+    state->menu_timer20 = 0u;
     state->menu_timer30 = 0u;
     state->menu_timer31 = 0x38u; /* ofs_C2BD initializes the menu display timer */
     state->menu_selection_changed = 0u;
