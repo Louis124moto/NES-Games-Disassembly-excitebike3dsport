@@ -269,6 +269,7 @@ Translate routines in dependency order rather than blindly copying address order
 | `sub_D19B` | `nesSubD19BWaitForStatus` | Finite trace of original bit-6 polling |
 | `sub_D347` | `nesSubD347ReadControllers` | Strobe and two controller decodes |
 | `loc_C4FC` | `nesLocC4FCComputeScaledValue` | Both arithmetic branches |
+| `sub_C522` | `nesSubC522SelectOptionTuple` | Translated + regression vectors: `$0043`-indexed tuple, `$0046` bank bit, `$0043=5` special case; native menu integration pending |
 | `sub_C92C` | `nesSubC92CSelectTableEntry` | Corrected/tested: `$0046` bank bit, special `$0043=5` path, and `$03F2` offset now match `sub_CB06/sub_CB13` |
 | `sub_C935` | `nesSubC935BuildCommand` | DF7F/DFA2 conversion and copy |
 | `sub_ECC9` | `nesSubECC9CheckSpriteBytes` | Four required byte comparisons |
