@@ -104,8 +104,9 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     manifestLength = snprintf(manifest, sizeof(manifest),
         "Excitebike 3DS native CHR export\n"
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
-        "Decoded pixels: chr_pixels.bin (%lu tiles, 64 2bpp indices per tile)\n"
+        "Decoded pixels: chr_pixels.bin (%lu tiles, 64 2bpp indices per tile; runtime cap 960 tiles)\n"
         "Preview: chr_atlas.png (256x240 RGB; 32x30 tiles; grayscale index visualization)\n"
+        "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
         "Palette: NOT APPLIED; active palette requires confirmed PPU RAM writes\n"
         "Nametable/attributes/OAM: NOT CAPTURED by this export\n"
         "Unknown/compressed PRG graphics: NOT CLAIMED EXTRACTED\n",
