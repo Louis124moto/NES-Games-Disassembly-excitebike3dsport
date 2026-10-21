@@ -37,6 +37,8 @@ static size_t s_tileCount;
 static int s_active;
 static int s_attempted;
 static size_t s_page;
+static unsigned int s_viewMode;
+static size_t s_paletteIndex;
 static char s_status[160] = "Starting native CHR extraction...";
 
 static void setStatus(const char *message)
@@ -366,6 +368,8 @@ void assetExtractorInit(const char *executablePath)
     s_active = 0;
     s_attempted = 0;
     s_page = 0u;
+    s_viewMode = 0u;
+    s_paletteIndex = 0u;
     s_tileCount = 0u;
     if (pathValid) {
         /*
@@ -399,13 +403,21 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             (void)exportCurrentRomAssets();
         }
     }
-    if ((pressedKeys & KEY_RIGHT) != 0u && s_tileCount > 0u) {
-        const size_t pages = (s_tileCount + 374u) / 375u;
-        s_page = (s_page + 1u) % pages;
+    if (s_active && (pressedKeys & (KEY_UP | KEY_DOWN)) != 0u) {
+        s_viewMode = s_viewMode == 0u ? 1u : 0u;
     }
-    if ((pressedKeys & KEY_LEFT) != 0u && s_tileCount > 0u) {
-        const size_t pages = (s_tileCount + 374u) / 375u;
-        s_page = (s_page + pages - 1u) % pages;
+    if (s_active && s_viewMode == 1u) {
+        if ((pressedKeys & KEY_RIGHT) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
+        if ((pressedKeys & KEY_LEFT) != 0u) s_paletteIndex = (s_paletteIndex + 6u) % 7u;
+    } else {
+        if ((pressedKeys & KEY_RIGHT) != 0u && s_tileCount > 0u) {
+            const size_t pages = (s_tileCount + 374u) / 375u;
+            s_page = (s_page + 1u) % pages;
+        }
+        if ((pressedKeys & KEY_LEFT) != 0u && s_tileCount > 0u) {
+            const size_t pages = (s_tileCount + 374u) / 375u;
+            s_page = (s_page + pages - 1u) % pages;
+        }
     }
     if ((pressedKeys & KEY_B) != 0u) {
         if (s_active) s_active = 0;
@@ -438,4 +450,14 @@ void assetExtractorSetPage(size_t page)
 {
     const size_t pages = (s_tileCount + 374u) / 375u;
     s_page = pages == 0u ? 0u : page % pages;
+}
+
+unsigned int assetExtractorGetViewMode(void)
+{
+    return s_viewMode;
+}
+
+size_t assetExtractorGetPaletteIndex(void)
+{
+    return s_paletteIndex;
 }
