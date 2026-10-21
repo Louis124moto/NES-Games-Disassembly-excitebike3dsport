@@ -50,6 +50,9 @@ typedef struct {
     uint8_t menu_ram03F3;
     uint8_t menu_ram0046;
     uint8_t menu_ram0048;
+    uint8_t menu_ram004B;
+    uint8_t menu_ram05E0[256];
+    uint8_t menu_ram06E0[256];
     uint8_t menu_ram03F8;
     uint8_t menu_ram0045;
     uint8_t menu_ram00FB;
