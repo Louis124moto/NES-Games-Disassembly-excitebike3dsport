@@ -29,7 +29,7 @@ int main(void)
     (void)mkdir(dir, 0777);
     memset(pixels, 1, sizeof(pixels));
     for (i = 0u; i < sizeof(raw); ++i) raw[i] = (unsigned char)i;
-    if (!assetExportWrite(dir, raw, sizeof(raw), pixels, 1u, status, sizeof(status))) {
+    if (!assetExportWrite(dir, raw, sizeof(raw), pixels, 960u, status, sizeof(status))) {
         fprintf(stderr, "Export failed: %s\n", status);
         return 1;
     }
