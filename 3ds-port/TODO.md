@@ -235,7 +235,8 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Translate and host-test the `sub_C318` PPU/OAM prelude effects (`sub_D255`, `sub_D23B/sub_D260`, `sub_D1A9`, `sub_C333`).
 - [x] Run and record the 3DS build and host suite for revision `e3459d1`; [host suite 39524481254](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481254) and [3DS build 39524481329](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481329) passed.
 - [ ] Implement the exact six-command setup list `off_C046_02` (state 2) and its dependencies before treating the main menu-to-game transition as complete.
-- [ ] Finish destination-state setup lists and source-derived transitions; do not mark the menu complete while any reached state is still an explicit stub.
+- [x] Port state 13's shared `ofs_001_C582_08_01` / `ofs_001_C518_08_02` setup list.
+- [ ] Implement setup lists for states 2, 9, 10, and 12, plus handlers for reached states 9, 10, 12, and 13; do not mark the menu complete while any reached state is still an explicit stub.
 - [ ] Reconstruct palette/attribute/nametable tile placement and compare a real screenshot against the NES reference.
 
 **Runtime extractor limitation:** the built-in viewer extracts raw CHR-ROM patterns only; it does not yet save PNG files or reconstruct the original menu. The Python PC-side pipeline still produces PNG/JSON/C-header files.
