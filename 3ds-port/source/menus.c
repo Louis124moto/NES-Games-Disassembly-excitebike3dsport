@@ -16,6 +16,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
     uint8_t changed = 0u;
 
     if (state == 0) return;
+    (void)heldKeys; /* The ASM menu consumes ram_btn_press, not ram_btn_hold. */
 
     /*
      * vec_C23B_NMI calls sub_D310 once per frame when unpaused. Preserve the
@@ -28,12 +29,17 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
                                     &state->menu_timer31);
     }
 
-    if (heldKeys & KEY_SELECT) nesButtons |= 0x20u;
-    if (heldKeys & KEY_START)  nesButtons |= 0x10u;
-    if (heldKeys & KEY_UP)     nesButtons |= 0x08u;
-    if (heldKeys & KEY_DOWN)   nesButtons |= 0x04u;
-    if (heldKeys & KEY_LEFT)   nesButtons |= 0x02u;
-    if (heldKeys & KEY_RIGHT)  nesButtons |= 0x01u;
+    /*
+     * sub_C7DE reads ram_btn_press ($0015), not ram_btn_hold ($0018).
+     * Use the per-frame press edges supplied by inputUpdate. This prevents
+     * a held 3DS key from being treated as a fresh NES press every frame.
+     */
+    if (pressedKeys & KEY_SELECT) nesButtons |= 0x20u;
+    if (pressedKeys & KEY_START)  nesButtons |= 0x10u;
+    if (pressedKeys & KEY_UP)     nesButtons |= 0x08u;
+    if (pressedKeys & KEY_DOWN)   nesButtons |= 0x04u;
+    if (pressedKeys & KEY_LEFT)   nesButtons |= 0x02u;
+    if (pressedKeys & KEY_RIGHT)  nesButtons |= 0x01u;
 
     state->menu_clear_ram_requested = 0u;
 
