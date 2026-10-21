@@ -330,6 +330,8 @@ void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030, uint8_t *r
 void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);
 uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048);
+void nesSubEC3BCopy256(const uint8_t source[256], uint8_t destination[256]);
+void nesLocCC6BUpdateMenuState(uint8_t *ram0041, uint8_t ram004B);
 void nesSubC318InitializePpu(uint8_t oam[256], uint8_t nametables[2048],
                              uint8_t *scrollX, uint8_t *scrollY,
                              uint8_t *ppuCtrl, uint8_t *ppuMask);
