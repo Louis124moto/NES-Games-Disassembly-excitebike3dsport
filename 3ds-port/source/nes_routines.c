@@ -1956,8 +1956,13 @@ void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
     if (ram0043 == 5u) {
         index = 0x20u;
     } else {
-        /* DEY / BPL loop: adds three once for each original Y value. */
-        index = (uint8_t)((unsigned int)ram0043 * 3u);
+        uint8_t counter = ram0043;
+        index = 0u;
+        for (;;) {
+            counter = (uint8_t)(counter - 1u); /* DEY */
+            if ((counter & 0x80u) != 0u) break; /* BMI */
+            index = (uint8_t)(index + 3u); /* CLC; ADC #$03 */
+        }
         if (ram0046 != 0u) index = (uint8_t)(index | 0x10u);
     }
     if (ram03F2 != 0u) index = (uint8_t)(index + 0x23u);
