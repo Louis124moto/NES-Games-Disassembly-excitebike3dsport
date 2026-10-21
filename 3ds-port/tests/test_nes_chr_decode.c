@@ -31,7 +31,14 @@ static int testTrainerAndInvalidHeaders(void)
     size_t size = 16u + 512u + 16384u + 8192u;
     if (rom == NULL) return 1;
     memcpy(rom, "NES\x1A", 4u); rom[4] = 1u; rom[5] = 1u; rom[6] = 0x04u;
+    rom[16u + 512u + 16384u] = 0xFFu; /* first plane row after trainer and PRG */
+    /* The nonzero row must be read after the optional trainer, not from it. */
     if (nesChrDecodeInes(rom, size, pixels, 1u, &count) != NES_CHR_DECODE_OK) { free(rom); return 2; }
+    {
+        unsigned int x;
+        for (x = 0u; x < 8u; ++x) if (pixels[x] != 1u) { free(rom); return 7; }
+        if (pixels[8u] != 0u) { free(rom); return 8; }
+    }
     rom[7] = 0x08u;
     if (nesChrDecodeInes(rom, size, pixels, 1u, &count) != NES_CHR_DECODE_UNSUPPORTED_NES2) { free(rom); return 3; }
     rom[7] = 0u; rom[5] = 0u;
