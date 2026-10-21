@@ -33,6 +33,10 @@ Counts below deliberately distinguish inventory, implementation, test execution,
 
 A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
+## Current menu/graphics work
+
+The main branch now contains a source-derived model of the original menu cursor helper (`sub_C7DE`) and the confirmation branches in `ofs_000_C3BD_08`, connected to an interactive native trace screen. This is **not yet the authentic NES title screen**: menu labels, CHR/palette mapping, PPU timing, and destination states remain under investigation. The new CHR atlas tool is diagnostic only. Host tests and the matching 3DS build still need confirmation.
+
 ## Repository layout
 
 - `Excitebike/` — original NES disassembly, source assets, and assembly scripts. Preserve these sources unchanged.
