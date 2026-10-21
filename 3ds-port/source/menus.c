@@ -13,6 +13,9 @@ static int menusRunSetupSequence(GameState *state)
 {
     uint8_t commandIndex;
 
+    /* sub_C2A9 checks ram_0030_timer before running even the prelude. */
+    if (state->menu_timer30 != 0u) return 1;
+
     if (state->menu_sequence_preface_pending != 0u) {
         /* sub_C318: hide sprites, reset scroll, and disable NMI rendering. */
         state->menu_sprite_y = 0xF8u;
@@ -24,8 +27,6 @@ static int menusRunSetupSequence(GameState *state)
         return 1;
     }
 
-    /* sub_C2A9 waits for ram_0030_timer to expire before each command. */
-    if (state->menu_timer30 != 0u) return 1;
     if (state->menu_ram0044 == 0u) return 1;
     commandIndex = (uint8_t)(state->menu_ram0044 - 1u);
     state->menu_ram0044 = (uint8_t)(state->menu_ram0044 + 1u);
@@ -125,7 +126,8 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
     if (!state->paused) {
         nesSubD310DecreaseMenuTimers(&state->menu_timer20,
                                     &state->menu_timer30,
-                                    &state->menu_timer31);
+                                    &state->menu_timer31,
+                                    &state->menu_timer34);
     }
 
     /*
