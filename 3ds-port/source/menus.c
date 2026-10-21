@@ -283,6 +283,19 @@ void menusRender(const GameState *state)
            (unsigned int)state->menu_clear_ram_requested);
 
     printf("cursor X/Y: %02X/%02X\n", (unsigned int)state->menu_sprite_x, (unsigned int)state->menu_sprite_y);
+    if (state->menu_ram0040 == 0u) {
+        printf("ASM setup sequencer: active (ram_0044=%u)\n",
+               (unsigned int)state->menu_ram0044);
+        if (state->menu_asm_state != 0u &&
+            state->menu_asm_state != 1u &&
+            state->menu_asm_state != 8u) {
+            printf("Setup command list for state %u is not ported yet.\n",
+                   (unsigned int)state->menu_asm_state);
+        }
+        if (state->show_help)
+            printf("Only setup command lists for states 0, 1 and 8 are reconstructed.\n");
+        return;
+    }
     if (state->menu_asm_state == 0u) {
         for (i = 0u; i < 3u; ++i) {
             printf("%c Title option %u [ASM label unresolved]\n",
