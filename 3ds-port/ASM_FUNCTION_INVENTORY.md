@@ -42,7 +42,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$C726` | `sub_C726` | Pending | — |
 | `$C739` | `sub_C739` | Pending | — |
 | `$C792` | `sub_C792` | Pending | ; in |
-| `$C7DE` | `sub_C7DE` | Pending | ; in |
+| `$C7DE` | `sub_C7DE` | Translated in C; host regression wired, execution pending | input: ram_btn_press, ram_0042; callers pass bounds 3/5/6 |
 | `$C92C` | `sub_C92C` | Pending | — |
 | `$C935` | `sub_C935` | Pending | calls: sub_DF7F |
 | `$C94B` | `sub_C94B` | Pending | calls: sub_C971 |
@@ -71,7 +71,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CF96` | `sub_CF96` | Pending | — |
 | `$CFCB` | `sub_CFCB` | Pending | — |
 | `$CFDB` | `sub_CFDB` | Pending | — |
-| `$CFE3` | `sub_CFE3` | Pending | — |
+| `$CFE3` | `sub_CFE3` | Translated in C; exhaustive regression wired, execution pending | called by sub_CFEA |
 | `$CFEA` | `sub_CFEA` | Pending | calls: sub_CFE3 |
 
 ## $D000–$DFFF · input, timing and object state
