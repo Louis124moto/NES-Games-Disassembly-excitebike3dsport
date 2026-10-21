@@ -24,6 +24,7 @@ typedef struct {
     uint8_t menu_clear_ram_requested;
     uint8_t menu_selection;
     uint8_t menu_repeat_guard;
+    uint8_t menu_timer20;
     uint8_t menu_timer30;
     uint8_t menu_timer31;
     uint8_t menu_selection_changed;
