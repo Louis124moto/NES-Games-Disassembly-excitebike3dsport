@@ -35,13 +35,13 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Verify supported ROM/header and graphics-memory cases from source evidence; document unsupported cases instead of implying universal compatibility.
 - [x] Extract and display raw CHR/pattern data from iNES/NES 2.0 CHR-ROM or a standalone raw CHR file; report CHR-RAM as requiring runtime PPU capture. The atlas is currently limited to 960 decoded tiles.
 - [ ] Trace active palette selection and all live-state write paths; seven source-defined palette command streams are now replayed with `sub_D3C1` semantics and exported, but their active assignment for each game state is not yet proven.
-- [x] Replay and export 17 source PPU command streams from `tbl_C0F6` indices 1–17, with nametable snapshots, palette snapshots, and per-byte write masks.
+- [x] Replay and export 18 source PPU command streams from `tbl_C0F6` indices 1–17 plus index 25 (D631), with nametable snapshots, palette snapshots, and per-byte write masks.
 - [ ] Trace which source command stream is selected by each active game state; determine from the full ASM whether any compressed/generated PRG graphics exist beyond the verified static PPU lists. The checked-in source header confirms mapper 0, 16 KiB PRG, 8 KiB CHR-ROM for canonical Excitebike; the runtime does not yet identify arbitrary ROMs as Excitebike.
 - [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
 - [ ] Add sprite/OAM, priority, scroll, animation, and PPU state/address diagnostics to the extent supported by verified runtime capture/source analysis.
 - [x] Implement basic D-pad/A/B navigation, CHR-atlas/palette/partial-PPU views, top-screen imagery, unknown-data hatching, and bottom-screen source diagnostics. Hardware usability validation remains open.
 - [x] Implement SD-card exports for raw CHR, decoded pixels, PNG atlas, seven source palette snapshots, write masks, and palette command streams.
-- [x] Export source-replayed nametable/attribute snapshots and write masks for all 17 static command streams in the source table.
+- [x] Export source-replayed nametable/attribute snapshots and write masks for all 18 static command streams in the source table.
 - [ ] Add dynamic active-state selection, CHR bank context, OAM/sprite capture, and any further verified runtime data formats.
 - [ ] Validate cold start, cache hit/miss, re-extraction, stale-cache rejection, malformed/unsupported input, bounds, output correctness, and repeated navigation.
 - [ ] Run the complete host test suite and a 3DS build on the exact same commit; record links and commit SHA.
@@ -86,7 +86,7 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Add host regression tests for raw-byte preservation, decoded pixels, PNG signature, source PPU command-list semantics, palette mirror behavior, all seven source palette snapshots, and explicit limits.
 - [x] Keep the original menu path locked while the extractor stage is not accepted.
 - [x] Add a source-derived PPU command-list interpreter and export seven verified palette command streams from `bank_FF.asm` D3D6–D450.
-- [x] Export 17 source PPU update streams from `tbl_C0F6` indices 1–17 with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
+- [x] Export 18 source PPU update streams from `tbl_C0F6` indices 1–17 with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
 - [ ] Trace which palette list is active in each game state; complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
 - [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
 - [ ] Finish UI and error-path tests, including malformed headers, missing source, failed writes, stale cache, repeated extraction, palette navigation, and viewer mode changes.
