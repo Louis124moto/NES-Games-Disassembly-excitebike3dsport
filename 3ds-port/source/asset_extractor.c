@@ -43,9 +43,9 @@ static void ensureExtractorDirectories(void)
     size_t length = strlen(s_cachePath);
     if (length >= sizeof(directory)) return;
     memcpy(directory, s_cachePath, length + 1u);
-    while (length > 0u && directory[length - 1u] != '/' && directory[length - 1u] != '\\\\') --length;
+    while (length > 0u && directory[length - 1u] != '/' && directory[length - 1u] != '\\') --length;
     if (length == 0u) return;
-    directory[length - 1u] = '\\0';
+    directory[length - 1u] = '\0';
     (void)mkdir(directory, 0777);
 }
 
@@ -191,8 +191,8 @@ void assetExtractorInit(const char *executablePath)
 
     /* Keep rom.nes beside the launched .3dsx; never depend on a fixed folder. */
     if (executablePath != NULL) {
-        for (i = 0u; executablePath[i] != '\\0'; ++i) {
-            if (executablePath[i] == '/' || executablePath[i] == '\\\\') slash = &executablePath[i];
+        for (i = 0u; executablePath[i] != '\0'; ++i) {
+            if (executablePath[i] == '/' || executablePath[i] == '\\') slash = &executablePath[i];
         }
     }
     if (slash != NULL) directoryLength = (size_t)(slash - executablePath) + 1u;
