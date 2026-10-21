@@ -271,3 +271,18 @@ Translate routines in dependency order rather than blindly copying address order
 | `sub_C409` | `nesSubC409SetupStaticSprite` | Tile, indexed X, attribute, flag |
 
 Native test source includes a dedicated regression group; execution and 3DS compilation are still pending.
+
+
+### Menu dependency batch — 2026-10-21
+
+| ASM entry | C translation / integration | Coverage |
+|---|---|---|
+| `ofs_000_C346_00` | `menusUpdate` state 0 | Bound-3 input, state 1/8 branches, timer-zero state 2 path |
+| `ofs_000_C395_01` | `menusUpdate` state 1 | Input remap, bound-5 selector, cursor X, state advance |
+| `sub_C3AF` | `nesSubC3AFIncrementState` | 8-bit increment/wrap |
+| `sub_C3B1` | `nesSubC3B1ResetFrameFlags` | Clear only `$0040/$0044` |
+| `ofs_000_C3BD_08` | `nesSubC3BDConfirmSelection` + `menusUpdate` | Selection 0–5 branches and clear path |
+| `tbl_C080_spr_Y` | `menusUpdate` state 0 cursor table | Source bytes copied from ASM |
+| `tbl_C083_spr_X` | `menusUpdate` state 1 cursor table | Source bytes copied from ASM |
+| `tbl_C08B_spr_Y` | `menusUpdate` state 8 cursor table | Source bytes copied from ASM |
+| `sub_D310` | Existing `nesSubD310DecreaseAllTimers` | Integrated for the tracked menu timer bytes |
