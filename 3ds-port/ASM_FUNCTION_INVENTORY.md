@@ -60,7 +60,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CD59` | `sub_CD59` | Pending | — |
 | `$CDEE` | `sub_CDEE` | Pending | — |
 | `$CE29` | `sub_CE29` | Pending | — |
-| `$CE58` | `sub_CE58` | Pending | — |
+| `$CE58` | `sub_CE58` | Translated in C; regression wired, latest execution pending | — |
 | `$CE5C` | `sub_CE5C` | Pending | — |
 | `$CED0` | `sub_CED0` | Pending | — |
 | `$CF0C` | `sub_CF0C` | Pending | calls: sub_CF96, sub_CFDB |
@@ -69,10 +69,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CF88` | `sub_CF88` | Pending | calls: sub_E7FF; ; out |
 | `$CF8B` | `sub_CF8B` | Pending | ; out |
 | `$CF96` | `sub_CF96` | Pending | — |
-| `$CFCB` | `sub_CFCB` | Pending | — |
-| `$CFDB` | `sub_CFDB` | Pending | — |
+| `$CFCB` | `sub_CFCB` | Translated in C; expanded regression wired, latest execution pending | — |
+| `$CFDB` | `sub_CFDB` | Translated in C; exhaustive regression wired, latest execution pending | — |
 | `$CFE3` | `sub_CFE3` | Pending | — |
-| `$CFEA` | `sub_CFEA` | Pending | calls: sub_CFE3 |
+| `$CFEA` | `sub_CFEA` | Translated in C; exhaustive regression wired, latest execution pending | calls: sub_CFE3 |
 
 ## $D000–$DFFF · input, timing and object state
 
