@@ -60,22 +60,29 @@ static void rendererDrawChrAtlas(void)
 
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
-    if (tileCount > 960u) tileCount = 960u;
+    /* 2x nearest-neighbour zoom: 25 columns × 15 rows fit the 400×240 screen. */
+    if (tileCount > 375u) tileCount = 375u;
     bank = assetExtractorGetPalette() % 10u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
-        const unsigned int tileX = (tile % 50u) * 8u;
-        const unsigned int tileY = (tile / 50u) * 8u;
+        const unsigned int tileX = (tile % 25u) * 16u;
+        const unsigned int tileY = (tile / 25u) * 16u;
         for (row = 0u; row < 8u; ++row) {
             for (col = 0u; col < 8u; ++col) {
-                const unsigned int x = tileX + col, y = tileY + row;
                 const uint8_t pixel = pixels[tile * 64u + row * 8u + col] & 3u;
                 const uint8_t nesIndex = s_gamePaletteSets[bank / 2u][bank % 2u][pixel] & 0x3Fu;
                 const uint8_t *rgb = s_nesMasterPalette[nesIndex];
-                const size_t offset = topFramebufferOffset(x, y);
-                framebuffer[offset + 0u] = rgb[2];
-                framebuffer[offset + 1u] = rgb[1];
-                framebuffer[offset + 2u] = rgb[0];
+                unsigned int dy, dx;
+                for (dy = 0u; dy < 2u; ++dy) {
+                    for (dx = 0u; dx < 2u; ++dx) {
+                        const unsigned int x = tileX + col * 2u + dx;
+                        const unsigned int y = tileY + row * 2u + dy;
+                        const size_t offset = topFramebufferOffset(x, y);
+                        framebuffer[offset + 0u] = rgb[2];
+                        framebuffer[offset + 1u] = rgb[1];
+                        framebuffer[offset + 2u] = rgb[0];
+                    }
+                }
             }
         }
     }
