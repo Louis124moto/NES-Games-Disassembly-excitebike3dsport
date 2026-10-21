@@ -4,19 +4,21 @@
 #include "renderer.h"
 #include "asset_extractor.h"
 
-/* libctru framebuffers use 8x8 tiled pixels, stored B,G,R. */
-static size_t framebufferOffset(unsigned int x, unsigned int y, unsigned int height)
+/*
+ * gfxGetFramebuffer reports the top screen as 240x400 memory coordinates,
+ * rotated relative to its physical 400x240 presentation. Convert physical
+ * screen (x,y) to framebuffer coordinates before applying the 8x8 tile layout.
+ */
+static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
 {
-    const unsigned int flippedY = height - 1u - y;
-    return ((((x >> 3u) * (height >> 3u)) + (flippedY >> 3u)) * 64u
-            + (x & 7u) * 8u + (flippedY & 7u)) * 3u;
+    const unsigned int fbX = screenY;       /* 0..239 */
+    const unsigned int fbY = 399u - screenX; /* 0..399 */
+    const unsigned int flippedY = 399u - fbY;
+    return ((((fbX >> 3u) * 50u) + (flippedY >> 3u)) * 64u
+            + (fbX & 7u) * 8u + (flippedY & 7u)) * 3u;
 }
 
-/*
- * Common 2C02/2C07-style 64-colour NES master-palette approximation.
- * RGB values represent hardware palette colours, not game-specific palette
- * RAM. The ROM's PPU palette writes still need to be traced for exact menus.
- */
+/* 64-colour NES master-palette RGB approximation, indexed by NES colour code. */
 static const uint8_t s_nesMasterPalette[64][3] = {
     {84,84,84},{0,30,116},{8,16,144},{48,0,136},{68,0,100},{92,0,48},{84,4,0},{60,24,0},
     {32,42,0},{8,58,0},{0,64,0},{0,60,0},{0,50,60},{0,0,0},{0,0,0},{0,0,0},
@@ -28,16 +30,16 @@ static const uint8_t s_nesMasterPalette[64][3] = {
     {204,210,120},{180,222,120},{168,226,144},{152,226,180},{160,214,228},{160,162,160},{0,0,0},{0,0,0}
 };
 
-/* Exact background sub-palettes from bank_FF.asm palette command streams:
- * $D3D6, $D3E9, $D3FC and $D40F each write 8 bytes at $3F00.
- * $D422 is another original background palette set. */
+/* Palette bytes recovered from the original bank_FF.asm palette streams. */
 static const uint8_t s_gamePaletteSets[5][2][4] = {
-    {{0x29,0x27,0x22,0x30},{0x29,0x27,0x18,0x36}}, /* _off_000_D3D6_12 */
-    {{0x01,0x1A,0x26,0x33},{0x01,0x11,0x0C,0x2C}}, /* _off_000_D3E9_13 */
-    {{0x02,0x26,0x1C,0x30},{0x02,0x29,0x19,0x39}}, /* _off_000_D3FC_14 */
-    {{0x00,0x26,0x22,0x30},{0x00,0x27,0x18,0x37}}, /* _off_000_D40F_15 */
-    {{0x02,0x19,0x22,0x30},{0x02,0x00,0x2D,0x10}}  /* _off_000_D422_16 */
+    {{0x29,0x27,0x22,0x30},{0x29,0x27,0x18,0x36}},
+    {{0x01,0x1A,0x26,0x33},{0x01,0x11,0x0C,0x2C}},
+    {{0x02,0x26,0x1C,0x30},{0x02,0x29,0x19,0x39}},
+    {{0x00,0x26,0x22,0x30},{0x00,0x27,0x18,0x37}},
+    {{0x02,0x19,0x22,0x30},{0x02,0x00,0x2D,0x10}}
 };
+
+static PrintConsole s_bottomConsole;
 
 static void rendererDrawChrAtlas(void)
 {
@@ -46,9 +48,12 @@ static void rendererDrawChrAtlas(void)
     const uint8_t *pixels = NULL;
     size_t tileCount = 0u;
     unsigned int tile, row, col, bank;
-    if (framebuffer == NULL || width < 400u || height < 240u) return;
+
+    /* On libctru top-screen framebuffer dimensions are 240x400. */
+    if (framebuffer == NULL || width != 240u || height != 400u) return;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     if (!assetExtractorIsActive()) return;
+
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     if (tileCount > 960u) tileCount = 960u;
@@ -63,7 +68,7 @@ static void rendererDrawChrAtlas(void)
                 const uint8_t pixel = pixels[tile * 64u + row * 8u + col] & 3u;
                 const uint8_t nesIndex = s_gamePaletteSets[bank / 2u][bank % 2u][pixel] & 0x3Fu;
                 const uint8_t *rgb = s_nesMasterPalette[nesIndex];
-                const size_t offset = framebufferOffset(x, y, height);
+                const size_t offset = topFramebufferOffset(x, y);
                 framebuffer[offset + 0u] = rgb[2];
                 framebuffer[offset + 1u] = rgb[1];
                 framebuffer[offset + 2u] = rgb[0];
@@ -76,12 +81,13 @@ void rendererInit(void)
 {
     gfxInitDefault();
     consoleInit(GFX_TOP, NULL);
-    consoleInit(GFX_BOTTOM, NULL);
+    consoleInit(GFX_BOTTOM, &s_bottomConsole);
+    consoleSelect(&s_bottomConsole);
 }
 
 void rendererBeginFrame(void)
 {
-    consoleSelect(NULL);
+    consoleSelect(&s_bottomConsole);
     consoleClear();
 }
 
@@ -97,11 +103,11 @@ void rendererDraw(const GameState *state)
     printf("ROM: rom.nes beside 3DSX\n");
     printf("Cache: extracted/chr_pixels.bin\n");
     printf("Viewer: %s\n", assetExtractorIsActive() ? "OPEN" : "closed");
-    printf("L/R: NES palette preview %u\n", assetExtractorGetPalette() + 1u);
+    printf("L/R: NES palette %u/10\n", assetExtractorGetPalette() + 1u);
     printf("Y: toggle atlas\n");
     printf("X: retry extraction (atlas open)\n");
     printf("B: close atlas\n");
-    printf("Preview palette; game palette pending.\n");
+    printf("Raw CHR; palette mapping is preview.\n");
 }
 
 void rendererEndFrame(void)
