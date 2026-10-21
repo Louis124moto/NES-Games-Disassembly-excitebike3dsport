@@ -32,6 +32,10 @@ typedef struct {
     uint8_t menu_scroll_x;
     uint8_t menu_scroll_y;
     uint8_t menu_ppu_ctrl;
+    uint8_t menu_ppu_mask;
+    uint8_t menu_oam[256];
+    /* CPU-side mirror of PPU $2000-$27FF used by sub_D23B/sub_D260. */
+    uint8_t menu_ppu_nametables[2048];
     uint8_t menu_selection_changed;
     uint8_t menu_action_x;
     uint8_t menu_ram0040;
