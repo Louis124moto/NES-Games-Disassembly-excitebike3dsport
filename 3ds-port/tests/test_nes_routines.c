@@ -2082,6 +2082,9 @@ static int testBatchAdditional20(void)
         /* Y=2 => base 6; $0046 ORs $10; $03F2 then adds $23. */
         nesSubC92CSelectTableEntry(0x37u,2u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=2u||r3!=0x37u||r5!=0xB1u||r6!=0xB2u||r7!=0xB3u)return 22;
+        /* C5A7 is exactly LDA #$00 / JMP loc_C92C. */
+        nesSubC5A7SelectMenuTableEntry(2u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=2u||r3!=0u||r5!=0xB1u||r6!=0xB2u||r7!=0xB3u)return 43;
         /* Without $0046, the same path selects base 6 + $23 = $29. */
         nesSubC92CSelectTableEntry(0x00u,2u,0u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=2u||r3!=0u||r5!=0xA1u||r6!=0xA2u||r7!=0xA3u)return 37;
