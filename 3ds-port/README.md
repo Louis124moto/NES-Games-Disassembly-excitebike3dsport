@@ -84,3 +84,8 @@ This remains a CHR-pattern diagnostic tool, not a reconstructed title screen: au
 ### Fixes for the 3DS hardware report (2026-10-21)
 
 The bottom-screen log is now intentionally short, with one action per line, to avoid wrapping text beyond the visible console area. The top-screen atlas renderer now uses the 3DS 8×8 tiled framebuffer layout rather than treating the framebuffer as linear memory; it also clears the screen when the viewer is closed. NES 2.0 size decoding and a regression case have been added. The latest CI results must be checked before these fixes are considered validated, and a real-console run is still required.
+
+
+### Authentic NES palette preview (2026-10-21)
+
+The CHR atlas renderer now maps decoded 2bpp pixels through a 64-colour NES master-palette RGB table. It also includes palette bytes read directly from the original `Excitebike/bank_FF.asm` streams `_off_000_D3D6_12`, `_off_000_D3E9_13`, `_off_000_D3FC_14`, `_off_000_D40F_15` and `_off_000_D422_16`. Use L/R to cycle ten palette previews (five source sets, two background sub-palettes each). Because the viewer shows raw CHR tiles without the original nametable/attribute map, a selected palette is a diagnostic preview and does not claim each tile's true in-game palette assignment. Menu rendering still requires source-faithful PPU upload, nametable, attribute and OAM integration.
