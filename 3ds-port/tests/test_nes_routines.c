@@ -604,6 +604,27 @@ static int testBatchC64E653(void) {
 }
 
 
+
+/* Independent CMP model: SBC-style binary subtraction, carry/no-borrow,
+   zero, and negative flags as produced by a 6502 CMP instruction. */
+typedef struct {
+    uint8_t result;
+    uint8_t carry;
+    uint8_t zero;
+    uint8_t negative;
+} ReferenceCmp6502;
+
+static ReferenceCmp6502 referenceCmp6502(uint8_t lhs, uint8_t rhs)
+{
+    uint16_t raw = (uint16_t)lhs + (uint16_t)(rhs ^ 0xFFu) + 1u;
+    ReferenceCmp6502 out;
+    out.result = (uint8_t)raw;
+    out.carry = (uint8_t)(raw > 0xFFu);
+    out.zero = (uint8_t)(out.result == 0u);
+    out.negative = (uint8_t)((out.result & 0x80u) != 0u);
+    return out;
+}
+
 /* Exhaustive instruction-derived checks for the latest comparison/flag batch. */
 static int testBatchAdditional20Boundaries(void)
 {
@@ -626,13 +647,14 @@ static int testBatchAdditional20Boundaries(void)
         }
     }
 
-    /* sub_CFCB: every high-byte CMP pair, then all low-byte values against
-       sign-bit/wrap boundary operands when the high bytes are equal. */
+    /* sub_CFCB: every high-byte CMP pair and every low byte against edge
+       operands. Expected branches are derived from the independent CMP model. */
     for (a = 0u; a < 256u; ++a) {
         for (b = 0u; b < 256u; ++b) {
+            ReferenceCmp6502 cmp = referenceCmp6502((uint8_t)a, (uint8_t)b);
             uint8_t actual = 0x5Au, expected = 0x5Au;
             nesSubCFCBCompareObjectPosition((uint8_t)a, (uint8_t)b, 0x80u, 0x80u, &actual);
-            if (a < b) expected = (uint8_t)(expected | 0x80u);
+            if (!cmp.carry) expected = (uint8_t)(expected | 0x80u);
             else if (a != 0u) expected = (uint8_t)(expected & 0x0Fu);
             if (actual != expected) {
                 fprintf(stderr, "sub_CFCB high-byte mismatch: %02X/%02X actual=%02X expected=%02X\n", a,b,actual,expected);
@@ -644,9 +666,10 @@ static int testBatchAdditional20Boundaries(void)
     for (a = 0u; a < 256u; ++a) {
         for (b = 0u; b < 256u; ++b) {
             uint8_t other = edge[b % 6u];
+            ReferenceCmp6502 cmp = referenceCmp6502((uint8_t)b, other);
             uint8_t actual = 0xA5u, expected = 0xA5u;
             nesSubCFCBCompareObjectPosition((uint8_t)a, (uint8_t)a, (uint8_t)b, other, &actual);
-            if (b < other) expected = (uint8_t)(expected | 0x80u);
+            if (!cmp.carry) expected = (uint8_t)(expected | 0x80u);
             else if (a != 0u) expected = (uint8_t)(expected & 0x0Fu);
             if (actual != expected) {
                 fprintf(stderr, "sub_CFCB low-byte mismatch: high=%02X low=%02X/%02X\n", a,b,other);
@@ -659,12 +682,13 @@ static int testBatchAdditional20Boundaries(void)
     /* sub_CFEA: exhaustive A, compare operand, and initial flag byte. */
     for (a = 0u; a < 256u; ++a) {
         for (b = 0u; b < 256u; ++b) {
+            ReferenceCmp6502 cmp = referenceCmp6502((uint8_t)a, (uint8_t)b);
             for (f = 0u; f < 256u; ++f) {
                 uint8_t actual = (uint8_t)f;
                 uint8_t expected = (uint8_t)(f & 0xF0u);
                 nesSubCFEAUpdateComparisonFlags((uint8_t)a, (uint8_t)b, &actual);
-                if (a != 0u && a != b)
-                    expected = (uint8_t)(expected | (a < b ? 1u : 2u));
+                if (a != 0u && !cmp.zero)
+                    expected = (uint8_t)(expected | (cmp.carry ? 2u : 1u));
                 if (actual != expected) {
                     fprintf(stderr, "sub_CFEA exhaustive mismatch: A=%02X operand=%02X flags=%02X actual=%02X expected=%02X\n",
                             a,b,f,actual,expected);
