@@ -5,6 +5,7 @@
 #include "asset_extractor.h"
 #include "menus.h"
 #include "nes_ppu_render.h"
+#include "nes_ppu_commands.h"
 
 /*
  * gfxGetFramebuffer reports the top screen as 240x400 memory coordinates,
@@ -87,6 +88,28 @@ static void rendererDrawChrAtlas(void)
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     if (!assetExtractorIsActive() || s_gameStarted) return;
 
+    if (assetExtractorGetViewMode() == 1u) {
+        uint8_t palette[32], written[32];
+        size_t writes = 0u, index;
+        if (nesExcitebikePaletteSnapshot(assetExtractorGetPaletteIndex(), palette, written, &writes) != NES_PPU_COMMAND_OK) return;
+        for (index = 0u; index < 32u; ++index) {
+            const unsigned int cellX = (unsigned int)(index % 8u) * 50u;
+            const unsigned int cellY = (unsigned int)(index / 8u) * 60u;
+            uint8_t rgb[3] = {64u,64u,64u};
+            unsigned int x, y;
+            if (written[index] != 0u) (void)nesPpuColorToRgb(palette[index], rgb);
+            for (y = 1u; y < 59u; ++y) {
+                for (x = 1u; x < 49u; ++x) {
+                    const size_t offset = topFramebufferOffset(cellX + x, cellY + y);
+                    framebuffer[offset] = rgb[0];
+                    framebuffer[offset + 1u] = rgb[1];
+                    framebuffer[offset + 2u] = rgb[2];
+                }
+            }
+        }
+        return;
+    }
+
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
@@ -157,6 +180,28 @@ void rendererDraw(const GameState *state)
         return;
     }
     (void)state;
+    if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 1u) {
+        uint8_t palette[32], written[32];
+        size_t writes = 0u, index;
+        const char *sourceLabel = NULL;
+        size_t streamSize = 0u;
+        (void)nesExcitebikePaletteStream(assetExtractorGetPaletteIndex(), &streamSize, &sourceLabel);
+        (void)nesExcitebikePaletteSnapshot(assetExtractorGetPaletteIndex(), palette, written, &writes);
+        consoleSelect(&s_bottomConsole);
+        consoleClear();
+        fputs("EXCITEBIKE 3DS / SOURCE PPU PALETTE\\n", stdout);
+        fputs("------------------------------\\n", stdout);
+        (void)printf("Source: %s\\nWrites replayed: %lu\\n", sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes);
+        fputs("Values: ", stdout);
+        for (index = 0u; index < 32u; ++index) {
+            (void)printf("%02X%s", palette[index], (index % 8u == 7u) ? "\\n       " : " ");
+        }
+        fputs("\\nMask marks addresses written by this source list.\\n", stdout);
+        fputs("This preset is not necessarily the active live-game palette.\\n", stdout);
+        fputs("D-pad left/right: palette; up/down: simple/advanced\\nA: export; B: back\\n", stdout);
+        s_logInitialized = 0;
+        return;
+    }
     if (s_gameStarted) {
         (void)snprintf(logText, sizeof(logText),
             "EXCITEBIKE 3DS\n"
@@ -184,6 +229,7 @@ void rendererDraw(const GameState *state)
             "Atlas is grayscale 2bpp indices, not game colors.\n",
             assetExtractorGetStatus(), (unsigned long)tileCount,
             assetExtractorIsActive() ? "OPEN" : "closed",
+            assetExtractorGetViewMode() == 0u ? "CHR atlas" : "palette diagnostics",
             (unsigned long)(assetExtractorGetPage() + 1u),
             (unsigned long)((tileCount + 374u) / 375u));
     }
