@@ -2055,7 +2055,7 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
     static const uint8_t startY[4] = {0x0Eu, 0x1Au, 0x26u, 0x32u};
     static const uint8_t objectE0[4] = {0x09u, 0x0Bu, 0x0Du, 0x0Fu};
     static const uint8_t objectX[4] = {0x38u, 0x48u, 0x58u, 0x68u};
-    unsigned int x, lastX;
+    unsigned int x, lastX, i;
 
     /* Literal writes at C875-C8A8. */
     ram[0x0047u] = (uint8_t)(ram[0x0047u] + 1u);
