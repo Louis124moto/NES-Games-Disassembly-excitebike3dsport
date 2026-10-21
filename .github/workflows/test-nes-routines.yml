@@ -26,6 +26,9 @@ on:
       - "3ds-port/include/nes_chr_decode.h"
       - "3ds-port/source/nes_ppu_render.c"
       - "3ds-port/include/nes_ppu_render.h"
+      - "3ds-port/source/asset_export.c"
+      - "3ds-port/include/asset_export.h"
+      - "3ds-port/include/third_party/stb_image_write.h"
       - ".github/workflows/test-nes-routines.yml"
   workflow_dispatch:
 
