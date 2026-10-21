@@ -1667,6 +1667,7 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
 
     y = *selection;
     *selectionChanged = 0u;
+    /* AND #$3C; no relevant held buttons clears ram_0049 and returns X=0. */
     if ((buttonPress & 0x3Cu) == 0u) {
         *repeatGuard = 0u;
         return 0u;
@@ -1675,6 +1676,10 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
     *timer31 = 0x5Du;
     if (*repeatGuard != 0u) return 0u;
 
+    /*
+     * 6502 order matters: Select has priority, then Down, then Up.
+     * Any other bit in the $3C mask follows the timer30/action-X=4 path.
+     */
     if ((buttonPress & 0x20u) != 0u || (buttonPress & 0x04u) != 0u) {
         y = (uint8_t)(y + 1u);
         if (y >= count) y = 1u;
@@ -1694,13 +1699,27 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
             (buttonPress & 0x08u) != 0u) ? 0u : 4u;
 }
 
+/* sub_C3AF: INC ram_0041 (8-bit wrap is intentional). */
+void nesSubC3AFIncrementState(uint8_t *ram0041)
+{
+    if (ram0041 != NULL) *ram0041 = (uint8_t)(*ram0041 + 1u);
+}
+
+/* sub_C3B1: clear ram_0040 and ram_0044, and nothing else. */
+void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044)
+{
+    if (ram0040 != NULL) *ram0040 = 0u;
+    if (ram0044 != NULL) *ram0044 = 0u;
+}
+
 /*
  * ofs_000_C3BD_08 confirmation branches after sub_C7DE returns X != 0.
- * This models only the selection/state RAM effects visible in the original ASM.
+ * Directly mirrors the branches and calls sub_C3AF/sub_C3B1 where ASM does.
  */
 void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
                                 uint8_t *ram0042, uint8_t *ram03F2,
-                                uint8_t *clearRamRequested)
+                                uint8_t *clearRamRequested,
+                                uint8_t *ram0040, uint8_t *ram0044)
 {
     uint8_t selection;
     if (actionX == 0u || ram0041 == NULL || ram0042 == NULL ||
@@ -1710,15 +1729,18 @@ void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
     selection = *ram0042;
     if (selection < 2u) {
         *ram03F2 = selection;
-        *ram0041 = (uint8_t)(*ram0041 + 1u);
+        nesSubC3AFIncrementState(ram0041);
+        nesSubC3B1ResetFrameFlags(ram0040, ram0044);
     } else if (selection == 2u) {
-        *ram0041 = (uint8_t)(*ram0041 + 1u);
+        nesSubC3AFIncrementState(ram0041);
+        nesSubC3B1ResetFrameFlags(ram0040, ram0044);
     } else if (selection == 5u) {
         *ram0042 = (uint8_t)(selection >> 1);
         *clearRamRequested = 1u;
     } else {
         *ram0041 = (uint8_t)(selection + 9u);
         *ram0042 = 0u;
+        nesSubC3B1ResetFrameFlags(ram0040, ram0044);
     }
 }
 
