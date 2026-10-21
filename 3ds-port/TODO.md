@@ -26,8 +26,8 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
 | Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
-| Latest host routine test execution | **Passed** in [CI run 39576697188](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188) (revision `4661d20`), including the C485, C621, C43D and CB2C regression vectors. |
-| Latest completed 3DS build | **Passed** in [CI run 39576523425](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576523425) (revision `910d26e`), including C485, C621 and C43D; the build including the later CB2C change is still pending. |
+| Latest host routine test execution | **Passed** in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`), including the new CBA3 regression vector and the existing menu routine suite. |
+| Latest completed 3DS build | **Passed** in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`). Note: `nes_routines.c` remains excluded from the active runtime target, so this verifies the homebrew scaffold/build, not gameplay integration. |
 | Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Finish the complete menu first; then implement and validate Course 1 only. Courses 2+ are explicitly deferred. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
@@ -353,7 +353,7 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [x] Start the runtime CHR cache/ROM check during initialization, so the result is available without first opening the atlas.
 - [x] Keep the bottom-screen console visible in normal runtime and show the current extraction/cache status, decoded tile count, expected ROM/cache locations, and viewer state.
 - [x] Keep the top-screen grayscale CHR atlas conditional on the viewer toggle; diagnostics do not pretend to be the original menu.
-- [ ] Run host tests and the 3DS build on the exact commit containing startup extraction and persistent logging.
+- [x] 3DS build passed on commit `62b918d`: [CI run 39577470276](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577470276). The subsequent host test suite also passed on `601e7e3`.
 - [ ] On hardware, verify that the bottom screen reports a useful success or failure message with the ROM beside the launched `.3dsx`, that a cache hit is reported, and that X retries extraction while the viewer is open.
 - [ ] If `argv[0]` does not resolve to the SD path on the target homebrew launcher, replace it with a verified libctru/argv path solution and document the evidence.
 
