@@ -108,9 +108,24 @@ static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
                            const uint8_t *palette, const uint8_t *paletteMask)
 {
     size_t tile, x, y;
-    if (nesPpuRenderNametable(pixels, tileCount, snapshot,
-                              snapshot + NES_PPU_NAMETABLE_BYTES,
-                              palette, s_ppuPreview, sizeof(s_ppuPreview)) != NES_PPU_RENDER_OK) {
+    uint8_t safeNametable[NES_PPU_NAMETABLE_BYTES];
+    uint8_t attributes[NES_PPU_ATTRIBUTE_BYTES];
+
+    /*
+     * PPU snapshots intentionally preserve unknown bytes, commonly 0xFF.
+     * The compositor correctly rejects out-of-range tile IDs, so sanitize
+     * only its temporary input and hatch the original unknown tile below.
+     * Never rewrite the exported source snapshot.
+     */
+    memcpy(safeNametable, snapshot, sizeof(safeNametable));
+    memcpy(attributes, snapshot + NES_PPU_NAMETABLE_BYTES,
+           sizeof(attributes));
+    for (tile = 0u; tile < NES_PPU_NAMETABLE_BYTES; ++tile) {
+        if (safeNametable[tile] >= tileCount) safeNametable[tile] = 0u;
+    }
+    if (nesPpuRenderNametable(pixels, tileCount, safeNametable,
+                              attributes, palette, s_ppuPreview,
+                              sizeof(s_ppuPreview)) != NES_PPU_RENDER_OK) {
         return 0;
     }
 
