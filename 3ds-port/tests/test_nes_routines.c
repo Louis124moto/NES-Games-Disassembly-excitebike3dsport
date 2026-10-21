@@ -2089,6 +2089,17 @@ static int testBatchAdditional20(void)
         nesSubC92CSelectTableEntry(0x00u,5u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=5u||r5!=0xC1u||r6!=0xC2u||r7!=0xC3u)return 38;
     }
+    {
+        uint8_t optionTable[256], v5=0u,v6=0u,v7=0u;
+        for(i=0u;i<256u;++i) optionTable[i]=(uint8_t)(i^0x5Au);
+        nesSubC522SelectOptionTuple(2u,1u,optionTable,&v5,&v6,&v7);
+        if(v5!=(uint8_t)(0x16u^0x5Au)||v6!=(uint8_t)(0x17u^0x5Au)||
+           v7!=(uint8_t)(0x18u^0x5Au))return 39;
+        /* $0043=5 selects $20 directly, regardless of $0046. */
+        nesSubC522SelectOptionTuple(5u,1u,optionTable,&v5,&v6,&v7);
+        if(v5!=(uint8_t)(0x20u^0x5Au)||v6!=(uint8_t)(0x21u^0x5Au)||
+           v7!=(uint8_t)(0x22u^0x5Au))return 40;
+    }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
     if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
