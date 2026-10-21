@@ -26,8 +26,8 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
 | Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
-| Latest batch host test execution | **Passed** in [CI run 39524481254](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481254) (revision `e3459d1`). |
-| Latest batch 3DS build | **Passed** in [CI run 39524481329](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481329) (revision `e3459d1`). |
+| Latest batch host test execution | **Passed** in [CI run 39524743178](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743178) (revision `d27ddb2`). |
+| Latest batch 3DS build | **Passed** in [CI run 39524743181](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743181) (revision `d27ddb2`). |
 | Latest batch gameplay integration | Not demonstrated. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
@@ -42,7 +42,7 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [x] Confirm the scaffold launches on real 3DS hardware (user-reported). This confirms launch only, not faithful gameplay.
 - [x] Add ignore rules for generated build output.
 - [x] Document build requirements and commands.
-- [x] Re-run a clean 3DS build on revision `e3459d1`; [CI run 39524481329 passed](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481329).
+- [x] Re-run a clean 3DS build on revision `d27ddb2`; [CI run 39524743181 passed](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743181).
 
 ## Phase 2 — Source analysis and architecture
 
@@ -225,7 +225,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Recover the original option text/graphics mapping from verified source data; do not infer labels from option indices.
 - [ ] Reconstruct menu nametable/attribute/palette writes, sprite/OAM state, scroll and PPU timing; compare screenshots/input traces with the NES reference.
 
-**Current honest status:** PC extraction tests, runtime iNES decoder tests, host C regression tests, and the 3DS build all pass on revision `e3459d1`. The runtime extractor is integrated. The native menu remains partial; this commit does not claim a completed faithful menu or playable port. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
+**Current honest status:** PC extraction tests, runtime iNES decoder tests, host C regression tests, and the 3DS build all pass on revision `d27ddb2`. The runtime extractor is integrated. The native menu remains partial; this commit does not claim a completed faithful menu or playable port. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
 
 ## Built-in extractor and menu PPU setup — 2026-10-21
 
@@ -233,7 +233,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [x] Add an in-homebrew grayscale atlas for up to 960 decoded 2bpp CHR tiles, with Y to open/close, X to reload, and B to return.
 - [x] Validate iNES signature, optional trainer, PRG/CHR offsets and file bounds; report unsupported NES 2.0 and CHR-RAM inputs explicitly.
 - [x] Translate and host-test the `sub_C318` PPU/OAM prelude effects (`sub_D255`, `sub_D23B/sub_D260`, `sub_D1A9`, `sub_C333`).
-- [x] Run and record the 3DS build and host suite for revision `e3459d1`; [host suite 39524481254](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481254) and [3DS build 39524481329](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481329) passed.
+- [x] Run and record the 3DS build and host suite for revision `d27ddb2`; [host suite 39524743178](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743178) and [3DS build 39524743181](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743181) passed.
 - [ ] Implement the exact six-command setup list `off_C046_02` (state 2) and its dependencies before treating the main menu-to-game transition as complete.
 - [x] Port state 13's shared `ofs_001_C582_08_01` / `ofs_001_C518_08_02` setup list.
 - [ ] Implement setup lists for states 2, 9, 10, and 12, plus handlers for reached states 9, 10, 12, and 13; do not mark the menu complete while any reached state is still an explicit stub.
