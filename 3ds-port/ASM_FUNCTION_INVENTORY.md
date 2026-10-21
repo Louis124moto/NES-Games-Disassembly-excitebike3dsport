@@ -71,7 +71,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CF96` | `sub_CF96` | Pending | — |
 | `$CFCB` | `sub_CFCB` | Translated in C; expanded regression wired, latest execution pending | — |
 | `$CFDB` | `sub_CFDB` | Translated in C; exhaustive regression wired, latest execution pending | — |
-| `$CFE3` | `sub_CFE3` | Pending | — |
+| `$CFE3` | `sub_CFE3` | Translated in C; exhaustive regression wired, latest execution pending | called by sub_CFEA |
 | `$CFEA` | `sub_CFEA` | Translated in C; exhaustive regression wired, latest execution pending | calls: sub_CFE3 |
 
 ## $D000–$DFFF · input, timing and object state
