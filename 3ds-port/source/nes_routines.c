@@ -1747,6 +1747,20 @@ uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048)
 /* sub_EC3B: X starts at zero, wraps through $FF, and exits when X returns to zero. */
 /* sub_C621: LDX #$00; copy $06E0,X -> $05E0,X; DEX/BNE.
  * The source starts at X=0, then visits $FF down through $01. */
+/* sub_CB2C: read the low and high handler bytes from the contiguous ROM
+ * layout tbl_C12C_lo ($C12C), tbl_C130_hi ($C130), then indirect-jump. */
+uint16_t nesSubCB2CDispatchAddress(uint8_t ram0044, const uint8_t romC12C[260],
+                                   uint8_t *ram0000, uint8_t *ram0001)
+{
+    uint8_t low, high;
+    if (romC12C == NULL) return 0u;
+    low = romC12C[ram0044];
+    high = romC12C[(unsigned int)ram0044 + 4u];
+    if (ram0000 != NULL) *ram0000 = low;
+    if (ram0001 != NULL) *ram0001 = high;
+    return (uint16_t)((uint16_t)low | ((uint16_t)high << 8u));
+}
+
 void nesSubC621CopyRaceData(uint8_t ram[65536])
 {
     uint8_t x = 0u;
