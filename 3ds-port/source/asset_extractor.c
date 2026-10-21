@@ -79,7 +79,7 @@ static int loadExtractedCache(void)
     {
         size_t i;
         for (i = 0u; i < expectedBytes; ++i) {
-            if (s_pixels[0][i] > 3u) {
+            if (((const uint8_t *)s_pixels)[i] > 3u) {
                 s_tileCount = 0u;
                 return 0;
             }
