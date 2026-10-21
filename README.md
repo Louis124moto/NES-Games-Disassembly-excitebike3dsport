@@ -125,7 +125,7 @@ Only claim the states supported by evidence. Host tests do not replace hardware/
 6. Compare complete gameplay scenarios against the original NES version; document any known differences.
 7. Test on both original 3DS and New 3DS hardware, then optimize and prepare a versioned `.3dsx` release.
 
-The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
+The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). The state-13 `$FF` completion branch has been translated and tested; the full menu remains incomplete while state 2 and destination states 9/10/12 are unported. See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
 
 ## Upstream source and credits
 
