@@ -885,7 +885,13 @@ static int testState2SetupCommands(void)
 
 int main(void)
 {
-    if (testState2SetupCommands() != 0) return 90;
+    {
+        int state2Result = testState2SetupCommands();
+        if (state2Result != 0) {
+            fprintf(stderr, "FAIL: state-2 setup regression vector %d\\n", state2Result);
+            return 90 + state2Result;
+        }
+    }
     if (testState13Completion() != 0) { fputs("FAIL: state-13 completion\n", stderr); return 1; }
     if (testSubD310MenuTimers() != 0) { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
