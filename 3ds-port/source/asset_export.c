@@ -46,6 +46,37 @@ static int writeBytes(const char *path, const uint8_t *bytes, size_t size)
     return ok;
 }
 
+
+/*
+ * Versioned, self-describing tile pack for native consumers.
+ * Header (little-endian): "EBPX", u16 version=1, u16 headerBytes=16,
+ * u32 tileCount, u8 tileWidth=8, u8 tileHeight=8, u8 format=1
+ * (one byte per 2bpp pixel index 0..3), u8 reserved=0; then tileCount*64
+ * pixel-index bytes in row-major tile order. chr_pixels.bin remains raw
+ * for backwards compatibility with the existing viewer.
+ */
+static int writePixelPack(const char *path, const uint8_t *pixels, size_t tileCount)
+{
+    uint8_t header[16] = {
+        'E', 'B', 'P', 'X', 1u, 0u, 16u, 0u,
+        0u, 0u, 0u, 0u, 8u, 8u, 1u, 0u
+    };
+    size_t countBytes = tileCount * 64u;
+    header[8] = (uint8_t)(tileCount & 0xFFu);
+    header[9] = (uint8_t)((tileCount >> 8u) & 0xFFu);
+    header[10] = (uint8_t)((tileCount >> 16u) & 0xFFu);
+    header[11] = (uint8_t)((tileCount >> 24u) & 0xFFu);
+    {
+        FILE *file = fopen(path, "wb");
+        int ok;
+        if (file == NULL) return 0;
+        ok = fwrite(header, 1u, sizeof(header), file) == sizeof(header) &&
+             fwrite(pixels, 1u, countBytes, file) == countBytes;
+        if (fclose(file) != 0) ok = 0;
+        return ok;
+    }
+}
+
 static void buildAtlas(const uint8_t *pixels, size_t tileCount)
 {
     size_t tile, y, x;
@@ -119,7 +150,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                      const uint8_t *pixels, size_t tileCount,
                      char *status, size_t statusCapacity)
 {
-    char rawPath[512], pixelPath[512], pngPath[512], manifestPath[512];
+    char rawPath[512], pixelPath[512], pixelPackPath[512], pngPath[512], manifestPath[512];
     char manifest[2048];
     struct stat st;
     FILE *file;
@@ -141,6 +172,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     }
     if (!makePath(rawPath, sizeof(rawPath), directory, "chr_raw.bin") ||
         !makePath(pixelPath, sizeof(pixelPath), directory, "chr_pixels.bin") ||
+        !makePath(pixelPackPath, sizeof(pixelPackPath), directory, "chr_pixels.ebp") ||
         !makePath(pngPath, sizeof(pngPath), directory, "chr_atlas.png") ||
         !makePath(manifestPath, sizeof(manifestPath), directory, "manifest.txt")) {
         if (status != NULL && statusCapacity > 0u)
@@ -150,6 +182,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     buildAtlas(pixels, tileCount);
     if (!writeBytes(rawPath, rawChr, rawChrBytes) ||
         !writeBytes(pixelPath, pixels, tileCount * 64u) ||
+        !writePixelPack(pixelPackPath, pixels, tileCount) ||
         !stbi_write_png(pngPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3, s_atlas, ATLAS_WIDTH * 3)) {
         if (status != NULL && statusCapacity > 0u)
             (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
@@ -219,7 +252,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Embedded source header: Excitebike/header.bin = mapper 0, 16 KiB PRG, 8 KiB CHR-ROM, vertical mirroring\n"
         "Embedded PPU command lists are Excitebike-specific, not general data for arbitrary ROMs\n"
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
-        "Decoded pixels: chr_pixels.bin (%lu tiles, 64 2bpp indices per tile; runtime cap 960 tiles)\n"
+        "Decoded pixels: chr_pixels.bin (raw compatibility file); chr_pixels.ebp (versioned EBPX tile pack, %lu tiles)\n"
+        "EBPX v1 header: magic[4], version u16 LE, header size u16 LE, tile count u32 LE, tile width, height, pixel format (1=index byte), reserved; payload = 64 bytes/tile\n"
         "Preview: chr_atlas.png (256x240 RGB; 32x30 tiles; grayscale index visualization)\n"
         "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
         "Palette presets: ppu_palette_12..18.bin replay source PPU write lists; mask and stream binaries are included\n"
@@ -251,6 +285,6 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         return 0;
     }
     if (status != NULL && statusCapacity > 0u)
-        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, atlas, color PPU previews, palettes, snapshots, manifest.");
+        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, EBPX tile pack, atlas, color PPU previews, palettes, snapshots, manifest.");
     return 1;
 }
