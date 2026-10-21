@@ -35,7 +35,7 @@ A function definition, matching name/address, passing unit test, successful buil
 
 ## Runtime integration update — 2026-10-21
 
-The diagnostic screen remains the cold-start view. Pressing START now resets the native menu model and routes subsequent frames through `menusUpdate()`; the CHR atlas is suppressed in menu mode. The menu-related C modules are included in the 3DSX target. This is an integration milestone only: the current `menusRender()` still emits a textual ASM-state trace and does **not** draw the original NES title screen. Menu state transitions, setup command lists, PPU data reconstruction, and fidelity validation remain incomplete; B currently returns to diagnostics as an explicit escape hatch.
+The diagnostic screen remains the cold-start view. Pressing START now resets the native menu model and routes subsequent frames through `menusUpdate()`; the CHR atlas is suppressed in menu mode. The menu-related C modules are included in the 3DSX target. This is an integration milestone only: the current `menusRender()` still emits a textual ASM-state trace and does **not** draw the original NES title screen. Menu state transitions, setup command lists, PPU data reconstruction, and fidelity validation remain incomplete; Menu input is mapped to the NES controller bit layout; no extra B-to-diagnostic or X-help behavior is added in menu mode.
 
 ## Current menu/graphics work
 
