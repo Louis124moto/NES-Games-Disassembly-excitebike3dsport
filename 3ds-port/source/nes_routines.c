@@ -2469,3 +2469,19 @@ void nesSubC455SelectState(uint8_t ram0041, uint8_t ram0046,
         *ram0045 = 0x07u;
     }
 }
+
+
+/*
+ * Exact translation of the shared exit at loc_CBA3 ($CBA3):
+ *   STA ram_0033_timer
+ *   INC ram_0044
+ *   RTS
+ * The caller supplies the A value that reaches this shared exit. INC wraps
+ * as an 8-bit byte; this helper intentionally does not model caller branches.
+ */
+void nesLocCBA3SetTimerAndAdvance(uint8_t accumulator,
+                                 uint8_t *ram0033, uint8_t *ram0044)
+{
+    *ram0033 = accumulator;
+    *ram0044 = (uint8_t)(*ram0044 + 1u);
+}
