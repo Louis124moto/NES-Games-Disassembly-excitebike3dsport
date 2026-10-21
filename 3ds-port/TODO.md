@@ -407,3 +407,12 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Run the host tests and 3DS build on the exact revision with the new palette renderer.
 - [ ] Verify on hardware that L/R cycles all ten palette choices and the colours match the source-defined NES palette values.
 - [ ] Trace which palette command is active in each menu state and integrate nametable/attribute data before claiming faithful menu colours.
+
+
+## Fix crash observed on physical New Nintendo 3DS — 2026-10-21
+
+- [x] Remove `consoleSelect(NULL)`: keep and select the actual bottom-screen `PrintConsole` instance. The crash dump's data-abort read at address `0x0000002C` was consistent with dereferencing a null console pointer.
+- [x] Restore correct libctru top framebuffer dimensions (`240×400` memory coordinates) and convert physical atlas coordinates (`400×240`) into rotated framebuffer coordinates before tiled addressing. The previous code checked dimensions as `400×240` and then wrote coordinates outside the actual framebuffer, risking memory corruption/data abort.
+- [ ] Build and run CI on commit `34ebefd` or later; the previously successful build was for an earlier revision and does not validate these crash fixes.
+- [ ] Retest on the user's console: launch, verify the bottom log appears without crash, press Y to open atlas, L/R to cycle palettes, B to close; verify no crash after several frames.
+- [ ] If it still crashes, save the crash dump with A and provide the dump/exception context; do not infer further causes without the new PC/LR/FAR and revision.
