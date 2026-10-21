@@ -655,3 +655,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - `sub_C522` copies `$0043` into scratch `$0002`, calls `sub_CB13`, and reads the three consecutive bytes at `tbl_C091,Y` into `$0005-$0007`.
 - `nesSubC522SelectOptionTuple` now mirrors the `sub_CB13` index rules, including the `$0043 == 5` special offset `$20` and the `$0046`-controlled `ORA #$10` path. Regression vectors cover both branches.
 - This is a verified helper, not completion of `ofs_001_C485_03_05`; its comparisons and later branches remain to be ported before state 3 can be enabled.
+
+
+## State-3 command `ofs_001_C5A7_03_04` (2026-10-21)
+
+- ASM is exactly `LDA #$00; JMP loc_C92C`. The native `nesSubC5A7SelectMenuTableEntry` wrapper passes A=`$00` into the shared C92C/C53E table path and preserves the same scratch outputs.
+- Regression coverage checks that `$0003` receives zero and that the selected three-byte table tuple matches the corrected `$0046/$03F2` index path.
+- This is an isolated routine translation only; `ofs_001_C485_03_05` and the complete state-3 setup list remain incomplete.
