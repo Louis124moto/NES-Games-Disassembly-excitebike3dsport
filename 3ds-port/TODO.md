@@ -219,10 +219,10 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 
 - [x] Add a unified Python extraction entry point: `tools/extract_nes_assets.py` invokes the PNG/JSON extractor and the C-header generator using the same verified source/range arguments.
 - [x] Document the one-command extraction workflow, generated files, optional tile PNGs, palette input, and native diagnostic-header installation.
-- [ ] Execute Python extractor unit tests and record the result for the exact commit.
-- [ ] Execute a clean `make -C 3ds-port` and record the result for the exact commit.
+- [x] Run Python extractor unit tests and the host C regression suite on `b47057371b09b68451119cf98706654e32243d3e`; [CI run 39523497914 passed](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497914).
+- [ ] Complete the matching clean 3DS build; [CI run 39523497853 is pending](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497853).
 - [ ] Complete and verify setup-command tables and their side effects for ASM states 2, 9, 10, 12, and 13 before calling the title/menu flow complete.
 - [ ] Recover the original option text/graphics mapping from verified source data; do not infer labels from option indices.
 - [ ] Reconstruct menu nametable/attribute/palette writes, sprite/OAM state, scroll and PPU timing; compare screenshots/input traces with the NES reference.
 
-**Current honest status:** extraction automation is implemented but not yet test-verified in this change. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
+**Current honest status:** extraction automation and its Python tests are verified; the host C regression suite passes after correcting an expectation to match the original `sub_C7DE` asymmetric wrap behavior. The current 3DS build is pending. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
