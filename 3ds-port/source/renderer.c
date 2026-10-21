@@ -243,16 +243,16 @@ void rendererDraw(const GameState *state)
         for (i = 0u; i < 64u; ++i) if (s_sourceNametableMask[0x3C0u + i] != 0u) ++attributeWritten;
         for (i = 0u; i < 32u; ++i) if (s_sourcePaletteMask[i] != 0u) ++paletteWritten;
         (void)snprintf(logText, sizeof(logText),
-            "EXCITEBIKE 3DS / SOURCE PPU SNAPSHOT\\n"
-            "------------------------------\\n"
-            "Source: %s\\nWrites replayed: %lu\\n"
-            "Nametable bytes written: %lu/960\\n"
-            "Attribute bytes written: %lu/64\\n"
-            "Palette addresses written: %lu/32\\n"
-            "Hatched tiles contain missing source data or unknown palette entries.\\n"
-            "This is a replayed command list, not a live game frame.\\n"
-            "D-pad left/right: PPU stream; up/down: change view\\n"
-            "A: export; B: back\\n",
+            "EXCITEBIKE 3DS / SOURCE PPU SNAPSHOT\n"
+            "------------------------------\n"
+            "Source: %s\nWrites replayed: %lu\n"
+            "Nametable bytes written: %lu/960\n"
+            "Attribute bytes written: %lu/64\n"
+            "Palette addresses written: %lu/32\n"
+            "Hatched tiles contain missing source data or unknown palette entries.\n"
+            "This is a replayed command list, not a live game frame.\n"
+            "D-pad left/right: PPU stream; up/down: change view\n"
+            "A: export; B: back\n",
             sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes,
             (unsigned long)nametableWritten, (unsigned long)attributeWritten, (unsigned long)paletteWritten);
         if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
