@@ -301,7 +301,7 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 
 ## Menu selection routine status — `ofs_001_C485_03_05` (2026-10-21)
 
-- Status: native C translation and four regression scenarios added; CI/build verification pending at the time of this update. Do not mark tested or integrated until the latest workflow completes.
+- Status: native C translation and regression scenarios added; host suite passed in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191). The helper is not integrated into the active runtime.
 - Implemented paths: compare the RAM tuple from `sub_C53A` with `$0068-$006A`; write the target tuple to `$0580,Y` when the candidate is greater; for states below 8, compare the ROM tuple from `sub_C522`; otherwise calculate the scaled value through the original `DEY/BMI`, `ADC #$3C`, carry/overflow, `SBC`, and shift loops.
 - Shared exit effects reproduced in C: `$0053`, `$0045=$18`, `$0049=$01`, `$0040=$01`, `$0044=$00`. The routine remains an isolated translation, not connected to the active menu runtime.
 
@@ -309,7 +309,7 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 | `$C43D` | `nesLocC43DHandleMenuState` | Translated + regression vectors; CI pending, runtime integration pending | — |
 
 
-| `$CB2C` | `nesSubCB2CDispatchAddress` | Translated + regression vectors for all four handler-table entries; CI pending, dispatcher integration pending | — |
+| `$CB2C` | `nesSubCB2CDispatchAddress` | Translated + regression vectors for all four handler-table entries; host suite passed in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191); dispatcher integration pending | — |
 
 
 | `$CBA3` | `nesLocCBA3SetTimerAndAdvance` | Translated; host regression vector added for normal increment and 8-bit wrap; CI/build verification pending | Shared exit used by menu handler states 3/6/11; caller branches and PPU dependencies remain incomplete |
