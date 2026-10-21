@@ -17,6 +17,20 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
 
     if (state == 0) return;
 
+    /*
+     * vec_C23B_NMI calls sub_D310 once per frame when unpaused. Preserve the
+     * $20 divider phase and the $30/$31 timer bytes; other unmodeled timers
+     * are zero in this menu-only trace.
+     */
+    if (!state->paused) {
+        uint8_t timers[29] = {0};
+        timers[0x30u - 0x21u] = state->menu_timer30;
+        timers[0x31u - 0x21u] = state->menu_timer31;
+        nesSubD310DecreaseAllTimers(&state->menu_timer20, timers);
+        state->menu_timer30 = timers[0x30u - 0x21u];
+        state->menu_timer31 = timers[0x31u - 0x21u];
+    }
+
     if (heldKeys & KEY_SELECT) nesButtons |= 0x20u;
     if (heldKeys & KEY_START)  nesButtons |= 0x10u;
     if (heldKeys & KEY_UP)     nesButtons |= 0x08u;
