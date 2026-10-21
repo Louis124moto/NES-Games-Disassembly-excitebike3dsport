@@ -151,14 +151,13 @@ static int menusRunSetupSequence(GameState *state)
             return 1;
         }
     } else if (state->menu_asm_state == 7u) {
-        if (commandIndex == 0u) { /* ofs_001_C869_07_01 */
-            state->menu_repeat_guard = 0u;
-            state->menu_ram0040 = 0u;
-            state->menu_ram0044 = 0u;
+        if (commandIndex == 0u) { /* ofs_001_C869_07_01: clear $004D-$00EF */
+            memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
             return 1;
         }
         if (commandIndex == 1u) { /* ofs_001_C586_07_02 depends on sub_C621 */
-            return 1; /* wait here; do not invent sub_C621's state changes */
+            state->menu_ram0044 = (uint8_t)(commandIndex + 1u);
+            return 1; /* hold at this command; do not skip the unported dependency */
         }
         if (commandIndex == 2u) { /* ofs_001_C518_07_03 */
             state->menu_repeat_guard = 1u;
