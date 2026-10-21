@@ -22,7 +22,7 @@ int main(void)
     const char *dir = "test_asset_export_output";
     const unsigned char pngMagic[8] = {137u,80u,78u,71u,13u,10u,26u,10u};
     unsigned char raw[16] = {0u};
-    unsigned char pixels[64];
+    unsigned char pixels[960u * 64u];
     char status[160];
     FILE *file;
     size_t i;
@@ -34,6 +34,7 @@ int main(void)
         return 1;
     }
     if (!fileStartsWith("test_asset_export_output/chr_atlas.png", pngMagic, sizeof(pngMagic))) return 2;
+    if (!fileStartsWith("test_asset_export_output/ppu_preview_01.png", pngMagic, sizeof(pngMagic))) return 14;
     file = fopen("test_asset_export_output/chr_raw.bin", "rb");
     if (file == NULL) return 3;
     {
@@ -75,12 +76,18 @@ int main(void)
         manifest[n] = '\0';
         if (strstr(manifest, "Palette presets:") == NULL ||
             strstr(manifest, "PPU command streams:") == NULL ||
-            strstr(manifest, "chr_atlas.png") == NULL) { fclose(file); return 8; }
+            strstr(manifest, "chr_atlas.png") == NULL ||
+            strstr(manifest, "Color previews: ppu_preview_01..18.png") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
     (void)unlink("test_asset_export_output/chr_atlas.png");
     (void)unlink("test_asset_export_output/chr_raw.bin");
     (void)unlink("test_asset_export_output/chr_pixels.bin");
+    for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_preview_%02lu.png", (unsigned long)i);
+        (void)unlink(path);
+    }
     (void)unlink("test_asset_export_output/manifest.txt");
     (void)unlink("test_asset_export_output/ppu_palette_12.bin");
     (void)unlink("test_asset_export_output/ppu_palette_12_mask.bin");
