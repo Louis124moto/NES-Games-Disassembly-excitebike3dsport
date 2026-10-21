@@ -669,3 +669,11 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - `sub_C53A` copies `$0043` to scratch `$0002`, then falls through into `sub_C53E`; it does not write `$0003`.
 - `nesSubC53AReadMenuTuple` reuses the verified `sub_CB06/sub_CB13` lookup while preserving the caller's `$0003` value. Regression coverage checks the scratch preservation and tuple bytes.
 - The helper is not yet connected to the full `ofs_001_C485_03_05` comparison/branch sequence.
+
+
+## Full menu-first roadmap update (2026-10-21)
+
+- README and TODO now state the strict milestone order: finish and verify the complete menu first; only then implement Course 1 end-to-end; defer Courses 2+ until Course 1 passes its own reference comparison.
+- `ofs_001_C485_03_05` at CPU `$C485` (ROM offset `$000495`) now has a native C translation in `nesSubC485UpdateMenuSelection` and four regression scenarios. This is translation/test wiring only; check CI before marking it tested, and do not treat it as integrated into the menu sequencer.
+- The routine's RAM-table and ROM-table triple comparisons are unsigned lexicographic comparisons, following the 6502's first non-equal `CMP` and carry branch. Its value calculation preserves byte wrap and carry paths, including the overflow jump to `bra_C50B` and the `$000A` shift loop.
+- Open decisions recorded in TODO: whether Course 1 acceptance requires the entire original race through results, and whether visual menu validation should be tested in parallel with functional navigation or after it. These do not authorize approximating the faithful baseline.
