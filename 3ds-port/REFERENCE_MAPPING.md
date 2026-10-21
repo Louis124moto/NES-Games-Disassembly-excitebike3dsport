@@ -684,3 +684,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - Source at CPU `$C621` starts X at zero, copies `$06E0,X` to `$05E0,X`, then decrements X and loops while nonzero. The first access is index 0, followed by `$FF` down through `$01`, for exactly 256 bytes.
 - `nesSubC621CopyRaceData` preserves that byte-sized index sequence. A regression vector checks every copied byte and adjacent memory boundaries.
 - This removes the isolated translation gap, not the menu-state integration gap. The callers and resulting state behavior still require source-traced integration and end-to-end validation.
+
+
+## State transition `ofs_000_C43D_0C` (2026-10-21)
+
+- When `$0044 == 0`, ASM writes `$0048=1` and `$0044=1`, then returns.
+- Otherwise it returns unless `$0048 == $FF`. On completion it writes `$00FB=$40` and jumps to `loc_CC6B`, which increments `$0041` and clamps values at or above 9 to 8 only when `$004B == 0`.
+- `nesLocC43DHandleMenuState` translates these paths and has vectors for entry, waiting, clamp, and unclamped transition. CI and end-to-end menu integration remain pending.
