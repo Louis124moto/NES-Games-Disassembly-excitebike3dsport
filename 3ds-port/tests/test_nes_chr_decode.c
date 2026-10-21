@@ -32,7 +32,7 @@ static int testRawChrDecode(void)
     uint8_t raw[32] = {0};
     uint8_t pixels[2u * 64u];
     size_t count = 0u;
-    memset(&raw[16u], 0xFF, 8u);
+    raw[16u] = 0xFFu;
     if (nesChrDecodeRaw(raw, sizeof(raw), pixels, 2u, &count) != NES_CHR_DECODE_OK || count != 2u) return 1;
     if (pixels[0] != 0u || pixels[64u] != 1u || pixels[71u] != 1u || pixels[72u] != 0u) return 2;
     if (nesChrDecodeRaw(raw, sizeof(raw) - 1u, pixels, 2u, &count) != NES_CHR_DECODE_INVALID_RAW_SIZE) return 3;
