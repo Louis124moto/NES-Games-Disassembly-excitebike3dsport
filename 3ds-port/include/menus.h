@@ -3,7 +3,7 @@
 
 #include "game_state.h"
 
-void menusUpdate(GameState *state, unsigned int pressed);
+void menusUpdate(GameState *state, unsigned int heldKeys);
 void menusRender(const GameState *state);
 
 #endif
