@@ -147,3 +147,28 @@ AI tools have been used as development assistants for repository analysis, docum
 - Add tests for branch paths and boundary cases; use independent instruction-level references where practical.
 - Do not mark a task complete until its required tests, build, integration, and fidelity evidence have been recorded.
 - Keep optional 3DS enhancements separate from the faithful baseline.
+
+
+## Reconstructing a background screen from extracted PPU data
+
+The CHR atlas is a tile inventory, not a full screen. A new source-driven tool,
+`3ds-port/tools/nes_render_nametable.py`, can render a supplied 256×240 NES
+background from a CHR-ROM/raw CHR source, a 960-byte tile map or 1024-byte
+nametable dump, its 64-byte attribute table, and an optional 16/32-byte PPU
+palette dump. It applies the NES attribute-quadrant palette selection and shared
+universal background color. It does not guess missing game data or reproduce
+sprite OAM, scrolling, mapper bank changes, or mid-frame PPU writes.
+
+Example with source-verified dumps:
+
+```sh
+python 3ds-port/tools/nes_render_nametable.py rom.nes nametable.bin screen.png \\
+  --attribute-file attributes.bin --palette-file palette.bin --pattern-table 0
+```
+
+If `nametable.bin` is 1024 bytes, it already contains the 64 attribute bytes at
+the end, so omit `--attribute-file`. If no palette dump is supplied, the image
+uses diagnostic grayscale rather than claiming original game colors. A 960-byte
+tile map requires an explicit attribute file. Use only offsets, banks and PPU
+dumps verified from the original ASM/runtime; the tool intentionally does not
+invent them.
