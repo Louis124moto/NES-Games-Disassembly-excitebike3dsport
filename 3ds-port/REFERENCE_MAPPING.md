@@ -698,3 +698,12 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - `sub_CB2C` reads the low byte from `tbl_C12C_lo,Y` at `$C12C+Y`, then the high byte from `tbl_C130_hi,Y` at `$C130+Y`, stores them in `$0000/$0001`, and jumps indirectly through that pointer.
 - `nesSubCB2CDispatchAddress` models the contiguous ROM layout and writes the same scratch pointer bytes. Regression vectors cover the four documented handlers at Y=0..3: `$CB3B`, `$CB77`, `$CBA4`, and `$CC6B`.
 - The pointer read is translated, but executing the state handler and its transitive dependencies is not yet integrated into the native menu runtime.
+
+
+## Shared menu handler exit — `loc_CBA3` (2026-10-21)
+
+- Source: `Excitebike/bank_FF.asm`, CPU `$CBA3` (listing offset `$000BB3`), reached from the timer/handler paths around `ofs_CB77_01` and `ofs_CBA4_02`.
+- Exact instruction effects at the shared exit: store the incoming accumulator in `ram_0033_timer` (`$0033`), increment `ram_0044` with 8-bit wrap, then return.
+- Native helper: `nesLocCBA3SetTimerAndAdvance`. It deliberately models only these three instructions; it does not claim to implement the callers, PPU command generation, timer waits, or input-dependent transitions.
+- Regression coverage: ordinary state-index increment and wrap from `$FF` to `$00`; exact-revision host CI and 3DS build still need confirmation.
+- Next handler work: trace and translate `ofs_CB77_01` and `ofs_CBA4_02` with their dependencies, including `sub_C94B`, `sub_CC15`, `sub_CC6B`, `sub_CCCA`, and the PPU/OAM command-buffer path. Do not enable these states in the runtime based on this shared block alone.
