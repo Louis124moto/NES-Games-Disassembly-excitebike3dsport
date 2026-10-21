@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include "asset_extractor.h"
 #include "menus.h"
+#include "nes_ppu_render.h"
 
 /*
  * gfxGetFramebuffer reports the top screen as 240x400 memory coordinates,
@@ -30,6 +31,45 @@ static char s_lastLog[512];
 static int s_logInitialized;
 static int s_gameStarted;
 static int s_menuActive;
+
+/*
+ * Draw a source-derived NES background centered on the 400x240 top screen.
+ * This path remains gated until the ASM translation has populated a complete
+ * PPU snapshot; it must not render zero-initialized placeholder memory as art.
+ */
+static int rendererDrawPpuBackground(const GameState *state)
+{
+    u16 width = 0u, height = 0u;
+    uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
+    const uint8_t *pixels;
+    uint8_t rgb[NES_PPU_RGB_BYTES];
+    size_t tileCount = 0u;
+    unsigned int x, y;
+
+    if (state == NULL || state->menu_ppu_background_ready == 0u) return 0;
+    if (framebuffer == NULL || width != 240u || height != 400u) return 0;
+    pixels = assetExtractorGetPixels(&tileCount);
+    if (pixels == NULL || nesPpuRenderNametable(
+            pixels, tileCount,
+            state->menu_ppu_nametables,
+            &state->menu_ppu_nametables[NES_PPU_NAMETABLE_BYTES],
+            state->menu_ppu_palette, rgb, sizeof(rgb)) != NES_PPU_RENDER_OK) {
+        return 0;
+    }
+
+    memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+    /* NES background is 256 pixels wide; center it in the 400-pixel 3DS display. */
+    for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
+        for (x = 0u; x < NES_PPU_WIDTH; ++x) {
+            const size_t src = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
+            const size_t dst = topFramebufferOffset(x + 72u, y);
+            framebuffer[dst] = rgb[src];
+            framebuffer[dst + 1u] = rgb[src + 1u];
+            framebuffer[dst + 2u] = rgb[src + 2u];
+        }
+    }
+    return 1;
+}
 
 static void rendererDrawChrAtlas(void)
 {
