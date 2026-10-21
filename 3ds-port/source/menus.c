@@ -4,6 +4,105 @@
 #include "nes_routines.h"
 
 /*
+ * Source-derived subset of sub_C2A9's command sequencer. The command-list
+ * prelude (sub_C318) runs once after reset/state changes; command index 0 is
+ * then selected from the original tbl_C01C_index/tbl_C02A/tbl_C033 sequence.
+ * Only the menu setup lists for states 0, 1, and 8 are translated here.
+ */
+static int menusRunSetupSequence(GameState *state)
+{
+    uint8_t commandIndex;
+
+    if (state->menu_sequence_preface_pending != 0u) {
+        /* sub_C318: hide sprites, reset scroll, and disable NMI rendering. */
+        state->menu_sprite_y = 0xF8u;
+        state->menu_scroll_x = 0u;
+        state->menu_scroll_y = 0u;
+        state->menu_ppu_ctrl = 0x10u;
+        state->menu_ram0044 = 1u;
+        state->menu_sequence_preface_pending = 0u;
+        return 1;
+    }
+
+    /* sub_C2A9 waits for ram_0030_timer to expire before each command. */
+    if (state->menu_timer30 != 0u) return 1;
+    if (state->menu_ram0044 == 0u) return 1;
+    commandIndex = (uint8_t)(state->menu_ram0044 - 1u);
+    state->menu_ram0044 = (uint8_t)(state->menu_ram0044 + 1u);
+
+    if (state->menu_asm_state == 0u) {
+        if (commandIndex == 0u) {
+            /* ofs_001_C2BD_00_01 + sub_C409 */
+            state->menu_ram03F8 = 0x04u;
+            state->menu_ram0045 = 0x02u;
+            state->menu_sprite_tile = 0xFAu;
+            state->menu_sprite_x = 0x50u; /* tbl_C088_spr_X[0] */
+            state->menu_sprite_attribute = 0u;
+            state->menu_ram0046 = 0u;
+            if (state->menu_ram03F0 == 0u) state->menu_ram00FB = 1u;
+            state->menu_ram03F0 = (state->menu_ram03F0 >= 2u)
+                ? 0u : (uint8_t)(state->menu_ram03F0 + 1u);
+            state->menu_timer31 = 0x38u;
+            state->menu_sprite_y = 0x80u; /* tbl_C080_spr_Y[0] */
+            return 1;
+        }
+        if (commandIndex == 1u) {
+            /* ofs_001_C514_00_02 */
+            state->menu_ram0045 = 0x18u;
+            state->menu_repeat_guard = 1u; /* ram_0049 */
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
+            return 1;
+        }
+    } else if (state->menu_asm_state == 1u) {
+        if (commandIndex == 0u) {
+            /* ofs_001_C55E_01_01 */
+            state->menu_ram0045 = 0x06u;
+            return 1;
+        }
+        if (commandIndex == 1u) {
+            /* ofs_001_C3F3_01_02 */
+            state->menu_ram00FB = 0x04u;
+            state->menu_ram0045 = 0x03u;
+            state->menu_sprite_tile = 0xFAu;
+            state->menu_sprite_x = 0x48u; /* tbl_C088_spr_X[1] */
+            state->menu_sprite_attribute = 0u;
+            state->menu_ram0046 = 0u;
+            state->menu_selection = 0u; /* returned A stored in ram_0042 */
+            state->menu_timer34 = 0x2Du;
+            state->menu_sprite_y = 0xB0u;
+            return 1;
+        }
+        if (commandIndex == 2u) {
+            /* ofs_001_C514_01_03 */
+            state->menu_ram0045 = 0x18u;
+            state->menu_repeat_guard = 1u;
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
+            return 1;
+        }
+    } else if (state->menu_asm_state == 8u) {
+        if (commandIndex == 0u) {
+            /* ofs_001_C582_08_01 */
+            state->menu_ram0045 = 0x11u;
+            return 1;
+        }
+        if (commandIndex == 1u) {
+            /* ofs_001_C518_08_02 */
+            state->menu_repeat_guard = 1u;
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
+            return 1;
+        }
+    }
+
+    /* Other command lists (notably states 2, 9, 10, 12, and 13) are pending. */
+    state->menu_action_x = 0u;
+    state->menu_selection_changed = 0u;
+    return 1;
+}
+
+/*
  * Source-derived menu dispatcher trace.
  *
  * State 8 is ofs_000_C3BD_08 ($C3BD); state 0 is ofs_000_C346_00
@@ -30,6 +129,16 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
     }
 
     /*
+     * sub_C2A9 dispatches menu handlers only while ram_0040 is nonzero.
+     * With it clear, run the translated command-list setup path first.
+     */
+    if (state->menu_ram0040 == 0u) {
+        (void)menusRunSetupSequence(state);
+        if (pressedKeys & KEY_X) state->show_help = !state->show_help;
+        return;
+    }
+
+    /*
      * sub_C7DE reads ram_btn_press ($0015), not ram_btn_hold ($0018).
      * Use the per-frame press edges supplied by inputUpdate. This prevents
      * a held 3DS key from being treated as a fresh NES press every frame.
@@ -53,6 +162,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram004A = 0u;
             state->menu_ram03F7 = 0x0Fu;
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+            state->menu_sequence_preface_pending = 1u;
             state->menu_asm_state = 2u;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
@@ -81,6 +191,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_asm_state = (selected == 2u) ? 8u : 1u;
             state->menu_ram03F2 = selected;
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+            state->menu_sequence_preface_pending = 1u;
         }
     } else if (state->menu_asm_state == 1u) {
         /* ofs_000_C395_01 remaps LEFT/RIGHT onto the vertical selector. */
@@ -101,6 +212,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram0043 = state->menu_selection;
             nesSubC3AFIncrementState(&state->menu_asm_state);
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+            state->menu_sequence_preface_pending = 1u;
         }
     } else if (state->menu_asm_state == 8u) {
         state->menu_action_x = nesSubC7DEMenuInput(
@@ -122,6 +234,8 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
                 &state->menu_selection, &state->menu_ram03F2,
                 &state->menu_clear_ram_requested,
                 &state->menu_ram0040, &state->menu_ram0044);
+            if (state->menu_ram0040 == 0u)
+                state->menu_sequence_preface_pending = 1u;
         }
 
         /*
@@ -139,6 +253,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram0043 = 0u;
             state->menu_ram0044 = 0u;
             state->menu_ram004A = 0u;
+            state->menu_sequence_preface_pending = 1u;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
             /* ram_0042=2 is preserved; ram_03F2 lives outside the cleared page. */
