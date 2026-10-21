@@ -424,3 +424,12 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Confirm latest CI build succeeds and the `.3dsx` is committed to `3ds-port/build/`.
 - [ ] Hardware retest: atlas should occupy the full 400×240 top screen without a garbled left strip; verify palette cycling and no crash.
 - [ ] If any left-edge clipping remains in the bottom log, capture a straight-on photo and check the actual console viewport; do not conflate text-console layout with top framebuffer atlas addressing.
+
+
+## Bottom log refresh and atlas legibility — 2026-10-21
+
+- [x] Stop clearing/redrawing the bottom-screen diagnostic console every frame; redraw only when its displayed status changes to avoid unnecessary flicker and cursor/layout churn.
+- [x] Reduce the status text length and clarify that the atlas shows raw CHR patterns.
+- [x] Increase atlas tile scale to 2× nearest-neighbour (25 columns × 15 rows, up to 375 visible tiles) so individual patterns can be inspected more easily.
+- [ ] Confirm CI build on latest commit succeeds.
+- [ ] Hardware validation required: confirm bottom log no longer flickers/clips and atlas spans the top screen at 2×. Raw CHR alone will still look abstract/noisy; faithful menu textures require nametable, attribute-table and sprite composition from the original PPU/ASM path.
