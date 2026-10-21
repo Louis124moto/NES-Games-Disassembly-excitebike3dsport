@@ -642,6 +642,15 @@ static int testSubC7DEMenuInput(void)
     selection=3u; guard=0u; timer30=0u; changed=1u;
     result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed);
     if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\n",stderr); return 5; }
+    selection=2u; guard=0u; changed=0u;
+    result=nesSubC7DEMenuInput(0x24u,6u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=3u || changed!=1u) { fputs("sub_C7DE Select priority mismatch\\n",stderr); return 7; }
+    selection=5u; guard=0u; changed=0u;
+    result=nesSubC7DEMenuInput(0x04u,6u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=1u || changed!=1u) { fputs("sub_C7DE six-entry down wrap mismatch\\n",stderr); return 8; }
+    selection=0u; guard=0u; changed=0u;
+    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE zero up wrap mismatch\\n",stderr); return 9; }
     for(i=0u;i<1000u;++i) {
         uint8_t press=(i&1u)?0x04u:0x08u;
         guard=0u;
