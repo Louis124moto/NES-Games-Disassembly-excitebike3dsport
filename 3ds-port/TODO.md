@@ -39,7 +39,7 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Connect the correct command stream to each active runtime/game state; validate CHR bank context and analyze compressed/generated PRG graphics.
 - [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
 - [ ] Add sprite/OAM, priority, scroll, animation, and PPU state/address diagnostics to the extent supported by verified runtime capture/source analysis.
-- [x] Implement basic D-pad/A/B navigation, simple CHR-atlas and advanced palette views, top-screen imagery, and bottom-screen status/diagnostics. Hardware usability validation remains open.
+- [x] Implement basic D-pad/A/B navigation, CHR-atlas/palette/partial-PPU views, top-screen imagery, unknown-data hatching, and bottom-screen source diagnostics. Hardware usability validation remains open.
 - [x] Implement SD-card exports for raw CHR, decoded pixels, PNG atlas, seven source palette snapshots, write masks, and palette command streams.
 - [x] Export source-replayed nametable/attribute snapshots and write masks for all 17 static command streams in the source table.
 - [ ] Add dynamic active-state selection, CHR bank context, OAM/sprite capture, and any further verified runtime data formats.
