@@ -667,12 +667,12 @@ static int testSubC3BDConfirmSelection(void)
 
     state=8u; selection=0u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
     nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
-    if(state!=9u || selection!=0u || mode!=0u || clear!=0u || flag40!=0u || flag44!=0u) {
+    if(state!=10u || selection!=0u || mode!=0u || clear!=0u || flag40!=0u || flag44!=0u) {
         fputs("sub_C3BD selection 0 mismatch\n",stderr); return 9;
     }
     state=8u; selection=1u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
     nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
-    if(state!=9u || selection!=1u || mode!=1u || clear!=0u || flag40!=0u || flag44!=0u) {
+    if(state!=10u || selection!=1u || mode!=1u || clear!=0u || flag40!=0u || flag44!=0u) {
         fputs("sub_C3BD selection 1 / sub_C3B1 mismatch\n",stderr); return 1;
     }
     state=8u; selection=2u; mode=7u; clear=0u; flag40=0xAAu; flag44=0xBBu;
