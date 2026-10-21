@@ -7,12 +7,17 @@ on:
       - "3ds-port/include/nes_routines.h"
       - "3ds-port/tests/**"
       - "3ds-port/tools/**"
+      - "3ds-port/source/nes_chr_decode.c"
+      - "3ds-port/include/nes_chr_decode.h"
+      - "3ds-port/tests/test_nes_chr_decode.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
       - "3ds-port/source/nes_routines.c"
       - "3ds-port/include/nes_routines.h"
       - "3ds-port/tests/**"
+      - "3ds-port/source/nes_chr_decode.c"
+      - "3ds-port/include/nes_chr_decode.h"
       - ".github/workflows/test-nes-routines.yml"
   workflow_dispatch:
 
@@ -32,3 +37,7 @@ jobs:
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
       - name: Exhaustively compare all 8-bit inputs
         run: ./test_nes_routines
+      - name: Compile host-side runtime CHR decoder test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_chr_decode.c 3ds-port/tests/test_nes_chr_decode.c -o test_nes_chr_decode
+      - name: Test runtime CHR decoder
+        run: ./test_nes_chr_decode
