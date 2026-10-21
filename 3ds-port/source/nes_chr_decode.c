@@ -1,6 +1,8 @@
 #include <string.h>
 #include "nes_chr_decode.h"
 
+#define NES_CHR_MAX_INPUT_BYTES (8u * 1024u * 1024u)
+
 static int checkedChrSize(const uint8_t *rom, size_t *chrBytes)
 {
     const unsigned int high = (unsigned int)(rom[9] & 0xF0u);
@@ -9,73 +11,79 @@ static int checkedChrSize(const uint8_t *rom, size_t *chrBytes)
         *chrBytes = (size_t)low * 8192u;
         return 1;
     }
-
-    /* NES 2.0: byte 9 high nibble normally extends byte 5. */
     if (high != 0xF0u) {
         *chrBytes = (size_t)(((high >> 4u) << 8u) | low) * 8192u;
-        return 1;
+        return *chrBytes <= NES_CHR_MAX_INPUT_BYTES;
     }
-
-    /*
-     * NES 2.0 exponent/multiplier form:
-     * size = 2^E * (2*M + 1), with E=byte5>>2 and M=byte5&3.
-     * Reject sizes that cannot be represented safely or exceed this runtime's
-     * documented 8 MiB input limit before doing any shifts.
-     */
     {
         const unsigned int exponent = low >> 2u;
         const unsigned int multiplier = low & 3u;
         size_t base;
         if (exponent >= sizeof(size_t) * 8u || exponent > 23u) return 0;
         base = (size_t)1u << exponent;
-        if (base > (8u * 1024u * 1024u) / (2u * multiplier + 1u)) return 0;
+        if (base > NES_CHR_MAX_INPUT_BYTES / (2u * multiplier + 1u)) return 0;
         *chrBytes = base * (2u * multiplier + 1u);
     }
     return 1;
+}
+
+static int checkedPrgSize(const uint8_t *rom, size_t *prgBytes)
+{
+    if ((rom[7] & 0x0Cu) != 0x08u) {
+        *prgBytes = (size_t)rom[4] * 16384u;
+        return 1;
+    }
+    {
+        const unsigned int high = (unsigned int)(rom[9] & 0x0Fu);
+        const unsigned int low = (unsigned int)rom[4];
+        if (high == 0x0Fu) {
+            const unsigned int exponent = low >> 2u;
+            const unsigned int multiplier = low & 3u;
+            if (exponent >= sizeof(size_t) * 8u || exponent > 23u) return 0;
+            *prgBytes = ((size_t)1u << exponent) * (2u * multiplier + 1u);
+        } else {
+            *prgBytes = (size_t)((high << 8u) | low) * 16384u;
+        }
+    }
+    return *prgBytes <= NES_CHR_MAX_INPUT_BYTES;
+}
+
+NesChrDecodeResult nesChrGetRawData(const uint8_t *rom, size_t romSize,
+                                    const uint8_t **chrData, size_t *chrBytes)
+{
+    size_t prgBytes, size, offset;
+    if (chrData != NULL) *chrData = NULL;
+    if (chrBytes != NULL) *chrBytes = 0u;
+    if (rom == NULL || chrData == NULL || chrBytes == NULL)
+        return NES_CHR_DECODE_INVALID_ARGUMENT;
+    if (romSize < 16u) return NES_CHR_DECODE_SHORT_HEADER;
+    if (memcmp(rom, "NES\x1A", 4u) != 0) return NES_CHR_DECODE_BAD_MAGIC;
+    if (!checkedChrSize(rom, &size) || !checkedPrgSize(rom, &prgBytes))
+        return NES_CHR_DECODE_UNSUPPORTED_NES2;
+    if (size == 0u) return NES_CHR_DECODE_CHR_RAM;
+    offset = 16u + ((rom[6] & 0x04u) ? 512u : 0u);
+    if (offset > romSize || prgBytes > romSize - offset)
+        return NES_CHR_DECODE_TRUNCATED_ROM;
+    offset += prgBytes;
+    if (offset > romSize || size > romSize - offset)
+        return NES_CHR_DECODE_TRUNCATED_ROM;
+    *chrData = rom + offset;
+    *chrBytes = size;
+    return NES_CHR_DECODE_OK;
 }
 
 NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
                                     uint8_t *pixels, size_t maxTiles,
                                     size_t *tileCount)
 {
-    size_t prgBytes, chrBytes, chrOffset, availableTiles, count, tile, row, col;
     const uint8_t *chr;
-
+    size_t chrBytes, availableTiles, count, tile, row, col;
+    NesChrDecodeResult result;
     if (tileCount != NULL) *tileCount = 0u;
     if (rom == NULL || pixels == NULL || tileCount == NULL || maxTiles == 0u)
         return NES_CHR_DECODE_INVALID_ARGUMENT;
-    if (romSize < 16u) return NES_CHR_DECODE_SHORT_HEADER;
-    if (memcmp(rom, "NES\x1A", 4u) != 0) return NES_CHR_DECODE_BAD_MAGIC;
-
-    if (!checkedChrSize(rom, &chrBytes))
-        return NES_CHR_DECODE_UNSUPPORTED_NES2;
-    if (chrBytes == 0u) return NES_CHR_DECODE_CHR_RAM;
-
-    /* NES 2.0 PRG-ROM uses the same size encoding in bytes 4 and 9. */
-    if ((rom[7] & 0x0Cu) == 0x08u) {
-        const unsigned int prgHigh = (unsigned int)(rom[9] & 0x0Fu);
-        const unsigned int prgLow = (unsigned int)rom[4];
-        if (prgHigh == 0x0Fu) {
-            const unsigned int exponent = prgLow >> 2u;
-            const unsigned int multiplier = prgLow & 3u;
-            if (exponent >= sizeof(size_t) * 8u || exponent > 23u)
-                return NES_CHR_DECODE_TRUNCATED_ROM;
-            prgBytes = ((size_t)1u << exponent) * (2u * multiplier + 1u);
-        } else {
-            prgBytes = (size_t)((prgHigh << 8u) | prgLow) * 16384u;
-        }
-    } else {
-        prgBytes = (size_t)rom[4] * 16384u;
-    }
-
-    chrOffset = 16u + ((rom[6] & 0x04u) ? 512u : 0u);
-    if (chrOffset > romSize || prgBytes > romSize - chrOffset)
-        return NES_CHR_DECODE_TRUNCATED_ROM;
-    chrOffset += prgBytes;
-    if (chrOffset > romSize || chrBytes > romSize - chrOffset)
-        return NES_CHR_DECODE_TRUNCATED_ROM;
-
-    chr = &rom[chrOffset];
+    result = nesChrGetRawData(rom, romSize, &chr, &chrBytes);
+    if (result != NES_CHR_DECODE_OK) return result;
     availableTiles = chrBytes / 16u;
     count = availableTiles < maxTiles ? availableTiles : maxTiles;
     for (tile = 0u; tile < count; ++tile) {
@@ -98,14 +106,15 @@ NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
 const char *nesChrDecodeError(NesChrDecodeResult result)
 {
     switch (result) {
-    case NES_CHR_DECODE_OK: return "CHR-ROM decoded.";
+    case NES_CHR_DECODE_OK: return "CHR-ROM data located/decoded.";
     case NES_CHR_DECODE_INVALID_ARGUMENT: return "Invalid decoder argument.";
     case NES_CHR_DECODE_BAD_MAGIC: return "Invalid iNES magic.";
     case NES_CHR_DECODE_SHORT_HEADER: return "ROM smaller than header.";
     case NES_CHR_DECODE_UNSUPPORTED_NES2: return "Unsupported/oversize NES 2.0 size encoding.";
-    case NES_CHR_DECODE_CHR_RAM: return "ROM uses CHR-RAM, not CHR-ROM.";
+    case NES_CHR_DECODE_CHR_RAM: return "ROM uses CHR-RAM; runtime PPU capture is required.";
     case NES_CHR_DECODE_TRUNCATED_ROM: return "Header sizes exceed ROM file length.";
     case NES_CHR_DECODE_NO_TILES: return "No complete CHR tiles found.";
+    case NES_CHR_DECODE_OUTPUT_TOO_SMALL: return "Output buffer too small.";
     default: return "Unknown decoder error.";
     }
 }
