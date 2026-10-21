@@ -27,6 +27,11 @@ typedef struct {
     uint8_t menu_timer20;
     uint8_t menu_timer30;
     uint8_t menu_timer31;
+    uint8_t menu_timer34;
+    uint8_t menu_sequence_preface_pending;
+    uint8_t menu_scroll_x;
+    uint8_t menu_scroll_y;
+    uint8_t menu_ppu_ctrl;
     uint8_t menu_selection_changed;
     uint8_t menu_action_x;
     uint8_t menu_ram0040;
