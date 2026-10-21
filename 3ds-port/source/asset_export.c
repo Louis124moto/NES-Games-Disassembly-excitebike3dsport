@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include "asset_export.h"
 #include "nes_ppu_commands.h"
+#include "nes_ppu_render.h"
 
 #define STBIW_ASSERT(x) ((void)0)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -23,6 +24,8 @@
 #define ATLAS_RGB_BYTES ((size_t)ATLAS_WIDTH * (size_t)ATLAS_HEIGHT * 3u)
 
 static uint8_t s_atlas[ATLAS_RGB_BYTES];
+/* Full-size RGB output is static to avoid a 184 KiB stack allocation on 3DS. */
+static uint8_t s_ppuPreview[NES_PPU_RGB_BYTES];
 static const uint8_t s_gray[4] = {0u, 85u, 170u, 255u};
 
 static int makePath(char *out, size_t capacity, const char *directory, const char *name)
@@ -61,6 +64,55 @@ static void buildAtlas(const uint8_t *pixels, size_t tileCount)
             }
         }
     }
+}
+
+
+/*
+ * Render one source-derived PPU snapshot using the same CHR/nametable/
+ * attribute/palette compositor as the runtime. Unwritten source bytes are
+ * deliberately hatched instead of silently presented as authentic pixels.
+ */
+static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
+                           const uint8_t *snapshot, const uint8_t *nametableMask,
+                           const uint8_t *palette, const uint8_t *paletteMask)
+{
+    size_t tile, x, y;
+    if (nesPpuRenderNametable(pixels, tileCount, snapshot,
+                              snapshot + NES_PPU_NAMETABLE_BYTES,
+                              palette, s_ppuPreview, sizeof(s_ppuPreview)) != NES_PPU_RENDER_OK) {
+        return 0;
+    }
+
+    for (tile = 0u; tile < NES_PPU_NAMETABLE_BYTES; ++tile) {
+        const size_t tileX = tile % NES_PPU_TILES_WIDE;
+        const size_t tileY = tile / NES_PPU_TILES_WIDE;
+        const size_t attributeIndex = NES_PPU_NAMETABLE_BYTES +
+            (tileY / 4u) * 8u + (tileX / 4u);
+        const unsigned int shift = (unsigned int)(((tileY & 2u) << 1u) | (tileX & 2u));
+        const unsigned int paletteGroup =
+            (snapshot[NES_PPU_NAMETABLE_BYTES + (tileY / 4u) * 8u + (tileX / 4u)] >> shift) & 3u;
+        const size_t chrTile = snapshot[tile];
+        int known = nametableMask[tile] != 0u && nametableMask[attributeIndex] != 0u &&
+                    chrTile < tileCount && paletteMask[0] != 0u;
+        size_t entry;
+        for (entry = 1u; entry < 4u; ++entry) {
+            if (paletteMask[paletteGroup * 4u + entry] == 0u) known = 0;
+        }
+        if (known) continue;
+
+        for (y = 0u; y < 8u; ++y) {
+            for (x = 0u; x < 8u; ++x) {
+                const uint8_t shade = (((x >> 1u) + (y >> 1u) + tileX + tileY) & 1u) != 0u
+                    ? 192u : 64u;
+                const size_t offset = (((tileY * 8u + y) * NES_PPU_WIDTH) +
+                                       tileX * 8u + x) * 3u;
+                s_ppuPreview[offset] = shade;
+                s_ppuPreview[offset + 1u] = shade;
+                s_ppuPreview[offset + 2u] = shade;
+            }
+        }
+    }
+    return 1;
 }
 
 int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChrBytes,
@@ -128,7 +180,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         (void)writes;
     }
     for (ppuStreamIndex = 0u; ppuStreamIndex < NES_EXCITEBIKE_PPU_STREAM_COUNT; ++ppuStreamIndex) {
-        char streamPath[512], snapshotPath[512], fileName[48];
+        char streamPath[512], snapshotPath[512], previewPath[512], fileName[48];
         uint8_t snapshot[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 64u];
         const uint8_t *stream;
         const char *sourceLabel = NULL;
@@ -137,6 +189,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         if (!makePath(streamPath, sizeof(streamPath), directory, fileName)) return 0;
         (void)snprintf(fileName, sizeof(fileName), "ppu_snapshot_%02lu.bin", (unsigned long)(ppuStreamIndex + 1u));
         if (!makePath(snapshotPath, sizeof(snapshotPath), directory, fileName)) return 0;
+        (void)snprintf(fileName, sizeof(fileName), "ppu_preview_%02lu.png", (unsigned long)(ppuStreamIndex + 1u));
+        if (!makePath(previewPath, sizeof(previewPath), directory, fileName)) return 0;
         stream = nesExcitebikePpuStream(ppuStreamIndex, &streamSize, &sourceLabel);
         if (stream == NULL ||
             nesExcitebikePpuSnapshot(ppuStreamIndex,
@@ -146,7 +200,13 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                 snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 32u,
                 &writes) != NES_PPU_COMMAND_OK ||
             !writeBytes(streamPath, stream, streamSize) ||
-            !writeBytes(snapshotPath, snapshot, sizeof(snapshot))) {
+            !writeBytes(snapshotPath, snapshot, sizeof(snapshot)) ||
+            !buildPpuPreview(pixels, tileCount, snapshot,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 32u) ||
+            !stbi_write_png(previewPath, (int)NES_PPU_WIDTH, (int)NES_PPU_HEIGHT,
+                            3, s_ppuPreview, (int)(NES_PPU_WIDTH * 3u))) {
             if (status != NULL && statusCapacity > 0u)
                 (void)snprintf(status, statusCapacity, "Could not export source PPU command snapshot.");
             return 0;
@@ -168,6 +228,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Table indices 18..24 are exported as palette streams; dynamic indices 0 and 26 are not captured\n"
         "Snapshots: ppu_snapshot_01..18.bin = 4096 nametable bytes + 4096 write mask + 32 palette + 32 palette mask\n"
         "Snapshots replay source command lists; they do not claim to be an active live-game frame\n"
+        "Color previews: ppu_preview_01..18.png (256x240 RGB; hatched areas are unverified/incomplete)\n"
+        "Previews use source CHR + snapshot nametable/attributes/palette; no OAM sprites or scroll timing\n"
         "OAM/sprite state and compressed PRG graphics: NOT CAPTURED by this export\n"
         "Unknown/compressed PRG graphics: NOT CLAIMED EXTRACTED\n",
         (unsigned long)rawChrBytes, (unsigned long)tileCount);
@@ -189,6 +251,6 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         return 0;
     }
     if (status != NULL && statusCapacity > 0u)
-        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, PNG, palettes, PPU snapshots, manifest.");
+        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, atlas, color PPU previews, palettes, snapshots, manifest.");
     return 1;
 }
