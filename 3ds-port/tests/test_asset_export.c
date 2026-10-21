@@ -17,6 +17,23 @@ static int fileStartsWith(const char *path, const unsigned char *magic, size_t c
     return ok;
 }
 
+static int pngHasDimensions(const char *path, unsigned int width, unsigned int height)
+{
+    unsigned char header[24];
+    FILE *file = fopen(path, "rb");
+    int ok;
+    if (file == NULL) return 0;
+    ok = fread(header, 1u, sizeof(header), file) == sizeof(header) &&
+         memcmp(header, "\x89PNG\r\n\x1a\n", 8u) == 0 &&
+         memcmp(header + 12u, "IHDR", 4u) == 0 &&
+         (((unsigned int)header[16] << 24u) | ((unsigned int)header[17] << 16u) |
+          ((unsigned int)header[18] << 8u) | header[19]) == width &&
+         (((unsigned int)header[20] << 24u) | ((unsigned int)header[21] << 16u) |
+          ((unsigned int)header[22] << 8u) | header[23]) == height;
+    fclose(file);
+    return ok;
+}
+
 int main(void)
 {
     const char *dir = "test_asset_export_output";
@@ -34,7 +51,9 @@ int main(void)
         return 1;
     }
     if (!fileStartsWith("test_asset_export_output/chr_atlas.png", pngMagic, sizeof(pngMagic))) return 2;
+    if (!pngHasDimensions("test_asset_export_output/chr_atlas.png", 256u, 240u)) return 18;
     if (!fileStartsWith("test_asset_export_output/ppu_preview_01.png", pngMagic, sizeof(pngMagic))) return 14;
+    if (!pngHasDimensions("test_asset_export_output/ppu_preview_01.png", 256u, 240u)) return 19;
     file = fopen("test_asset_export_output/chr_raw.bin", "rb");
     if (file == NULL) return 3;
     {
