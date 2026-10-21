@@ -2124,7 +2124,8 @@ static void nesC046BuildPpuCommand(uint8_t ram[65536], uint8_t tableIndex)
         x = (uint8_t)(x + 1u);
     }
 
-    /* sub_C971 preserves X=old ram_0300 while incrementing ram_0300 by $0A. */
+    /* sub_C971 reloads X=old ram_0300, then increments ram_0300 by $0A. */
+    x = ram[0x0300u];
     ram[0x0300u] = (uint8_t)(ram[0x0300u] + 0x0Au);
 
     /* tbl_C0EC_ppu_address stores five big-endian PPU address pairs. */
