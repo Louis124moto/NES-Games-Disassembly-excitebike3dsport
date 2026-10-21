@@ -68,7 +68,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                      char *status, size_t statusCapacity)
 {
     char rawPath[512], pixelPath[512], pngPath[512], manifestPath[512];
-    char manifest[1024];
+    char manifest[2048];
     struct stat st;
     FILE *file;
     int manifestLength;
