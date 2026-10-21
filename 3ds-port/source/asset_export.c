@@ -156,6 +156,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     }
     manifestLength = snprintf(manifest, sizeof(manifest),
         "Excitebike 3DS native CHR export\n"
+        "Embedded source header: Excitebike/header.bin = mapper 0, 16 KiB PRG, 8 KiB CHR-ROM, vertical mirroring\n"
+        "Embedded PPU command lists are Excitebike-specific, not general data for arbitrary ROMs\n"
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
         "Decoded pixels: chr_pixels.bin (%lu tiles, 64 2bpp indices per tile; runtime cap 960 tiles)\n"
         "Preview: chr_atlas.png (256x240 RGB; 32x30 tiles; grayscale index visualization)\n"
