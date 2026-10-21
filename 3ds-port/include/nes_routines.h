@@ -378,4 +378,7 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536]); /* C875-C8DE; 1 = depe
 void nesSubC55ESetState06(uint8_t *ram0045);
 void nesSubC56ASetState04(uint8_t *ram0033, uint8_t *ram0045);
 
+/* Exact menu setup entry at $C455; preserves $0045 when neither branch stores. */
+void nesSubC455SelectState(uint8_t ram0041, uint8_t ram0046, uint8_t *ram0045);
+
 #endif
