@@ -23,9 +23,6 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
             + (fbX & 7u) * 8u + (fbY & 7u)) * 3u;
 }
 
-/* Four-level grayscale intentionally exposes the decoded 2bpp pixel indices.
-   The true per-tile game palette is not knowable without nametable attributes. */
-static const uint8_t s_pixelGray[4] = {0u, 85u, 170u, 255u};
 
 static PrintConsole s_bottomConsole;
 static char s_lastLog[512];
@@ -173,8 +170,21 @@ static void rendererDrawChrAtlas(void)
     }
 
     if (pixels == NULL || tileCount == 0u) return;
-    /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
-    firstTile = assetExtractorGetPage() * 375u;
+    /*
+     * A standalone CHR tile has no assigned palette. Use the selected source
+     * palette preset's first background subpalette for this diagnostic view;
+     * the SD export also writes all seven presets x four subpalette variants.
+     */
+    {
+        uint8_t atlasPalette[32], atlasPaletteMask[32];
+        size_t paletteWrites = 0u;
+        if (nesExcitebikePaletteSnapshot(assetExtractorGetPaletteIndex(),
+                atlasPalette, atlasPaletteMask, &paletteWrites) != NES_PPU_COMMAND_OK) {
+            memset(atlasPalette, 0, sizeof(atlasPalette));
+            memset(atlasPaletteMask, 0, sizeof(atlasPaletteMask));
+        }
+        /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
+        firstTile = assetExtractorGetPage() * 375u;
     if (firstTile >= tileCount) return;
     tileCount -= firstTile;
     if (tileCount > 375u) tileCount = 375u;
@@ -186,19 +196,27 @@ static void rendererDrawChrAtlas(void)
         for (row = 0u; row < 8u; ++row) {
             for (col = 0u; col < 8u; ++col) {
                 const uint8_t pixel = pixels[sourceTile * 64u + row * 8u + col] & 3u;
-                const uint8_t gray = s_pixelGray[pixel];
+                const size_t paletteEntry = pixel == 0u ? 0u : pixel;
+                uint8_t rgb[3];
+                const int known = atlasPaletteMask[paletteEntry] != 0u &&
+                                  nesPpuColorToRgb(atlasPalette[paletteEntry], rgb);
                 unsigned int dy, dx;
+                if (!known) {
+                    const uint8_t shade = ((col / 2u + row / 2u + tile) & 1u) != 0u ? 192u : 64u;
+                    rgb[0] = shade; rgb[1] = 0u; rgb[2] = shade;
+                }
                 for (dy = 0u; dy < 2u; ++dy) {
                     for (dx = 0u; dx < 2u; ++dx) {
                         const unsigned int x = tileX + col * 2u + dx;
                         const unsigned int y = tileY + row * 2u + dy;
                         const size_t offset = topFramebufferOffset(x, y);
-                        framebuffer[offset + 0u] = gray;
-                        framebuffer[offset + 1u] = gray;
-                        framebuffer[offset + 2u] = gray;
+                        framebuffer[offset + 0u] = rgb[0];
+                        framebuffer[offset + 1u] = rgb[1];
+                        framebuffer[offset + 2u] = rgb[2];
                     }
                 }
             }
+        }
         }
     }
 }
