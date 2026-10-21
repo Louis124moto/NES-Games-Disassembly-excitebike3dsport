@@ -691,3 +691,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - When `$0044 == 0`, ASM writes `$0048=1` and `$0044=1`, then returns.
 - Otherwise it returns unless `$0048 == $FF`. On completion it writes `$00FB=$40` and jumps to `loc_CC6B`, which increments `$0041` and clamps values at or above 9 to 8 only when `$004B == 0`.
 - `nesLocC43DHandleMenuState` translates these paths and has vectors for entry, waiting, clamp, and unclamped transition. CI and end-to-end menu integration remain pending.
+
+
+## Handler pointer table `sub_CB2C` (2026-10-21)
+
+- `sub_CB2C` reads the low byte from `tbl_C12C_lo,Y` at `$C12C+Y`, then the high byte from `tbl_C130_hi,Y` at `$C130+Y`, stores them in `$0000/$0001`, and jumps indirectly through that pointer.
+- `nesSubCB2CDispatchAddress` models the contiguous ROM layout and writes the same scratch pointer bytes. Regression vectors cover the four documented handlers at Y=0..3: `$CB3B`, `$CB77`, `$CBA4`, and `$CC6B`.
+- The pointer read is translated, but executing the state handler and its transitive dependencies is not yet integrated into the native menu runtime.
