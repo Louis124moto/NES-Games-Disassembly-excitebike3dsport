@@ -156,15 +156,14 @@ Only claim the states supported by evidence. Host tests do not replace hardware/
 
 ## Current next priorities
 
-1. Establish player-slot identity and initialization/update paths by tracing the relevant RAM writers, callers, and indirect writes.
-2. Trace the actual player input and movement path, then prioritize acceleration, braking, overheating/cooling, jumping, posture, landing, and crashes.
-3. Finish and validate each translation batch: run host tests, correct mismatches, build the 3DS target, and compare boundary cases against the assembly.
-4. Integrate validated routines in batches only after their dependencies and call order are understood.
-5. Reconstruct course/terrain data and rendering, opponents, race progression, scoring/results, menus, and audio.
-6. Compare complete gameplay scenarios against the original NES version; document any known differences.
-7. Test on both original 3DS and New 3DS hardware, then optimize and prepare a versioned `.3dsx` release.
+The mandatory staged acceptance gates above control all work. Do not use this list as permission to work on later stages in parallel.
 
-The runtime CHR cache now persists decoded tile pixels to the SD card and reloads them on subsequent launches. It remains a diagnostic tile cache, not a reconstructed title-screen texture pack. The next menu gate is to integrate the six individually tested state-2 setup commands into persistent menu RAM, then complete the other state command lists and trace exact PPU tile/palette placement. The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). The state-13 `$FF` completion branch has been translated and tested; the full menu remains incomplete while state 2 and destination states 9/10/12 are unported. See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
+1. Complete and validate the native `.3dsx` extractor (Stage 1), including SD exports, source-derived graphics/data diagnostics, regression tests, an exact-revision 3DS build, and hardware verification.
+2. Only after Stage 1 is formally accepted, reconstruct and validate the original menu (Stage 2).
+3. Only after Stage 2 is formally accepted, implement and validate Course 1, including the exact player motorcycle physics and all required race behavior (Stage 3).
+4. Continue through subsequent original game states in source order, opening one stage at a time and recording acceptance evidence in `3ds-port/TODO.md`.
+
+The runtime CHR cache now persists decoded tile pixels to the SD card and reloads them on subsequent launches. It remains a diagnostic tile cache, not a reconstructed title-screen texture pack. The menu remains blocked until Stage 1 is accepted. After that gate opens, integrate and validate menu setup commands and trace exact PPU tile/palette placement before proceeding to the first race. The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). The state-13 `$FF` completion branch has been translated and tested; the full menu remains incomplete while state 2 and destination states 9/10/12 are unported. See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
 
 ## Upstream source and credits
 
