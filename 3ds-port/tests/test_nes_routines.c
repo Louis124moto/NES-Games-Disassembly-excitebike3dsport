@@ -2151,6 +2151,15 @@ static int testBatchAdditional20(void)
         if(ramMenu[0x0053u]!=130u||ramMenu[0x0008u]!=60u||
            ramMenu[0x0009u]!=2u)return 48;
     }
+    {
+        uint8_t ramCopy[65536];
+        memset(ramCopy,0,sizeof(ramCopy));
+        for(i=0u;i<256u;++i) ramCopy[0x06E0u+i]=(uint8_t)(i^0xA5u);
+        nesSubC621CopyRaceData(ramCopy);
+        for(i=0u;i<256u;++i)
+            if(ramCopy[0x05E0u+i]!=(uint8_t)(i^0xA5u))return 49;
+        if(ramCopy[0x05DFu]!=0u||ramCopy[0x07E0u]!=0u)return 50;
+    }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
     if(source7[0]!=5u||source7[1]!=0xA2u||source7[2]!=3u||source7[3]!=4u||
