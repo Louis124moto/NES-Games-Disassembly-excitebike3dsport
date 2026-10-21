@@ -149,26 +149,18 @@ AI tools have been used as development assistants for repository analysis, docum
 - Keep optional 3DS enhancements separate from the faithful baseline.
 
 
-## Reconstructing a background screen from extracted PPU data
+## Native PPU background renderer
 
-The CHR atlas is a tile inventory, not a full screen. A new source-driven tool,
-`3ds-port/tools/nes_render_nametable.py`, can render a supplied 256×240 NES
-background from a CHR-ROM/raw CHR source, a 960-byte tile map or 1024-byte
-nametable dump, its 64-byte attribute table, and an optional 16/32-byte PPU
-palette dump. It applies the NES attribute-quadrant palette selection and shared
-universal background color. It does not guess missing game data or reproduce
-sprite OAM, scrolling, mapper bank changes, or mid-frame PPU writes.
+The background compositor is implemented in C in `3ds-port/source/nes_ppu_render.c`
+and linked into the native `.3dsx`. It combines decoded 2bpp CHR pixels with a
+960-byte nametable, 64 attribute bytes, and 16 source-derived background palette
+values. The renderer is connected to the top-screen path and centered at native
+NES resolution when `GameState.menu_ppu_background_ready` is set by a future
+verified PPU setup path.
 
-Example with source-verified dumps:
-
-```sh
-python 3ds-port/tools/nes_render_nametable.py rom.nes nametable.bin screen.png \\
-  --attribute-file attributes.bin --palette-file palette.bin --pattern-table 0
-```
-
-If `nametable.bin` is 1024 bytes, it already contains the 64 attribute bytes at
-the end, so omit `--attribute-file`. If no palette dump is supplied, the image
-uses diagnostic grayscale rather than claiming original game colors. A 960-byte
-tile map requires an explicit attribute file. Use only offsets, banks and PPU
-dumps verified from the original ASM/runtime; the tool intentionally does not
-invent them.
+That readiness flag intentionally remains off until the ASM-derived menu code
+has populated real nametable, attribute, and palette state. Until then the 3DS
+continues to show the state trace instead of displaying fabricated graphics.
+Sprite/OAM composition, scroll and mapper bank changes are not implemented by
+this background-only renderer. The C regression test is
+`3ds-port/tests/test_nes_ppu_render.c`; CI compiles and runs it.
