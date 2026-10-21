@@ -3,6 +3,14 @@
 #include <string.h>
 #include "nes_ppu_render.h"
 
+static int testColorLookup(void)
+{
+    uint8_t rgb[3];
+    if (!nesPpuColorToRgb(0x16u, rgb) || rgb[0] != 152u || rgb[1] != 34u || rgb[2] != 32u) return 1;
+    if (nesPpuColorToRgb(0x40u, rgb)) return 2;
+    return 0;
+}
+
 int main(void)
 {
     uint8_t *pixels = (uint8_t *)calloc(NES_PPU_MAX_TILES * 64u, 1u);
