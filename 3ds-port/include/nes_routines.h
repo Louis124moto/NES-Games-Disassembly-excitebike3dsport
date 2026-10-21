@@ -318,6 +318,7 @@ uint8_t nesSubC409SetupStaticSprite(uint8_t y, const uint8_t tblC088[256],
                                     uint8_t spriteOam[4], uint8_t *ram0046);
 
 
+void nesSubCFE3MaskFlags(uint8_t *ram005C);
 void nesSubCFDBClearUpperFlags(uint8_t ram0094, uint8_t *ram005C);
 void nesSubCFCBCompareObjectPosition(uint8_t ram0094, uint8_t ram0078, uint8_t ram0090, uint8_t ram0074, uint8_t *ram005C);
 void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *ram005C);
