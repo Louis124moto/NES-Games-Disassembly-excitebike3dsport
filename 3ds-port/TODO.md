@@ -226,3 +226,16 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Reconstruct menu nametable/attribute/palette writes, sprite/OAM state, scroll and PPU timing; compare screenshots/input traces with the NES reference.
 
 **Current honest status:** extraction automation and its Python tests are verified; the host C regression suite passes after correcting an expectation to match the original `sub_C7DE` asymmetric wrap behavior. The 3DS build passed on the same code revision as the passing host tests. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
+
+## Built-in extractor and menu PPU setup — 2026-10-21
+
+- [x] Integrate a runtime classic-iNES CHR-ROM reader into the native homebrew; no Python interpreter is required on the 3DS.
+- [x] Add an in-homebrew grayscale atlas for up to 960 decoded 2bpp CHR tiles, with Y to open/close, X to reload, and B to return.
+- [x] Validate iNES signature, optional trainer, PRG/CHR offsets and file bounds; report unsupported NES 2.0 and CHR-RAM inputs explicitly.
+- [x] Translate and host-test the `sub_C318` PPU/OAM prelude effects (`sub_D255`, `sub_D23B/sub_D260`, `sub_D1A9`, `sub_C333`).
+- [ ] Run and record the 3DS build and host suite for the latest revision containing the runtime extractor and PPU helper.
+- [ ] Implement the exact six-command setup list `off_C046_02` (state 2) and its dependencies before treating the main menu-to-game transition as complete.
+- [ ] Finish destination-state setup lists and source-derived transitions; do not mark the menu complete while any reached state is still an explicit stub.
+- [ ] Reconstruct palette/attribute/nametable tile placement and compare a real screenshot against the NES reference.
+
+**Runtime extractor limitation:** the built-in viewer extracts raw CHR-ROM patterns only; it does not yet save PNG files or reconstruct the original menu. The Python PC-side pipeline still produces PNG/JSON/C-header files.
