@@ -19,6 +19,9 @@ typedef struct {
     bool show_help;
 
     /* Partial, source-derived menu input model for ASM state 8 / sub_C7DE. */
+    uint8_t menu_asm_state;
+    uint8_t menu_ram03F2;
+    uint8_t menu_clear_ram_requested;
     uint8_t menu_selection;
     uint8_t menu_repeat_guard;
     uint8_t menu_timer30;
