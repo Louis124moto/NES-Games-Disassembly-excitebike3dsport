@@ -17,7 +17,7 @@ The CI build should produce `build/excitebike3ds.3dsx` and `build/excitebike3ds.
 
 ## Architecture status
 
-The application now has separate modules for shared game state, input, rendering, bike physics, collision, track, audio, and menus. The runtime deliberately does not execute the partial menu trace or generic bike/track scaffolding. Until the source-derived menu, PPU rendering, and gameplay dependencies are complete, the homebrew shows no invented game screen; only the explicitly diagnostic CHR viewer can be opened with Y.
+The application has a native CHR extractor and diagnostic atlas. It starts in Stage 1; the original menu is deliberately locked until the extractor is accepted. The runtime accepts either `rom.nes` or a standalone raw `CHR_ROM.chr` beside the `.3dsx` (the iNES ROM takes precedence). Use A to open the atlas and press A again to export; B closes the atlas or retries extraction while it is closed; left/right changes atlas pages. Exports are written under `extracted/`. The atlas uses grayscale pixel indices, not claimed game colors. See the top-level README and TODO for the strict stage gates and remaining extraction requirements.
 
 See [TODO.md](TODO.md) for the staged roadmap and [REFERENCE_MAPPING.md](REFERENCE_MAPPING.md) for the fidelity target and plan for mapping original NES routines to native code.
 
