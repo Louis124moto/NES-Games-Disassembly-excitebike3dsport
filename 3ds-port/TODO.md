@@ -194,3 +194,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Validate the CHR inspection script against a known-good raw tile fixture, then connect palette-correct source tiles to the 3DS renderer.
 
 **Integrity rule:** the original NES disassembly remains unchanged. This follow-up adds tooling, test coverage, and a clearly labelled diagnostic overlay; it does not establish a playable or fidelity-verified port.
+
+
+- [x] Added a separate `sub_CFE3` C helper for the exact `LDA #$F0 / AND ram_005C_obj,X / STA ram_005C_obj,X` mask and routed `sub_CFEA` through it, preserving the original call dependency.
+- [x] Wired an exhaustive 256-byte regression for `sub_CFE3`; host execution and same-revision 3DS build remain pending.
