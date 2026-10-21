@@ -47,3 +47,17 @@ make -C 3ds-port
 ```
 
 Latest verification: the Python extraction tests and host C regression suite passed on `b47057371b09b68451119cf98706654e32243d3e` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497914)). The corresponding 3DS build also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497853)). These checks do not establish that the menu is visually or behaviorally complete.
+
+### Built-in runtime CHR extractor (on the 3DS)
+
+The homebrew now includes a runtime inspector; the Python scripts are optional PC-side tools, not a runtime dependency. Copy a legally obtained **classic iNES** ROM with CHR-ROM to `sdmc:/3ds/excitebike3ds/rom.nes` on the SD card (create the `3ds/excitebike3ds` folders if needed), then launch the homebrew and press **Y**.
+
+- **Y**: open/close the extractor
+- **X**: reload the ROM from the SD card
+- **B**: close the extractor and return to the menu
+
+The inspector validates the iNES magic and header lengths, accounts for the optional 512-byte trainer, checks the PRG/CHR ranges against the file size, and decodes up to 960 raw 2bpp CHR tiles for a grayscale atlas. It reports errors instead of reading beyond the ROM. This first runtime version does not yet support NES 2.0 headers, CHR-RAM snapshots, compressed graphics in PRG, PPU palette/nametable mapping, or original menu reconstruction. Do not rename a random file to `rom.nes` and assume it is compatible.
+
+### Latest menu routine batch
+
+The setup prelude now models the side effects visible in the source: all 256 OAM bytes become `$F8`, both `$2000` and `$2400` nametable blocks are initialized to `$FC` for 960 bytes and zero for the 64-byte attribute region, scroll resets to zero, PPU mask is disabled, and PPU control becomes `$10`. The host regression suite has a test for these exact memory effects. The actual state-2 six-command setup list and other destination states remain incomplete; the main menu is not yet fidelity-complete.
