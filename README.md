@@ -162,7 +162,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 
 - Put either a legally obtained `rom.nes` iNES/NES 2.0 ROM or the project’s raw `CHR_ROM.chr` dump beside the launched `.3dsx`. The iNES file takes precedence if both are present.
 - On startup, the app checks the ROM fingerprint and cache, then extracts or reloads CHR-ROM tile pixels.
-- Exports are written beside the app in `extracted/`: `chr_raw.bin` (original CHR bytes), `chr_pixels.bin` (decoded 2bpp indices), `chr_atlas.png` (256×240 grayscale-index atlas), and `manifest.txt`.
+- Exports are written beside the app in `extracted/`: `chr_raw.bin` (original CHR bytes), `chr_pixels.bin` (decoded 2bpp indices), `chr_atlas.png` (256×240 grayscale-index atlas), `ppu_palette_12.bin` through `ppu_palette_18.bin` (source-replayed 32-byte PPU palette snapshots), matching `_mask.bin` and `_stream.bin` files, and `manifest.txt`.
 - The internal decoded cache is `extracted/chr_cache.bin`; it is distinct from the exported pixel data.
 - Controls: D-pad left/right changes atlas pages or palette presets; up/down switches simple/advanced view; A opens the viewer or exports while open; B closes the viewer or retries extraction while closed.
 - START is deliberately locked out of the menu until Stage 1 is accepted.
