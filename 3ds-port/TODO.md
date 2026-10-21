@@ -630,3 +630,13 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 - [ ] User reports the third atlas page appears as pixel noise on physical New Nintendo 3DS. Inspection found a likely framebuffer tile-addressing error in `renderer.c`: the top-screen offset inverted the tile-row coordinate a second time after converting physical X to framebuffer Y. Corrected the address calculation in commit `908e43e8757d02a7973c7a8668308101fec57a10` by using `fbY >> 3` directly.
 - [ ] Rebuild the 3DSX and test pages 1, 2, and 3 on physical New 3DS. This is a source-level fix hypothesis, **not yet hardware-verified**. Check image orientation, tile boundaries, all 960 tiles, and navigation wraparound.
 - [ ] If pixels remain corrupted, inspect framebuffer pixel format/channel order and the 3DS tiled framebuffer layout against libctru's documented layout; do not mask the issue with a generated preview.
+
+
+### Follow-up after physical-console report — colored atlas and persistent pixel corruption — 2026-10-21
+
+- [x] Use existing source-derived palette replay and the project's NES RGB conversion table to generate color atlas variants: `chr_atlas_palette_12..18_subpalette_0..3.png` (28 variants). `chr_atlas.png` now uses source palette preset 12 / subpalette 0 as a diagnostic default; standalone CHR does not encode the correct palette assignment per tile.
+- [x] Change the on-device CHR atlas from grayscale index display to the selected source preset's first background subpalette, with magenta hatching for missing palette entries.
+- [x] Extend host regression assertions to check a color-variant PNG and the manifest entry. Tests have **not** yet been executed on the new revision.
+- [ ] User reports the atlas remains pixel-corrupted on real hardware after the previous framebuffer-coordinate patch. Therefore that patch is not considered a fix. Verify the framebuffer memory layout against libctru/working 3DS rendering code, inspect the exact pixel addressing and coordinate transform, then test on hardware.
+- [ ] Rebuild from the latest `main` commit before the next console test; confirm the app is actually running the updated binary. Check all three pages after the framebuffer fix.
+- [ ] Confirm that the color atlas variants and the on-device palette-colored atlas show recognizable tile shapes, then validate palette choice against known original game states. Stage 1 remains unaccepted.
