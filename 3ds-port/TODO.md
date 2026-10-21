@@ -471,3 +471,21 @@ Reference projects consulted for architecture, not copied wholesale:
 - [ ] CI verification is required for the cache/header and renderer changes; host unit tests should cover cache fingerprint/version validation if cache logic is extracted into a host-testable module.
 - [ ] Hardware verification required on New Nintendo 3DS: check log line breaks, atlas bounds/orientation, page 1/page 2, X re-extraction, Y open/close, B close, and cold start with both valid and stale cache.
 - [ ] Remaining honest limitation: this extracts CHR-ROM tiles from iNES/NES 2.0 ROM images within configured size bounds. CHR-RAM cartridges need runtime PPU memory capture; full-color game/menu composition needs nametable, attribute table, OAM, palette RAM and mapper bank context. Do not mark full menu textures complete until these are implemented and tested.
+
+
+## NES texture extraction research and nametable rendering — 2026-10-21
+
+Reference projects reviewed:
+- NEStractor: CHR-ROM to image extraction; useful baseline for 2bpp tile decoding.
+- NES-Screen-Tool: separate CHR, nametable, attributes and palette workflows.
+- makechr: treats CHR, nametable, palette and attribute data as distinct assets.
+- QLNES: broader ROM/graphics extraction and verification pipeline.
+
+Implementation added:
+- [x] Add `tools/nes_render_nametable.py` to compose a 256×240 background from supplied CHR, nametable, attribute table and optional PPU palette data.
+- [x] Apply NES 2bpp decoding, attribute-quadrant palette selection, and the shared universal background color.
+- [x] Accept either a 1024-byte nametable dump or a 960-byte tile map plus a separate 64-byte attribute table.
+- [x] Add regression tests for tile pixels, palette-quadrant selection, combined/separate attribute data and invalid inputs.
+- [ ] Confirm the new tests pass in CI on the exact current revision.
+- [ ] Validate against a known-good reference screen and source-verified Excitebike PPU dumps before using it to claim a faithful title screen.
+- [ ] Trace the original ASM's palette, nametable, CHR-bank, OAM and PPU writes. The new tool renders provided data only; it does not recover compressed PRG graphics or infer missing runtime state.
