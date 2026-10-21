@@ -34,6 +34,15 @@ static int s_gameStarted;
 static int s_menuActive;
 /* Static storage avoids putting a 184 KiB NES RGB frame on the 3DS stack. */
 static uint8_t s_ppuRgb[NES_PPU_RGB_BYTES];
+static uint8_t s_sourcePpuRgb[NES_PPU_RGB_BYTES];
+static uint8_t s_sourceNametable[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+static uint8_t s_sourceNametableMask[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+static uint8_t s_sourcePalette[32];
+static uint8_t s_sourcePaletteMask[32];
+static uint8_t s_sourceNametableView[NES_PPU_NAMETABLE_BYTES];
+static uint8_t s_sourceAttributes[NES_PPU_ATTRIBUTE_BYTES];
+static uint8_t s_sourcePaletteView[NES_PPU_PALETTE_BYTES];
+static uint8_t s_unknownTiles[NES_PPU_NAMETABLE_BYTES];
 
 /*
  * Draw a source-derived NES background centered on the 400x240 top screen.
@@ -87,6 +96,7 @@ static void rendererDrawChrAtlas(void)
     if (framebuffer == NULL || width != 240u || height != 400u) return;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     if (!assetExtractorIsActive() || s_gameStarted) return;
+    pixels = assetExtractorGetPixels(&tileCount);
 
     if (assetExtractorGetViewMode() == 2u) {
         size_t writes = 0u, tile, pixelX, pixelY;
@@ -105,7 +115,7 @@ static void rendererDrawChrAtlas(void)
             size_t entry;
             s_unknownTiles[tile] = (uint8_t)(s_sourceNametableMask[tile] == 0u ||
                                                s_sourceNametableMask[attributeIndex] == 0u);
-            if (s_sourceNametableView[tile] >= tileCount) {
+            if (pixels == NULL || tileCount == 0u || s_sourceNametableView[tile] >= tileCount) {
                 s_sourceNametableView[tile] = 0u;
                 s_unknownTiles[tile] = 1u;
             }
@@ -114,7 +124,8 @@ static void rendererDrawChrAtlas(void)
                     s_unknownTiles[tile] = 1u;
             }
         }
-        if (nesPpuRenderNametable(&s_pixels[0][0], tileCount, s_sourceNametableView,
+        if (pixels == NULL || tileCount == 0u ||
+            nesPpuRenderNametable(pixels, tileCount, s_sourceNametableView,
                                   s_sourceAttributes, s_sourcePaletteView,
                                   s_sourcePpuRgb, sizeof(s_sourcePpuRgb)) != NES_PPU_RENDER_OK) {
             memset(s_unknownTiles, 1, sizeof(s_unknownTiles));
@@ -161,7 +172,6 @@ static void rendererDrawChrAtlas(void)
         return;
     }
 
-    pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
     firstTile = assetExtractorGetPage() * 375u;
