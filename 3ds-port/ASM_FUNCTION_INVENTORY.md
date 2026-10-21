@@ -307,3 +307,6 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 
 
 | `$C43D` | `nesLocC43DHandleMenuState` | Translated + regression vectors; CI pending, runtime integration pending | — |
+
+
+| `$CB2C` | `nesSubCB2CDispatchAddress` | Translated + regression vectors for all four handler-table entries; CI pending, dispatcher integration pending | — |
