@@ -382,3 +382,17 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Check atlas pixel bounds and repeatedly test opening/closing with Y and B.
 
 **Important:** these source changes address the reported failure causes, but are not considered fixed until CI passes and the same ROM is tested on the 3DS. A CHR atlas only displays raw pattern tiles; it does not reproduce the NES menu without palette, nametable, attributes, sprite/OAM and PPU upload sequence.
+
+
+## 3DS extraction + atlas correction pass — 2026-10-21
+
+- [x] Fix runtime iNES signature comparison: the previous C literal accidentally matched the four characters `NES\\x1A` instead of the magic bytes `NES 1A`, causing valid ROMs to be rejected.
+- [x] Fix top-screen dimensions: the top framebuffer is 400×240, not 240×400; the previous guard returned early, leaving the atlas black.
+- [x] Lay out tiles 50 across × 8 pixels, keeping all 960 tiles inside 400×240 and avoiding out-of-bounds writes.
+- [x] Add a diagnostic four-colour view for 2bpp CHR indices. This is explicitly false-colour diagnostic output, **not** the game's authentic palette; original colors require palette selection plus nametable/attribute mapping.
+- [x] Correct the runtime decoder test suite after the magic-byte fix: [CI run 39579214835 passed](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39579214835) on revision `92ac657`.
+- [ ] Confirm the latest 3DS build including the framebuffer and diagnostic-colour changes: [CI run 39579240514](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39579240514).
+- [ ] Verify on the user's 3DS that `Tiles` is nonzero, the atlas is visible after pressing Y, and no pixels wrap or disappear.
+- [ ] Implement the authentic NES palette tables and tile-to-palette assignments from the original source/ROM; do not substitute the diagnostic palette in the faithful menu renderer.
+
+**Menu gate remains closed:** this does not complete the menu. Required work still includes source-faithful setup lists for states 2/3/4/5/6/7 and destinations 9/10/12/13, the PPU/nametable/attribute/palette upload path, OAM/sprite ordering, startup timing, and input/state verification against the original ASM. Do not enable an approximate menu as a substitute.
