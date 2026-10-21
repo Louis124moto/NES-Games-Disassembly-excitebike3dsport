@@ -180,3 +180,16 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - Keep hypotheses explicitly marked until verified from instructions, tables, callers, or repeatable tests.
 - Prefer completing the original game's features before optimization.
 - Keep optional 3DS enhancements isolated from the faithful baseline.
+
+
+## Main-menu source trace — 2026-10-21
+
+- [x] Trace the shared input/cursor helper `sub_C7DE` at CPU `$C7DE` (ROM offset `$0007EE`): reads `ram_btn_press`, masks `$3C`, sets `ram_0031_timer=$5D` when a relevant input is present, uses `ram_0049` as a repeat guard, and applies one-based cursor wrap behavior.
+- [x] Add a native C model of those helper side effects and host tests for up/down/select, wrapping, repeat suppression, idle reset, and Start's four-frame timer effect.
+- [ ] Run the host suite and confirm the new helper tests pass.
+- [ ] Trace the complete state flow around `ofs_000_C346_00`, `ofs_000_C395_01`, and `ofs_000_C3BD_08`, including every caller, state transition, menu option meaning, and source tile/nametable data.
+- [ ] Reconstruct the original menu visuals from the original tile data, palette/attribute writes, sprite coordinates, and PPU upload path. Do not invent menu labels or pretend a diagnostic overlay is the original menu.
+- [ ] Connect the verified menu state machine to the native 3DS renderer and input path, then compare selection and confirm/cancel behavior against the NES reference.
+- [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
+
+**Current menu status:** one shared ASM input helper has been translated; the full title/main-menu state machine and authentic visual reconstruction are still incomplete. The new helper is not yet wired to a playable menu.
