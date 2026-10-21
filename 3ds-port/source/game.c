@@ -30,7 +30,7 @@ void gameUpdate(void)
 void gameRender(void)
 {
     rendererBeginFrame();
-    if (assetExtractorIsActive()) rendererDraw(NULL);
+    rendererDraw(NULL);
     rendererEndFrame();
 }
 
