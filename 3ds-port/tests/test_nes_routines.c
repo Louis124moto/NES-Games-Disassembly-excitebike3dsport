@@ -651,9 +651,48 @@ static int testSubC7DEMenuInput(void)
     return 0;
 }
 
+
+static int testSubC3BDConfirmSelection(void)
+{
+    uint8_t state, selection, mode, clear;
+
+    state=8u; selection=1u; mode=0u; clear=0u;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    if(state!=9u || selection!=1u || mode!=1u || clear!=0u) {
+        fputs("sub_C3BD selection 1 mismatch\n",stderr); return 1;
+    }
+    state=8u; selection=2u; mode=7u; clear=0u;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    if(state!=9u || mode!=7u || clear!=0u) {
+        fputs("sub_C3BD selection 2 mismatch\n",stderr); return 2;
+    }
+    state=8u; selection=3u; mode=0u; clear=0u;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    if(state!=12u || selection!=0u || clear!=0u) {
+        fputs("sub_C3BD selection 3 mismatch\n",stderr); return 3;
+    }
+    state=8u; selection=4u; mode=0u; clear=0u;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    if(state!=13u || selection!=0u || clear!=0u) {
+        fputs("sub_C3BD selection 4 mismatch\n",stderr); return 4;
+    }
+    state=8u; selection=5u; mode=0u; clear=0u;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
+    if(state!=8u || selection!=2u || clear!=1u) {
+        fputs("sub_C3BD selection 5 mismatch\n",stderr); return 5;
+    }
+    state=8u; selection=3u; mode=0u; clear=0u;
+    nesSubC3BDConfirmSelection(0u,&state,&selection,&mode,&clear);
+    if(state!=8u || selection!=3u || clear!=0u) {
+        fputs("sub_C3BD no-action mismatch\n",stderr); return 6;
+    }
+    return 0;
+}
+
 int main(void)
 {
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
+    if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\n", stderr); return 1; }
