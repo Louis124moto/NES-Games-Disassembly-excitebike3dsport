@@ -603,8 +603,58 @@ static int testBatchC64E653(void) {
     return (ao==a&&r7==0u&&rc==0u&&w[0]==4u&&w[1]==0xFFu&&loops[0]==0x6Au&&loops[1]==0x6Au)?0:2;
 }
 
+
+static int testSubCFE3MaskFlags(void)
+{
+    unsigned int value;
+    for (value = 0u; value < 256u; ++value) {
+        uint8_t actual = (uint8_t)value;
+        nesSubCFE3MaskFlags(&actual);
+        if (actual != (uint8_t)(value & 0xF0u)) {
+            fprintf(stderr, "sub_CFE3 mismatch: input=%02X actual=%02X\\n", value, actual);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int testSubC7DEMenuInput(void)
+{
+    uint8_t selection, guard, timer30, timer31, changed, result;
+    unsigned int i;
+
+    selection=4u; guard=0u; timer30=0u; timer31=0u; changed=0u;
+    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=1u || guard!=1u || timer31!=0x5Du || changed!=1u) {
+        fputs("sub_C7DE down/wrap mismatch\\n",stderr); return 1;
+    }
+    selection=2u; guard=1u; timer31=0u; changed=1u;
+    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=2u || guard!=1u || timer31!=0x5Du || changed!=0u) {
+        fputs("sub_C7DE repeat guard mismatch\\n",stderr); return 2;
+    }
+    guard=1u;
+    result=nesSubC7DEMenuInput(0x01u,5u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || guard!=0u) { fputs("sub_C7DE idle reset mismatch\\n",stderr); return 3; }
+    selection=1u; guard=0u; changed=0u;
+    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE up/wrap mismatch\\n",stderr); return 4; }
+    selection=3u; guard=0u; timer30=0u; changed=1u;
+    result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed);
+    if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\\n",stderr); return 5; }
+    for(i=0u;i<1000u;++i) {
+        uint8_t press=(i&1u)?0x04u:0x08u;
+        guard=0u;
+        (void)nesSubC7DEMenuInput(press,6u,&selection,&guard,&timer30,&timer31,&changed);
+        if(selection<1u || selection>5u) { fputs("sub_C7DE range mismatch\\n",stderr); return 6; }
+    }
+    return 0;
+}
+
 int main(void)
 {
+    if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\\n", stderr); return 1; }
+    if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\\n", stderr); return 1; }
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
