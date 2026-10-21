@@ -53,14 +53,24 @@ void rendererBeginFrame(void)
 
 void rendererDraw(const GameState *state)
 {
+    size_t tileCount = 0u;
     (void)state;
-    if (!assetExtractorIsActive()) return;
-    printf("DIAGNOSTIC CHR VIEWER (not gameplay)\n");
-    printf("%s\n", assetExtractorGetStatus());
-    printf("ROM: rom.nes (beside the 3DSX)\n");
-    printf("Cache: extracted/chr_pixels.bin (beside the 3DSX)\n");
-    printf("Y: close/return   X: reload   B: close\n");
-    printf("Raw CHR patterns only; no NES screen layout is emulated.\n");
+    (void)assetExtractorGetPixels(&tileCount);
+
+    /*
+     * This console is the bottom-screen log. Keep it visible even while the
+     * atlas viewer is closed, so startup/cache/ROM errors are immediately
+     * inspectable instead of hidden behind the Y toggle.
+     */
+    printf("EXCITEBIKE 3DS - ASSET LOG\n");
+    printf("CHR status: %s\n", assetExtractorGetStatus());
+    printf("Decoded tiles: %lu / 960\n", (unsigned long)tileCount);
+    printf("ROM path: rom.nes beside the launched 3DSX\n");
+    printf("Cache path: extracted/chr_pixels.bin beside the 3DSX\n");
+    printf("Viewer: %s\n", assetExtractorIsActive() ? "OPEN" : "closed");
+    printf("Y: toggle atlas   X: retry extraction (viewer open)\n");
+    printf("B: close atlas   A: no action\n");
+    printf("NOTE: raw CHR patterns only; menu layout/palettes not yet emulated.\n");
 }
 
 void rendererEndFrame(void)
