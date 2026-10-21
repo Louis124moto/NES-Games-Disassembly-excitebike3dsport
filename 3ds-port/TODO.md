@@ -60,6 +60,15 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [ ] Reconcile `ASM_FUNCTION_INVENTORY.md` with actual C entry points, tests, CI evidence, and gameplay integration.
 - [ ] Record a confirmed baseline for the current branch's host tests and 3DS build.
 
+## Menu runtime integration update — 2026-10-21
+
+- [x] Connect `GameState` initialization and `menusUpdate()` to the active 3DSX frame loop after START exits the diagnostic screen.
+- [x] Include `menus.c`, `game_state.c`, and `nes_routines.c` in the native build target so menu code is no longer silently excluded.
+- [x] Route menu-mode rendering to the menu-state diagnostic and suppress the CHR atlas while menu mode is active.
+- [ ] Reconstruct the original title screen from source-verified CHR/nametable/attribute/palette data; current `menusRender()` is still a textual state trace, not the original NES image.
+- [ ] Complete all menu setup/dispatch states and transitive routine dependencies before claiming faithful menu navigation.
+- [ ] Run host regressions and a clean 3DSX build on this integration revision; runtime wiring is not yet build-verified in this commit.
+
 ## Immediate priority — finish the complete menu, then Course 1 only
 
 **Latest evidence:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
