@@ -41,9 +41,10 @@ static void rendererDrawChrAtlas(void)
     unsigned int tile, row, col;
 
     /* On libctru top-screen framebuffer dimensions are 240x400. */
+    if (s_menuActive) return;
     if (framebuffer == NULL || width != 240u || height != 400u) return;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-    if (!assetExtractorIsActive() || s_gameStarted || s_menuActive) return;
+    if (!assetExtractorIsActive() || s_gameStarted) return;
 
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
@@ -85,6 +86,7 @@ void rendererInit(void)
     consoleSelect(&s_bottomConsole);
     s_logInitialized = 0;
     s_gameStarted = 0;
+    s_menuActive = 0;
     s_lastLog[0] = '\0';
 }
 
@@ -99,8 +101,10 @@ void rendererDraw(const GameState *state)
     size_t tileCount = 0u;
     (void)assetExtractorGetPixels(&tileCount);
     if (s_menuActive && state != NULL) {
+        consoleSelect(NULL);
         consoleClear();
         menusRender(state);
+        consoleSelect(&s_bottomConsole);
         s_logInitialized = 0;
         return;
     }
@@ -126,7 +130,7 @@ void rendererDraw(const GameState *state)
             "Cache: extracted/chr_pixels.bin\n"
             "Atlas: %s\n"
             "Page: %lu/%lu (D-pad left/right)\n"
-            "Y: toggle atlas; START: game mode\n"
+            "Y: toggle atlas; START: enter menu trace\n"
             "X: retry extraction; B: close atlas\n"
             "Atlas uses grayscale 2bpp indices.\n",
             assetExtractorGetStatus(), (unsigned long)tileCount,
