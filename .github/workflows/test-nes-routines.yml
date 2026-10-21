@@ -11,6 +11,9 @@ on:
       - "3ds-port/include/nes_chr_decode.h"
       - "3ds-port/source/nes_ppu_render.c"
       - "3ds-port/include/nes_ppu_render.h"
+      - "3ds-port/source/asset_export.c"
+      - "3ds-port/include/asset_export.h"
+      - "3ds-port/include/third_party/stb_image_write.h"
       - "3ds-port/tests/test_nes_chr_decode.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
@@ -50,3 +53,7 @@ jobs:
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_ppu_render.c 3ds-port/tests/test_nes_ppu_render.c -o test_nes_ppu_render
       - name: Test native PPU renderer
         run: ./test_nes_ppu_render
+      - name: Compile native CHR export test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
+      - name: Test native CHR exports
+        run: ./test_asset_export
