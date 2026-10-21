@@ -16,6 +16,22 @@ static int testLiteralAndFillCommands(void)
     return 0;
 }
 
+static int testSourceNametableStreams(void)
+{
+    uint8_t nametable[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+    uint8_t mask[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+    uint8_t palette[32], paletteMask[32];
+    size_t writes = 0u, streamSize = 0u;
+    const char *label = NULL;
+    const uint8_t *stream = nesExcitebikePpuStream(0u, &streamSize, &label);
+    if (stream == NULL || streamSize != 180u || label == NULL || strstr(label, "D470") == NULL) return 1;
+    if (nesExcitebikePpuSnapshot(0u, nametable, mask, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) return 2;
+    if (writes == 0u || nametable[0x3D0u] != 0x55u || nametable[0x3EFu] != 0x55u ||
+        mask[0x3D0u] != 1u || mask[0x3EFu] != 1u) return 3;
+    if (nesExcitebikePpuStream(NES_EXCITEBIKE_PPU_STREAM_COUNT, &streamSize, &label) != NULL) return 4;
+    return 0;
+}
+
 static int testSourcePaletteStreams(void)
 {
     uint8_t palette[32], mask[32];
@@ -37,6 +53,8 @@ int main(void)
 {
     int result = testLiteralAndFillCommands();
     if (result != 0) { fprintf(stderr, "PPU command interpreter test failed: %d\n", result); return 1; }
+    result = testSourceNametableStreams();
+    if (result != 0) { fprintf(stderr, "Source PPU snapshot test failed: %d\\n", result); return 1; }
     result = testSourcePaletteStreams();
     if (result != 0) { fprintf(stderr, "Source palette stream test failed: %d\n", result); return 1; }
     puts("PASS: source-format PPU write-list interpreter and seven verified palette streams.");
