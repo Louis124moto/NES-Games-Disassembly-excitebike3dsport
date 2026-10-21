@@ -16,15 +16,9 @@ void rendererBeginFrame(void)
 
 void rendererDraw(const GameState *state)
 {
-    if (state == 0) return;
-    printf("EXCITEBIKE 3DS - PORT DEVELOPMENT\n");
-    printf("==================================\n");
-    printf("Menu input: ASM-derived sub_C7DE model\n");
-    printf("Cursor: %u | action X: %u\n",
-           (unsigned int)state->menu_selection,
-           (unsigned int)state->menu_action_x);
-    printf("This screen is a trace prototype, not NES artwork.\n");
-    printf("Original title graphics and menu labels remain pending.\n");
+    (void)state;
+    printf("EXCITEBIKE 3DS - FAITHFUL PORT WORKSPACE\n");
+    printf("========================================\n");
 }
 
 void rendererEndFrame(void)
