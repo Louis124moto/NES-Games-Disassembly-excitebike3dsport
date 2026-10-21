@@ -21,6 +21,8 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
     if (heldKeys & KEY_START)  nesButtons |= 0x10u;
     if (heldKeys & KEY_UP)     nesButtons |= 0x08u;
     if (heldKeys & KEY_DOWN)   nesButtons |= 0x04u;
+    if (heldKeys & KEY_LEFT)   nesButtons |= 0x02u;
+    if (heldKeys & KEY_RIGHT)  nesButtons |= 0x01u;
 
     state->menu_clear_ram_requested = 0u;
 
@@ -28,18 +30,62 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
      * ofs_000_C346_00: when ram_0031_timer is zero, the ASM initializes
      * ram_0043/ram_004A, sets ram_03F7=$0F and enters state 2.
      */
-    if (state->menu_asm_state == 0u && state->menu_timer31 == 0u) {
-        state->menu_ram0043 = 0u;
-        state->menu_ram004A = 0u;
-        state->menu_ram03F7 = 0x0Fu;
-        nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
-        state->menu_asm_state = 2u;
-        state->menu_action_x = 0u;
-        state->menu_selection_changed = 0u;
-        return;
-    }
+    if (state->menu_asm_state == 0u) {
+        if (state->menu_timer31 == 0u) {
+            state->menu_ram0043 = 0u;
+            state->menu_ram004A = 0u;
+            state->menu_ram03F7 = 0x0Fu;
+            nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+            state->menu_asm_state = 2u;
+            state->menu_action_x = 0u;
+            state->menu_selection_changed = 0u;
+            return;
+        }
 
-    if (state->menu_asm_state == 8u) {
+        /* ofs_000_C346_00: the actual three-entry title menu. */
+        state->menu_action_x = nesSubC7DEMenuInput(
+            nesButtons, 3u, &state->menu_selection,
+            &state->menu_repeat_guard, &state->menu_timer30,
+            &state->menu_timer31, &changed);
+        state->menu_selection_changed = changed;
+        if (state->menu_action_x == 0u) {
+            static const uint8_t cursorY[3] = {0x80u, 0x90u, 0xA0u};
+            if (state->menu_selection < 3u)
+                state->menu_sprite_y = cursorY[state->menu_selection];
+            state->menu_ram03F2 = 0u;
+        } else {
+            uint8_t selected = state->menu_selection;
+            state->menu_ram03F7 = 0u;
+            state->menu_ram0043 = 0u;
+            state->menu_selection = 0u;
+            state->menu_ram03F3 = 1u;
+            state->menu_ram004A = 1u;
+            state->menu_ram03F0 = 1u;
+            state->menu_asm_state = (selected == 2u) ? 8u : 1u;
+            state->menu_ram03F2 = selected;
+            nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+        }
+    } else if (state->menu_asm_state == 1u) {
+        /* ofs_000_C395_01 remaps LEFT/RIGHT onto the vertical selector. */
+        uint8_t selectorButtons = (uint8_t)((nesButtons & 0xF3u) |
+                                           ((nesButtons & 0x03u) << 2));
+        state->menu_action_x = nesSubC7DEMenuInput(
+            selectorButtons, 5u, &state->menu_selection,
+            &state->menu_repeat_guard, &state->menu_timer30,
+            &state->menu_timer31, &changed);
+        state->menu_selection_changed = changed;
+        if (state->menu_action_x == 0u) {
+            static const uint8_t cursorX[5] = {0x48u, 0x60u, 0x78u, 0x90u, 0xA8u};
+            if (state->menu_selection < 5u)
+                state->menu_sprite_x = cursorX[state->menu_selection];
+            state->menu_sprite_attribute = 0u; /* bra_C411 writes zero */
+            state->menu_ram0046 = 0u;
+        } else {
+            state->menu_ram0043 = state->menu_selection;
+            nesSubC3AFIncrementState(&state->menu_asm_state);
+            nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
+        }
+    } else if (state->menu_asm_state == 8u) {
         state->menu_action_x = nesSubC7DEMenuInput(
             nesButtons, 6u, &state->menu_selection,
             &state->menu_repeat_guard, &state->menu_timer30,
@@ -103,7 +149,7 @@ void menusRender(const GameState *state)
            (unsigned int)state->menu_clear_ram_requested);
 
     if (state->menu_asm_state == 8u) {
-        for (i = 1u; i <= 5u; ++i) {
+        for (i = 0u; i <= 5u; ++i) {
             printf("%c Option %u [ASM label unresolved]\n",
                    i == (unsigned int)state->menu_selection ? '>' : ' ',
                    i);
