@@ -358,3 +358,12 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] If `argv[0]` does not resolve to the SD path on the target homebrew launcher, replace it with a verified libctru/argv path solution and document the evidence.
 
 **Expected startup behavior:** the bottom screen shows `CHR status` and `Decoded tiles` immediately. A successful cache load should say “Loaded … CHR tiles from extracted cache”; a successful fresh extraction should say “Extracted … CHR tiles; cache saved.” Failures should show the decoder/file error. The atlas is still opened with Y; X retries extraction while it is open; B closes it. Hardware verification is still pending.
+
+
+## Menu handler shared exit — `loc_CBA3` (2026-10-21)
+
+- [x] Translate the shared three-instruction exit at CPU `$CBA3`: store incoming A in `$0033`, increment `$0044` with byte wrap, return.
+- [x] Add a regression vector for normal increment and `$FF -> $00` wrap.
+- [ ] Run the host suite and 3DS build against the exact revision containing this helper.
+- [ ] Continue with `ofs_CB77_01` and `ofs_CBA4_02`; trace the `sub_C94B`, `sub_CC15`, `sub_CC6B`, `sub_CCCA`, and PPU/OAM dependencies before translating the complete handler path.
+- [ ] Keep states 3/6/11 out of the active runtime until their handlers and graphics/data dependencies are fully integrated and fidelity-checked.
