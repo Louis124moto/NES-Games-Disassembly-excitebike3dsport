@@ -24,6 +24,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$C3AF` | `sub_C3AF` | Pending | — |
 | `$C3B1` | `sub_C3B1` | Pending | — |
 | `$C409` | `sub_C409` | Pending | ; in |
+| `$C53A` | `sub_C53A` | Translated + regression vector: writes `$0002` from `$0043`, preserves `$0003`, shares the verified CB06/CB13 tuple read; full caller integration pending |
 | `$C522` | `sub_C522` | Pending | calls: sub_CB13 |
 | `$C53A` | `sub_C53A` | Pending | — |
 | `$C53E` | `sub_C53E` | Pending | calls: sub_CB06 |
