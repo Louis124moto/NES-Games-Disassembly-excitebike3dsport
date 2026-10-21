@@ -138,8 +138,7 @@ static int menusRunSetupSequence(GameState *state)
         }
         if (commandIndex == 1u) { /* ofs_001_C575_06_02 */
             state->menu_ram0043 = 0x05u;
-            state->menu_sprite_y = 0xA0u; /* tbl_C080_spr_Y[2] */
-            state->menu_sprite_x = 0x60u; /* tbl_C088_spr_X[2] */
+            state->menu_sprite_x = 0x4Cu; /* tbl_C088_spr_X[2]; sub_C409 does not write sprite Y */
             state->menu_sprite_tile = 0xFAu;
             state->menu_sprite_attribute = 0u;
             state->menu_ram0046 = 0u;
