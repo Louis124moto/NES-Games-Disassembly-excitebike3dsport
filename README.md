@@ -164,7 +164,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 - On startup, the app checks the ROM fingerprint and cache, then extracts or reloads CHR-ROM tile pixels.
 - Exports are written beside the app in `extracted/`: raw CHR, decoded pixels, grayscale PNG atlas, seven source palette snapshots/masks/streams, 17 PPU command streams, 17 nametable/palette snapshots with write masks, and `manifest.txt`.
 - The internal decoded cache is `extracted/chr_cache.bin`; it is distinct from the exported pixel data.
-- Controls: D-pad left/right changes atlas pages or palette presets; up/down switches simple/advanced view; A opens the viewer or exports while open; B closes the viewer or retries extraction while closed.
+- Controls: D-pad left/right changes atlas pages, palette presets, or PPU streams; up/down cycles atlas, palette, and PPU snapshot views; A opens the viewer or exports while open; B closes the viewer or retries extraction while closed.
 - START is deliberately locked out of the menu until Stage 1 is accepted.
 - The PNG uses grayscale to expose 2bpp pixel indices. It does **not** claim to show Excitebike's actual palette or a complete original screen.
 
