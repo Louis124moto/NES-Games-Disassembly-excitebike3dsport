@@ -1732,6 +1732,19 @@ void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044)
     if (ram0044 != NULL) *ram0044 = 0u;
 }
 
+/* ofs_000_C41C_0D entry: initialize $0048/$0044, then wait for $0048 == $FF. */
+uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048)
+{
+    if (ram0044 == NULL || ram0048 == NULL) return 0u;
+    if (*ram0044 == 0u) {
+        *ram0048 = 2u;
+        *ram0044 = 1u;
+        return 0u;
+    }
+    return (uint8_t)(*ram0048 == 0xFFu);
+}
+
+
 /*
  * sub_C318 + sub_D255 + sub_D23B/sub_D260 + sub_D1A9 + sub_C333:
  * hide all OAM bytes, clear the two $2000/$2400 nametables to $FC,
