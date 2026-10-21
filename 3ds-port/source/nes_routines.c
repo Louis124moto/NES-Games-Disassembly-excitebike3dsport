@@ -1732,6 +1732,31 @@ void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044)
 }
 
 /*
+ * sub_C318 + sub_D255 + sub_D23B/sub_D260 + sub_D1A9 + sub_C333:
+ * hide all OAM bytes, clear the two $2000/$2400 nametables to $FC,
+ * clear their 64-byte attribute tables, reset scroll, disable rendering,
+ * and write $10 to PPUCTRL.
+ */
+void nesSubC318InitializePpu(uint8_t oam[256], uint8_t nametables[2048],
+                             uint8_t *scrollX, uint8_t *scrollY,
+                             uint8_t *ppuCtrl, uint8_t *ppuMask)
+{
+    unsigned int table;
+    if (oam != NULL) memset(oam, 0xF8, 256u);
+    if (nametables != NULL) {
+        for (table = 0u; table < 2u; ++table) {
+            memset(&nametables[table * 1024u], 0xFC, 960u);
+            memset(&nametables[table * 1024u + 960u], 0, 64u);
+        }
+    }
+    if (scrollX != NULL) *scrollX = 0u;
+    if (scrollY != NULL) *scrollY = 0u;
+    if (ppuCtrl != NULL) *ppuCtrl = 0x10u;
+    if (ppuMask != NULL) *ppuMask = 0u;
+}
+
+
+/*
  * ofs_000_C3BD_08 confirmation branches after sub_C7DE returns X != 0.
  * Directly mirrors the branches and calls sub_C3AF/sub_C3B1 where ASM does.
  */
