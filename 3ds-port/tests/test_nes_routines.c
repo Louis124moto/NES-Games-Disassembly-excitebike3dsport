@@ -785,21 +785,21 @@ static int testBatchAdditional20Boundaries(void)
 
 static int testSubD310MenuTimers(void)
 {
-    uint8_t frame=0u, timer30=4u, timer31=0x38u;
+    uint8_t frame=0u, timer30=4u, timer31=0x38u, timer34=0x2Du;
     unsigned int i;
-    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
-    if(frame!=0x0Au || timer30!=3u || timer31!=0x37u) {
+    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31,&timer34);
+    if(frame!=0x0Au || timer30!=3u || timer31!=0x37u || timer34!=0x2Cu) {
         fputs("sub_D310 menu timer initial tick mismatch\n",stderr); return 1;
     }
-    for(i=0u;i<10u;++i) nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
-    if(timer30!=3u || timer31!=0x37u) {
+    for(i=0u;i<10u;++i) nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31,&timer34);
+    if(timer30!=3u || timer31!=0x37u || timer34!=0x2Cu) {
         fputs("sub_D310 menu timer divider mismatch\n",stderr); return 2;
     }
-    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31);
-    if(timer30!=2u || timer31!=0x36u) {
+    nesSubD310DecreaseMenuTimers(&frame,&timer30,&timer31,&timer34);
+    if(timer30!=2u || timer31!=0x36u || timer34!=0x2Bu) {
         fputs("sub_D310 menu timer rollover mismatch\n",stderr); return 3;
     }
-    puts("PASS: sub_D310 timer projection for menu $0030/$0031.");
+    puts("PASS: sub_D310 timer projection for menu $0030/$0031/$0034.");
     return 0;
 }
 
