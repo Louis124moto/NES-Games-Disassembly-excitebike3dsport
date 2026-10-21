@@ -8,19 +8,19 @@
  *
  * State 8 is ofs_000_C3BD_08 ($C3BD); state 0 is ofs_000_C346_00
  * ($C346). Selection meanings and original title artwork are deliberately
- * not guessed. The cursor and state/reset side effects follow bank_FF.asm.
+ * not guessed. The menu receives held controls to match ram_btn_press sampling and the repeat guard; state/reset side effects follow bank_FF.asm.
  */
-void menusUpdate(GameState *state, unsigned int pressed)
+void menusUpdate(GameState *state, unsigned int heldKeys)
 {
     uint8_t nesButtons = 0u;
     uint8_t changed = 0u;
 
     if (state == 0) return;
 
-    if (pressed & KEY_SELECT) nesButtons |= 0x20u;
-    if (pressed & KEY_START)  nesButtons |= 0x10u;
-    if (pressed & KEY_UP)     nesButtons |= 0x08u;
-    if (pressed & KEY_DOWN)   nesButtons |= 0x04u;
+    if (heldKeys & KEY_SELECT) nesButtons |= 0x20u;
+    if (heldKeys & KEY_START)  nesButtons |= 0x10u;
+    if (heldKeys & KEY_UP)     nesButtons |= 0x08u;
+    if (heldKeys & KEY_DOWN)   nesButtons |= 0x04u;
 
     state->menu_clear_ram_requested = 0u;
 
@@ -78,7 +78,7 @@ void menusUpdate(GameState *state, unsigned int pressed)
         state->menu_selection_changed = 0u;
     }
 
-    if (pressed & KEY_X) state->show_help = !state->show_help;
+    if (heldKeys & KEY_X) state->show_help = !state->show_help;
 }
 
 void menusRender(const GameState *state)
