@@ -33,7 +33,7 @@ This is the controlling project specification. If older checklist items conflict
 
 - [ ] Audit the current extractor and its real 3DSX startup path against every requirement above.
 - [ ] Verify supported ROM/header and graphics-memory cases from source evidence; document unsupported cases instead of implying universal compatibility.
-- [ ] Extract and display raw CHR/pattern data accurately; distinguish CHR-ROM extraction from CHR-RAM/runtime PPU capture.
+- [x] Extract and display raw CHR/pattern data from iNES/NES 2.0 CHR-ROM or a standalone raw CHR file; report CHR-RAM as requiring runtime PPU capture. The atlas is currently limited to 960 decoded tiles.
 - [ ] Trace and extract source-confirmed palette data from actual PPU writes; do not infer active palette assignments from palette tables alone.
 - [ ] Implement and validate available nametable/attribute data, bank context, and any proven compressed/generated graphics path.
 - [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
