@@ -374,4 +374,8 @@ void nesSubC046Command4(uint8_t ram[65536]); /* ofs_001_C5A3_02_04 */
 void nesSubC046Command5(uint8_t ram[65536]); /* ofs_001_C566_02_05 */
 uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536]); /* C875-C8DE; 1 = dependencies remain */
  
+/* Exact menu setup entries from bank_FF.asm at $C55E and $C56A. */
+void nesSubC55ESetState06(uint8_t *ram0045);
+void nesSubC56ASetState04(uint8_t *ram0033, uint8_t *ram0045);
+
 #endif
