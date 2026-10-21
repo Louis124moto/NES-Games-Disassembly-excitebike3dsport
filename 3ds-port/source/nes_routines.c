@@ -1980,3 +1980,114 @@ uint8_t nesSubECC9CheckSpriteBytes(uint8_t y, const uint8_t ram0540[256],
     return (uint8_t)(ram0540[y]!=0x3Du||ram0480[y]!=0x3Du||
                      ram0400[y]!=0x3Bu||ram04C0[y]!=0x3Bu);
 }
+
+
+/* State-2 command list off_C046_02 from bank_FF.asm. */
+void nesSubC046Command1(uint8_t ram[65536])
+{
+    uint8_t a = 0x12u; /* LDA #con_0045_12 */
+    if (ram[0x0041u] < 0x08u) {
+        a = (uint8_t)(a + ram[0x0043u]); /* CLC / ADC ram_0043 */
+    }
+    ram[0x0045u] = a;
+}
+
+void nesSubC046Command2(uint8_t ram[65536])
+{
+    unsigned int address;
+    /* X=$EF down through $4D inclusive; $4C is the loop sentinel. */
+    for (address = 0x004Du; address <= 0x00EFu; ++address) {
+        ram[address] = 0u;
+    }
+}
+
+void nesSubC046Command3(uint8_t ram[65536])
+{
+    unsigned int i;
+    /*
+     * sub_D13F invokes sub_ECE4 three times. Its buffer output in $0400-$057F
+     * is completely overwritten by this command below; the final scratch
+     * bytes left by its last (X=$08) call are preserved here exactly.
+     */
+    ram[0x0002u] = 0xC0u;
+    ram[0x0003u] = 0xFCu;
+    ram[0x0004u] = 0x83u;
+    ram[0x0005u] = 0x21u;
+
+    ram[0x0001u] = 0x03u;
+    ram[0x0045u] = 0x01u;
+    ram[0x0000u] = 0x00u;
+    ram[0x004Bu] = 0x00u;
+
+    /* Y=$EF down to $41: clears $0340-$03EF, not $0340-$03FF. */
+    for (i = 0x0340u; i <= 0x03EFu; ++i) {
+        ram[i] = 0u;
+    }
+    for (i = 0u; i < 0x80u; ++i) {
+        ram[0x0400u + i] = 0x3Bu;
+        ram[0x0480u + i] = 0x3Du;
+        ram[0x0500u + i] = 0x3Du;
+    }
+
+    ram[0x0200u] = 0xBFu; /* ram_spr_Y */
+    ram[0x0201u] = 0xFFu; /* ram_spr_T */
+    ram[0x0203u] = 0xF7u; /* ram_spr_X */
+    ram[0x00E8u] = 0x3Fu;
+    ram[0x00E9u] = 0x1Fu;
+    ram[0x00EBu] = 0x0Au;
+    ram[0x00EAu] = 0x25u;
+}
+
+void nesSubC046Command4(uint8_t ram[65536])
+{
+    ram[0x0045u] = 0x17u;
+}
+
+void nesSubC046Command5(uint8_t ram[65536])
+{
+    ram[0x0045u] = 0x0Eu;
+}
+
+uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
+{
+    static const uint8_t startY[4] = {0x0Eu, 0x1Au, 0x26u, 0x32u};
+    static const uint8_t objectE0[4] = {0x09u, 0x0Bu, 0x0Du, 0x0Fu};
+    static const uint8_t objectX[4] = {0x38u, 0x48u, 0x58u, 0x68u};
+    unsigned int x, lastX;
+
+    /* Literal writes at C875-C8A8. */
+    ram[0x0047u] = (uint8_t)(ram[0x0047u] + 1u);
+    ram[0x0040u] = (uint8_t)(ram[0x0040u] + 1u);
+    if (ram[0x0034u] == 0u) ram[0x0034u] = 0x05u;
+    ram[0x00E8u] = 0x34u;
+    ram[0x00E9u] = 0x14u;
+    ram[0x03F1u] = 0xA0u;
+    ram[0x03B4u] = 0x80u;
+    ram[0x03B0u] = 0x80u;
+    ram[0x03BDu] = 0xFFu;
+    ram[0x0370u] = 0x01u;
+    ram[0x03BEu] = 0x02u;
+
+    lastX = (ram[0x03F2u] != 0u) ? 2u : 0u;
+    for (x = lastX + 1u; x-- > 0u;) {
+        ram[0x00B8u + x] = startY[x];
+        ram[0x0064u + x] = 0x08u;
+        ram[0x00E0u + x] = objectE0[x];
+        ram[0x0080u + x] = objectX[x];
+        ram[0x00ACu + x] = 0x06u;
+        ram[0x0078u + x] = 0x06u;
+        ram[0x0084u + x] = 0x01u;
+        ram[0x00A8u + x] = 0x01u;
+        ram[0x0074u + x] = (uint8_t)(ram[0x0019u + x] >> 1);
+    }
+    x = (unsigned int)(ram[0x0019u] & 0x03u);
+    if (x == 0u) x = 2u;
+    ram[0x0078u + x] = (uint8_t)(ram[0x0078u + x] >> 1u);
+
+    /*
+     * C8DE branches into the rest of the 6502 routine, which also calls
+     * sub_C522/sub_C53A and builds the PPU command buffer using source tables.
+     * Do not pretend those dependent effects have been executed here.
+     */
+    return 1u;
+}
