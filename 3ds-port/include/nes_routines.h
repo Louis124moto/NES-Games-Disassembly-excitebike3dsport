@@ -321,6 +321,11 @@ uint8_t nesSubC409SetupStaticSprite(uint8_t y, const uint8_t tblC088[256],
 void nesSubCFDBClearUpperFlags(uint8_t ram0094, uint8_t *ram005C);
 void nesSubCFCBCompareObjectPosition(uint8_t ram0094, uint8_t ram0078, uint8_t ram0090, uint8_t ram0074, uint8_t *ram005C);
 void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *ram005C);
+void nesSubCFE3MaskFlags(uint8_t *ram005C);
+uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
+                            uint8_t *selection, uint8_t *repeatGuard,
+                            uint8_t *timer30, uint8_t *timer31,
+                            uint8_t *selectionChanged);
 uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C);
 uint8_t nesLocCAFAFillCommand(uint8_t x, uint8_t ram0304To040Au[263]);
 void nesLocCD13CopySpriteTemplate(uint8_t oam[256], const uint8_t tblC150[8]);
