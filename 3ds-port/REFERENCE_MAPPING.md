@@ -639,3 +639,12 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 
 **Current conclusion:** the available `nesLocE96EApplyVerticalDelta` helper is a valid translation of one bounded instruction block, not of `sub_E96C`. Do not integrate it as the complete vertical-state update. Player-slot identity and the surrounding state/caller dependencies remain unresolved.
 
+
+
+## Menu table-index correction — `sub_C92C` / `sub_C53E` / `sub_CB06` / `sub_CB13` (2026-10-21)
+
+- `loc_C92C` stores the incoming A in `$0003`, copies `$0043` to `$0002`, then calls `sub_C53E`.
+- `sub_C53E` calls `sub_CB06`, then reads three consecutive bytes from CPU RAM `$0580+Y` into scratch `$0005-$0007`.
+- `sub_CB13` returns `$20` immediately when `$0002 == 5`; otherwise its DEY/BPL loop adds `$03` once for each original Y unit. It ORs `$10` when `$0046 != 0`. Then `sub_CB06` adds `$23` when `$03F2 != 0`.
+- The previous native helper omitted `$0046` and used an incorrect loop count. Its signature and implementation now model the flag, special state, and offsets; regression vectors cover all three paths.
+- This fixes the table-index dependency only. `ofs_001_C485_03_05` still depends on comparisons, `sub_C522/sub_C53A`, and downstream branch effects; state 3 remains disabled until that complete dependency chain is translated and tested.
