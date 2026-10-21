@@ -27,7 +27,7 @@ The NES source is 6502 assembly and relies on NES-specific hardware. It cannot b
 
 ## Menu port status (2026-10-21)
 
-The current implementation is a native state/input trace, not a completed faithful menu. ASM states 0, 1, and 8 have partial setup command lists and input branches. State 2 and destination states 9, 10, 12, and 13 still need their exact command lists and side effects; the app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
+The current implementation is a native state/input trace, not a completed faithful menu. ASM states 0, 1, and 8 have partial setup command lists and input branches. State 2 and destination states 9, 10, and 12 still need their exact command lists and side effects. State 13 now uses the exact shared two-command setup from state 8, but its state handler is still unported. The app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
 
 ### Extract graphics and prepare the native diagnostic atlas
 
@@ -60,4 +60,4 @@ The inspector validates the iNES magic and header lengths, accounts for the opti
 
 ### Latest menu routine batch
 
-The setup prelude now models the side effects visible in the source: all 256 OAM bytes become `$F8`, both `$2000` and `$2400` nametable blocks are initialized to `$FC` for 960 bytes and zero for the 64-byte attribute region, scroll resets to zero, PPU mask is disabled, and PPU control becomes `$10`. The host regression suite has a test for these exact memory effects. The actual state-2 six-command setup list and other destination states remain incomplete; the main menu is not yet fidelity-complete.
+The setup prelude now models the side effects visible in the source: all 256 OAM bytes become `$F8`, both `$2000` and `$2400` nametable blocks are initialized to `$FC` for 960 bytes and zero for the 64-byte attribute region, scroll resets to zero, PPU mask is disabled, and PPU control becomes `$10`. The host regression suite has a test for these exact memory effects. The state-2 six-command setup list and states 9, 10, and 12 remain incomplete; state 13 has its shared setup list but no handler. The main menu is not yet fidelity-complete.
