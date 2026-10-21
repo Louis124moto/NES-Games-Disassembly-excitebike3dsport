@@ -17,14 +17,14 @@ void rendererBeginFrame(void)
 void rendererDraw(const GameState *state)
 {
     if (state == 0) return;
-    printf("EXCITEBIKE 3DS - ARCHITECTURE TEST\n");
+    printf("EXCITEBIKE 3DS - PORT DEVELOPMENT\n");
     printf("==================================\n");
-    printf("Speed: %d\nHeat: %d\nTrack position: %d\n\n",
-           state->bike.speed, state->bike.temperature, state->bike.track_position);
-    printf("A: throttle | B: temporary boost\n");
-    printf("D-pad: position test | X: help toggle\n");
-    printf("START: quit\n\n");
-    printf("This is not authentic gameplay yet.\n");
+    printf("Menu input: ASM-derived sub_C7DE model\n");
+    printf("Cursor: %u | action X: %u\n",
+           (unsigned int)state->menu_selection,
+           (unsigned int)state->menu_action_x);
+    printf("This screen is a trace prototype, not NES artwork.\n");
+    printf("Original title graphics and menu labels remain pending.\n");
 }
 
 void rendererEndFrame(void)
