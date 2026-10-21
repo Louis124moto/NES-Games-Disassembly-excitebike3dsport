@@ -197,7 +197,7 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Connect the verified state model to a pixel renderer and compare selection/confirmation timing against the NES reference.
 - [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
 
-**Current menu status:** CPU-side traces now cover states 0, 1, and 8, their shared input helper, cursor coordinate tables, key remapping, confirmation branches, RAM-clear helper, and tracked timer cadence. This is still not a full faithful port: original startup/PPU setup, audio behavior, and destination states 9/12/13 remain incomplete; tests are not yet executed.
+**Current menu status:** CPU-side traces cover states 0, 1, and 8, their shared input helper, cursor coordinate tables, left/right remapping, confirmation branches, the choice-5 RAM-clear helper, and the timer divider. The 3DS menu now passes per-frame key-down edges to match the ASM's `ram_btn_press` input rather than treating held keys as new presses. Startup command `ofs_001_C2BD_00_01` was inspected and its source-derived timer/cursor/audio-control state is reflected in reset initialization, but the complete `sub_C2A9` transition sequencer and its PPU command streams are not yet ported. Destination states 9/12/13, authentic nametable/CHR/palette rendering, and original audio behavior remain incomplete. Host tests and the current 3DS build have not been run for these latest commits.
 
 
 ## Main-menu implementation update — 2026-10-21
