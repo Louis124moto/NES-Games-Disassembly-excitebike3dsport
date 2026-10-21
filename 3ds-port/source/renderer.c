@@ -199,8 +199,18 @@ void rendererDraw(const GameState *state)
             used += (size_t)writtenCount;
         }
         if (used < sizeof(logText)) {
+            const int maskHeader = snprintf(logText + used, sizeof(logText) - used, "\nMask: ");
+            if (maskHeader > 0) used += (size_t)maskHeader;
+        }
+        for (index = 0u; index < 32u && used < sizeof(logText); ++index) {
+            const int maskCount = snprintf(logText + used, sizeof(logText) - used,
+                "%c%s", written[index] != 0u ? '#' : '-', (index % 8u == 7u) ? "\n      " : " ");
+            if (maskCount < 0 || (size_t)maskCount >= sizeof(logText) - used) break;
+            used += (size_t)maskCount;
+        }
+        if (used < sizeof(logText)) {
             (void)snprintf(logText + used, sizeof(logText) - used,
-                "\nMask marks source-written addresses.\n"
+                "\n# = written by this source list; - = untouched.\n"
                 "Preset does not identify the active live-game palette.\n"
                 "D-pad left/right: palette; up/down: simple/advanced\n"
                 "A: export; B: back\n");
