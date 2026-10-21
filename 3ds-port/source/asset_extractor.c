@@ -30,6 +30,7 @@ static uint8_t s_pixels[EXTRACTOR_MAX_TILES][64];
 static size_t s_tileCount;
 static int s_active;
 static int s_attempted;
+static unsigned int s_paletteBank;
 static char s_status[160] = "Press Y to open CHR extractor.";
 
 static void setStatus(const char *message)
@@ -211,6 +212,7 @@ void assetExtractorInit(const char *executablePath)
 
     s_active = 0;
     s_attempted = 0;
+    s_paletteBank = 0u;
     s_tileCount = 0u;
     if (pathValid) {
         /*
@@ -233,6 +235,8 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             if (!loadExtractedCache()) loadChrRom();
         }
     }
+    if ((pressedKeys & KEY_L) != 0u) s_paletteBank = (s_paletteBank + 3u) & 3u;
+    if ((pressedKeys & KEY_R) != 0u) s_paletteBank = (s_paletteBank + 1u) & 3u;
     if (!s_active) return;
     /* X explicitly re-reads the ROM and refreshes the persisted cache. */
     if ((pressedKeys & KEY_X) != 0u) loadChrRom();
@@ -253,4 +257,9 @@ const uint8_t *assetExtractorGetPixels(size_t *tileCount)
 const char *assetExtractorGetStatus(void)
 {
     return s_status;
+}
+
+unsigned int assetExtractorGetPalette(void)
+{
+    return s_paletteBank;
 }
