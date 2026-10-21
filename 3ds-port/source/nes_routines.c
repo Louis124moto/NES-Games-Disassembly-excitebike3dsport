@@ -1913,27 +1913,29 @@ uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A
 }
 
 /* Full sub_C92C -> sub_C53E -> sub_CB06/CB13 table-selection path. */
-void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram03F2,
-                                const uint8_t cpuRam[2048], uint8_t *ram0002,
-                                uint8_t *ram0003, uint8_t *ram0005,
-                                uint8_t *ram0006, uint8_t *ram0007)
+/* Exact sub_C92C -> sub_C53E -> sub_CB06 -> sub_CB13 table lookup.
+ * ram0046 selects the $10 bank via ORA, then ram03F2 adds $23.
+ * For ram0043 == 5, sub_CB13 returns $20 without consulting $0046. */
+void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
+                                uint8_t ram03F2, const uint8_t cpuRam[2048],
+                                uint8_t *ram0002, uint8_t *ram0003,
+                                uint8_t *ram0005, uint8_t *ram0006,
+                                uint8_t *ram0007)
 {
     uint8_t index;
     if (cpuRam == NULL) return;
     if (ram0002 != NULL) *ram0002 = ram0043;
     if (ram0003 != NULL) *ram0003 = a;
+
     if (ram0043 == 5u) {
         index = 0x20u;
     } else {
-        uint8_t counter = ram0043;
-        index = 0u;
-        for (;;) {
-            counter = (uint8_t)(counter - 1u); /* DEY; branch on N */
-            if ((counter & 0x80u) != 0u) break;
-            index = (uint8_t)(index + 3u); /* CLC; ADC #$03 */
-        }
+        /* DEY / BPL loop: adds three once for each original Y value. */
+        index = (uint8_t)((unsigned int)ram0043 * 3u);
+        if (ram0046 != 0u) index = (uint8_t)(index | 0x10u);
     }
     if (ram03F2 != 0u) index = (uint8_t)(index + 0x23u);
+
     if (ram0005 != NULL) *ram0005 = cpuRam[0x0580u + index];
     if (ram0006 != NULL) *ram0006 = cpuRam[0x0581u + index];
     if (ram0007 != NULL) *ram0007 = cpuRam[0x0582u + index];
