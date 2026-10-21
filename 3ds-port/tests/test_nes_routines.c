@@ -654,38 +654,45 @@ static int testSubC7DEMenuInput(void)
 
 static int testSubC3BDConfirmSelection(void)
 {
-    uint8_t state, selection, mode, clear;
+    uint8_t state, selection, mode, clear, flag40, flag44;
 
-    state=8u; selection=1u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&(uint8_t){0u},&(uint8_t){0u});
-    if(state!=9u || selection!=1u || mode!=1u || clear!=0u) {
-        fputs("sub_C3BD selection 1 mismatch\n",stderr); return 1;
+    state=8u; selection=1u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=9u || selection!=1u || mode!=1u || clear!=0u || flag40!=0u || flag44!=0u) {
+        fputs("sub_C3BD selection 1 / sub_C3B1 mismatch\\n",stderr); return 1;
     }
-    state=8u; selection=2u; mode=7u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
-    if(state!=9u || mode!=7u || clear!=0u) {
-        fputs("sub_C3BD selection 2 mismatch\n",stderr); return 2;
+    state=8u; selection=2u; mode=7u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=9u || mode!=7u || clear!=0u || flag40!=0u || flag44!=0u) {
+        fputs("sub_C3BD selection 2 mismatch\\n",stderr); return 2;
     }
-    state=8u; selection=3u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
-    if(state!=12u || selection!=0u || clear!=0u) {
-        fputs("sub_C3BD selection 3 mismatch\n",stderr); return 3;
+    state=8u; selection=3u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=12u || selection!=0u || clear!=0u || flag40!=0u || flag44!=0u) {
+        fputs("sub_C3BD selection 3 mismatch\\n",stderr); return 3;
     }
-    state=8u; selection=4u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
-    if(state!=13u || selection!=0u || clear!=0u) {
-        fputs("sub_C3BD selection 4 mismatch\n",stderr); return 4;
+    state=8u; selection=4u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=13u || selection!=0u || clear!=0u || flag40!=0u || flag44!=0u) {
+        fputs("sub_C3BD selection 4 mismatch\\n",stderr); return 4;
     }
-    state=8u; selection=5u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear);
-    if(state!=8u || selection!=2u || clear!=1u) {
-        fputs("sub_C3BD selection 5 mismatch\n",stderr); return 5;
+    state=8u; selection=5u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(4u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=8u || selection!=2u || clear!=1u || flag40!=0xAAu || flag44!=0xBBu) {
+        fputs("sub_C3BD selection 5 / clear branch mismatch\\n",stderr); return 5;
     }
-    state=8u; selection=3u; mode=0u; clear=0u;
-    nesSubC3BDConfirmSelection(0u,&state,&selection,&mode,&clear,&(uint8_t){0u},&(uint8_t){0u});
-    if(state!=8u || selection!=3u || clear!=0u) {
-        fputs("sub_C3BD no-action mismatch\n",stderr); return 6;
+    state=8u; selection=3u; mode=0u; clear=0u; flag40=0xAAu; flag44=0xBBu;
+    nesSubC3BDConfirmSelection(0u,&state,&selection,&mode,&clear,&flag40,&flag44);
+    if(state!=8u || selection!=3u || clear!=0u || flag40!=0xAAu || flag44!=0xBBu) {
+        fputs("sub_C3BD no-action mismatch\\n",stderr); return 6;
     }
+    state=0xFFu;
+    nesSubC3AFIncrementState(&state);
+    if(state!=0u) { fputs("sub_C3AF 8-bit wrap mismatch\\n",stderr); return 7; }
+    flag40=0x12u; flag44=0x34u;
+    nesSubC3B1ResetFrameFlags(&flag40,&flag44);
+    if(flag40!=0u || flag44!=0u) { fputs("sub_C3B1 flag reset mismatch\\n",stderr); return 8; }
+    puts("PASS: sub_C3BD confirmation branches and sub_C3AF/sub_C3B1 side effects.");
     return 0;
 }
 
