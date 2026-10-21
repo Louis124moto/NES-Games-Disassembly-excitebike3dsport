@@ -33,6 +33,7 @@ typedef struct {
     uint8_t menu_ram0044;
     uint8_t menu_ram004A;
     uint8_t menu_ram03F7;
+    uint8_t menu_sprite_y;
 } GameState;
 
 void gameStateReset(GameState *state);
