@@ -72,7 +72,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     struct stat st;
     FILE *file;
     int manifestLength;
-    size_t paletteIndex;
+    size_t paletteIndex, ppuStreamIndex;
     if (status != NULL && statusCapacity > 0u) status[0] = '\0';
     if (directory == NULL || rawChr == NULL || rawChrBytes == 0u ||
         pixels == NULL || tileCount == 0u || tileCount > 960u) {
@@ -127,6 +127,33 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         (void)sourceLabel;
         (void)writes;
     }
+    for (ppuStreamIndex = 0u; ppuStreamIndex < NES_EXCITEBIKE_PPU_STREAM_COUNT; ++ppuStreamIndex) {
+        char streamPath[512], snapshotPath[512], fileName[48];
+        uint8_t snapshot[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 64u];
+        const uint8_t *stream;
+        const char *sourceLabel = NULL;
+        size_t streamSize = 0u, writes = 0u;
+        (void)snprintf(fileName, sizeof(fileName), "ppu_stream_%02lu.bin", (unsigned long)(ppuStreamIndex + 1u));
+        if (!makePath(streamPath, sizeof(streamPath), directory, fileName)) return 0;
+        (void)snprintf(fileName, sizeof(fileName), "ppu_snapshot_%02lu.bin", (unsigned long)(ppuStreamIndex + 1u));
+        if (!makePath(snapshotPath, sizeof(snapshotPath), directory, fileName)) return 0;
+        stream = nesExcitebikePpuStream(ppuStreamIndex, &streamSize, &sourceLabel);
+        if (stream == NULL ||
+            nesExcitebikePpuSnapshot(ppuStreamIndex,
+                snapshot,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u,
+                snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 32u,
+                &writes) != NES_PPU_COMMAND_OK ||
+            !writeBytes(streamPath, stream, streamSize) ||
+            !writeBytes(snapshotPath, snapshot, sizeof(snapshot))) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "Could not export source PPU command snapshot.");
+            return 0;
+        }
+        (void)sourceLabel;
+        (void)writes;
+    }
     manifestLength = snprintf(manifest, sizeof(manifest),
         "Excitebike 3DS native CHR export\n"
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
@@ -156,6 +183,6 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         return 0;
     }
     if (status != NULL && statusCapacity > 0u)
-        (void)snprintf(status, statusCapacity, "SD exports saved: CHR binary, decoded pixels, PNG atlas, manifest.");
+        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, PNG, palettes, PPU snapshots, manifest.");
     return 1;
 }
