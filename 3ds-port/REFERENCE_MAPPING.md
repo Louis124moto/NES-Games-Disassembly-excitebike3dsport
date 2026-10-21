@@ -32,9 +32,9 @@ The original `../Excitebike/` source is a 6502/NES disassembly. Its CPU instruct
 | `bike_physics.c` | Speed, heat, posture, jumps and landing | Temporary placeholder; not faithful |
 | `collision.c` | Track bounds, obstacles and crashes | Temporary boundary placeholder |
 | `track.c` | Course data, terrain and ramps | Interface only |
-| `renderer.c` | 3DS display and debug view | Console output only |
+| `renderer.c` | 3DS display, debug view and CHR atlas | Diagnostic console plus raw CHR tile atlas; original menu layout not reconstructed |
 | `audio.c` | Sound events and audio backend | Interface only |
-| `menus.c` | Menus, pause and help | Minimal interface only |
+| `menus.c` | Menus, pause and help | Source-derived state/input trace; setup lists for states 0, 1, 8, and 13; other states incomplete |
 | `game.c` | Module lifecycle and update order | Initial orchestration |
 
 ## Current status
@@ -555,3 +555,28 @@ The native menu path now models the source-derived setup subset in `sub_C2A9` / 
 This is a deliberately bounded translation, not the entire indirect-command engine. Other command lists (including state 2 and destinations 9, 10, 12, and 13), full PPU writes, nametable/attribute data, and audio hardware effects remain incomplete. The port must not treat those paths as fidelity-verified.
 
 The graphics pipeline now has `tools/nes_chr_to_c.py`, which reuses the validated 2bpp tile decoder to emit a C header from an iNES/NES 2.0 CHR-ROM or a verified raw CHR range. The native renderer can display a grayscale diagnostic tile atlas from that generated header. This does not reconstruct original tile placement, palette/attribute selection, or title-screen timing. The source ROM is not included.
+
+
+## Menu setup trace — PPU/OAM initialization
+
+Primary source: `Excitebike/bank_FF.asm`, `sub_C2A9` at CPU `$C2A9` / ROM offset `$0002B9`; setup prelude `sub_C318` at CPU `$C318` / ROM offset `$000328`.
+
+Verified effects translated to `nesSubC318InitializePpu` and invoked by the native menu setup sequencer:
+
+- `sub_D255` (`$D255`, ROM offset `$001265`) writes `$F8` to all 256 bytes of NES OAM.
+- `sub_D23B` (`$D23B`, ROM offset `$00124B`) calls `sub_D260` twice.
+- Each `sub_D260` (`$D260`, ROM offset `$001270`) fills 960 bytes of a nametable with `$FC` and its following 64-byte attribute table with zero. The two calls target the `$2000` and `$2400` nametable regions.
+- `sub_D1A9` (`$D1A9`, ROM offset `$0011B9`) resets the scroll write to zero; `sub_C318` stores it to both horizontal/vertical scroll fields and their shadow values.
+- `sub_D24F` (`$D24F`, ROM offset `$00125F`) disables rendering via PPU mask `$2001 = $00`; `sub_C333` then writes `$10` to PPU control `$2000`.
+
+The native host test checks the OAM fill, both 1 KiB nametable regions, attribute bytes, scroll values, PPU control and PPU mask. This verifies the translated memory effects, not cycle timing or a rendered-screen match.
+
+## Runtime CHR extractor — scope
+
+The native homebrew reads a classic iNES image from `sdmc:/3ds/excitebike3ds/rom.nes` when the user opens the extractor with Y. It validates the header, optional 512-byte trainer, PRG/CHR offsets and file bounds, then decodes up to 960 raw 2bpp CHR-ROM tiles for the diagnostic atlas. The host-tested parser is `nes_chr_decode.c`. The Python pipeline remains a PC-side utility for PNG/JSON/header export.
+
+Not supported by the runtime extractor yet: NES 2.0, CHR-RAM snapshots, compressed graphics stored in PRG, NES palette interpretation, nametable/attribute tile placement, original OAM composition, and PPU frame timing. The raw tile atlas must not be described as the authentic title screen.
+
+## Menu command-sequencer status
+
+The source table mapping is `tbl_C01C_index` → `tbl_C02A_lo/tbl_C033_hi` → per-state command list. The native implementation translates lists for states 0 (`off_C03C_00`), 1 (`off_C040_01`), 8 (`off_C076_08`), and 13 (which shares the state-8 command routines). State 13's setup is translated, but its state handler is not. The six-command state-2 list (`off_C046_02`) and lists used by states 9, 10, and 12 remain incomplete. The native sequencer now freezes safely at an unsupported list instead of incrementing the command index through unported memory.
