@@ -69,7 +69,8 @@ NesChrDecodeResult nesChrDecodeInes(const uint8_t *rom, size_t romSize,
     }
 
     chrOffset = 16u + ((rom[6] & 0x04u) ? 512u : 0u);
-    if (prgBytes > romSize - chrOffset) return NES_CHR_DECODE_TRUNCATED_ROM;
+    if (chrOffset > romSize || prgBytes > romSize - chrOffset)
+        return NES_CHR_DECODE_TRUNCATED_ROM;
     chrOffset += prgBytes;
     if (chrOffset > romSize || chrBytes > romSize - chrOffset)
         return NES_CHR_DECODE_TRUNCATED_ROM;
