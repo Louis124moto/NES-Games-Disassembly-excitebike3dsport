@@ -39,8 +39,9 @@ static int testTrainerAndInvalidHeaders(void)
         for (x = 0u; x < 8u; ++x) if (pixels[x] != 1u) { free(rom); return 7; }
         if (pixels[8u] != 0u) { free(rom); return 8; }
     }
+    /* NES 2.0 with ordinary 8 KiB CHR size fields is supported. */
     rom[7] = 0x08u;
-    if (nesChrDecodeInes(rom, size, pixels, 1u, &count) != NES_CHR_DECODE_UNSUPPORTED_NES2) { free(rom); return 3; }
+    if (nesChrDecodeInes(rom, size, pixels, 1u, &count) != NES_CHR_DECODE_OK || count != 1u) { free(rom); return 3; }
     rom[7] = 0u; rom[5] = 0u;
     if (nesChrDecodeInes(rom, size, pixels, 1u, &count) != NES_CHR_DECODE_CHR_RAM) { free(rom); return 4; }
     rom[5] = 1u;
