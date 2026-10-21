@@ -331,6 +331,7 @@ void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);
 uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048);
 void nesSubEC3BCopy256(const uint8_t source[256], uint8_t destination[256]);
+void nesSubC621CopyRaceData(uint8_t ram[65536]); /* sub_C621: copy $06E0-$07DF to $05E0-$06DF */
 void nesLocCC6BUpdateMenuState(uint8_t *ram0041, uint8_t ram004B);
 void nesSubC318InitializePpu(uint8_t oam[256], uint8_t nametables[2048],
                              uint8_t *scrollX, uint8_t *scrollY,
