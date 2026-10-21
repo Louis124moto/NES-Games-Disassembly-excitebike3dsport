@@ -619,7 +619,7 @@ static int testBatchAdditional20Boundaries(void)
             nesSubCFDBClearUpperFlags((uint8_t)a, &actual);
             if (a != 0u) expected = (uint8_t)(expected & 0x0Fu);
             if (actual != expected) {
-                fprintf(stderr, "sub_CFDB exhaustive mismatch: ram0094=%02X flags=%02X\\n", a, f);
+                fprintf(stderr, "sub_CFDB exhaustive mismatch: ram0094=%02X flags=%02X\n", a, f);
                 return 1;
             }
             ++checked;
@@ -635,7 +635,7 @@ static int testBatchAdditional20Boundaries(void)
             if (a < b) expected = (uint8_t)(expected | 0x80u);
             else if (a != 0u) expected = (uint8_t)(expected & 0x0Fu);
             if (actual != expected) {
-                fprintf(stderr, "sub_CFCB high-byte mismatch: %02X/%02X actual=%02X expected=%02X\\n", a,b,actual,expected);
+                fprintf(stderr, "sub_CFCB high-byte mismatch: %02X/%02X actual=%02X expected=%02X\n", a,b,actual,expected);
                 return 2;
             }
             ++checked;
@@ -649,7 +649,7 @@ static int testBatchAdditional20Boundaries(void)
             if (b < other) expected = (uint8_t)(expected | 0x80u);
             else if (a != 0u) expected = (uint8_t)(expected & 0x0Fu);
             if (actual != expected) {
-                fprintf(stderr, "sub_CFCB low-byte mismatch: high=%02X low=%02X/%02X\\n", a,b,other);
+                fprintf(stderr, "sub_CFCB low-byte mismatch: high=%02X low=%02X/%02X\n", a,b,other);
                 return 3;
             }
             ++checked;
@@ -666,7 +666,7 @@ static int testBatchAdditional20Boundaries(void)
                 if (a != 0u && a != b)
                     expected = (uint8_t)(expected | (a < b ? 1u : 2u));
                 if (actual != expected) {
-                    fprintf(stderr, "sub_CFEA exhaustive mismatch: A=%02X operand=%02X flags=%02X actual=%02X expected=%02X\\n",
+                    fprintf(stderr, "sub_CFEA exhaustive mismatch: A=%02X operand=%02X flags=%02X actual=%02X expected=%02X\n",
                             a,b,f,actual,expected);
                     return 4;
                 }
@@ -674,14 +674,14 @@ static int testBatchAdditional20Boundaries(void)
             }
         }
     }
-    printf("PASS: additional comparison/flag boundary audit (%lu cases).\\n", checked);
+    printf("PASS: additional comparison/flag boundary audit (%lu cases).\n", checked);
     return 0;
 }
 
 int main(void)
 {
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\\n", stderr); return 1; }
-    if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: additional 20 ASM comparison/flag boundaries\\n", stderr); return 1; }
+    if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: additional 20 ASM comparison/flag boundaries\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\\n", stderr); return 1; }
     if(testBatchC1FDC229()!=0) { fputs("FAIL: sub_C1FD/sub_C229\\n",stderr); return 1; }
