@@ -10,7 +10,7 @@
  * ($C346). Selection meanings and original title artwork are deliberately
  * not guessed. The menu receives held controls to match ram_btn_press sampling and the repeat guard; state/reset side effects follow bank_FF.asm.
  */
-void menusUpdate(GameState *state, unsigned int heldKeys)
+void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKeys)
 {
     uint8_t nesButtons = 0u;
     uint8_t changed = 0u;
@@ -78,7 +78,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys)
         state->menu_selection_changed = 0u;
     }
 
-    if (heldKeys & KEY_X) state->show_help = !state->show_help;
+    if (pressedKeys & KEY_X) state->show_help = !state->show_help;
 }
 
 void menusRender(const GameState *state)
