@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "asset_extractor.h"
+#include "nes_chr_decode.h"
 
 /*
  * Runtime CHR inspection for the 3DS homebrew.
@@ -14,8 +15,7 @@
  */
 #define EXTRACTOR_ROM_PATH "sdmc:/3ds/excitebike3ds/rom.nes"
 #define EXTRACTOR_MAX_TILES 960u
-#define EXTRACTOR_TILE_BYTES 16u
-#define EXTRACTOR_CHR_BYTES (EXTRACTOR_MAX_TILES * EXTRACTOR_TILE_BYTES)
+#define EXTRACTOR_MAX_ROM_BYTES (8u * 1024u * 1024u)
 
 static uint8_t s_pixels[EXTRACTOR_MAX_TILES][64];
 static size_t s_tileCount;
@@ -31,10 +31,10 @@ static void setStatus(const char *message)
 static void loadChrRom(void)
 {
     FILE *file;
-    uint8_t header[16];
+    uint8_t *rom;
     long fileSize;
-    size_t prgBytes, chrBytes, chrOffset, bytesToRead, tile, row, col;
-    uint8_t tileBytes[EXTRACTOR_TILE_BYTES];
+    size_t romSize;
+    NesChrDecodeResult result;
 
     s_attempted = 1;
     s_tileCount = 0u;
@@ -51,60 +51,37 @@ static void loadChrRom(void)
         setStatus("ROM file is too small or cannot be read.");
         return;
     }
-    if (fread(header, 1u, sizeof(header), file) != sizeof(header) ||
-        memcmp(header, "NES\x1A", 4u) != 0) {
+    if ((unsigned long)fileSize > (unsigned long)EXTRACTOR_MAX_ROM_BYTES) {
         fclose(file);
-        setStatus("Invalid iNES header. Expected NES\\x1A magic.");
-        return;
-    }
-    if ((header[7] & 0x0Cu) == 0x08u) {
-        fclose(file);
-        setStatus("NES 2.0 ROM parsing is not supported by this runtime extractor yet.");
-        return;
-    }
-    if (header[5] == 0u) {
-        fclose(file);
-        setStatus("ROM declares CHR-RAM, not stored CHR-ROM; no tiles to extract.");
+        setStatus("ROM exceeds the runtime extractor's 8 MiB safety limit.");
         return;
     }
 
-    prgBytes = (size_t)header[4] * 16384u;
-    chrBytes = (size_t)header[5] * 8192u;
-    chrOffset = 16u + ((header[6] & 0x04u) ? 512u : 0u) + prgBytes;
-    if (chrOffset > (size_t)fileSize || chrBytes > (size_t)fileSize - chrOffset) {
+    romSize = (size_t)fileSize;
+    rom = (uint8_t *)malloc(romSize);
+    if (rom == NULL) {
         fclose(file);
-        setStatus("ROM header sizes exceed file length; extraction aborted.");
+        setStatus("Not enough memory to read the ROM.");
         return;
     }
-    if (fseek(file, (long)chrOffset, SEEK_SET) != 0) {
+    if (fread(rom, 1u, romSize, file) != romSize) {
+        free(rom);
         fclose(file);
-        setStatus("Cannot seek to CHR-ROM data.");
+        setStatus("Could not read the complete ROM file.");
         return;
-    }
-
-    bytesToRead = chrBytes < EXTRACTOR_CHR_BYTES ? chrBytes : EXTRACTOR_CHR_BYTES;
-    for (tile = 0u; tile < bytesToRead / EXTRACTOR_TILE_BYTES; ++tile) {
-        if (fread(tileBytes, 1u, sizeof(tileBytes), file) != sizeof(tileBytes)) {
-            fclose(file);
-            s_tileCount = 0u;
-            setStatus("Unexpected end of CHR-ROM data.");
-            return;
-        }
-        for (row = 0u; row < 8u; ++row) {
-            uint8_t plane0 = tileBytes[row];
-            uint8_t plane1 = tileBytes[row + 8u];
-            for (col = 0u; col < 8u; ++col) {
-                const unsigned int bit = 7u - (unsigned int)col;
-                s_pixels[tile][row * 8u + col] =
-                    (uint8_t)(((plane0 >> bit) & 1u) |
-                              (((plane1 >> bit) & 1u) << 1u));
-            }
-        }
     }
     fclose(file);
-    s_tileCount = bytesToRead / EXTRACTOR_TILE_BYTES;
+
+    result = nesChrDecodeInes(rom, romSize, &s_pixels[0][0],
+                              EXTRACTOR_MAX_TILES, &s_tileCount);
+    free(rom);
+    if (result != NES_CHR_DECODE_OK) {
+        s_tileCount = 0u;
+        setStatus(nesChrDecodeError(result));
+        return;
+    }
     (void)snprintf(s_status, sizeof(s_status),
-                   "Loaded %lu CHR tiles from ROM (showing up to %u).",
+                   "Loaded %lu CHR tiles (showing up to %u).",
                    (unsigned long)s_tileCount, (unsigned int)EXTRACTOR_MAX_TILES);
 }
 
@@ -135,7 +112,7 @@ int assetExtractorIsActive(void)
 const uint8_t *assetExtractorGetPixels(size_t *tileCount)
 {
     if (tileCount != NULL) *tileCount = s_tileCount;
-    return s_pixels[0];
+    return &s_pixels[0][0];
 }
 
 const char *assetExtractorGetStatus(void)
