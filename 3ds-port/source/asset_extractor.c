@@ -8,11 +8,11 @@
 
 /*
  * Runtime CHR extraction/cache for the 3DS homebrew.
- * Put a legally obtained classic iNES ROM at:
- *   sdmc:/3ds/excitebike3ds/rom.nes
+ * Put a legally obtained classic iNES ROM named rom.nes beside the launched
+ * .3dsx. The path is derived from argv[0], not from a fixed SD-card folder.
  *
- * Extracted decoded pixel indices are persisted at:
- *   sdmc:/3ds/excitebike3ds/extracted/chr_pixels.bin
+ * Decoded pixel indices are persisted beside the .3dsx at:
+ *   extracted/chr_pixels.bin
  *
  * The cache stores decoded 2bpp pixel indices, not a reconstructed title
  * screen. Nametable/attribute layout, palette selection, compressed PRG
