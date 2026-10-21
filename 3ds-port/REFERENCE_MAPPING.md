@@ -601,3 +601,27 @@ The six pointers in the original list are translated in their original order:
 6. `ofs_001_C875_02_06`: translates initialization through RTS at `$C970`: timer/flag/object RAM writes, the conditional `$C158` PPU buffer and divide-by-ten path, `sub_C522`/`sub_C53A` course-triple lookup, course-position conversion, and both `sub_C935` PPU command-buffer records. The ROM bytes read through `tbl_C091` and `tbl_C0EC` are represented explicitly; the `$0580` course table remains RAM input, as in the original.
 
 Host regression checks the byte ranges and untouched sentinels. This completes the six state-2 setup command handlers at the RAM-effect level. The handlers are regression-tested but remain out of the active homebrew runtime while the global faithful-runtime gate remains closed; this does not yet prove the full menu-to-game transition or PPU timing.
+
+## Extended source trace — `sub_E96C` / `sub_DD06` (2026-10-21)
+
+Primary source: `Excitebike/bank_FF.asm`.
+
+### `sub_E96C` — CPU `$E96C`, ROM `$00297C`
+
+The loop processes X=3,2,1,0. The existing native helper `nesLocE96EApplyVerticalDelta` covers only `$E96E-$E97D`: states `$14/$15` skip the initial Y delta; otherwise Y receives an 8-bit addition with discarded carry.
+
+The remainder of the ASM routine is stateful and must not be approximated as part of that helper:
+
+- `$E97F-$E989`: compare Y against `tbl_E53D` entries 3 down to 0. Equality clears `ram_00DC_obj,X` and skips the rest of that object's branch logic.
+- `$E98B-$E9C2`: branch on `ram_00A4_obj,X`, state `ram_0058_obj,X`, and Y thresholds. The value-1 path can set state to 4 when Y<$20, clear `ram_00BC_obj,X`, call `sub_DD06`, and decrement the state counter. Other states can decrement Y only when Y is at least `$20`.
+- `$E9C4-$E9D0`: Y below `$08` takes the low-Y path; values `$3A-$FF` are clamped to `$39`.
+- `$E9D2-$E9E1`: if both `ram_009C_obj,X` and `ram_03E0_obj,X` are zero, the delta becomes `$01` if it was zero, otherwise `old_delta XOR $FE`. This is the literal 6502 operation sequence, not signed negation.
+- `$E9E9-$E9FF`: the low-Y path writes `$07` if `ram_009C_obj,X` is zero; otherwise it preserves Y unless Y<$02, which becomes `$01`. Slot zero branches to the delta update; other slots continue through the regular path.
+- `$EA07-$EA43`: after all four objects, the routine gates additional input/state work on `ram_004F_race_started_flag`, `ram_0098_obj`, `ram_03E0_obj`, and `ram_03F7`. This does not by itself identify which slot is the player.
+
+### `sub_DD06` — CPU `$DD06`, ROM `$001D16`
+
+The call from `sub_E96C` enters with the caller's X preserved. The first block copies `ram_0094_obj,X` into `ram_0384_obj,X`, calls `sub_DD38`, then jumps to `loc_DD1A`. The alternate entry `bra_DD11` tests bit 0 of `ram_005C_obj,X`; if set and `ram_004C` is zero it returns early. The shared path masks `ram_005C_obj,X` with `$03`, indexes `tbl_D868`, stores the result to `ram_038C_obj,X`, copies `ram_008C,X` to scratch `ram_0001`, calls `sub_DD6F`, stores the returned A to `ram_008C,X`, and sets `ram_0364_obj,X=$01` only when `ram_00CC_obj,X` is zero. The called `sub_DD38` and `sub_DD6F` side effects remain dependencies and need their own complete trace before this call can be modeled as a faithful unit.
+
+**Current conclusion:** the available `nesLocE96EApplyVerticalDelta` helper is a valid translation of one bounded instruction block, not of `sub_E96C`. Do not integrate it as the complete vertical-state update. Player-slot identity and the surrounding state/caller dependencies remain unresolved.
+
