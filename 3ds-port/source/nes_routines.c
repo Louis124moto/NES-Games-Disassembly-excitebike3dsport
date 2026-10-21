@@ -1967,6 +1967,17 @@ void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
     if (ram0007 != NULL) *ram0007 = cpuRam[0x0582u + index];
 }
 
+void nesSubC5A7SelectMenuTableEntry(uint8_t ram0043, uint8_t ram0046,
+                                    uint8_t ram03F2, const uint8_t cpuRam[2048],
+                                    uint8_t *ram0002, uint8_t *ram0003,
+                                    uint8_t *ram0005, uint8_t *ram0006,
+                                    uint8_t *ram0007)
+{
+    /* ofs_001_C5A7 is LDA #$00 / JMP loc_C92C. */
+    nesSubC92CSelectTableEntry(0u, ram0043, ram0046, ram03F2, cpuRam,
+                               ram0002, ram0003, ram0005, ram0006, ram0007);
+}
+
 static void nesSubDFA2DivideByTen(uint8_t input, uint8_t *outX, uint8_t *outA)
 {
     uint8_t x=0u, a=input;
