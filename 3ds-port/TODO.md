@@ -396,3 +396,14 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Implement the authentic NES palette tables and tile-to-palette assignments from the original source/ROM; do not substitute the diagnostic palette in the faithful menu renderer.
 
 **Menu gate remains closed:** this does not complete the menu. Required work still includes source-faithful setup lists for states 2/3/4/5/6/7 and destinations 9/10/12/13, the PPU/nametable/attribute/palette upload path, OAM/sprite ordering, startup timing, and input/state verification against the original ASM. Do not enable an approximate menu as a substitute.
+
+
+## Authentic NES colour palette for the CHR atlas — 2026-10-21
+
+- [x] Replace false-colour diagnostics with a 64-entry NES master-palette RGB lookup.
+- [x] Extract the game's actual palette bytes from `Excitebike/bank_FF.asm` command streams at `_off_000_D3D6_12`, `_off_000_D3E9_13`, `_off_000_D3FC_14`, `_off_000_D40F_15` and `_off_000_D422_16`.
+- [x] Expose a ten-choice palette selector; L/R cycle through the five source-defined sets × two background sub-palettes.
+- [x] Keep the atlas a raw pattern-table viewer and state the limitation: without original nametable/attribute tables, each tile's actual in-game palette assignment is unknown. Palette previews use the exact source palette values, but do not yet reproduce the menu's layout.
+- [ ] Run the host tests and 3DS build on the exact revision with the new palette renderer.
+- [ ] Verify on hardware that L/R cycles all ten palette choices and the colours match the source-defined NES palette values.
+- [ ] Trace which palette command is active in each menu state and integrate nametable/attribute data before claiming faithful menu colours.
