@@ -580,3 +580,11 @@ Not supported by the runtime extractor yet: NES 2.0, CHR-RAM snapshots, compress
 ## Menu command-sequencer status
 
 The source table mapping is `tbl_C01C_index` → `tbl_C02A_lo/tbl_C033_hi` → per-state command list. The native implementation translates lists for states 0 (`off_C03C_00`), 1 (`off_C040_01`), 8 (`off_C076_08`), and 13 (which shares the state-8 command routines). State 13's shared setup and entry wait are translated and tested; the `$FF` branch through `sub_EC3B`/`loc_CC6B` is still unported. The six-command state-2 list (`off_C046_02`) and lists used by states 9, 10, and 12 remain incomplete. The native sequencer now freezes safely at an unsupported list instead of incrementing the command index through unported memory.
+
+
+## State 13 completion — 2026-10-21
+
+- `ofs_000_C41C_0D` at CPU `$C41C` / ROM `$00042C`: when `$0044==0`, initializes `$0048=2`, `$0044=1`; waits until `$0048==$FF`.
+- `sub_EC3B` at CPU `$EC3B` / ROM `$002C4B`: copies 256 bytes from `$05E0-$06DF` to `$06E0-$07DF`; the indexed X loop wraps through all byte values.
+- `loc_CC6B` at CPU `$CC6B` / ROM `$000C7B`: increments `$0041`; if `$004B` is nonzero, returns immediately; otherwise states >=9 are replaced with 8.
+- The native model includes the branch and host tests the copy, clamp, no-clamp, and 8-bit wrap. This is branch-level completion, not completion of states 2/9/10/12.
