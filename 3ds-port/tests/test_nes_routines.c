@@ -1978,6 +1978,18 @@ static int testBatchAdditional20(void)
         if(nesSubC409SetupStaticSprite(2u,table256,sprite,&flag)!=0u||
            sprite[1]!=0xFAu||sprite[2]!=0u||sprite[3]!=0xACu||flag!=0u)return 29;
     }
+    {
+        uint8_t initOam[256], nt[2048], sx=0x12u, sy=0x34u, pctrl=0xFFu, pmask=0xFFu;
+        unsigned int j;
+        memset(initOam,0,sizeof(initOam)); memset(nt,0,sizeof(nt));
+        nesSubC318InitializePpu(initOam,nt,&sx,&sy,&pctrl,&pmask);
+        for(j=0u;j<256u;++j) if(initOam[j]!=0xF8u)return 31;
+        for(j=0u;j<2048u;++j) {
+            const uint8_t expected=((j%1024u)<960u)?0xFCu:0u;
+            if(nt[j]!=expected)return 32;
+        }
+        if(sx!=0u||sy!=0u||pctrl!=0x10u||pmask!=0u)return 33;
+    }
     puts("PASS: additional ASM batch: compare branches, buffer writes, RAM clearing, PPU polling, controller latch and sprite setup.");
     return 0;
 }
