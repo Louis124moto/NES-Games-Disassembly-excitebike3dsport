@@ -35,7 +35,10 @@ A function definition, matching name/address, passing unit test, successful buil
 
 ## Current menu/graphics work
 
-The main branch contains source-derived native traces for menu states 0, 1, and 8: `ofs_000_C346_00`, `ofs_000_C395_01`, `ofs_000_C3BD_08`, shared `sub_C7DE` input, `sub_C3AF/sub_C3B1`, the choice-5 RAM-clear path, source cursor tables, and a tested-in-source `sub_D310` timer projection. Test execution is still unconfirmed. It remains a **trace screen, not the authentic NES title screen**: destination-state routines, option labels, CHR/palette/nametable mapping, and PPU timing remain incomplete. The CHR extractor now produces PNG atlases, optional per-tile PNGs and JSON pixel metadata; it does not guess compressed PRG graphics. The new Python tests, host C suite, and matching 3DS build still need execution confirmation.
+The native menu currently translates input/state behavior for ASM states 0, 1, and 8, including `sub_C7DE`, `sub_C3AF/sub_C3B1`, the state-8 choice branches, choice-5 RAM clearing, cursor-table coordinates, and timer projection. The setup sequencer is still only partially ported: states 0/1/8 have source-derived command lists, but state 2 and destination states 9/10/12/13 do not have complete setup lists. Therefore the title-to-selector input trace is **not a finished menu port**, and state 2 deliberately does not launch placeholder gameplay. Option names and authentic title-screen layout are not inferred from numeric selection indices.
+
+Graphics extraction now has a one-command Python pipeline (`3ds-port/tools/extract_nes_assets.py`) that produces a PNG atlas, per-tile JSON pixel metadata, an optional directory of individual 8×8 PNGs, and a C header for the native diagnostic atlas renderer. It accepts iNES/NES 2.0 CHR-ROM or verified raw CHR ranges. This is not a menu-art reconstruction: the exact source graphics, palette/attribute data, nametable tile placement, transparency, scrolling and PPU timing still need tracing. No ROM dump is checked into the repository. The extractor tests, host C suite, and a 3DS build must be run against the same revision before marking them verified.
+
 
 ## Repository layout
 
