@@ -89,3 +89,8 @@ The bottom-screen log is now intentionally short, with one action per line, to a
 ### Authentic NES palette preview (2026-10-21)
 
 The CHR atlas renderer now maps decoded 2bpp pixels through a 64-colour NES master-palette RGB table. It also includes palette bytes read directly from the original `Excitebike/bank_FF.asm` streams `_off_000_D3D6_12`, `_off_000_D3E9_13`, `_off_000_D3FC_14`, `_off_000_D40F_15` and `_off_000_D422_16`. Use L/R to cycle ten palette previews (five source sets, two background sub-palettes each). Because the viewer shows raw CHR tiles without the original nametable/attribute map, a selected palette is a diagnostic preview and does not claim each tile's true in-game palette assignment. Menu rendering still requires source-faithful PPU upload, nametable, attribute and OAM integration.
+
+
+### Persistent build outputs on `main`
+
+On successful pushes to `main`, GitHub Actions compiles the project and commits `3ds-port/build/excitebike3ds.3dsx` and `3ds-port/build/excitebike3ds.elf` back to `main`. The workflow still uploads downloadable artifacts for each run. The committed binaries are only refreshed after a successful build; pull requests and non-main refs do not publish binaries to `main`.
