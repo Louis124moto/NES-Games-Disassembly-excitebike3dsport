@@ -416,3 +416,11 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Build and run CI on commit `34ebefd` or later; the previously successful build was for an earlier revision and does not validate these crash fixes.
 - [ ] Retest on the user's console: launch, verify the bottom log appears without crash, press Y to open atlas, L/R to cycle palettes, B to close; verify no crash after several frames.
 - [ ] If it still crashes, save the crash dump with A and provide the dump/exception context; do not infer further causes without the new PC/LR/FAR and revision.
+
+
+## Atlas partial-width / top-left rendering defect — 2026-10-21
+
+- [x] Fix the tiled framebuffer offset: reverse the framebuffer tile-row index, but preserve the within-tile Y coordinate. The previous helper reversed both, which incorrectly swizzled tile pixels and could produce the narrow/garbled atlas seen on hardware.
+- [ ] Confirm latest CI build succeeds and the `.3dsx` is committed to `3ds-port/build/`.
+- [ ] Hardware retest: atlas should occupy the full 400×240 top screen without a garbled left strip; verify palette cycling and no crash.
+- [ ] If any left-edge clipping remains in the bottom log, capture a straight-on photo and check the actual console viewport; do not conflate text-console layout with top framebuffer atlas addressing.
