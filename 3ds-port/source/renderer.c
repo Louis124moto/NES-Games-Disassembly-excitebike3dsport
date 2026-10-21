@@ -97,23 +97,35 @@ void rendererDraw(const GameState *state)
     size_t tileCount = 0u;
     (void)state;
     (void)assetExtractorGetPixels(&tileCount);
-    (void)snprintf(logText, sizeof(logText),
-        "EXCITEBIKE 3DS / ASSET LOG\n"
-        "------------------------------\n"
-        "CHR: %.36s\n"
-        "Tiles: %lu / 960\n"
-        "ROM: rom.nes beside 3DSX\n"
-        "Cache: extracted/chr_pixels.bin\n"
-        "Atlas: %s\n"
-        "L/R: palette %u/10\n"
-        "Y: toggle atlas\n"
-        "X: retry extraction\n"
-        "B: close atlas\n"
-        "CHR tiles are raw patterns.\n",
-        assetExtractorGetStatus(), (unsigned long)tileCount,
-        assetExtractorIsActive() ? "OPEN" : "closed",
-        (unsigned long)(assetExtractorGetPage() + 1u),
-        (unsigned long)((tileCount + 374u) / 375u));
+    if (s_gameStarted) {
+        (void)snprintf(logText, sizeof(logText),
+            "EXCITEBIKE 3DS\\n"
+            "------------------------------\\n"
+            "START received.\\n"
+            "Native game mode entered.\\n"
+            "Faithful NES menu/race runtime\\n"
+            "is not integrated yet.\\n"
+            "CHR tiles extracted: %lu\\n"
+            "B: return to asset viewer\\n",
+            (unsigned long)tileCount);
+    } else {
+        (void)snprintf(logText, sizeof(logText),
+            "EXCITEBIKE 3DS / ASSET LOG\\n"
+            "------------------------------\\n"
+            "CHR: %.36s\\n"
+            "Tiles: %lu / 960\\n"
+            "ROM: rom.nes beside 3DSX\\n"
+            "Cache: extracted/chr_pixels.bin\\n"
+            "Atlas: %s\\n"
+            "Page: %lu/%lu (D-pad left/right)\\n"
+            "Y: toggle atlas; START: game mode\\n"
+            "X: retry extraction; B: close atlas\\n"
+            "Atlas uses grayscale 2bpp indices.\\n",
+            assetExtractorGetStatus(), (unsigned long)tileCount,
+            assetExtractorIsActive() ? "OPEN" : "closed",
+            (unsigned long)(assetExtractorGetPage() + 1u),
+            (unsigned long)((tileCount + 374u) / 375u));
+    }
     if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
         consoleClear();
         fputs(logText, stdout);
