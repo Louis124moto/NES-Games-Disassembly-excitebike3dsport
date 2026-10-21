@@ -1694,6 +1694,34 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
             (buttonPress & 0x08u) != 0u) ? 0u : 4u;
 }
 
+/*
+ * ofs_000_C3BD_08 confirmation branches after sub_C7DE returns X != 0.
+ * This models only the selection/state RAM effects visible in the original ASM.
+ */
+void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
+                                uint8_t *ram0042, uint8_t *ram03F2,
+                                uint8_t *clearRamRequested)
+{
+    uint8_t selection;
+    if (actionX == 0u || ram0041 == NULL || ram0042 == NULL ||
+        ram03F2 == NULL || clearRamRequested == NULL)
+        return;
+
+    selection = *ram0042;
+    if (selection < 2u) {
+        *ram03F2 = selection;
+        *ram0041 = (uint8_t)(*ram0041 + 1u);
+    } else if (selection == 2u) {
+        *ram0041 = (uint8_t)(*ram0041 + 1u);
+    } else if (selection == 5u) {
+        *ram0042 = (uint8_t)(selection >> 1);
+        *clearRamRequested = 1u;
+    } else {
+        *ram0041 = (uint8_t)(selection + 9u);
+        *ram0042 = 0u;
+    }
+}
+
 uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C)
 { return (uint8_t)(x == ram004C); }
 
