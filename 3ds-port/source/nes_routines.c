@@ -1916,6 +1916,26 @@ uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A
 /* Exact sub_C92C -> sub_C53E -> sub_CB06 -> sub_CB13 table lookup.
  * ram0046 selects the $10 bank via ORA, then ram03F2 adds $23.
  * For ram0043 == 5, sub_CB13 returns $20 without consulting $0046. */
+/* Exact sub_C522 lookup through sub_CB13. The $0043==5 special case
+ * selects offset $20 and bypasses the $0046 bank flag, matching the 6502. */
+void nesSubC522SelectOptionTuple(uint8_t ram0043, uint8_t ram0046,
+                                 const uint8_t cpuTable[256],
+                                 uint8_t *ram0005, uint8_t *ram0006,
+                                 uint8_t *ram0007)
+{
+    uint8_t index;
+    if (cpuTable == NULL) return;
+    if (ram0043 == 5u) {
+        index = 0x20u;
+    } else {
+        index = (uint8_t)((unsigned int)ram0043 * 3u);
+        if (ram0046 != 0u) index = (uint8_t)(index | 0x10u);
+    }
+    if (ram0005 != NULL) *ram0005 = cpuTable[index];
+    if (ram0006 != NULL) *ram0006 = cpuTable[(uint8_t)(index + 1u)];
+    if (ram0007 != NULL) *ram0007 = cpuTable[(uint8_t)(index + 2u)];
+}
+
 void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
                                 uint8_t ram03F2, const uint8_t cpuRam[2048],
                                 uint8_t *ram0002, uint8_t *ram0003,
