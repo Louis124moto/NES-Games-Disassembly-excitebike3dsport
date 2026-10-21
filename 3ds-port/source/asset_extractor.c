@@ -34,7 +34,7 @@ static size_t s_tileCount;
 static int s_active;
 static int s_attempted;
 static size_t s_page;
-static char s_status[160] = "Press Y to open CHR extractor.";
+static char s_status[160] = "Starting native CHR extraction...";
 
 static void setStatus(const char *message)
 {
@@ -77,7 +77,7 @@ static int computeRomFingerprint(uint32_t *fingerprint)
     return 1;
 }
 
-/* File format v2: magic, uint16 tile count, uint32 ROM fingerprint, decoded pixels. */
+/* File format v3: magic, uint16 tile count, uint32 ROM fingerprint, decoded pixels. */
 static int loadExtractedCache(void)
 {
     FILE *file;
@@ -209,6 +209,7 @@ static void loadChrRom(void)
     const uint8_t *rawChr = NULL;
     size_t rawChrBytes = 0u;
     char exportStatus[160];
+    int exportOk = 0;
 
     s_attempted = 1;
     s_tileCount = 0u;
@@ -262,10 +263,8 @@ static void loadChrRom(void)
     if (result == NES_CHR_DECODE_OK) {
         const NesChrDecodeResult rawResult = nesChrGetRawData(rom, romSize, &rawChr, &rawChrBytes);
         if (rawResult != NES_CHR_DECODE_OK) result = rawResult;
-        else if (!assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
-                                   s_tileCount, exportStatus, sizeof(exportStatus))) {
-            setStatus(exportStatus);
-        }
+        else exportOk = assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
+                                         s_tileCount, exportStatus, sizeof(exportStatus));
     }
     free(rom);
     if (result != NES_CHR_DECODE_OK) {
@@ -274,9 +273,13 @@ static void loadChrRom(void)
         return;
     }
 
-    if (saveExtractedCache()) {
+    if (saveExtractedCache() && exportOk) {
         (void)snprintf(s_status, sizeof(s_status),
                        "Extracted %lu CHR tiles; cache and SD exports saved.",
+                       (unsigned long)s_tileCount);
+    } else if (saveExtractedCache()) {
+        (void)snprintf(s_status, sizeof(s_status),
+                       "Extracted %lu CHR tiles; cache saved, SD export failed (A to retry).",
                        (unsigned long)s_tileCount);
     } else {
         (void)snprintf(s_status, sizeof(s_status),
@@ -303,6 +306,7 @@ void assetExtractorInit(const char *executablePath)
         if (directoryLength > 0u) {
             memcpy(s_romPath, executablePath, directoryLength);
             memcpy(s_cachePath, executablePath, directoryLength);
+            memcpy(s_exportDirectory, executablePath, directoryLength);
         }
         memcpy(s_romPath + directoryLength, "rom.nes", sizeof("rom.nes"));
         memcpy(s_cachePath + directoryLength, "extracted/chr_cache.bin", sizeof("extracted/chr_cache.bin"));
@@ -320,7 +324,7 @@ void assetExtractorInit(const char *executablePath)
         /*
          * Load the cache or attempt extraction immediately so the bottom-screen
          * log reports the result on startup without requiring the user to open
-         * the viewer first. Y now toggles the atlas; X retries extraction.
+         * the viewer first. A opens/exports; B closes/retries; D-pad pages.
          */
         s_attempted = 1;
         setStatus("Checking CHR cache and ROM...");
