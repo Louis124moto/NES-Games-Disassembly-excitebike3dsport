@@ -1634,14 +1634,19 @@ void nesSubCFCBCompareObjectPosition(uint8_t ram0094, uint8_t ram0078,
         *ram005C = (uint8_t)(*ram005C & 0x0Fu);
 }
 
+/* sub_CFE3: LDA #$F0; AND ram_005C_obj,X; STA ram_005C_obj,X. */
+void nesSubCFE3MaskFlags(uint8_t *ram005C)
+{
+    if (ram005C != NULL) *ram005C = (uint8_t)(*ram005C & 0xF0u);
+}
+
+/* sub_CFEA calls sub_CFE3 before setting the unsigned comparison marker. */
 void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *ram005C)
 {
-    uint8_t flags;
     if (ram005C == NULL) return;
-    flags = (uint8_t)(*ram005C & 0xF0u);
+    nesSubCFE3MaskFlags(ram005C);
     if (ram007C != 0u && ram007C != ram00AC)
-        flags = (uint8_t)(flags | (ram007C < ram00AC ? 1u : 2u));
-    *ram005C = flags;
+        *ram005C = (uint8_t)(*ram005C | (ram007C < ram00AC ? 1u : 2u));
 }
 
 uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C)
