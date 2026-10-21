@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "asset_export.h"
+#include "nes_ppu_commands.h"
 
 static int fileStartsWith(const char *path, const unsigned char *magic, size_t count)
 {
@@ -51,6 +52,18 @@ int main(void)
     fclose(file);
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12.bin", (const unsigned char *)"\x29\x27\x22\x30", 4u)) return 9;
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12_stream.bin", (const unsigned char *)"\x3F\x00\x08", 3u)) return 10;
+    if (!fileStartsWith("test_asset_export_output/ppu_stream_01.bin", (const unsigned char *)"\\x23\\xD0\\x60", 3u)) return 11;
+    file = fopen("test_asset_export_output/ppu_snapshot_01.bin", "rb");
+    if (file == NULL) return 12;
+    {
+        unsigned char value = 0u, mask = 0u;
+        if (fseek(file, 0x3D0L, SEEK_SET) != 0 || fread(&value, 1u, 1u, file) != 1u ||
+            fseek(file, (long)(NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES + 0x3D0u), SEEK_SET) != 0 ||
+            fread(&mask, 1u, 1u, file) != 1u || value != 0x55u || mask != 1u) {
+            fclose(file); return 13;
+        }
+    }
+    fclose(file);
     file = fopen("test_asset_export_output/manifest.txt", "rb");
     if (file == NULL) return 7;
     {
@@ -58,6 +71,7 @@ int main(void)
         const size_t n = fread(manifest, 1u, sizeof(manifest)-1u, file);
         manifest[n] = '\0';
         if (strstr(manifest, "Palette presets:") == NULL ||
+            strstr(manifest, "PPU command streams:") == NULL ||
             strstr(manifest, "chr_atlas.png") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
@@ -86,6 +100,13 @@ int main(void)
     (void)unlink("test_asset_export_output/ppu_palette_18.bin");
     (void)unlink("test_asset_export_output/ppu_palette_18_mask.bin");
     (void)unlink("test_asset_export_output/ppu_palette_18_stream.bin");
+    for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_stream_%02lu.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_snapshot_%02lu.bin", (unsigned long)i);
+        (void)unlink(path);
+    }
     (void)rmdir(dir);
     puts("PASS: native CHR raw/pixel/PNG/manifest export and honest palette metadata.");
     return 0;
