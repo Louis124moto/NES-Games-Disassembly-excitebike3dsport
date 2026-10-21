@@ -32,8 +32,8 @@ static void rendererDrawChrAtlas(void)
     if (tileCount > 960u) tileCount = 960u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
-        const unsigned int tileX = (tile % 32u) * 8u;
-        const unsigned int tileY = (tile / 32u) * 8u;
+        const unsigned int tileX = (tile % 30u) * 8u;
+        const unsigned int tileY = (tile / 30u) * 8u;
         for (row = 0u; row < 8u; ++row) {
             for (col = 0u; col < 8u; ++col) {
                 const unsigned int x = tileX + col;
