@@ -34,7 +34,7 @@ The original `../Excitebike/` source is a 6502/NES disassembly. Its CPU instruct
 | `track.c` | Course data, terrain and ramps | Interface only |
 | `renderer.c` | 3DS display, debug view and CHR atlas | Diagnostic console plus raw CHR tile atlas; original menu layout not reconstructed |
 | `audio.c` | Sound events and audio backend | Interface only |
-| `menus.c` | Menus, pause and help | Source-derived state/input trace; setup lists for states 0, 1, 8, and 13; other states incomplete |
+| `menus.c` | Menus, pause and help | Source-derived state/input trace; verified setup-command effects for states 0, 1, 4, 6, 8, and 13; state 7 blocked at sub_C621; other states incomplete |
 | `game.c` | Module lifecycle and update order | Initial orchestration |
 
 ## Current status
@@ -579,7 +579,7 @@ Not supported by the runtime extractor yet: NES 2.0, CHR-RAM snapshots, compress
 
 ## Menu command-sequencer status
 
-The source table mapping is `tbl_C01C_index` → `tbl_C02A_lo/tbl_C033_hi` → per-state command list. The native implementation translates lists for states 0 (`off_C03C_00`), 1 (`off_C040_01`), 8 (`off_C076_08`), and 13 (which shares the state-8 command routines). State 13's shared setup and entry wait are translated and tested; the `$FF` branch through `sub_EC3B`/`loc_CC6B` is still unported. The six-command state-2 list (`off_C046_02`) and lists used by states 9, 10, and 12 remain incomplete. The native sequencer now freezes safely at an unsupported list instead of incrementing the command index through unported memory.
+The source table mapping is `tbl_C01C_index` → `tbl_C02A_lo/tbl_C033_hi` → per-state command list. The native implementation translates verified effects for states 0 (`off_C03C_00`), 1 (`off_C040_01`), 4 (`off_C05C_04`), 6 (`off_C070_06`), 8 (`off_C076_08`), and 13 (which shares the state-8 command routines). State 7 (`off_C07A_07`) clears exactly `$004D-$00EF` but deliberately blocks at `ofs_001_C586_07_02` until `sub_C621` is translated. State 13's shared setup and entry wait are translated and tested; the `$FF` branch through `sub_EC3B`/`loc_CC6B` is still unported. The six-command state-2 list (`off_C046_02`) and lists used by states 3, 5, 9, 10, 11, and 12 remain incomplete. State 2's list includes race-start/data initialization, not just menu presentation. The native sequencer now freezes safely at an unsupported list instead of incrementing the command index through unported memory.
 
 
 ## State 13 completion — 2026-10-21
