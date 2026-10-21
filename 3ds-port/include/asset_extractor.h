@@ -10,5 +10,7 @@ int assetExtractorIsActive(void);
 const uint8_t *assetExtractorGetPixels(size_t *tileCount);
 const char *assetExtractorGetStatus(void);
 unsigned int assetExtractorGetPalette(void);
+size_t assetExtractorGetPage(void);
+void assetExtractorSetPage(size_t page);
 
 #endif
