@@ -1705,15 +1705,18 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
  * timers. Other timer bytes are not part of this small state model.
  */
 void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030,
-                                  uint8_t *ram0031)
+                                  uint8_t *ram0031, uint8_t *ram0034)
 {
     uint8_t timers[29] = {0};
-    if (ram0020 == NULL || ram0030 == NULL || ram0031 == NULL) return;
+    if (ram0020 == NULL || ram0030 == NULL || ram0031 == NULL ||
+        ram0034 == NULL) return;
     timers[0x30u - 0x21u] = *ram0030;
     timers[0x31u - 0x21u] = *ram0031;
+    timers[0x34u - 0x21u] = *ram0034;
     nesSubD310DecreaseAllTimers(ram0020, timers);
     *ram0030 = timers[0x30u - 0x21u];
     *ram0031 = timers[0x31u - 0x21u];
+    *ram0034 = timers[0x34u - 0x21u];
 }
 
 void nesSubC3AFIncrementState(uint8_t *ram0041)
