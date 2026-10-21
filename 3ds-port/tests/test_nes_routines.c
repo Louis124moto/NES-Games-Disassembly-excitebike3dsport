@@ -2088,6 +2088,9 @@ static int testBatchAdditional20(void)
         /* Y=5 takes the special $20 path and ignores the $0046 bank bit. */
         nesSubC92CSelectTableEntry(0x00u,5u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=5u||r5!=0xC1u||r6!=0xC2u||r7!=0xC3u)return 38;
+        nesSubC92CSelectTableEntry(0x00u,0xFFu,0u,0u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=0xFFu||r3!=0u||r5!=cpuRam[0x580u]||
+           r6!=cpuRam[0x581u]||r7!=cpuRam[0x582u])return 42;
     }
     {
         uint8_t optionTable[256], v5=0u,v6=0u,v7=0u;
@@ -2099,6 +2102,9 @@ static int testBatchAdditional20(void)
         nesSubC522SelectOptionTuple(5u,1u,optionTable,&v5,&v6,&v7);
         if(v5!=(uint8_t)(0x20u^0x5Au)||v6!=(uint8_t)(0x21u^0x5Au)||
            v7!=(uint8_t)(0x22u^0x5Au))return 40;
+        /* DEY immediately sets N for $FF, so the BPL loop adds nothing. */
+        nesSubC522SelectOptionTuple(0xFFu,0u,optionTable,&v5,&v6,&v7);
+        if(v5!=optionTable[0]||v6!=optionTable[1]||v7!=optionTable[2])return 41;
     }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
