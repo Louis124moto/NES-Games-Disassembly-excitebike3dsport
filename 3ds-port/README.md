@@ -24,3 +24,26 @@ See [TODO.md](TODO.md) for the staged roadmap and [REFERENCE_MAPPING.md](REFEREN
 ## Fidelity approach
 
 The NES source is 6502 assembly and relies on NES-specific hardware. It cannot be linked directly into a native ARM11/libctru executable. The port will translate verified gameplay logic and data into native modules, then compare behaviour against the original. Any subsystem remains marked incomplete until validated.
+
+## Menu port status (2026-10-21)
+
+The current implementation is a native state/input trace, not a completed faithful menu. ASM states 0, 1, and 8 have partial setup command lists and input branches. State 2 and destination states 9, 10, 12, and 13 still need their exact command lists and side effects; the app intentionally stops rather than inventing gameplay. Numeric option indices are not verified translations of the original option labels. Original title graphics also require verified CHR data plus nametable, attribute/palette, sprite/OAM, and PPU timing reconstruction.
+
+### Extract graphics and prepare the native diagnostic atlas
+
+Run from the repository root with a legally obtained ROM or raw CHR dump:
+
+```sh
+python3 3ds-port/tools/extract_nes_assets.py game.nes
+```
+
+Outputs go to `3ds-port/build/extracted-assets/`: `chr-atlas.png`, `chr-tiles.json`, and `nes_chr_assets.h`. Add `--tiles` for individual PNGs. For a verified raw 2bpp range inside a CHR-RAM image, add both `--chr-offset 0x... --chr-size 0x...`; do not guess the range. Add `--install-header` to copy the generated header into `3ds-port/include/nes_chr_assets.h` so the native renderer can display the diagnostic atlas on the next build. The atlas is not the original title-screen layout.
+
+### Test and build
+
+```sh
+python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'
+make -C 3ds-port
+```
+
+Run both commands and record their results on the same commit. Neither command is reported as passing merely because it is documented here.
