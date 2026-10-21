@@ -35,7 +35,7 @@ A function definition, matching name/address, passing unit test, successful buil
 
 ## Current menu/graphics work
 
-The main branch now contains a source-derived model of the original menu cursor helper (`sub_C7DE`) and the confirmation branches in `ofs_000_C3BD_08`, connected to an interactive native trace screen. This is **not yet the authentic NES title screen**: menu labels, CHR/palette mapping, PPU timing, and destination states remain under investigation. The new CHR atlas tool is diagnostic only. Host tests and the matching 3DS build still need confirmation.
+The main branch contains a source-derived model of `sub_C7DE`, the `ofs_000_C3BD_08` choice branches, the choice-5 RAM-clear path, and the timer-zero state-0 transition. It remains a **trace screen, not the authentic NES title screen**: destination-state routines, option labels, CHR/palette/nametable mapping, and PPU timing remain incomplete. The CHR extractor now produces PNG atlases, optional per-tile PNGs and JSON pixel metadata; it does not guess compressed PRG graphics. The new Python tests, host C suite, and matching 3DS build still need execution confirmation.
 
 ## Repository layout
 
