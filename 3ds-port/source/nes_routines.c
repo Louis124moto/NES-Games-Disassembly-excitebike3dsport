@@ -1913,6 +1913,133 @@ uint8_t nesLocC4FCComputeScaledValue(uint8_t a, uint8_t ram0009, uint8_t ram000A
 }
 
 /* Full sub_C92C -> sub_C53E -> sub_CB06/CB13 table-selection path. */
+/* sub_CB13: exact 8-bit DEY/BMI loop and $0046 flag handling. */
+static uint8_t nesMenuCb13Index(uint8_t ram0002, uint8_t ram0046)
+{
+    uint8_t a = 0x20u;
+    uint8_t y = ram0002;
+    if (y == 5u) return a;
+    a = 0u;
+    for (;;) {
+        y = (uint8_t)(y - 1u); /* DEY */
+        if ((y & 0x80u) != 0u) break; /* BMI */
+        a = (uint8_t)(a + 3u); /* CLC; ADC #$03 */
+    }
+    if (ram0046 != 0u) a = (uint8_t)(a | 0x10u); /* ORA #$10 */
+    return a;
+}
+
+static int nesCompareMenuTriples(const uint8_t left[3], const uint8_t right[3])
+{
+    unsigned int i;
+    for (i = 0u; i < 3u; ++i) {
+        if (left[i] < right[i]) return -1;
+        if (left[i] > right[i]) return 1;
+    }
+    return 0;
+}
+
+/* Exact control-flow translation of ofs_001_C485_03_05 ($C485).
+ * Keeps byte wrap/carry branches from the ADC/SBC/DEY loop and writes every
+ * RAM location touched by this routine, including its shared exit labels. */
+void nesSubC485UpdateMenuSelection(uint8_t ram[65536], const uint8_t tblC091[258])
+{
+    uint8_t tableIndex, tuple[3], selected[3], target[3];
+    uint8_t a, y, carry, ram0008 = 0u, ram0009, ram000A;
+    unsigned int sum;
+    int comparison;
+
+    if (ram == NULL || tblC091 == NULL) return;
+
+    /* JSR sub_C53A -> sub_C53E -> sub_CB06; LDA $0580,Y... */
+    ram[0x0002u] = ram[0x0043u];
+    tableIndex = nesMenuCb13Index(ram[0x0002u], ram[0x0046u]);
+    if (ram[0x03F2u] != 0u) tableIndex = (uint8_t)(tableIndex + 0x23u);
+    tuple[0] = ram[0x0580u + tableIndex];
+    tuple[1] = ram[0x0581u + tableIndex];
+    tuple[2] = ram[0x0582u + tableIndex];
+    ram[0x0005u] = tuple[0];
+    ram[0x0006u] = tuple[1];
+    ram[0x0007u] = tuple[2];
+    target[0] = ram[0x0068u];
+    target[1] = ram[0x0069u];
+    target[2] = ram[0x006Au];
+
+    comparison = nesCompareMenuTriples(tuple, target);
+    if (comparison == 0) {
+        a = 1u; /* BEQ bra_C4A9 */
+    } else if (comparison > 0) {
+        /* LDX #0; copy $0068-$006A to $0580,Y. */
+        ram[0x0580u + tableIndex] = target[0];
+        ram[0x0581u + tableIndex] = target[1];
+        ram[0x0582u + tableIndex] = target[2];
+        a = 1u;
+    } else if (ram[0x0041u] >= 8u) {
+        goto calculate_value;
+    } else {
+        /* JSR sub_C522; compare its ROM tuple with $0068-$006A. */
+        tableIndex = nesMenuCb13Index(ram[0x0043u], ram[0x0046u]);
+        selected[0] = tblC091[tableIndex];
+        selected[1] = tblC091[(unsigned int)tableIndex + 1u];
+        selected[2] = tblC091[(unsigned int)tableIndex + 2u];
+        ram[0x0005u] = selected[0];
+        ram[0x0006u] = selected[1];
+        ram[0x0007u] = selected[2];
+        comparison = nesCompareMenuTriples(selected, target);
+        if (comparison >= 0) {
+            a = 2u; /* bra_C4C8 */
+        } else {
+calculate_value:
+            ram000A = ram[0x03F8u];
+            ram0009 = (uint8_t)(ram000A << 1u);
+            y = (uint8_t)(ram[0x0068u] - ram[0x0005u]);
+            a = 0u;
+            for (;;) {
+                y = (uint8_t)(y - 1u); /* DEY */
+                if ((y & 0x80u) != 0u) break; /* BMI bra_C4E8 */
+                sum = (unsigned int)a + 0x3Cu;
+                a = (uint8_t)sum;
+                if (sum > 0xFFu) goto overflow_value; /* BCC loop not taken */
+            }
+            ram0008 = a;
+            ram[0x0008u] = ram0008;
+            a = (uint8_t)(ram[0x0069u] - ram[0x0006u]);
+            carry = (ram[0x0069u] >= ram[0x0006u]) ? 1u : 0u;
+            if (carry == 0u) {
+                a = (uint8_t)(a + ram0008); /* CLC; ADC; JMP loc_C4FC */
+            } else {
+                sum = (unsigned int)a + ram0008; /* CLC; ADC */
+                a = (uint8_t)sum;
+                if (sum > 0xFFu) goto overflow_value; /* BCS bra_C4E4 */
+            }
+            if (a >= ram0009) {
+overflow_value:
+                /* bra_C50B: SEC; SBC $0009; LSR; CLC; ADC #$04 */
+                a = (uint8_t)(0xFFu - ram0009);
+                a = (uint8_t)(a >> 1u);
+                a = (uint8_t)(a + 4u);
+            } else {
+                a = (uint8_t)(a + ram0009); /* CLC; ADC */
+                for (;;) {
+                    ram000A = (uint8_t)(ram000A >> 1u); /* LSR $000A */
+                    if (ram000A == 0u) break; /* BEQ bra_C512 */
+                    a = (uint8_t)(a >> 1u); /* LSR A */
+                }
+            }
+            ram[0x0008u] = ram0008;
+            ram[0x0009u] = ram0009;
+            ram[0x000Au] = ram000A;
+        }
+    }
+
+    /* Shared bra_C512 -> $0053, then $C514/$C518 exit writes. */
+    ram[0x0053u] = a;
+    ram[0x0045u] = 0x18u;
+    ram[0x0049u] = 0x01u;
+    ram[0x0040u] = 0x01u;
+    ram[0x0044u] = 0x00u;
+}
+
 /* Exact sub_C92C -> sub_C53E -> sub_CB06 -> sub_CB13 table lookup.
  * ram0046 selects the $10 bank via ORA, then ram03F2 adds $23.
  * For ram0043 == 5, sub_CB13 returns $20 without consulting $0046. */
