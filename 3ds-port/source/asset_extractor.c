@@ -235,8 +235,8 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             if (!loadExtractedCache()) loadChrRom();
         }
     }
-    if ((pressedKeys & KEY_L) != 0u) s_paletteBank = (s_paletteBank + 3u) & 3u;
-    if ((pressedKeys & KEY_R) != 0u) s_paletteBank = (s_paletteBank + 1u) & 3u;
+    if ((pressedKeys & KEY_L) != 0u) s_paletteBank = (s_paletteBank + 9u) % 10u;
+    if ((pressedKeys & KEY_R) != 0u) s_paletteBank = (s_paletteBank + 1u) % 10u;
     if (!s_active) return;
     /* X explicitly re-reads the ROM and refreshes the persisted cache. */
     if ((pressedKeys & KEY_X) != 0u) loadChrRom();
