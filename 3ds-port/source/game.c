@@ -13,12 +13,12 @@
  */
 static InputState s_input;
 
-void gameInit(void)
+void gameInit(const char *executablePath)
 {
     s_input.held = 0u;
     s_input.pressed = 0u;
     rendererInit();
-    assetExtractorInit();
+    assetExtractorInit(executablePath);
 }
 
 void gameUpdate(void)
