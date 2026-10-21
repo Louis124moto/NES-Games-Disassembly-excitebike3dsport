@@ -24,10 +24,11 @@ static int testSourcePaletteStreams(void)
     const uint8_t *stream = nesExcitebikePaletteStream(0u, &size, &label);
     if (stream == NULL || size != 19u || label == NULL || strstr(label, "D3D6") == NULL) return 1;
     if (nesExcitebikePaletteSnapshot(0u, palette, mask, &writes) != NES_PPU_COMMAND_OK) return 2;
-    if (writes != 12u || palette[0] != 0x29u || palette[1] != 0x20u ||
-        palette[2] != 0x16u || palette[3] != 0x0Fu || palette[4] != 0x29u ||
-        palette[7] != 0x36u || palette[16] != palette[0] ||
-        mask[0] != 1u || mask[15] != 0u || mask[16] != 1u) return 3;
+    if (writes != 12u) return 30;
+    if (palette[0] != 0x29u || palette[1] != 0x20u || palette[2] != 0x16u || palette[3] != 0x0Fu) return 31;
+    if (palette[4] != 0x29u || palette[7] != 0x36u) return 32;
+    if (palette[16] != palette[0]) return 33;
+    if (mask[0] != 1u || mask[15] != 0u || mask[16] != 1u) return 34;
     if (nesExcitebikePaletteStream(7u, &size, &label) != NULL) return 4;
     return 0;
 }
