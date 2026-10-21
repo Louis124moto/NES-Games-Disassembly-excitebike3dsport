@@ -39,19 +39,6 @@ jobs:
           test ! -e 3ds-port/excitebike3ds.elf
           ls -lh 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
 
-      - name: Publish build outputs into main/3ds-port/build
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
-          if git diff --cached --quiet; then
-            echo "Build outputs are already up to date."
-          else
-            git commit -m "Build 3DSX and ELF artifacts"
-            git push origin HEAD:main
-          fi
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
