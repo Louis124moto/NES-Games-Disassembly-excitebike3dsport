@@ -444,3 +444,20 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Verify latest host tests and 3DS build on the exact revision; verify the `.3dsx` publishing workflow.
 - [ ] Hardware test: confirm grayscale tile patterns are discernible, D-pad paging exposes all 512 extracted tiles (including last partial page), and START/B transition works without crash.
 - [ ] For faithful visual reconstruction, implement CHR-RAM support or document it as unsupported per ROM, preserve mapper/bank selection, and trace original nametable/attribute/OAM/palette writes. A raw CHR atlas cannot itself look like the game's menu or track.
+
+
+## Extractor completion pass using external NES/3DS references — 2026-10-21
+
+Reference projects consulted for architecture, not copied wholesale:
+- `https://github.com/SKyletoft/nes-emu`: NES recompiler with a 3DS frontend; useful comparison for target-platform constraints, but it supports only NROM at present and is not a drop-in graphics extractor.
+- `https://github.com/ognis1205/nesdev`: modular NES toolkit with a PPU framebuffer and separate CHR rendering; supports the distinction between raw CHR patterns and the composed screen.
+- `https://github.com/tavuntu/PPUX`: NES graphics/PPU inspection concepts (CHR, palettes, nametables/OAM) inform future visual diagnostics.
+- `https://github.com/devkitPro/libctru`: official homebrew API reference for framebuffer and console behavior.
+
+- [x] Fix diagnostic log newline escapes so each status item is actually rendered on a separate line.
+- [x] Version the CHR cache format and store an FNV-1a fingerprint of the complete ROM; reject a cache made from a different ROM and regenerate it.
+- [x] Remove nonfunctional L/R palette cycling. A raw CHR tile's final color palette depends on PPU nametable attributes and sprite attributes; arbitrary palette cycling would be misleading. Current grayscale preview intentionally visualizes the four decoded 2bpp indices.
+- [x] Keep 2× atlas paging (375 tiles/page), bounds-check page selection, and keep the bottom log persistent unless its content changes.
+- [ ] CI verification is required for the cache/header and renderer changes; host unit tests should cover cache fingerprint/version validation if cache logic is extracted into a host-testable module.
+- [ ] Hardware verification required on New Nintendo 3DS: check log line breaks, atlas bounds/orientation, page 1/page 2, X re-extraction, Y open/close, B close, and cold start with both valid and stale cache.
+- [ ] Remaining honest limitation: this extracts CHR-ROM tiles from iNES/NES 2.0 ROM images within configured size bounds. CHR-RAM cartridges need runtime PPU memory capture; full-color game/menu composition needs nametable, attribute table, OAM, palette RAM and mapper bank context. Do not mark full menu textures complete until these are implemented and tested.
