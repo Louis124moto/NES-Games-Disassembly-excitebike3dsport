@@ -120,7 +120,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
 | `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCF2` | `sub_DCF2` | Pending | — |
-| `$DD06` | `sub_DD06` | Pending | — |
+| `$DD06` | `sub_DD06` | Analyzed (partial trace; translation pending) | `$DD06-$DD37` traced; depends on `sub_DD38` and `sub_DD6F`; full caller/callee equivalence not verified |
 | `$DD38` | `sub_DD38` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DD6F` | `sub_DD6F` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DD8D` | `sub_DD8D` | Pending | — |
@@ -168,7 +168,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E86F` | `sub_E86F` | Pending | — |
 | `$E893` | `sub_E893` | Pending | ; in |
 | `$E927` | `sub_E927` | Pending | — |
-| `$E96C` | `sub_E96C` | Pending | — |
+| `$E96C` | `sub_E96C` | Analyzed (partial block only; translation pending) | `nesLocE96EApplyVerticalDelta` covers `$E96E-$E97D` only; remaining state logic and player-slot identity unresolved |
 | `$EA44` | `sub_EA44` | Host regression and 3DS build passed | Special wheel tile and fallback wheel rendering |
 | `$EAC5` | `sub_EAC5` | Pending | — |
 | `$EB17` | `sub_EB17` | Pending | — |
