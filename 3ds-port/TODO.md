@@ -1,5 +1,94 @@
 # Excitebike 3DS — roadmap and task tracker
 
+## User-approved specification and strict stage gates — 2026-10-21
+
+This is the controlling project specification. If older checklist items conflict with it, follow this section and update the older item before acting on it.
+
+### Confirmed requirements
+
+- [x] Goal: complete faithful Excitebike port, with the extractor as the first required component.
+- [x] Preserve original NES ASM and use it as the authority for graphics, game logic, and behavior.
+- [x] The motorcycle's behavior/physics must be faithful; all other game behavior must also be faithful. No plausible-but-unverified replacement physics or graphics.
+- [x] Extractor supports Excitebike first while keeping architecture reusable for other NES ROMs where formats and mapper behavior are verified.
+- [x] Extract all recoverable graphic classes: raw CHR tiles, palettes, full-screen compositions, sprites/animations, track, bikes/riders, menus/title, and other data the source proves recoverable.
+- [x] Provide a tile atlas and distinguish raw stored data from the actual NES-rendered result.
+- [x] Analyze compressed/generated graphics where source routines indicate they exist; unknowns remain unknown until traced.
+- [x] Use actual PPU RAM writes for palette truth; reconstruct nametable, attributes, CHR bank changes, PPU writes, sprites/OAM, priority, scrolling, and animation progressively from the ASM.
+- [x] For incomplete screen data, render known parts and visibly mark missing/unknown portions rather than fabricating content.
+- [x] Controls: D-pad, A, and B. Minimal image-focused interface with simple and advanced modes.
+- [x] Dual-screen layout: selected image/view on the top screen; controls, status, and technical diagnostics on the bottom screen.
+- [x] Diagnostics for CHR banks, palettes, tile indices, nametables/attributes, sprites/OAM, and PPU state/addresses.
+- [x] Save useful exports to SD card; include image exports (PNG) and binary/source-data exports (such as CHR, palette, and nametable where available).
+- [x] Keep extractor native and integrated into the 3DSX; do not require Python or PC preprocessing for the 3DS workflow.
+- [x] Prefer complete accurate extraction over speed; do not enable incomplete features before their prerequisites are verified.
+- [x] When ASM does not confirm behavior, investigate further and do not invent an implementation.
+- [x] Maintain tracking in this file: checklist, evidence-backed module percentages, completed/in-progress/blocked/verification statuses, test evidence, and known limits.
+- [x] Keep README and TODO synchronized on each meaningful implementation batch; test each batch when possible and never claim success without proof.
+
+### Mandatory sequential roadmap
+
+**No later stage may begin until the current stage is fully tested and accepted.** Work on `main` only; do not create a branch for this workflow. The original disassembly remains unchanged.
+
+#### Stage 1 — Native extractor (current stage; gate CLOSED)
+
+- [ ] Audit the current extractor and its real 3DSX startup path against every requirement above.
+- [ ] Verify supported ROM/header and graphics-memory cases from source evidence; document unsupported cases instead of implying universal compatibility.
+- [ ] Extract and display raw CHR/pattern data accurately; distinguish CHR-ROM extraction from CHR-RAM/runtime PPU capture.
+- [ ] Trace and extract source-confirmed palette data from actual PPU writes; do not infer active palette assignments from palette tables alone.
+- [ ] Implement and validate available nametable/attribute data, bank context, and any proven compressed/generated graphics path.
+- [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
+- [ ] Add sprite/OAM, priority, scroll, animation, and PPU state/address diagnostics to the extent supported by verified runtime capture/source analysis.
+- [ ] Implement D-pad/A/B navigation, simple/advanced modes, top-screen viewing, and bottom-screen status/diagnostics.
+- [ ] Implement SD-card export for PNG and all useful verified binary formats (CHR, palettes, nametable/attributes, and additional formats where applicable).
+- [ ] Validate cold start, cache hit/miss, re-extraction, stale-cache rejection, malformed/unsupported input, bounds, output correctness, and repeated navigation.
+- [ ] Run the complete host test suite and a 3DS build on the exact same commit; record links and commit SHA.
+- [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
+- [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
+
+#### Stage 2 — Original NES menu (blocked until Stage 1 accepted)
+
+- [ ] Trace the menu startup sequence and each setup command/handler from the original ASM.
+- [ ] Connect verified CHR, PPU palette writes, nametable/attributes, OAM/sprites, banks, scroll, and timing into the native renderer.
+- [ ] Reproduce authentic title/menu appearance, colors, layout, cursor, transitions, and controller behavior.
+- [ ] Compare each menu state and transition against the original NES reference, including edge cases and reset/start behavior.
+- [ ] Run host tests, exact-commit 3DS build, and hardware checks; record evidence.
+- [ ] Accept Stage 2 only after the entire menu path in scope matches the source; do not proceed to Course 1 before acceptance.
+
+#### Stage 3 — First course / first race (blocked until Stage 2 accepted)
+
+- [ ] Trace the original first-course entry and all dependencies before integrating gameplay.
+- [ ] Establish the player slot through source-confirmed initialization, RAM writers, input path, and update callers; never infer it from slot number.
+- [ ] Reproduce course/terrain data and rendering, opponent behavior, race timing, start/countdown, scoring, and state transitions as source-confirmed.
+- [ ] Translate and verify the actual player motorcycle path: acceleration, braking, speed/gear behavior where applicable, overheating/cooling, jumping, posture, landing, crashes, collisions, and recovery.
+- [ ] Compare physics and frame-by-frame observable state against the original NES for normal play, boundaries, collisions, jumps, overheating, and reset/edge cases.
+- [ ] Do not use generic physics or mark the course playable while any required player behavior is placeholder or unverified.
+- [ ] Run host tests, exact-commit 3DS build, and physical New 3DS tests; record evidence.
+- [ ] Accept Stage 3 only when the first race in scope is faithfully playable and its required comparisons pass.
+
+#### Stage 4 onward — remaining original game flow
+
+- [ ] After each prior stage is accepted, identify the next state/feature in the original game's actual execution order from ASM.
+- [ ] Work on one stage at a time: analysis → implementation → tests → exact-commit 3DS build → hardware verification → fidelity comparison → acceptance.
+- [ ] Include remaining courses, opponents, results/scoring, menus, audio, reset and other original flows in the order supported by the source.
+- [ ] Never skip an unaccepted stage or work on a later feature as a substitute for finishing the current one.
+
+### Acceptance record template
+
+For every stage, add a dated record containing:
+- Stage and exact scope;
+- source files, CPU addresses/ROM ranges, data tables, and dependencies examined;
+- implemented modules and unresolved items;
+- host test command/results and CI URL;
+- 3DS build command/result, artifact confirmation, and commit SHA;
+- physical New 3DS test steps/results where applicable;
+- comparison method and results against original NES behavior;
+- remaining differences or blocked criteria;
+- explicit decision: ACCEPTED or NOT ACCEPTED.
+
+A stage is NOT ACCEPTED if any applicable required check is missing or fails. A successful build or isolated unit test is not enough. Do not use a percentage to imply acceptance; any module percentage must be tied to a defined checklist and evidence.
+
+---
+
 This file is the active project checklist. The original NES disassembly is the reference implementation and must remain unchanged. The port is native C for Nintendo 3DS; 6502 code and NES hardware registers cannot be reused directly as an ARM11/libctru executable.
 
 **Overall status:** not yet a playable faithful port. The application scaffold exists; routine translations are in progress. A translated routine is not automatically tested, build-verified, integrated, or fidelity-verified.
@@ -28,10 +117,14 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
 | Latest host routine test execution | **Passed** in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`), including the new CBA3 regression vector and the existing menu routine suite. |
 | Latest completed 3DS build | **Passed** in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`). Note: `nes_routines.c` remains excluded from the active runtime target, so this verifies the homebrew scaffold/build, not gameplay integration. |
-| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Finish the complete menu first; then implement and validate Course 1 only. Courses 2+ are explicitly deferred. |
+| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Strict sequential gates: Stage 1 extractor → Stage 2 original menu → Stage 3 first race → subsequent original game flow. Later stages stay blocked until current-stage acceptance. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
+
+## Historical foundation tasks (do not override the mandatory staged roadmap above)
+
+The completed/in-progress module lists below are historical implementation tracking. They do not authorize advancing to the original menu or race before the Stage 1/Stage 2 gates above are formally accepted.
 
 ## Phase 1 — Build foundation
 
