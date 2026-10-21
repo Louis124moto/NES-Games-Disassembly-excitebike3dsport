@@ -360,4 +360,19 @@ uint8_t nesSubC935BuildCommand(uint8_t ram0005, uint8_t ram0006, uint8_t ram0007
                                uint8_t x, uint8_t ram03D1To03D7[7],
                                uint8_t ram0304To040Au[263]);
 
+
+/*
+ * State-2 setup command list off_C046_02, in original pointer-table order.
+ * RAM is a flat 64 KiB 6502 address space. Commands 1-5 are complete
+ * instruction-level translations. Command 6 exposes its exact C875-C8DE
+ * initialization prefix and returns 1 because the remaining source routine
+ * calls setup dependencies not yet connected to this memory image.
+ */
+void nesSubC046Command1(uint8_t ram[65536]); /* ofs_001_C551_02_01 */
+void nesSubC046Command2(uint8_t ram[65536]); /* ofs_001_C869_02_02 */
+void nesSubC046Command3(uint8_t ram[65536]); /* ofs_001_C820_02_03 */
+void nesSubC046Command4(uint8_t ram[65536]); /* ofs_001_C5A3_02_04 */
+void nesSubC046Command5(uint8_t ram[65536]); /* ofs_001_C566_02_05 */
+uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536]); /* C875-C8DE; 1 = dependencies remain */
+ 
 #endif
