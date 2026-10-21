@@ -164,8 +164,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
         "Palette presets: ppu_palette_12..18.bin replay source PPU write lists; mask and stream binaries are included\n"
         "Presets are not a claim about which palette is active in a live menu state\n"
-        "PPU command streams: ppu_stream_01..17.bin from table C0F6 indices 1..17\n"
-        "Snapshots: ppu_snapshot_01..17.bin = 4096 nametable bytes + 4096 write mask + 32 palette + 32 palette mask\n"
+        "PPU command streams: ppu_stream_01..18.bin from table C0F6 indices 1..17\n"
+        "Snapshots: ppu_snapshot_01..18.bin = 4096 nametable bytes + 4096 write mask + 32 palette + 32 palette mask\n"
         "Snapshots replay source command lists; they do not claim to be an active live-game frame\n"
         "OAM/sprite state and compressed PRG graphics: NOT CAPTURED by this export\n"
         "Unknown/compressed PRG graphics: NOT CLAIMED EXTRACTED\n",
