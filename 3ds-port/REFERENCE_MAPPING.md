@@ -16,6 +16,20 @@ The original `../Excitebike/` source is a 6502/NES disassembly. Its CPU instruct
 - The audio routine around CPU address `$FA82` reads `ram_00F3_bike_speed_sound`; its branch `bra_FABF_overheat_danger_noise` at `$FABF` writes `$30` to that sound-state byte when the comparison reaches the danger-noise branch. The subsequent lookup in `tbl_F9F4` selects sound data. This is audio behavior associated with overheat, not proof that `$00F3` is the primary speed or heat variable.
 - The initial routine-pointer table and RAM comments still do **not** establish exact acceleration, heat/cooling, jump/landing, or collision logic. Those routines and persistent variables must be traced before a faithful implementation is claimed.
 
+
+## Menu setup dispatcher trace — `sub_C2A9` / `sub_C318` (2026-10-21)
+
+Source: `Excitebike/bank_FF.asm`, CPU `$C2A9` (ROM offset `$0002B9`), `$C2ED` (ROM offset `$0002FD`), and `$C318` (ROM offset `$000328`).
+
+- `sub_C2A9` first checks `ram[$0040]`. If nonzero, it dispatches through the 16-bit pointer at `tbl_C000 + 2 * ram[$0041]`; this is a distinct animation/state path and must not be merged with the setup-command path.
+- If `ram[$0040] == 0`, it calls the rendering-disable routine `sub_D24F`, then waits while `ram[$0030]` is nonzero.
+- When the timer reaches zero, `tbl_C01C_index[ram[$0041]]` selects one of nine setup-command pointer lists. The exact selector bytes at `$C01C-$C029` are `00,01,02,03,04,02,03,04,06,05,02,03,07,08` for states 0 through 13.
+- `tbl_C02A_lo` / `tbl_C033_hi` provide the list base. The routine reads `ram[$0044]` into Y, increments `ram[$0044]`, decrements Y, and branches to `sub_C318` when the decremented value is negative. Otherwise it reads a little-endian routine address from the selected list at offset `2*Y` and jumps through `loc_CB36_indirect_jump`.
+- The zero-index branch is therefore a real list-transition/cleanup path: it increments `$0044` and invokes `sub_C318`, which hides sprites, calls `sub_D23B` and `sub_D1A9`, zeroes scroll state, sets `$00FC=0`, and sets A=`$10` before entering `sub_C333`.
+- Source lists and lengths: state-list 0 has 2 entries; list 1 has 3; list 2 has 6; list 3 has 5; list 4 has 4; list 5 has 6; list 6 has 3; list 7 has 3; list 8 has 2. State 9 reuses list 5, states 10 and 11 reuse lists 2 and 3, and states 12 and 13 use lists 7 and 8 respectively.
+- The six list-2 routines are already represented by the isolated `nesSubC046Command1..6` helpers and their tests, but this is **not** proof that the full dispatcher and all command side effects are integrated. In particular, command 6 currently translates a bounded prefix of `ofs_001_C875_02_06`; its API name deliberately calls out that prefix.
+- Do not simulate this path by simply running all commands in a C array at once. The original executes one pointer-selected routine per eligible frame/update, uses a timer gate, increments the byte-sized command index before the indirect jump, and invokes `sub_C318` only on the signed-negative Y branch. The native sequencer must preserve these details and the effects of each command on `$0044`, `$0045`, timers, PPU command buffers, and state transitions.
+
 ## Fidelity workflow
 1. Preserve the original disassembly and its history.
 2. Trace routine entry points and RAM writes/reads; record source labels, ROM offsets, inferred purpose, and confidence.
