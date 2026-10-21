@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <3ds.h>
 #include "menus.h"
 #include "nes_routines.h"
@@ -17,8 +18,20 @@ static int menusRunSetupSequence(GameState *state)
     if (state->menu_timer30 != 0u) return 1;
 
     if (state->menu_sequence_preface_pending != 0u) {
-        /* sub_C318: hide sprites, reset scroll, and disable NMI rendering. */
+        /*
+         * sub_C318 calls sub_D255 (fill all 256 OAM bytes with $F8),
+         * sub_D23B/sub_D260 (clear two 1 KiB nametables to $FC with zero
+         * attribute tables), then sub_D1A9 (reset both scroll registers).
+         * $2001 is disabled by sub_D24F and $2000 becomes $10.
+         */
+        unsigned int i;
         state->menu_sprite_y = 0xF8u;
+        memset(state->menu_oam, 0xF8, sizeof(state->menu_oam));
+        for (i = 0u; i < 2u; ++i) {
+            memset(&state->menu_ppu_nametables[i * 1024u], 0xFC, 960u);
+            memset(&state->menu_ppu_nametables[i * 1024u + 960u], 0, 64u);
+        }
+        state->menu_ppu_mask = 0u;
         state->menu_scroll_x = 0u;
         state->menu_scroll_y = 0u;
         state->menu_ppu_ctrl = 0x10u;
