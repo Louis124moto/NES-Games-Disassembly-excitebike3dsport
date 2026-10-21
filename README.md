@@ -154,6 +154,29 @@ Use these states consistently:
 
 Only claim the states supported by evidence. Host tests do not replace hardware/build validation, and isolated routine tests do not establish complete-game fidelity. Record CI run links and code revisions in the task tracker when available.
 
+## Stage 1 implementation status — extractor (NOT ACCEPTED)
+
+The first native extraction/export pass is integrated into the 3DSX runtime. It is a partial Stage 1 implementation, not a completed or validated extractor.
+
+### Current runtime behavior
+
+- Put a legally obtained `rom.nes` iNES/NES 2.0 ROM beside the launched `.3dsx`.
+- On startup, the app checks the ROM fingerprint and cache, then extracts or reloads CHR-ROM tile pixels.
+- Exports are written beside the app in `extracted/`: `chr_raw.bin` (original CHR-ROM bytes), `chr_pixels.bin` (decoded 2bpp indices), `chr_atlas.png` (256×240 grayscale-index atlas), and `manifest.txt`.
+- The internal decoded cache is `extracted/chr_cache.bin`; it is distinct from the exported pixel data.
+- Controls: D-pad left/right changes atlas pages; A opens the atlas and, while it is open, retries the export; B closes the atlas or retries extraction while the atlas is closed.
+- START is deliberately locked out of the menu until Stage 1 is accepted.
+- The PNG uses grayscale to expose 2bpp pixel indices. It does **not** claim to show Excitebike's actual palette or a complete original screen.
+
+### Current hard limits and remaining work
+
+- The runtime accepts ROM files up to 8 MiB and decodes at most 960 tiles for the current atlas/cache. The raw CHR export preserves the entire validated CHR-ROM byte range; if it contains more than 960 tiles, the decoded preview currently contains only the first 960.
+- CHR-RAM is reported as requiring runtime PPU capture; it is not falsely treated as CHR-ROM.
+- Actual PPU palette RAM writes, nametable/attribute capture, CHR bank switching, compressed/generated PRG graphics, sprites/OAM, scrolling, timing, and the full advanced diagnostic UI are not yet integrated.
+- This implementation has not been accepted on physical New Nintendo 3DS hardware. Host tests and a successful 3DS build are necessary but not sufficient for the Stage 1 gate.
+
+`stb_image_write.h` is vendored from the public-domain stb project (Sean Barrett; v1.16) and is compiled into the native homebrew. No Python program is needed at runtime.
+
 ## Current next priorities
 
 The mandatory staged acceptance gates above control all work. Do not use this list as permission to work on later stages in parallel.
