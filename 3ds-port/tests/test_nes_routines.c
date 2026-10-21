@@ -1990,6 +1990,13 @@ static int testBatchAdditional20(void)
         }
         if(sx!=0u||sy!=0u||pctrl!=0x10u||pmask!=0u)return 33;
     }
+    {
+        uint8_t index=0u, value=0u;
+        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=1u||value!=2u)return 34;
+        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=1u||value!=2u)return 35;
+        value=0xFFu;
+        if(nesSubC41CState13Entry(&index,&value)!=1u||index!=1u||value!=0xFFu)return 36;
+    }
     puts("PASS: additional ASM batch: compare branches, buffer writes, RAM clearing, PPU polling, controller latch and sprite setup.");
     return 0;
 }
