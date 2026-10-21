@@ -540,3 +540,18 @@ The dispatch table `tbl_C000` confirms state 0 -> `ofs_000_C346_00`, state 1 -> 
 - `sub_D310` is reused through `nesSubD310DecreaseMenuTimers` for timer bytes `$30/$31` with the `$20` 10-frame divider. Unmodeled timer bytes are treated as zero in this menu trace. Regression vectors cover the initial rollover and the 10-frame interval.
 
 These are CPU-side control-flow translations. They do not yet reproduce the full reset/startup command sequencer, PPU nametable/CHR upload, original audio, or destination states 9/12/13. Tests are wired but not executed on the current commit.
+
+
+## Menu setup sequencer and CHR extraction update (2026-10-21)
+
+The native menu path now models the source-derived setup subset in `sub_C2A9` / `sub_C318` before dispatching menu handlers:
+
+- State 0 setup list: `ofs_001_C2BD_00_01` then `ofs_001_C514_00_02`.
+- State 1 setup list: `ofs_001_C55E_01_01`, `ofs_001_C3F3_01_02`, then `ofs_001_C514_01_03`.
+- State 8 setup list: `ofs_001_C582_08_01`, then `ofs_001_C518_08_02`.
+- The sequence prelude models sprite hiding, zero scroll, and the `$2000 = $10` write. The timer wait before each command is modeled from `ram_0030`.
+- The menu timer projection now includes `ram_0034` in addition to `ram_0030` and `ram_0031`, all using the existing `ram_0020` divider.
+
+This is a deliberately bounded translation, not the entire indirect-command engine. Other command lists (including state 2 and destinations 9, 10, 12, and 13), full PPU writes, nametable/attribute data, and audio hardware effects remain incomplete. The port must not treat those paths as fidelity-verified.
+
+The graphics pipeline now has `tools/nes_chr_to_c.py`, which reuses the validated 2bpp tile decoder to emit a C header from an iNES/NES 2.0 CHR-ROM or a verified raw CHR range. The native renderer can display a grayscale diagnostic tile atlas from that generated header. This does not reconstruct original tile placement, palette/attribute selection, or title-screen timing. The source ROM is not included.
