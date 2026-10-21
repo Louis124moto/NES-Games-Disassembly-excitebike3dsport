@@ -1744,6 +1744,21 @@ uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048)
     return (uint8_t)(*ram0048 == 0xFFu);
 }
 
+/* sub_EC3B: X starts at zero, wraps through $FF, and exits when X returns to zero. */
+void nesSubEC3BCopy256(const uint8_t source[256], uint8_t destination[256])
+{
+    if (source == NULL || destination == NULL) return;
+    memcpy(destination, source, 256u);
+}
+
+/* loc_CC6B: INC $0041; if $004B is zero, clamp states >= 9 to state 8. */
+void nesLocCC6BUpdateMenuState(uint8_t *ram0041, uint8_t ram004B)
+{
+    if (ram0041 == NULL) return;
+    *ram0041 = (uint8_t)(*ram0041 + 1u);
+    if (ram004B == 0u && *ram0041 >= 9u) *ram0041 = 8u;
+}
+
 
 /*
  * sub_C318 + sub_D255 + sub_D23B/sub_D260 + sub_D1A9 + sub_C333:
