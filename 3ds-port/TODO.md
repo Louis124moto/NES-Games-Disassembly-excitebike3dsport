@@ -36,8 +36,10 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Extract and display raw CHR/pattern data from iNES/NES 2.0 CHR-ROM or a standalone raw CHR file; report CHR-RAM as requiring runtime PPU capture. The atlas is currently limited to 960 decoded tiles.
 - [ ] Trace active palette selection and all live-state write paths; seven source-defined palette command streams are now replayed with `sub_D3C1` semantics and exported, but their active assignment for each game state is not yet proven.
 - [x] Replay and export 18 source PPU command streams from `tbl_C0F6` indices 1–17 plus index 25 (D631), with nametable snapshots, palette snapshots, and per-byte write masks.
+- [x] Export one 256x240 RGB PNG preview per replayed source PPU snapshot using the native CHR/nametable/attribute/palette compositor; hatch tiles with missing or unverified inputs. Host regression coverage checks the PNG signature and manifest entry.
 - [ ] Trace which source command stream is selected by each active game state; determine from the full ASM whether any compressed/generated PRG graphics exist beyond the verified static PPU lists. The checked-in source header confirms mapper 0, 16 KiB PRG, 8 KiB CHR-ROM for canonical Excitebike; the runtime does not yet identify arbitrary ROMs as Excitebike.
-- [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
+- [ ] Validate the color PPU preview export on the host and on physical New Nintendo 3DS hardware, including PNG dimensions/palette correctness and output paths.
+- [ ] Provide a faithful live-game screen only after tracing active state, scrolling, OAM sprites, priority, and dynamic PPU writes. The new PNGs are static source-command replays, not complete live frames.
 - [ ] Add sprite/OAM, priority, scroll, animation, and PPU state/address diagnostics to the extent supported by verified runtime capture/source analysis.
 - [x] Implement basic D-pad/A/B navigation, CHR-atlas/palette/partial-PPU views, top-screen imagery, unknown-data hatching, and bottom-screen source diagnostics. Hardware usability validation remains open.
 - [x] Implement SD-card exports for raw CHR, decoded pixels, PNG atlas, seven source palette snapshots, write masks, and palette command streams.
