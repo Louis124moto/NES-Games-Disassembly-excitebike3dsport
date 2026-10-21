@@ -70,7 +70,7 @@ int main(void)
     file = fopen("test_asset_export_output/manifest.txt", "rb");
     if (file == NULL) return 7;
     {
-        char manifest[768];
+        char manifest[2048];
         const size_t n = fread(manifest, 1u, sizeof(manifest)-1u, file);
         manifest[n] = '\0';
         if (strstr(manifest, "Palette presets:") == NULL ||
