@@ -46,4 +46,4 @@ python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'
 make -C 3ds-port
 ```
 
-Latest verification: the Python extraction tests and host C regression suite passed on `b47057371b09b68451119cf98706654e32243d3e` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497914)). The corresponding 3DS build is pending ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497853)); do not assume it passed until the run completes.
+Latest verification: the Python extraction tests and host C regression suite passed on `b47057371b09b68451119cf98706654e32243d3e` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497914)). The corresponding 3DS build also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39523497853)). These checks do not establish that the menu is visually or behaviorally complete.
