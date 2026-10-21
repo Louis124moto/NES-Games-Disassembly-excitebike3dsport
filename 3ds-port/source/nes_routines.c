@@ -1167,7 +1167,7 @@ uint8_t nesSubCB13ComputeSpriteCode(uint8_t yIn, uint8_t ram0046Flag)
 
 void nesSubCFE3ClearObjectFlags(uint8_t x, uint8_t ram005C[256])
 {
-    if (ram005C != NULL) ram005C[x] = (uint8_t)(ram005C[x] & 0xF0u);
+    if (ram005C != NULL) nesSubCFE3MaskFlags(&ram005C[x]);
 }
 
 /* sub_D24F: STA $2001 with A=0. The caller applies this value to its PPU. */
