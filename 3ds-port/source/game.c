@@ -1,24 +1,30 @@
 #include "game.h"
 #include "asset_extractor.h"
+#include "game_state.h"
 #include "input.h"
+#include "menus.h"
 #include "renderer.h"
 
 /*
- * Faithful-baseline runtime.
+ * Runtime routing:
+ * - cold boot remains the diagnostic/CHR-inspector screen;
+ * - START leaves diagnostics and enters the source-derived menu state machine;
+ * - menu updates are now in the active 3DSX frame loop.
  *
- * The partial C menu trace and generic bike/track physics are intentionally
- * not executed as gameplay: they are not a complete translation of the NES
- * program. Until the source-driven menu/PPU path and gameplay dependencies
- * are complete, the only enabled UI is the explicitly diagnostic CHR viewer.
+ * The native menu model is still incomplete and menusRender currently reports
+ * its state rather than reproducing the original PPU image. Do not describe
+ * this integration point as a faithful title-screen implementation.
  */
 static InputState s_input;
-static int s_gameStarted;
+static GameState s_menuState;
+static int s_menuActive;
 
 void gameInit(const char *executablePath)
 {
     s_input.held = 0u;
     s_input.pressed = 0u;
-    s_gameStarted = 0;
+    s_menuActive = 0;
+    gameStateReset(&s_menuState);
     rendererInit();
     assetExtractorInit(executablePath);
 }
@@ -26,23 +32,32 @@ void gameInit(const char *executablePath)
 void gameUpdate(void)
 {
     inputUpdate(&s_input);
-    if (!s_gameStarted && (s_input.pressed & KEY_START) != 0u) {
-        s_gameStarted = 1;
-        rendererSetGameStarted(1);
+
+    if (!s_menuActive) {
+        if ((s_input.pressed & KEY_START) != 0u) {
+            gameStateReset(&s_menuState);
+            s_menuActive = 1;
+            rendererSetMenuActive(1);
+            return;
+        }
+        assetExtractorUpdate(s_input.pressed);
         return;
     }
-    if (s_gameStarted && (s_input.pressed & KEY_B) != 0u) {
-        s_gameStarted = 0;
-        rendererSetGameStarted(0);
+
+    /* B is retained as an explicit escape hatch back to diagnostics. */
+    if ((s_input.pressed & KEY_B) != 0u) {
+        s_menuActive = 0;
+        rendererSetMenuActive(0);
         return;
     }
-    if (!s_gameStarted) assetExtractorUpdate(s_input.pressed);
+
+    menusUpdate(&s_menuState, s_input.held, s_input.pressed);
 }
 
 void gameRender(void)
 {
     rendererBeginFrame();
-    rendererDraw(NULL);
+    rendererDraw(s_menuActive ? &s_menuState : NULL);
     rendererEndFrame();
 }
 
