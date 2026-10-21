@@ -94,9 +94,10 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
 
 **Evidence available at the time of this log:**
-- Host regression workflow passed at commit `570e3b2129f04142a059285c316cfd6590a5af6f`, including CHR decoding, native PNG/binary export, PPU command-list interpretation, and seven source palette streams: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39593772928
-- 3DS build passed at source revision `d78375d4d2d6a18aced671b1d8898c42b8b646f3` (including the advanced palette view): https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39593711247
-- A newer build/test run is pending for the latest documentation/test-only commit; the runtime code itself compiled successfully at the linked source revision.
+- Host regression workflow passed at commit `377c548c2f8dfc97470b0617df5324ea73d28824`, including CHR decoding, native PNG/binary export, seven palette streams, and 17 source PPU snapshot exports: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594834025
+- 3DS build passed at source revision `3c41a1ecf3d5303fb2c715db7ef540fca2b01ee7`, including native source PPU stream snapshots: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39594756480
+- A newer build is pending for a test-only change; the runtime source is unchanged from the successful build revision.
+- No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity.
 - No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity.
 
 ### Acceptance record template
