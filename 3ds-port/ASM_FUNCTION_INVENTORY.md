@@ -310,3 +310,6 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 
 
 | `$CB2C` | `nesSubCB2CDispatchAddress` | Translated + regression vectors for all four handler-table entries; CI pending, dispatcher integration pending | — |
+
+
+| `$CBA3` | `nesLocCBA3SetTimerAndAdvance` | Translated; host regression vector added for normal increment and 8-bit wrap; CI/build verification pending | Shared exit used by menu handler states 3/6/11; caller branches and PPU dependencies remain incomplete |
