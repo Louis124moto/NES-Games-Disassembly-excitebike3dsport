@@ -537,6 +537,6 @@ The dispatch table `tbl_C000` confirms state 0 -> `ofs_000_C346_00`, state 1 -> 
 - State 0: bound-3 `sub_C7DE` input, `tbl_C080_spr_Y` cursor positions, the selection-dependent state 1/8 transition, writes to `$03F0/$03F2/$03F3/$03F7` and `$0043/$004A`, and `sub_C3B1` effects.
 - State 1: the original `$F3` input mask plus LEFT/RIGHT bit remapping, bound-5 `sub_C7DE`, `tbl_C083_spr_X` cursor positions, `bra_C411` sprite X/attribute/flag writes, and state advance through `sub_C3AF` plus `sub_C3B1`.
 - State 8: bound-6 `sub_C7DE`, six selection indices (0–5), `tbl_C08B_spr_Y` cursor positions, all confirmation branches, and the choice-5 `loc_CA85_clear_0021_00FF` RAM-clear path.
-- `sub_D310` is reused for the relevant timer bytes `$30/$31` with the `$20` 10-frame divider. Unmodeled timer bytes are treated as zero in this menu trace.
+- `sub_D310` is reused through `nesSubD310DecreaseMenuTimers` for timer bytes `$30/$31` with the `$20` 10-frame divider. Unmodeled timer bytes are treated as zero in this menu trace. Regression vectors cover the initial rollover and the 10-frame interval.
 
 These are CPU-side control-flow translations. They do not yet reproduce the full reset/startup command sequencer, PPU nametable/CHR upload, original audio, or destination states 9/12/13. Tests are wired but not executed on the current commit.
