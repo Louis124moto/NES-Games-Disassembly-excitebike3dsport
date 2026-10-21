@@ -31,6 +31,8 @@ static char s_lastLog[512];
 static int s_logInitialized;
 static int s_gameStarted;
 static int s_menuActive;
+/* Static storage avoids putting a 184 KiB NES RGB frame on the 3DS stack. */
+static uint8_t s_ppuRgb[NES_PPU_RGB_BYTES];
 
 /*
  * Draw a source-derived NES background centered on the 400x240 top screen.
@@ -42,7 +44,6 @@ static int rendererDrawPpuBackground(const GameState *state)
     u16 width = 0u, height = 0u;
     uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     const uint8_t *pixels;
-    uint8_t rgb[NES_PPU_RGB_BYTES];
     size_t tileCount = 0u;
     unsigned int x, y;
 
@@ -53,7 +54,7 @@ static int rendererDrawPpuBackground(const GameState *state)
             pixels, tileCount,
             state->menu_ppu_nametables,
             &state->menu_ppu_nametables[NES_PPU_NAMETABLE_BYTES],
-            state->menu_ppu_palette, rgb, sizeof(rgb)) != NES_PPU_RENDER_OK) {
+            state->menu_ppu_palette, s_ppuRgb, sizeof(s_ppuRgb)) != NES_PPU_RENDER_OK) {
         return 0;
     }
 
@@ -63,9 +64,9 @@ static int rendererDrawPpuBackground(const GameState *state)
         for (x = 0u; x < NES_PPU_WIDTH; ++x) {
             const size_t src = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
             const size_t dst = topFramebufferOffset(x + 72u, y);
-            framebuffer[dst] = rgb[src];
-            framebuffer[dst + 1u] = rgb[src + 1u];
-            framebuffer[dst + 2u] = rgb[src + 2u];
+            framebuffer[dst] = s_ppuRgb[src];
+            framebuffer[dst + 1u] = s_ppuRgb[src + 1u];
+            framebuffer[dst + 2u] = s_ppuRgb[src + 2u];
         }
     }
     return 1;
@@ -141,10 +142,17 @@ void rendererDraw(const GameState *state)
     size_t tileCount = 0u;
     (void)assetExtractorGetPixels(&tileCount);
     if (s_menuActive && state != NULL) {
-        consoleSelect(NULL);
-        consoleClear();
-        menusRender(state);
-        consoleSelect(&s_bottomConsole);
+        if (!rendererDrawPpuBackground(state)) {
+            consoleSelect(&s_bottomConsole);
+            consoleClear();
+            menusRender(state);
+        } else {
+            consoleSelect(&s_bottomConsole);
+            consoleClear();
+            fputs("EXCITEBIKE 3DS / PPU BACKGROUND\n"
+                  "Source-derived nametable rendered.\n"
+                  "Sprite/OAM composition is not yet enabled.\n", stdout);
+        }
         s_logInitialized = 0;
         return;
     }
