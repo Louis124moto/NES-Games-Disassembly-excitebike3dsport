@@ -34,12 +34,13 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Audit the current extractor and its real 3DSX startup path against every requirement above.
 - [ ] Verify supported ROM/header and graphics-memory cases from source evidence; document unsupported cases instead of implying universal compatibility.
 - [x] Extract and display raw CHR/pattern data from iNES/NES 2.0 CHR-ROM or a standalone raw CHR file; report CHR-RAM as requiring runtime PPU capture. The atlas is currently limited to 960 decoded tiles.
-- [ ] Trace and extract source-confirmed palette data from actual PPU writes; do not infer active palette assignments from palette tables alone.
+- [ ] Trace active palette selection and all live-state write paths; seven source-defined palette command streams are now replayed with `sub_D3C1` semantics and exported, but their active assignment for each game state is not yet proven.
 - [ ] Implement and validate available nametable/attribute data, bank context, and any proven compressed/generated graphics path.
 - [ ] Provide an NES-rendered view only when all inputs needed for the displayed region are source-derived; mark missing portions explicitly.
 - [ ] Add sprite/OAM, priority, scroll, animation, and PPU state/address diagnostics to the extent supported by verified runtime capture/source analysis.
-- [ ] Implement D-pad/A/B navigation, simple/advanced modes, top-screen viewing, and bottom-screen status/diagnostics.
-- [ ] Implement SD-card export for PNG and all useful verified binary formats (CHR, palettes, nametable/attributes, and additional formats where applicable).
+- [x] Implement basic D-pad/A/B navigation, simple CHR-atlas and advanced palette views, top-screen imagery, and bottom-screen status/diagnostics. Hardware usability validation remains open.
+- [x] Implement SD-card exports for raw CHR, decoded pixels, PNG atlas, seven source palette snapshots, write masks, and palette command streams.
+- [ ] Add verified nametable/attribute exports and any additional source-confirmed runtime data formats.
 - [ ] Validate cold start, cache hit/miss, re-extraction, stale-cache rejection, malformed/unsupported input, bounds, output correctness, and repeated navigation.
 - [ ] Run the complete host test suite and a 3DS build on the exact same commit; record links and commit SHA.
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
@@ -80,18 +81,19 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Vendor public-domain `stb_image_write` v1.16 and generate a native PNG tile atlas without a PC-side tool.
 - [x] Export `extracted/chr_raw.bin`, `extracted/chr_pixels.bin`, `extracted/chr_atlas.png`, and `extracted/manifest.txt` from the 3DS runtime.
 - [x] Version the internal cache separately as `extracted/chr_cache.bin`.
-- [x] Add a host regression test checking PNG signature, raw-byte preservation, decoded-pixel preservation, and explicit palette limitations.
+- [x] Add host regression tests for raw-byte preservation, decoded pixels, PNG signature, source PPU command-list semantics, palette mirror behavior, all seven source palette snapshots, and explicit limits.
 - [x] Keep the original menu path locked while the extractor stage is not accepted.
-- [ ] Complete source-derived PPU palette/nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
+- [x] Add a source-derived PPU command-list interpreter and export seven verified palette command streams from `bank_FF.asm` D3D6–D450.
+- [ ] Trace which palette list is active in each game state; complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
 - [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
-- [ ] Finish UI and error-path tests, including malformed headers, missing ROM, failed writes, stale cache, repeated extraction, and navigation.
+- [ ] Finish UI and error-path tests, including malformed headers, missing source, failed writes, stale cache, repeated extraction, palette navigation, and viewer mode changes.
 - [ ] Validate on physical New Nintendo 3DS and compare extracted data against the ROM/source reference.
 - [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
 
 **Evidence available at the time of this log:**
-- Host regression workflow passed at commit `06ae1b43d7cf74c478f94e79792acef5476d8f4f`: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39592026016
-- 3DS build passed at commit `06ae1b43d7cf74c478f94e79792acef5476d8f4f`: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39592026107
-- Later source-only status-handling changes are still awaiting a fresh exact-commit build/test result at the time this log is written.
+- Host regression workflow passed at commit `570e3b2129f04142a059285c316cfd6590a5af6f`, including CHR decoding, native PNG/binary export, PPU command-list interpretation, and seven source palette streams: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39593772928
+- 3DS build passed at source revision `d78375d4d2d6a18aced671b1d8898c42b8b646f3` (including the advanced palette view): https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39593711247
+- A newer build/test run is pending for the latest documentation/test-only commit; the runtime code itself compiled successfully at the linked source revision.
 - No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity.
 
 ### Acceptance record template
