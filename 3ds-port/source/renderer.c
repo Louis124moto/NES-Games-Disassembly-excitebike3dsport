@@ -8,21 +8,14 @@
 #include "nes_ppu_commands.h"
 
 /*
- * gfxGetFramebuffer reports the top screen as 240x400 memory coordinates,
- * rotated relative to its physical 400x240 presentation. Convert physical
- * screen (x,y) to framebuffer coordinates before applying the 8x8 tile layout.
+ * libctru's default framebuffer is BGR8 and stored sideways: physical
+ * (x,y) maps to byte offset ((x * 240) + (239 - y)) * 3.
+ * This is linear rotated storage, NOT an 8x8-tiled framebuffer.
  */
 static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
 {
-    /* libctru exposes the rotated top framebuffer as 240x400.
-       Physical screen (x,y) maps to framebuffer (y, 399-x). */
-    const unsigned int fbX = screenY;
-    const unsigned int fbY = 399u - screenX;
-    const unsigned int tileY = fbY >> 3u;
-    return ((((fbX >> 3u) * 50u) + tileY) * 64u
-            + (fbX & 7u) * 8u + (fbY & 7u)) * 3u;
+    return (((size_t)screenX * 240u) + (239u - screenY)) * 3u;
 }
-
 
 static PrintConsole s_bottomConsole;
 static char s_lastLog[512];
@@ -71,9 +64,9 @@ static int rendererDrawPpuBackground(const GameState *state)
         for (x = 0u; x < NES_PPU_WIDTH; ++x) {
             const size_t src = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
             const size_t dst = topFramebufferOffset(x + 72u, y);
-            framebuffer[dst] = s_ppuRgb[src];
+            framebuffer[dst] = s_ppuRgb[src + 2u];
             framebuffer[dst + 1u] = s_ppuRgb[src + 1u];
-            framebuffer[dst + 2u] = s_ppuRgb[src + 2u];
+            framebuffer[dst + 2u] = s_ppuRgb[src];
         }
     }
     return 1;
@@ -138,9 +131,9 @@ static void rendererDrawChrAtlas(void)
                     framebuffer[destOffset + 1u] = shade;
                     framebuffer[destOffset + 2u] = shade;
                 } else {
-                    framebuffer[destOffset] = s_sourcePpuRgb[sourceOffset];
+                    framebuffer[destOffset] = s_sourcePpuRgb[sourceOffset + 2u];
                     framebuffer[destOffset + 1u] = s_sourcePpuRgb[sourceOffset + 1u];
-                    framebuffer[destOffset + 2u] = s_sourcePpuRgb[sourceOffset + 2u];
+                    framebuffer[destOffset + 2u] = s_sourcePpuRgb[sourceOffset];
                 }
             }
         }
@@ -160,9 +153,9 @@ static void rendererDrawChrAtlas(void)
             for (y = 1u; y < 59u; ++y) {
                 for (x = 1u; x < 49u; ++x) {
                     const size_t offset = topFramebufferOffset(cellX + x, cellY + y);
-                    framebuffer[offset] = rgb[0];
+                    framebuffer[offset] = rgb[2];
                     framebuffer[offset + 1u] = rgb[1];
-                    framebuffer[offset + 2u] = rgb[2];
+                    framebuffer[offset + 2u] = rgb[0];
                 }
             }
         }
@@ -210,9 +203,9 @@ static void rendererDrawChrAtlas(void)
                         const unsigned int x = tileX + col * 2u + dx;
                         const unsigned int y = tileY + row * 2u + dy;
                         const size_t offset = topFramebufferOffset(x, y);
-                        framebuffer[offset + 0u] = rgb[0];
+                        framebuffer[offset + 0u] = rgb[2];
                         framebuffer[offset + 1u] = rgb[1];
-                        framebuffer[offset + 2u] = rgb[2];
+                        framebuffer[offset + 2u] = rgb[0];
                     }
                 }
             }
