@@ -39,6 +39,7 @@ static int s_attempted;
 static size_t s_page;
 static unsigned int s_viewMode;
 static size_t s_paletteIndex;
+static size_t s_ppuStreamIndex;
 static char s_status[160] = "Starting native CHR extraction...";
 
 static void setStatus(const char *message)
@@ -370,6 +371,7 @@ void assetExtractorInit(const char *executablePath)
     s_page = 0u;
     s_viewMode = 0u;
     s_paletteIndex = 0u;
+    s_ppuStreamIndex = 0u;
     s_tileCount = 0u;
     if (pathValid) {
         /*
@@ -403,12 +405,17 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             (void)exportCurrentRomAssets();
         }
     }
-    if (s_active && (pressedKeys & (KEY_UP | KEY_DOWN)) != 0u) {
-        s_viewMode = s_viewMode == 0u ? 1u : 0u;
+    if (s_active && (pressedKeys & KEY_UP) != 0u) {
+        s_viewMode = (s_viewMode + 1u) % 3u;
+    } else if (s_active && (pressedKeys & KEY_DOWN) != 0u) {
+        s_viewMode = (s_viewMode + 2u) % 3u;
     }
     if (s_active && s_viewMode == 1u) {
         if ((pressedKeys & KEY_RIGHT) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
         if ((pressedKeys & KEY_LEFT) != 0u) s_paletteIndex = (s_paletteIndex + 6u) % 7u;
+    } else if (s_active && s_viewMode == 2u) {
+        if ((pressedKeys & KEY_RIGHT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
+        if ((pressedKeys & KEY_LEFT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + NES_EXCITEBIKE_PPU_STREAM_COUNT - 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
     } else {
         if ((pressedKeys & KEY_RIGHT) != 0u && s_tileCount > 0u) {
             const size_t pages = (s_tileCount + 374u) / 375u;
@@ -460,4 +467,9 @@ unsigned int assetExtractorGetViewMode(void)
 size_t assetExtractorGetPaletteIndex(void)
 {
     return s_paletteIndex;
+}
+
+size_t assetExtractorGetPpuStreamIndex(void)
+{
+    return s_ppuStreamIndex;
 }
