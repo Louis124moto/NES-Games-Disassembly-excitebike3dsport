@@ -506,3 +506,6 @@ The following routines were cross-read against `Excitebike/bank_FF.asm`. This is
 - `sub_CFEA` — CPU `$CFEA`, ROM offset `$000FFA`. Calls `sub_CFE3` (`A=$F0`, AND with `ram_005C_obj,X`, preserving the upper nibble and clearing the lower nibble), sets `Y=1`, then returns if `ram_007C_obj,X` is zero or equal to `ram_00AC_obj,X`. Otherwise it ORs `1` for unsigned less-than or `2` for unsigned greater-than into the flag byte. The C helper matches this modeled byte effect.
 - Host test coverage was expanded for `sub_CFDB` over every flag byte and `ram_0094` byte, for all high-byte pairs in `sub_CFCB` plus low-byte edge comparisons, and exhaustively over A/operand/initial-flag bytes for `sub_CFEA`. The test code is wired into `test_nes_routines.c`; **execution is pending** and must be confirmed by a host test run before status is upgraded.
 - None of these helper translations is yet proven gameplay-integrated or end-to-end fidelity-verified.
+
+
+- `sub_CFE3` — CPU `$CFE3`, ROM offset `$000FF3`. Added as a separate byte-level helper: `LDA #$F0; AND ram_005C_obj,X; STA ram_005C_obj,X; RTS`. The C implementation preserves the upper nibble and clears the lower nibble. `sub_CFEA` now calls this helper before adding its comparison marker, matching the original call dependency. An exhaustive 256-input regression is wired but execution remains pending.
