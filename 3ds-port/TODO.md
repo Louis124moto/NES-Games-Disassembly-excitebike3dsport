@@ -26,8 +26,8 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
 | Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
-| Latest batch host test execution | **Passed** in [CI run 39525039178](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039178) (revision `2fb6e14`). |
-| Latest batch 3DS build | **Passed** in [CI run 39525039042](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039042) (revision `2fb6e14`). |
+| Latest host routine test execution | **Passed** in [CI run 39576697188](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188) (revision `4661d20`), including the C485, C621, C43D and CB2C regression vectors. |
+| Latest completed 3DS build | **Passed** in [CI run 39576523425](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576523425) (revision `910d26e`), including C485, C621 and C43D; the build including the later CB2C change is still pending. |
 | Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Finish the complete menu first; then implement and validate Course 1 only. Courses 2+ are explicitly deferred. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
@@ -61,6 +61,8 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [ ] Record a confirmed baseline for the current branch's host tests and 3DS build.
 
 ## Immediate priority — finish the complete menu, then Course 1 only
+
+**Latest evidence:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
 
 **Execution order is mandatory:** do not begin the course implementation until the menu has passed its end-to-end acceptance gate. Do not implement courses 2+ in parallel with Course 1.
 
