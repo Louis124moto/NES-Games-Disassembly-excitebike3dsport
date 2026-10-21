@@ -662,3 +662,10 @@ The call from `sub_E96C` enters with the caller's X preserved. The first block c
 - ASM is exactly `LDA #$00; JMP loc_C92C`. The native `nesSubC5A7SelectMenuTableEntry` wrapper passes A=`$00` into the shared C92C/C53E table path and preserves the same scratch outputs.
 - Regression coverage checks that `$0003` receives zero and that the selected three-byte table tuple matches the corrected `$0046/$03F2` index path.
 - This is an isolated routine translation only; `ofs_001_C485_03_05` and the complete state-3 setup list remain incomplete.
+
+
+## Shared menu table reader `sub_C53A` (2026-10-21)
+
+- `sub_C53A` copies `$0043` to scratch `$0002`, then falls through into `sub_C53E`; it does not write `$0003`.
+- `nesSubC53AReadMenuTuple` reuses the verified `sub_CB06/sub_CB13` lookup while preserving the caller's `$0003` value. Regression coverage checks the scratch preservation and tuple bytes.
+- The helper is not yet connected to the full `ofs_001_C485_03_05` comparison/branch sequence.
