@@ -212,7 +212,16 @@ void assetExtractorInit(const char *executablePath)
     s_active = 0;
     s_attempted = 0;
     s_tileCount = 0u;
-    if (pathValid) setStatus("Press Y to load/extract CHR texture data.");
+    if (pathValid) {
+        /*
+         * Load the cache or attempt extraction immediately so the bottom-screen
+         * log reports the result on startup without requiring the user to open
+         * the viewer first. Y now toggles the atlas; X retries extraction.
+         */
+        s_attempted = 1;
+        setStatus("Checking CHR cache and ROM...");
+        if (!loadExtractedCache()) loadChrRom();
+    }
 }
 
 void assetExtractorUpdate(unsigned int pressedKeys)
