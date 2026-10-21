@@ -2077,8 +2077,17 @@ static int testBatchAdditional20(void)
     {
         uint8_t cpuRam[2048]={0}, r2=0u,r3=0u,r5=0u,r6=0u,r7=0u;
         cpuRam[0x5A9u]=0xA1u;cpuRam[0x5AAu]=0xA2u;cpuRam[0x5ABu]=0xA3u;
-        nesSubC92CSelectTableEntry(0x37u,2u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
-        if(r2!=2u||r3!=0x37u||r5!=0xA1u||r6!=0xA2u||r7!=0xA3u)return 22;
+        cpuRam[0x5B9u]=0xB1u;cpuRam[0x5BAu]=0xB2u;cpuRam[0x5BBu]=0xB3u;
+        cpuRam[0x5C3u]=0xC1u;cpuRam[0x5C4u]=0xC2u;cpuRam[0x5C5u]=0xC3u;
+        /* Y=2 => base 6; $0046 ORs $10; $03F2 then adds $23. */
+        nesSubC92CSelectTableEntry(0x37u,2u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=2u||r3!=0x37u||r5!=0xB1u||r6!=0xB2u||r7!=0xB3u)return 22;
+        /* Without $0046, the same path selects base 6 + $23 = $29. */
+        nesSubC92CSelectTableEntry(0x00u,2u,0u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=2u||r3!=0u||r5!=0xA1u||r6!=0xA2u||r7!=0xA3u)return 37;
+        /* Y=5 takes the special $20 path and ignores the $0046 bank bit. */
+        nesSubC92CSelectTableEntry(0x00u,5u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
+        if(r2!=5u||r5!=0xC1u||r6!=0xC2u||r7!=0xC3u)return 38;
     }
     source7[1]=0xA2u; source7[4]=0xB4u;
     if(nesSubC935BuildCommand(25u,34u,68u,1u,source7,buf)!=8u)return 23;
