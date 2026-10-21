@@ -28,8 +28,8 @@ int main(void)
     }
     {
         const size_t p = (16u * 3u);
-        if (rgb[p] != 236u || rgb[p + 1u] != 238u || rgb[p + 2u] != 236u) {
-            /* palette[9] is 0x21 (RGB 236,238,236). */
+        if (rgb[p] != 76u || rgb[p + 1u] != 154u || rgb[p + 2u] != 236u) {
+            /* palette[9] is 0x21 (RGB 76,154,236). */
             free(pixels); free(rgb); return 4;
         }
     }
