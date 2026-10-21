@@ -24,17 +24,10 @@ static int menusRunSetupSequence(GameState *state)
          * attribute tables), then sub_D1A9 (reset both scroll registers).
          * $2001 is disabled by sub_D24F and $2000 becomes $10.
          */
-        unsigned int i;
         state->menu_sprite_y = 0xF8u;
-        memset(state->menu_oam, 0xF8, sizeof(state->menu_oam));
-        for (i = 0u; i < 2u; ++i) {
-            memset(&state->menu_ppu_nametables[i * 1024u], 0xFC, 960u);
-            memset(&state->menu_ppu_nametables[i * 1024u + 960u], 0, 64u);
-        }
-        state->menu_ppu_mask = 0u;
-        state->menu_scroll_x = 0u;
-        state->menu_scroll_y = 0u;
-        state->menu_ppu_ctrl = 0x10u;
+        nesSubC318InitializePpu(state->menu_oam, state->menu_ppu_nametables,
+                                &state->menu_scroll_x, &state->menu_scroll_y,
+                                &state->menu_ppu_ctrl, &state->menu_ppu_mask);
         state->menu_ram0044 = 1u;
         state->menu_sequence_preface_pending = 0u;
         return 1;
