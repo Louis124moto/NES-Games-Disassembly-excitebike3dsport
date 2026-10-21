@@ -14,6 +14,15 @@ static const uint8_t s_nesRgb[64][3] = {
  {204,210,120},{180,222,120},{168,226,144},{152,226,180},{160,214,228},{160,162,160},{0,0,0},{0,0,0}
 };
 
+int nesPpuColorToRgb(uint8_t nesColor, uint8_t rgb[3])
+{
+    if (rgb == NULL || nesColor > 0x3Fu) return 0;
+    rgb[0] = s_nesRgb[nesColor][0];
+    rgb[1] = s_nesRgb[nesColor][1];
+    rgb[2] = s_nesRgb[nesColor][2];
+    return 1;
+}
+
 int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
                           const uint8_t *nametable, const uint8_t *attributes,
                           const uint8_t *palette, uint8_t *rgb,
