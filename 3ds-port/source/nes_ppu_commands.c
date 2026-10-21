@@ -50,6 +50,10 @@ NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t strea
         uint8_t control;
         int repeat;
         uint8_t repeatedValue = 0u;
+        if (stream[offset] == 0u) {
+            *writeCount = writes;
+            return NES_PPU_COMMAND_OK;
+        }
         if (streamSize - offset < 3u) return NES_PPU_COMMAND_TRUNCATED;
         address = ((size_t)stream[offset] << 8u) | stream[offset + 1u];
         control = stream[offset + 2u];
@@ -115,8 +119,9 @@ NesPpuCommandResult nesExcitebikePaletteSnapshot(size_t index, uint8_t palette[3
                                       sizeof(ppuRam), &writes);
     if (result != NES_PPU_COMMAND_OK) return result;
     for (i = 0u; i < 32u; ++i) {
-        palette[i] = ppuRam[0x3F00u + i];
-        writtenMask[i] = ppuMask[0x3F00u + i];
+        const size_t mirroredAddress = mirrorPaletteAddress(0x3F00u + i);
+        palette[i] = ppuRam[mirroredAddress];
+        writtenMask[i] = ppuMask[mirroredAddress];
     }
     *writeCount = writes;
     return NES_PPU_COMMAND_OK;
