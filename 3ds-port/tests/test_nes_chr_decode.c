@@ -27,6 +27,18 @@ static int testDecodePlanesAndOffset(void)
     return 0;
 }
 
+static int testRawChrDecode(void)
+{
+    uint8_t raw[32] = {0};
+    uint8_t pixels[2u * 64u];
+    size_t count = 0u;
+    memset(&raw[16u], 0xFF, 8u);
+    if (nesChrDecodeRaw(raw, sizeof(raw), pixels, 2u, &count) != NES_CHR_DECODE_OK || count != 2u) return 1;
+    if (pixels[0] != 0u || pixels[64u] != 1u || pixels[71u] != 1u || pixels[72u] != 0u) return 2;
+    if (nesChrDecodeRaw(raw, sizeof(raw) - 1u, pixels, 2u, &count) != NES_CHR_DECODE_INVALID_RAW_SIZE) return 3;
+    return 0;
+}
+
 static int testTrainerAndInvalidHeaders(void)
 {
     uint8_t *rom = (uint8_t *)calloc(1u, 16u + 512u + 16384u + 8192u);
@@ -60,6 +72,8 @@ int main(void)
 {
     int result = testDecodePlanesAndOffset();
     if (result != 0) { fprintf(stderr, "CHR plane/offset test failed: %d\n", result); return 1; }
+    result = testRawChrDecode();
+    if (result != 0) { fprintf(stderr, "Raw CHR test failed: %d\\n", result); return 1; }
     result = testTrainerAndInvalidHeaders();
     if (result != 0) { fprintf(stderr, "CHR header/bounds test failed: %d\n", result); return 1; }
     puts("PASS: iNES CHR parser, trainer offset, 2bpp decode and invalid-input bounds.");
