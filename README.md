@@ -160,9 +160,9 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 
 ### Current runtime behavior
 
-- Put a legally obtained `rom.nes` iNES/NES 2.0 ROM beside the launched `.3dsx`.
+- Put either a legally obtained `rom.nes` iNES/NES 2.0 ROM or the project’s raw `CHR_ROM.chr` dump beside the launched `.3dsx`. The iNES file takes precedence if both are present.
 - On startup, the app checks the ROM fingerprint and cache, then extracts or reloads CHR-ROM tile pixels.
-- Exports are written beside the app in `extracted/`: `chr_raw.bin` (original CHR-ROM bytes), `chr_pixels.bin` (decoded 2bpp indices), `chr_atlas.png` (256×240 grayscale-index atlas), and `manifest.txt`.
+- Exports are written beside the app in `extracted/`: `chr_raw.bin` (original CHR bytes), `chr_pixels.bin` (decoded 2bpp indices), `chr_atlas.png` (256×240 grayscale-index atlas), and `manifest.txt`.
 - The internal decoded cache is `extracted/chr_cache.bin`; it is distinct from the exported pixel data.
 - Controls: D-pad left/right changes atlas pages; A opens the atlas and, while it is open, retries the export; B closes the atlas or retries extraction while the atlas is closed.
 - START is deliberately locked out of the menu until Stage 1 is accepted.
@@ -171,7 +171,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 ### Current hard limits and remaining work
 
 - The runtime accepts ROM files up to 8 MiB and decodes at most 960 tiles for the current atlas/cache. The raw CHR export preserves the entire validated CHR-ROM byte range; if it contains more than 960 tiles, the decoded preview currently contains only the first 960.
-- CHR-RAM is reported as requiring runtime PPU capture; it is not falsely treated as CHR-ROM.
+- CHR-RAM is reported as requiring runtime PPU capture; it is not falsely treated as CHR-ROM. The repository’s standalone `Excitebike/CHR_ROM.chr` can be copied beside the `.3dsx` under the exact name `CHR_ROM.chr` to inspect the verified raw 8 KiB CHR dump without a full ROM file.
 - Actual PPU palette RAM writes, nametable/attribute capture, CHR bank switching, compressed/generated PRG graphics, sprites/OAM, scrolling, timing, and the full advanced diagnostic UI are not yet integrated.
 - This implementation has not been accepted on physical New Nintendo 3DS hardware. Host tests and a successful 3DS build are necessary but not sufficient for the Stage 1 gate.
 
