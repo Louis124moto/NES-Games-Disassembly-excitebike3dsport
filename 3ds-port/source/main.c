@@ -6,7 +6,7 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    gameInit();
+    gameInit(argc > 0 ? argv[0] : NULL);
     while (aptMainLoop()) {
         gameUpdate();
         gameRender();
