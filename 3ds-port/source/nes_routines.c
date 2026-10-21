@@ -1700,6 +1700,22 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
 }
 
 /* sub_C3AF: INC ram_0041 (8-bit wrap is intentional). */
+/*
+ * Menu-only projection of sub_D310's RAM $0020 divider and $0030/$0031
+ * timers. Other timer bytes are not part of this small state model.
+ */
+void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030,
+                                  uint8_t *ram0031)
+{
+    uint8_t timers[29] = {0};
+    if (ram0020 == NULL || ram0030 == NULL || ram0031 == NULL) return;
+    timers[0x30u - 0x21u] = *ram0030;
+    timers[0x31u - 0x21u] = *ram0031;
+    nesSubD310DecreaseAllTimers(ram0020, timers);
+    *ram0030 = timers[0x30u - 0x21u];
+    *ram0031 = timers[0x31u - 0x21u];
+}
+
 void nesSubC3AFIncrementState(uint8_t *ram0041)
 {
     if (ram0041 != NULL) *ram0041 = (uint8_t)(*ram0041 + 1u);
