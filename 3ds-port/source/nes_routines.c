@@ -1988,6 +1988,8 @@ void nesSubC046Command1(uint8_t ram[65536])
     uint8_t a = 0x12u; /* LDA #con_0045_12 */
     if (ram[0x0041u] < 0x08u) {
         a = (uint8_t)(a + ram[0x0043u]); /* CLC / ADC ram_0043 */
+        /* BNE bra_C56E; a wrapped zero falls through ofs_001_C55E. */
+        if (a == 0u) a = 0x06u;
     }
     ram[0x0045u] = a;
 }
