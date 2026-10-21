@@ -913,8 +913,20 @@ static int testState2SetupCommands(void)
     return 0;
 }
 
+static int testLocCBA3SetTimerAndAdvance(void)
+{
+    uint8_t timer = 0xA5u;
+    uint8_t index = 0xFEu;
+    nesLocCBA3SetTimerAndAdvance(0x31u, &timer, &index);
+    if (timer != 0x31u || index != 0xFFu) return 1;
+    nesLocCBA3SetTimerAndAdvance(0x00u, &timer, &index);
+    if (timer != 0x00u || index != 0x00u) return 2;
+    return 0;
+}
+
 int main(void)
 {
+    if (testLocCBA3SetTimerAndAdvance() != 0) { fputs("FAIL: loc_CBA3 timer/state advance\\n", stderr); return 1; }
     if (testSubC455SelectState() != 0) { fputs("FAIL: menu command C455\\n", stderr); return 1; }
     if (testSubC55EC56A() != 0) { fputs("FAIL: menu commands C55E/C56A\\n", stderr); return 1; }
     {
