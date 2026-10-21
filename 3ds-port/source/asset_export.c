@@ -26,7 +26,6 @@
 static uint8_t s_atlas[ATLAS_RGB_BYTES];
 /* Full-size RGB output is static to avoid a 184 KiB stack allocation on 3DS. */
 static uint8_t s_ppuPreview[NES_PPU_RGB_BYTES];
-static const uint8_t s_gray[4] = {0u, 85u, 170u, 255u};
 
 static int makePath(char *out, size_t capacity, const char *directory, const char *name)
 {
@@ -77,7 +76,15 @@ static int writePixelPack(const char *path, const uint8_t *pixels, size_t tileCo
     }
 }
 
-static void buildAtlas(const uint8_t *pixels, size_t tileCount)
+/*
+ * A CHR tile stores only pixel indices, not a palette assignment. Emit four
+ * explicitly labelled variants for every source-defined palette preset rather
+ * than pretending that one palette assignment is correct for every tile.
+ * Missing palette entries are checkerboarded magenta/black.
+ */
+static void buildAtlas(const uint8_t *pixels, size_t tileCount,
+                       const uint8_t *palette, const uint8_t *paletteMask,
+                       unsigned int subpalette)
 {
     size_t tile, y, x;
     memset(s_atlas, 0, sizeof(s_atlas));
@@ -86,17 +93,25 @@ static void buildAtlas(const uint8_t *pixels, size_t tileCount)
         const size_t tileY = (tile / 32u) * 8u;
         for (y = 0u; y < 8u; ++y) {
             for (x = 0u; x < 8u; ++x) {
-                const uint8_t index = pixels[tile * 64u + y * 8u + x];
+                const uint8_t index = pixels[tile * 64u + y * 8u + x] & 3u;
+                const size_t paletteIndex = index == 0u ? 0u : (size_t)subpalette * 4u + index;
                 const size_t out = ((tileY + y) * ATLAS_WIDTH + tileX + x) * 3u;
-                const uint8_t value = s_gray[index & 3u];
-                s_atlas[out] = value;
-                s_atlas[out + 1u] = value;
-                s_atlas[out + 2u] = value;
+                uint8_t rgb[3];
+                if (paletteMask[paletteIndex] == 0u ||
+                    !nesPpuColorToRgb(palette[paletteIndex], rgb)) {
+                    const int light = (((x >> 1u) + (y >> 1u) + tileX + tileY) & 1u) != 0u;
+                    s_atlas[out] = light ? 255u : 32u;
+                    s_atlas[out + 1u] = 0u;
+                    s_atlas[out + 2u] = light ? 255u : 32u;
+                } else {
+                    s_atlas[out] = rgb[0];
+                    s_atlas[out + 1u] = rgb[1];
+                    s_atlas[out + 2u] = rgb[2];
+                }
             }
         }
     }
 }
-
 
 /*
  * Render one source-derived PPU snapshot using the same CHR/nametable/
@@ -194,11 +209,46 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
             (void)snprintf(status, statusCapacity, "Export path is too long.");
         return 0;
     }
-    buildAtlas(pixels, tileCount);
-    if (!writeBytes(rawPath, rawChr, rawChrBytes) ||
-        !writeBytes(pixelPath, pixels, tileCount * 64u) ||
-        !writePixelPack(pixelPackPath, pixels, tileCount) ||
-        !stbi_write_png(pngPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3, s_atlas, ATLAS_WIDTH * 3)) {
+    {
+        uint8_t palette[32], paletteMask[32];
+        size_t writes = 0u, paletteIndex;
+        if (nesExcitebikePaletteSnapshot(0u, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "Could not resolve source palette preset 12.");
+            return 0;
+        }
+        buildAtlas(pixels, tileCount, palette, paletteMask, 0u);
+        if (!writeBytes(rawPath, rawChr, rawChrBytes) ||
+            !writeBytes(pixelPath, pixels, tileCount * 64u) ||
+            !writePixelPack(pixelPackPath, pixels, tileCount) ||
+            !stbi_write_png(pngPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3, s_atlas, ATLAS_WIDTH * 3)) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
+            return 0;
+        }
+        for (paletteIndex = 0u; paletteIndex < NES_EXCITEBIKE_PALETTE_STREAM_COUNT; ++paletteIndex) {
+            unsigned int subpalette;
+            if (nesExcitebikePaletteSnapshot(paletteIndex, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) {
+                if (status != NULL && statusCapacity > 0u)
+                    (void)snprintf(status, statusCapacity, "Could not resolve source palette preset.");
+                return 0;
+            }
+            for (subpalette = 0u; subpalette < 4u; ++subpalette) {
+                char colorAtlasPath[512], fileName[64];
+                (void)snprintf(fileName, sizeof(fileName), "chr_atlas_palette_%lu_subpalette_%u.png",
+                               (unsigned long)(paletteIndex + 12u), subpalette);
+                if (!makePath(colorAtlasPath, sizeof(colorAtlasPath), directory, fileName)) return 0;
+                buildAtlas(pixels, tileCount, palette, paletteMask, subpalette);
+                if (!stbi_write_png(colorAtlasPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3,
+                                    s_atlas, ATLAS_WIDTH * 3)) {
+                    if (status != NULL && statusCapacity > 0u)
+                        (void)snprintf(status, statusCapacity, "Failed writing color atlas variants.");
+                    return 0;
+                }
+            }
+        }
+    }
+    {
         if (status != NULL && statusCapacity > 0u)
             (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
         return 0;
@@ -269,7 +319,8 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
         "Decoded pixels: chr_pixels.bin (raw compatibility file); chr_pixels.ebp (versioned EBPX tile pack, %lu tiles)\n"
         "EBPX v1 header: magic[4], version u16 LE, header size u16 LE, tile count u32 LE, tile width, height, pixel format (1=index byte), reserved; payload = 64 bytes/tile\n"
-        "Preview: chr_atlas.png (256x240 RGB; 32x30 tiles; grayscale index visualization)\n"
+        "Preview: chr_atlas.png (256x240 RGB; source palette preset 12, subpalette 0; palette assignment is illustrative, not per-tile truth)\n"
+        "Color variants: chr_atlas_palette_12..18_subpalette_0..3.png; one image per source palette preset and subpalette, unknown palette entries are magenta/black hatching\n"
         "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
         "Palette presets: ppu_palette_12..18.bin replay source PPU write lists; mask and stream binaries are included\n"
         "Presets are not a claim about which palette is active in a live menu state\n"
