@@ -5,6 +5,7 @@
 #include "nes_routines.h"
 
 static int testBatchAdditional20(void);
+static int testState2SetupCommands(void);
 static int testSubEC99Exact(void);
 static int testSubFF53Exact(void);
 
@@ -817,8 +818,55 @@ static int testState13Completion(void)
     return 0;
 }
 
+
+
+static int testState2SetupCommands(void)
+{
+    static uint8_t ram[65536];
+    unsigned int i;
+    memset(ram, 0xA5, sizeof(ram));
+    ram[0x0041u]=0x07u; ram[0x0043u]=0x03u;
+    nesSubC046Command1(ram);
+    if(ram[0x0045u]!=0x15u)return 1;
+    ram[0x0041u]=0x08u; ram[0x0045u]=0u;
+    nesSubC046Command1(ram);
+    if(ram[0x0045u]!=0x12u)return 2;
+
+    memset(ram,0xA5,sizeof(ram));
+    nesSubC046Command2(ram);
+    for(i=0x004Du;i<=0x00EFu;++i)if(ram[i]!=0u)return 3;
+    if(ram[0x004Cu]!=0xA5u||ram[0x00F0u]!=0xA5u)return 4;
+
+    memset(ram,0xA5,sizeof(ram));
+    nesSubC046Command3(ram);
+    if(ram[0x0000u]!=0u||ram[0x0001u]!=3u||ram[0x0045u]!=1u||ram[0x004Bu]!=0u)return 5;
+    if(ram[0x0002u]!=0xC0u||ram[0x0003u]!=0xFCu||ram[0x0004u]!=0x83u||ram[0x0005u]!=0x21u)return 6;
+    for(i=0x0340u;i<=0x03EFu;++i)if(ram[i]!=0u)return 7;
+    if(ram[0x033Fu]!=0xA5u||ram[0x03F0u]!=0xA5u)return 8;
+    for(i=0u;i<0x80u;++i)
+        if(ram[0x0400u+i]!=0x3Bu||ram[0x0480u+i]!=0x3Du||ram[0x0500u+i]!=0x3Du)return 9;
+    if(ram[0x0200u]!=0xBFu||ram[0x0201u]!=0xFFu||ram[0x0203u]!=0xF7u||
+       ram[0x00E8u]!=0x3Fu||ram[0x00E9u]!=0x1Fu||ram[0x00EBu]!=0x0Au||ram[0x00EAu]!=0x25u)return 10;
+
+    ram[0x0045u]=0u; nesSubC046Command4(ram); if(ram[0x0045u]!=0x17u)return 11;
+    nesSubC046Command5(ram); if(ram[0x0045u]!=0x0Eu)return 12;
+
+    memset(ram,0,sizeof(ram));
+    ram[0x0034u]=3u; ram[0x03F2u]=1u; ram[0x0019u]=0x03u;
+    if(nesSubC046Command6InitPrefix(ram)!=1u)return 13;
+    if(ram[0x0047u]!=1u||ram[0x0040u]!=1u||ram[0x0034u]!=3u||
+       ram[0x00E8u]!=0x34u||ram[0x00E9u]!=0x14u||ram[0x03F1u]!=0xA0u||
+       ram[0x03B4u]!=0x80u||ram[0x03B0u]!=0x80u||ram[0x03BDu]!=0xFFu||
+       ram[0x0370u]!=1u||ram[0x03BEu]!=2u)return 14;
+    if(ram[0x00B8u]!=0x0Eu||ram[0x00B9u]!=0x1Au||ram[0x00Bau]!=0x26u)return 15;
+    if(ram[0x0080u]!=0x38u||ram[0x0081u]!=0x48u||ram[0x0082u]!=0x58u)return 16;
+    puts("PASS: state-2 setup command RAM effects; C875 prefix explicitly reports unresolved dependencies.");
+    return 0;
+}
+
 int main(void)
 {
+    if (testState2SetupCommands() != 0) return 90;
     if (testState13Completion() != 0) { fputs("FAIL: state-13 completion\n", stderr); return 1; }
     if (testSubD310MenuTimers() != 0) { fputs("FAIL: sub_D310 menu timers\n", stderr); return 1; }
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
