@@ -2085,6 +2085,10 @@ static int testBatchAdditional20(void)
         /* C5A7 is exactly LDA #$00 / JMP loc_C92C. */
         nesSubC5A7SelectMenuTableEntry(2u,1u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=2u||r3!=0u||r5!=0xB1u||r6!=0xB2u||r7!=0xB3u)return 43;
+        /* C53A preserves $0003 while writing $0002 and the tuple. */
+        r3=0x66u;
+        nesSubC53AReadMenuTuple(2u,1u,1u,cpuRam,&r2,&r5,&r6,&r7);
+        if(r2!=2u||r3!=0x66u||r5!=0xB1u||r6!=0xB2u||r7!=0xB3u)return 44;
         /* Without $0046, the same path selects base 6 + $23 = $29. */
         nesSubC92CSelectTableEntry(0x00u,2u,0u,1u,cpuRam,&r2,&r3,&r5,&r6,&r7);
         if(r2!=2u||r3!=0u||r5!=0xA1u||r6!=0xA2u||r7!=0xA3u)return 37;
