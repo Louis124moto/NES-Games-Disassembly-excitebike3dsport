@@ -44,7 +44,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
+          git add -f 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
           if git diff --cached --quiet; then
             echo "Build outputs are already up to date."
           else
