@@ -29,6 +29,8 @@ typedef enum {
  * PPU nametable/attribute/palette snapshots. No data is inferred here.
  * palette must contain the 16 background palette RAM values (0..63).
  */
+int nesPpuColorToRgb(uint8_t nesColor, uint8_t rgb[3]);
+
 int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
                           const uint8_t *nametable,
                           const uint8_t *attributes,
