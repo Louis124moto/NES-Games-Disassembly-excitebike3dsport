@@ -8,6 +8,5 @@
  * The checked-in fallback intentionally contains no artwork.
  */
 #define NES_CHR_TILE_COUNT 0u
-static const uint8_t nesChrPixels[1][64] = {{0u}};
 
 #endif
