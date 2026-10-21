@@ -326,6 +326,9 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
                             uint8_t *selection, uint8_t *repeatGuard,
                             uint8_t *timer30, uint8_t *timer31,
                             uint8_t *selectionChanged);
+void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
+                                uint8_t *ram0042, uint8_t *ram03F2,
+                                uint8_t *clearRamRequested);
 uint8_t nesSubCE58ObjectIndexMatches(uint8_t x, uint8_t ram004C);
 uint8_t nesLocCAFAFillCommand(uint8_t x, uint8_t ram0304To040Au[263]);
 void nesLocCD13CopySpriteTemplate(uint8_t oam[256], const uint8_t tblC150[8]);
