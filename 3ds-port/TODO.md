@@ -367,3 +367,18 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [ ] Run the host suite and 3DS build against the exact revision containing this helper.
 - [ ] Continue with `ofs_CB77_01` and `ofs_CBA4_02`; trace the `sub_C94B`, `sub_CC15`, `sub_CC6B`, `sub_CCCA`, and PPU/OAM dependencies before translating the complete handler path.
 - [ ] Keep states 3/6/11 out of the active runtime until their handlers and graphics/data dependencies are fully integrated and fidelity-checked.
+
+
+## Hardware-reported extractor/display defects — 2026-10-21
+
+- [x] Support NES 2.0 CHR-ROM size fields, including exponent/multiplier encoding within the runtime's 8 MiB ROM input limit.
+- [x] Add a decoder regression case for a valid NES 2.0 header with a standard 8 KiB CHR-ROM bank.
+- [x] Fix top-screen atlas addressing to use the Nintendo 3DS 8×8 tiled framebuffer layout; clear the top screen when the viewer is closed.
+- [x] Shorten bottom-screen diagnostic lines to prevent status/path/help text wrapping off-screen.
+- [ ] Run host decoder tests and the full host suite on the exact revision containing the NES 2.0 change.
+- [ ] Build the 3DS target on the same revision and confirm .3dsx and .elf outputs.
+- [ ] Test on hardware with the same ROM that produced the NES 2.0 error; confirm a nonzero tile count and visible atlas patterns.
+- [ ] Confirm that the ROM and cache paths resolve correctly in the actual homebrew launcher. If no tiles are found, capture the new status text and inspect the ROM's CHR-ROM/CHR-RAM declaration.
+- [ ] Check atlas pixel bounds and repeatedly test opening/closing with Y and B.
+
+**Important:** these source changes address the reported failure causes, but are not considered fixed until CI passes and the same ROM is tested on the 3DS. A CHR atlas only displays raw pattern tiles; it does not reproduce the NES menu without palette, nametable, attributes, sprite/OAM and PPU upload sequence.
