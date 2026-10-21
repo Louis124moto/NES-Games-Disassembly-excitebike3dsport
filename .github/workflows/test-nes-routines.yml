@@ -6,6 +6,7 @@ on:
       - "3ds-port/source/nes_routines.c"
       - "3ds-port/include/nes_routines.h"
       - "3ds-port/tests/**"
+      - "3ds-port/tools/**"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
@@ -21,6 +22,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Set up Python for extraction-tool tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Test Python CHR extraction tools
+        run: python -m unittest discover -s 3ds-port/tools -p 'test_*.py'
       - name: Compile host-side reference test
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
       - name: Exhaustively compare all 8-bit inputs
