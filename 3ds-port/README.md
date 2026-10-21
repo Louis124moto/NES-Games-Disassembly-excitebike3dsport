@@ -46,7 +46,7 @@ python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'
 make -C 3ds-port
 ```
 
-Latest verification on `e3459d1e518603b73375aaa9ff06215358c7e8a6`: Python extractor tests, host C routine regression tests, and runtime iNES decoder tests passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481254)). The matching 3DS build and artifact checks also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524481329)). These checks do not establish that the menu is visually or behaviorally complete.
+Latest verification on `d27ddb2d46ebaebf42fbd3797e1bd04768a02eae`: Python extractor tests, host C routine regression tests, and runtime iNES decoder tests passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743178)). The matching 3DS build and artifact checks also passed ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39524743181)). These checks do not establish that the menu is visually or behaviorally complete.
 
 ### Built-in runtime CHR extractor (on the 3DS)
 
