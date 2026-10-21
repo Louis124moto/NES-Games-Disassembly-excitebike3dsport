@@ -36,6 +36,9 @@ typedef struct {
     uint8_t menu_scroll_y;
     uint8_t menu_ppu_ctrl;
     uint8_t menu_ppu_mask;
+    /* Valid only after the source-derived menu path has populated these PPU values. */
+    uint8_t menu_ppu_background_ready;
+    uint8_t menu_ppu_palette[16];
     uint8_t menu_oam[256];
     /* CPU-side mirror of PPU $2000-$27FF used by sub_D23B/sub_D260. */
     uint8_t menu_ppu_nametables[2048];
