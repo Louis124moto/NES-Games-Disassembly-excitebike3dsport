@@ -354,7 +354,7 @@ uint8_t nesSubECC9CheckSpriteBytes(uint8_t y, const uint8_t ram0540[256], const 
 
 /* Exact source-level translation of ofs_001_C485_03_05.
  * ram is the flat 6502 address space; tblC091 is the original ROM table. */
-void nesSubC485UpdateMenuSelection(uint8_t ram[65536], const uint8_t tblC091[256]);
+void nesSubC485UpdateMenuSelection(uint8_t ram[65536], const uint8_t tblC091[258]);
 void nesSubC522SelectOptionTuple(uint8_t ram0043, uint8_t ram0046,
                                 const uint8_t cpuTable[256],
                                 uint8_t *ram0005, uint8_t *ram0006,
