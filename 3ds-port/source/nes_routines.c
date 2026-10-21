@@ -2028,8 +2028,6 @@ overflow_value:
                     a = (uint8_t)(a >> 1u); /* LSR A */
                 }
             }
-            ram[0x0008u] = ram0008;
-            ram[0x0009u] = ram0009;
             ram[0x000Au] = ram000A;
         }
     }
