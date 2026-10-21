@@ -36,12 +36,7 @@ void gameUpdate(void)
     inputUpdate(&s_input);
 
     if (!s_menuActive) {
-        if ((s_input.pressed & KEY_START) != 0u) {
-            gameStateReset(&s_menuState);
-            s_menuActive = 1;
-            rendererSetMenuActive(1);
-            return;
-        }
+        /* Stage 1 is not accepted yet: keep the original menu path locked. */
         assetExtractorUpdate(s_input.pressed);
         return;
     }
