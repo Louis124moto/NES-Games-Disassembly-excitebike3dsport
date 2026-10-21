@@ -175,12 +175,13 @@ void rendererDraw(const GameState *state)
             "CHR: %.36s\n"
             "Tiles: %lu / 960\n"
             "ROM: rom.nes beside 3DSX\n"
-            "Cache: extracted/chr_pixels.bin\n"
+            "Exports: extracted/chr_raw.bin + chr_pixels.bin\n"
+            "PNG: extracted/chr_atlas.png; see manifest.txt\n"
             "Atlas: %s\n"
             "Page: %lu/%lu (D-pad left/right)\n"
-            "Y: toggle atlas; START: enter menu trace\n"
-            "X: retry extraction; B: close atlas\n"
-            "Atlas uses grayscale 2bpp indices.\n",
+            "A: open/export; B: close/re-extract\n"
+            "START: menu locked until Stage 1 passes\n"
+            "Atlas is grayscale 2bpp indices, not game colors.\n",
             assetExtractorGetStatus(), (unsigned long)tileCount,
             assetExtractorIsActive() ? "OPEN" : "closed",
             (unsigned long)(assetExtractorGetPage() + 1u),
