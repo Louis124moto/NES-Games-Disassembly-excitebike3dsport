@@ -346,3 +346,15 @@ Source inspected directly in `Excitebike/bank_FF.asm`, CPU `$E96C-$EA43`, ROM of
 
 The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first Y-delta block (`$E96E-$E97D`). Its exhaustive test does not establish equivalence for the rest of `sub_E96C`.
 
+
+
+## Bottom-screen extraction log — 2026-10-21
+
+- [x] Start the runtime CHR cache/ROM check during initialization, so the result is available without first opening the atlas.
+- [x] Keep the bottom-screen console visible in normal runtime and show the current extraction/cache status, decoded tile count, expected ROM/cache locations, and viewer state.
+- [x] Keep the top-screen grayscale CHR atlas conditional on the viewer toggle; diagnostics do not pretend to be the original menu.
+- [ ] Run host tests and the 3DS build on the exact commit containing startup extraction and persistent logging.
+- [ ] On hardware, verify that the bottom screen reports a useful success or failure message with the ROM beside the launched `.3dsx`, that a cache hit is reported, and that X retries extraction while the viewer is open.
+- [ ] If `argv[0]` does not resolve to the SD path on the target homebrew launcher, replace it with a verified libctru/argv path solution and document the evidence.
+
+**Expected startup behavior:** the bottom screen shows `CHR status` and `Decoded tiles` immediately. A successful cache load should say “Loaded … CHR tiles from extracted cache”; a successful fresh extraction should say “Extracted … CHR tiles; cache saved.” Failures should show the decoder/file error. The atlas is still opened with Y; X retries extraction while it is open; B closes it. Hardware verification is still pending.
