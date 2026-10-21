@@ -326,6 +326,7 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
                             uint8_t *selection, uint8_t *repeatGuard,
                             uint8_t *timer30, uint8_t *timer31,
                             uint8_t *selectionChanged);
+void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030, uint8_t *ram0031);
 void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);
 void nesSubC3BDConfirmSelection(uint8_t actionX, uint8_t *ram0041,
