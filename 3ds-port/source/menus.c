@@ -218,15 +218,17 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
      */
     if (state->menu_ram0040 == 0u) {
         (void)menusRunSetupSequence(state);
-        if (pressedKeys & KEY_X) state->show_help = !state->show_help;
         return;
     }
 
     /*
      * sub_C7DE reads ram_btn_press ($0015), not ram_btn_hold ($0018).
+     * Map all eight physical 3DS face/d-pad buttons to the NES serial bit order.
      * Use the per-frame press edges supplied by inputUpdate. This prevents
      * a held 3DS key from being treated as a fresh NES press every frame.
      */
+    if (pressedKeys & KEY_A)      nesButtons |= 0x80u;
+    if (pressedKeys & KEY_B)      nesButtons |= 0x40u;
     if (pressedKeys & KEY_SELECT) nesButtons |= 0x20u;
     if (pressedKeys & KEY_START)  nesButtons |= 0x10u;
     if (pressedKeys & KEY_UP)     nesButtons |= 0x08u;
@@ -363,7 +365,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         state->menu_selection_changed = 0u;
     }
 
-    if (pressedKeys & KEY_X) state->show_help = !state->show_help;
 }
 
 void menusRender(const GameState *state)
