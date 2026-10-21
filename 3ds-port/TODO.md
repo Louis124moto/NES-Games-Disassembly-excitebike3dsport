@@ -72,6 +72,28 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Include remaining courses, opponents, results/scoring, menus, audio, reset and other original flows in the order supported by the source.
 - [ ] Never skip an unaccepted stage or work on a later feature as a substitute for finishing the current one.
 
+### Stage 1 implementation log — 2026-10-21 (NOT ACCEPTED)
+
+**Implemented in native C and committed directly to `main`:**
+- [x] Expose and validate the original CHR-ROM byte range for iNES/NES 2.0 ROMs, including trainer and PRG offsets.
+- [x] Keep the raw source CHR bytes separate from decoded 2bpp pixel indices.
+- [x] Vendor public-domain `stb_image_write` v1.16 and generate a native PNG tile atlas without a PC-side tool.
+- [x] Export `extracted/chr_raw.bin`, `extracted/chr_pixels.bin`, `extracted/chr_atlas.png`, and `extracted/manifest.txt` from the 3DS runtime.
+- [x] Version the internal cache separately as `extracted/chr_cache.bin`.
+- [x] Add a host regression test checking PNG signature, raw-byte preservation, decoded-pixel preservation, and explicit palette limitations.
+- [x] Keep the original menu path locked while the extractor stage is not accepted.
+- [ ] Complete source-derived PPU palette/nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
+- [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
+- [ ] Finish UI and error-path tests, including malformed headers, missing ROM, failed writes, stale cache, repeated extraction, and navigation.
+- [ ] Validate on physical New Nintendo 3DS and compare extracted data against the ROM/source reference.
+- [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
+
+**Evidence available at the time of this log:**
+- Host regression workflow passed at commit `06ae1b43d7cf74c478f94e79792acef5476d8f4f`: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39592026016
+- 3DS build passed at commit `06ae1b43d7cf74c478f94e79792acef5476d8f4f`: https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39592026107
+- Later source-only status-handling changes are still awaiting a fresh exact-commit build/test result at the time this log is written.
+- No physical New Nintendo 3DS test has been performed here. A CI pass does not validate hardware behavior or full extraction fidelity.
+
 ### Acceptance record template
 
 For every stage, add a dated record containing:
