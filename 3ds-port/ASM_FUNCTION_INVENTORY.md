@@ -74,6 +74,12 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CFE3` | `sub_CFE3` | Translated in C; exhaustive regression wired, execution pending | called by sub_CFEA |
 | `$CFEA` | `sub_CFEA` | Translated in C; exhaustive regression wired, execution pending | calls: sub_CFE3 |
 
+### Menu setup entry translations
+
+- `$C55E` (`ofs_001_C55E_*`, shared by setup lists 1/3/4/6): translated as `nesSubC55ESetState06`; writes only `ram[$0045] = $06`.
+- `$C56A` (`ofs_001_C56A_03_02`): translated as `nesSubC56ASetState04`; writes `ram[$0033] = $04` and then `ram[$0045] = $04`.
+- Regression vectors are wired in `testSubC55EC56A`. These are isolated entry translations; list dispatch and complete menu integration remain pending.
+
 ## $D000–$DFFF · input, timing and object state
 
 | CPU address | ASM label | Status | Calls / notes |
