@@ -1,5 +1,6 @@
 #include "game.h"
 #include "audio.h"
+#include "asset_extractor.h"
 #include "bike_physics.h"
 #include "collision.h"
 #include "game_state.h"
@@ -17,6 +18,7 @@ void gameInit(void)
     s_input.held = 0;
     s_input.pressed = 0;
     rendererInit();
+    assetExtractorInit();
     trackInit();
     audioInit();
 }
@@ -24,6 +26,11 @@ void gameInit(void)
 void gameUpdate(void)
 {
     inputUpdate(&s_input);
+    assetExtractorUpdate(s_input.pressed);
+    if (assetExtractorIsActive()) {
+        audioUpdate();
+        return;
+    }
     menusUpdate(&s_game, s_input.held, s_input.pressed);
     if (!s_game.paused && s_game.menu_asm_state == 2u &&
         s_game.menu_ram0040 != 0u) {
@@ -38,7 +45,11 @@ void gameRender(void)
 {
     rendererBeginFrame();
     rendererDraw(&s_game);
-    menusRender(&s_game);
+    if (assetExtractorIsActive()) {
+        /* The renderer shows the live CHR atlas and extractor status. */
+    } else {
+        menusRender(&s_game);
+    }
     rendererEndFrame();
 }
 
