@@ -2068,10 +2068,10 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
     ram[0x0370u] = 0x01u;
     ram[0x03BEu] = 0x02u;
 
-    lastX = (ram[0x03F2u] != 0u) ? 2u : 0u;
+    lastX = (ram[0x03F2u] != 0u) ? 3u : 0u;
     for (x = lastX + 1u; x-- > 0u;) {
         ram[0x00B8u + x] = startY[x];
-        ram[0x0064u + x] = 0x08u;
+        ram[0x0065u + x] = 0x08u;
         ram[0x00E0u + x] = objectE0[x];
         ram[0x0080u + x] = objectX[x];
         ram[0x00ACu + x] = 0x06u;
@@ -2080,14 +2080,31 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
         ram[0x00A8u + x] = 0x01u;
         ram[0x0074u + x] = (uint8_t)(ram[0x0019u + x] >> 1);
     }
-    x = (unsigned int)(ram[0x0019u] & 0x03u);
+    x = (unsigned int)(ram[0x0018u] & 0x03u);
     if (x == 0u) x = 2u;
     ram[0x0078u + x] = (uint8_t)(ram[0x0078u + x] >> 1u);
 
+    /* C8E0-C902: optional alternate-mode command buffer and DIV10. */
+    if (ram[0x0046u] != 0u && ram[0x0043u] == 0x04u) {
+        static const uint8_t tblC158[8] =
+            {0x07u, 0x23u, 0x78u, 0x04u, 0x1Du, 0xF8u, 0xFEu, 0xFEu};
+        uint8_t value = ram[0x03F3u];
+        uint8_t quotient = 0u;
+        uint8_t remainder;
+        for (i = 0u; i < 8u; ++i) ram[0x0300u + i] = tblC158[i];
+        while (value >= 10u) {
+            value = (uint8_t)(value - 10u);
+            quotient = (uint8_t)(quotient + 1u);
+        }
+        remainder = value;
+        ram[0x0307u] = remainder;
+        if (quotient != 0u) ram[0x0306u] = quotient;
+    }
+
     /*
-     * C8DE branches into the rest of the 6502 routine, which also calls
-     * sub_C522/sub_C53A and builds the PPU command buffer using source tables.
-     * Do not pretend those dependent effects have been executed here.
+     * C902 next calls sub_C522 and then conditionally sub_C53A, followed by
+     * sub_C935 and the final buffer writes. These are the remaining C875
+     * dependencies; return 1 rather than claim the full command has run.
      */
     return 1u;
 }
