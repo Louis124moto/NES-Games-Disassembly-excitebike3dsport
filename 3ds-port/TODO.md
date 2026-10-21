@@ -69,7 +69,7 @@ A project-wide total for translated/tested/integrated/fidelity-verified routines
 - [ ] Finish and integrate `ofs_001_C485_03_05` and validate its newly added regression vectors in CI. Its C translation and tests are present; CI verification is still pending.
 - [ ] Finish the remaining state-3 dependencies and command path, including `sub_C485`, the correct table/ROM data reads, and any callers affected by its RAM side effects.
 - [ ] Implement all required setup lists and transitions from `tbl_C01C_index`, `tbl_C02A_lo`, `tbl_C033_hi`, and `tbl_C000` in the original order; preserve the `$0040` alternate dispatch path, `$0030` timer gate, `$0044` wrap behavior, and `$C318` cleanup.
-- [ ] Finish state handlers and input/confirmation behavior, including currently incomplete states and the `sub_C621` dependency; do not enable a state whose dependencies remain partial.
+- [ ] Finish state handlers and input/confirmation behavior, including currently incomplete states; `sub_C621` now has an isolated byte-faithful 256-byte copy helper and regression vector, but must be integrated into its callers before those states are enabled.
 - [ ] Complete the race-start boundary needed to leave the menu correctly, including the full `C820/C875` dependency chain, without silently treating track initialization as a menu-only routine.
 - [ ] Reconstruct the original title/menu output from verified CHR indices, nametable data, attributes, palettes, OAM/sprite ordering, scroll and frame timing. The grayscale CHR atlas is diagnostic only.
 - [ ] Verify menu input, timers, transitions, selection/confirmation, and exit-to-race behavior against the original NES game.
