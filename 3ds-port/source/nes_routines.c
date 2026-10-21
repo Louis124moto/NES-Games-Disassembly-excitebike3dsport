@@ -2050,12 +2050,104 @@ void nesSubC046Command5(uint8_t ram[65536])
     ram[0x0045u] = 0x0Eu;
 }
 
+static uint8_t nesC046SelectionOffset(uint8_t selection, uint8_t alternate)
+{
+    uint8_t offset = (selection == 5u) ? 0x20u : (uint8_t)(selection * 3u);
+    if (alternate != 0u) offset = (uint8_t)(offset | 0x10u);
+    return offset;
+}
+
+static void nesC046DivideByTen(uint8_t value, uint8_t *quotient, uint8_t *remainder)
+{
+    uint8_t q = 0u;
+    while (value >= 10u) {
+        value = (uint8_t)(value - 10u);
+        q = (uint8_t)(q + 1u);
+    }
+    *quotient = q;
+    *remainder = value;
+}
+
+static void nesC046LoadCourseTriple(uint8_t ram[65536], uint8_t state)
+{
+    static const uint8_t tblC091ToC0C3[51] = {
+        0x01u,0x10u,0x00u, 0x01u,0x10u,0x00u, 0x01u,0x10u,0x00u,
+        0x01u,0x0Cu,0x00u, 0x01u,0x06u,0x00u, 0x00u,0x01u,0x18u,
+        0x00u,0x01u,0x16u, 0x00u,0x01u,0x0Au, 0x00u,0x01u,0x14u,
+        0x00u,0x01u,0x06u, 0x00u,
+        0x09u,0x0Bu,0x0Du,0x0Fu,0x0Eu,0x1Au,0x26u,0x32u,
+        0x38u,0x48u,0x58u,0x68u,0x18u,0x3Fu,0x28u,0x20u,
+        0x28u,0x38u,0x0Cu,0x00u
+    };
+    uint8_t offset = nesC046SelectionOffset(ram[0x0043u], ram[0x0046u]);
+    uint16_t address = (uint16_t)(0xC091u + offset);
+    uint8_t index = (uint8_t)(address - 0xC091u);
+    (void)state;
+    ram[0x0002u] = ram[0x0043u];
+    ram[0x0005u] = tblC091ToC0C3[index];
+    ram[0x0006u] = tblC091ToC0C3[(uint8_t)(index + 1u)];
+    ram[0x0007u] = tblC091ToC0C3[(uint8_t)(index + 2u)];
+}
+
+static void nesC046LoadRamCourseTriple(uint8_t ram[65536])
+{
+    uint8_t offset = nesC046SelectionOffset(ram[0x0043u], ram[0x03F2u]);
+    uint16_t address = (uint16_t)(0x0580u + offset);
+    ram[0x0002u] = ram[0x0043u];
+    ram[0x0005u] = ram[address];
+    ram[0x0006u] = ram[(uint16_t)(address + 1u)];
+    ram[0x0007u] = ram[(uint16_t)(address + 2u)];
+}
+
+static void nesC046BuildPpuCommand(uint8_t ram[65536], uint8_t tableIndex)
+{
+    uint8_t q, r;
+    unsigned int i;
+    uint8_t x = 5u;
+    (void)x;
+
+    /* sub_DF7F: decimal digits for ram[$0005..$0007] -> $03D1..$03D7. */
+    nesC046DivideByTen(ram[0x0007u], &q, &r);
+    ram[0x03D6u] = q;
+    ram[0x03D7u] = r;
+    nesC046DivideByTen(ram[0x0006u], &q, &r);
+    ram[0x03D3u] = q;
+    ram[0x03D4u] = r;
+    nesC046DivideByTen(ram[0x0005u], &q, &r);
+    ram[0x03D1u] = r; /* the quotient is intentionally discarded */
+
+    x = ram[0x0300u];
+    for (i = 0u; i < 7u; ++i) {
+        ram[(uint16_t)(0x0304u + x)] = ram[0x03D1u + i];
+        x = (uint8_t)(x + 1u);
+    }
+
+    /* sub_C971: LDA #$0A; CLC; ADC ram_0300; STA ram_0300. */
+    ram[0x0300u] = (uint8_t)(ram[0x0300u] + 0x0Au);
+    x = ram[0x0300u];
+
+    /* tbl_C0EC_ppu_address stores five big-endian PPU address pairs. */
+    {
+        static const uint8_t ppuAddressBytes[10] = {
+            0x21u,0xF2u, 0x23u,0x43u, 0x22u,0x32u,
+            0x22u,0x8Cu, 0x24u,0xCFu
+        };
+        uint8_t tableByteOffset = (uint8_t)(tableIndex);
+        ram[(uint16_t)(0x0301u + x)] = ppuAddressBytes[tableByteOffset];
+        ram[(uint16_t)(0x0302u + x)] = ppuAddressBytes[(uint8_t)(tableByteOffset + 1u)];
+    }
+    ram[(uint16_t)(0x0305u + x)] = 0xFBu;
+    ram[(uint16_t)(0x0308u + x)] = 0xFBu;
+    ram[(uint16_t)(0x0303u + x)] = 0x07u;
+    ram[(uint16_t)(0x030Bu + x)] = 0x00u;
+}
+
 uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
 {
     static const uint8_t startY[4] = {0x0Eu, 0x1Au, 0x26u, 0x32u};
     static const uint8_t objectE0[4] = {0x09u, 0x0Bu, 0x0Du, 0x0Fu};
     static const uint8_t objectX[4] = {0x38u, 0x48u, 0x58u, 0x68u};
-    unsigned int x, lastX, i;
+    unsigned int x, lastX;
 
     /* Literal writes at C875-C8A8. */
     ram[0x0047u] = (uint8_t)(ram[0x0047u] + 1u);
@@ -2080,8 +2172,10 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
         ram[0x0078u + x] = 0x06u;
         ram[0x0084u + x] = 0x01u;
         ram[0x00A8u + x] = 0x01u;
-        ram[0x0074u + x] = (uint8_t)(ram[0x0019u + x] >> 1);
+        ram[0x0074u + x] = (uint8_t)(ram[0x0019u + x] >> 1u);
     }
+
+    /* After the indexed loop X=$FF; LDA $19,X reads zero-page $18. */
     x = (unsigned int)(ram[0x0018u] & 0x03u);
     if (x == 0u) x = 2u;
     ram[0x0078u + x] = (uint8_t)(ram[0x0078u + x] >> 1u);
@@ -2090,23 +2184,34 @@ uint8_t nesSubC046Command6InitPrefix(uint8_t ram[65536])
     if (ram[0x0046u] != 0u && ram[0x0043u] == 0x04u) {
         static const uint8_t tblC158[8] =
             {0x07u, 0x23u, 0x78u, 0x04u, 0x1Du, 0xF8u, 0xFEu, 0xFEu};
-        uint8_t value = ram[0x03F3u];
-        uint8_t quotient = 0u;
-        uint8_t remainder;
-        for (i = 0u; i < 8u; ++i) ram[0x0300u + i] = tblC158[i];
-        while (value >= 10u) {
-            value = (uint8_t)(value - 10u);
-            quotient = (uint8_t)(quotient + 1u);
-        }
-        remainder = value;
+        uint8_t quotient, remainder;
+        for (x = 0u; x < 8u; ++x) ram[0x0300u + x] = tblC158[x];
+        nesC046DivideByTen(ram[0x03F3u], &quotient, &remainder);
         ram[0x0307u] = remainder;
         if (quotient != 0u) ram[0x0306u] = quotient;
     }
 
-    /*
-     * C902 next calls sub_C522 and then conditionally sub_C53A, followed by
-     * sub_C935 and the final buffer writes. These are the remaining C875
-     * dependencies; return 1 rather than claim the full command has run.
-     */
-    return 1u;
+    /* sub_C522: indexed ROM triple, then optional sub_C53A replacement. */
+    nesC046LoadCourseTriple(ram, ram[0x0041u]);
+    if (ram[0x0041u] >= 0x08u) nesC046LoadRamCourseTriple(ram);
+
+    /* C90E-C925: convert course position and prepare the first PPU command. */
+    {
+        uint8_t a = (uint8_t)((uint8_t)(ram[0x03F8u] << 1u) + ram[0x0006u]);
+        if (a >= 0x3Cu) {
+            a = (uint8_t)(a - 0x3Cu);
+            ram[0x0005u] = (uint8_t)(ram[0x0005u] + 1u);
+        }
+        ram[0x0006u] = a;
+        ram[0x0007u] = 0u;
+        ram[0x0003u] = 0x02u;
+    }
+    nesC046BuildPpuCommand(ram, 0x02u);
+
+    /* C92A-C935: load the second triple from RAM $0580+Y and build its command. */
+    ram[0x0002u] = ram[0x0043u];
+    ram[0x0003u] = 0x08u;
+    nesC046LoadRamCourseTriple(ram);
+    nesC046BuildPpuCommand(ram, 0x08u);
+    return 0u;
 }
