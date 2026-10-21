@@ -1972,6 +1972,17 @@ void nesSubC92CSelectTableEntry(uint8_t a, uint8_t ram0043, uint8_t ram0046,
     if (ram0007 != NULL) *ram0007 = cpuRam[0x0582u + index];
 }
 
+void nesSubC53AReadMenuTuple(uint8_t ram0043, uint8_t ram0046,
+                              uint8_t ram03F2, const uint8_t cpuRam[2048],
+                              uint8_t *ram0002, uint8_t *ram0005,
+                              uint8_t *ram0006, uint8_t *ram0007)
+{
+    /* sub_C53A stores $0043 in $0002, then falls through to sub_C53E.
+     * Passing NULL for $0003 preserves that scratch byte exactly. */
+    nesSubC92CSelectTableEntry(0u, ram0043, ram0046, ram03F2, cpuRam,
+                               ram0002, NULL, ram0005, ram0006, ram0007);
+}
+
 void nesSubC5A7SelectMenuTableEntry(uint8_t ram0043, uint8_t ram0046,
                                     uint8_t ram03F2, const uint8_t cpuRam[2048],
                                     uint8_t *ram0002, uint8_t *ram0003,
