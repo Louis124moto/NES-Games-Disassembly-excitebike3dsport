@@ -46,11 +46,20 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             &state->menu_repeat_guard, &state->menu_timer30,
             &state->menu_timer31, &changed);
         state->menu_selection_changed = changed;
+        if (state->menu_action_x == 0u) {
+            /* tbl_C08B_spr_Y indexed by ram_0042, exactly as bra_C3EA. */
+            static const uint8_t cursorY[6] = {
+                0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u
+            };
+            if (state->menu_selection < 6u)
+                state->menu_sprite_y = cursorY[state->menu_selection];
+        }
         if (state->menu_action_x != 0u) {
             nesSubC3BDConfirmSelection(
                 state->menu_action_x, &state->menu_asm_state,
                 &state->menu_selection, &state->menu_ram03F2,
-                &state->menu_clear_ram_requested);
+                &state->menu_clear_ram_requested,
+                &state->menu_ram0040, &state->menu_ram0044);
         }
 
         /*
