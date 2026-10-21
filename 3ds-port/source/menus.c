@@ -34,6 +34,22 @@ static int menusRunSetupSequence(GameState *state)
     }
 
     if (state->menu_ram0044 == 0u) return 1;
+
+    /*
+     * Never walk beyond a translated command table. In the 6502, this
+     * index is consumed by a real pointer table; incrementing indefinitely
+     * in the native stub would fabricate state and eventually wrap.
+     */
+    if (state->menu_asm_state == 0u) {
+        if (state->menu_ram0044 > 2u) return 1;
+    } else if (state->menu_asm_state == 1u) {
+        if (state->menu_ram0044 > 3u) return 1;
+    } else if (state->menu_asm_state == 8u) {
+        if (state->menu_ram0044 > 2u) return 1;
+    } else {
+        return 1; /* setup list is not translated; hold state for inspection */
+    }
+
     commandIndex = (uint8_t)(state->menu_ram0044 - 1u);
     state->menu_ram0044 = (uint8_t)(state->menu_ram0044 + 1u);
 
