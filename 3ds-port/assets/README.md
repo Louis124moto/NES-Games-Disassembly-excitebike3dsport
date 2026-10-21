@@ -33,3 +33,16 @@ The extractor decodes raw 2bpp tile patterns; it does not decompress arbitrary P
 - [ ] Map source tile indices to exact palette and background/sprite use.
 - [ ] Add a native 3DS rendering path and validate orientation, transparency, and palette colors.
 - [ ] Compare menu screenshots and selection states against the NES reference before claiming fidelity.
+
+
+## Native 3DS CHR atlas path
+
+The native renderer can display a decoded 2bpp CHR atlas on the top screen when the generated `include/nes_chr_assets.h` contains tiles. Generate that header from an actual ROM with CHR-ROM, or from a verified raw CHR dump:
+
+```sh
+python3 3ds-port/tools/nes_chr_to_c.py game.nes 3ds-port/include/nes_chr_assets.h
+# or, only for a verified raw 2bpp range:
+python3 3ds-port/tools/nes_chr_to_c.py game.nes 3ds-port/include/nes_chr_assets.h --chr-offset 0x4000 --chr-size 0x2000
+```
+
+The tool reuses the same CHR-ROM parsing and tile decoder as the PNG extractor. It emits source code, not a ROM dump, and the 3DS app draws the decoded tile indices directly from the generated header. The default checked-in header has zero tiles, so no fabricated art is displayed until a real source asset is supplied. This atlas is a diagnostic texture view only: the title screen still needs the original nametable, attribute/palette data, tile placement, and PPU update sequence before it can be called faithful.
