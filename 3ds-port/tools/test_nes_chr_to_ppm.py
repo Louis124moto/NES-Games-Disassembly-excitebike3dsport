@@ -7,7 +7,7 @@ import nes_chr_to_ppm as tool
 
 class TestChrExtractor(unittest.TestCase):
     def test_tile_bitplanes(self):
-        tile = bytes([128] + [0] * 7 + [64] + [0] * 7)
+        tile = bytes([128] + [0] * 7 + [0, 64] + [0] * 6)
         pixels = tool.decode_tile(tile)
         self.assertEqual(pixels[:8], [1, 0, 0, 0, 0, 0, 0, 0])
         self.assertEqual(pixels[8:16], [0, 2, 0, 0, 0, 0, 0, 0])
