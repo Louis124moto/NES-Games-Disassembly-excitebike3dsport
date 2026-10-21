@@ -213,3 +213,16 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Trace the exact menu option meanings and title-screen PPU/nametable/palette path before replacing index labels with authentic content.
 - [ ] Implement and test destination states 9, 12, and 13 and their complete callers/dependencies; states 0/1/8 are modeled at CPU-control-flow level, but startup/display setup and destination-state behavior remain incomplete.
 - [ ] Verify menu navigation, confirm behavior, sound, timing, and title visuals against the NES reference.
+
+
+## Menu and asset pipeline status — 2026-10-21
+
+- [x] Add a unified Python extraction entry point: `tools/extract_nes_assets.py` invokes the PNG/JSON extractor and the C-header generator using the same verified source/range arguments.
+- [x] Document the one-command extraction workflow, generated files, optional tile PNGs, palette input, and native diagnostic-header installation.
+- [ ] Execute Python extractor unit tests and record the result for the exact commit.
+- [ ] Execute a clean `make -C 3ds-port` and record the result for the exact commit.
+- [ ] Complete and verify setup-command tables and their side effects for ASM states 2, 9, 10, 12, and 13 before calling the title/menu flow complete.
+- [ ] Recover the original option text/graphics mapping from verified source data; do not infer labels from option indices.
+- [ ] Reconstruct menu nametable/attribute/palette writes, sprite/OAM state, scroll and PPU timing; compare screenshots/input traces with the NES reference.
+
+**Current honest status:** extraction automation is implemented but not yet test-verified in this change. The native menu remains partial; this commit does not claim a completed faithful menu or playable port.
