@@ -2091,8 +2091,10 @@ static void nesC046LoadCourseTriple(uint8_t ram[65536], uint8_t state)
 
 static void nesC046LoadRamCourseTriple(uint8_t ram[65536])
 {
-    uint8_t offset = nesC046SelectionOffset(ram[0x0043u], ram[0x03F2u]);
-    uint16_t address = (uint16_t)(0x0580u + offset);
+    uint8_t offset = nesC046SelectionOffset(ram[0x0043u], 0u);
+    uint16_t address;
+    if (ram[0x03F2u] != 0u) offset = (uint8_t)(offset + 0x23u);
+    address = (uint16_t)(0x0580u + offset);
     ram[0x0002u] = ram[0x0043u];
     ram[0x0005u] = ram[address];
     ram[0x0006u] = ram[(uint16_t)(address + 1u)];
