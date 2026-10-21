@@ -57,8 +57,8 @@ void rendererDraw(const GameState *state)
     if (!assetExtractorIsActive()) return;
     printf("DIAGNOSTIC CHR VIEWER (not gameplay)\n");
     printf("%s\n", assetExtractorGetStatus());
-    printf("ROM: sdmc:/3ds/excitebike3ds/rom.nes\n");
-    printf("Cache: sdmc:/3ds/excitebike3ds/extracted/chr_pixels.bin\n");
+    printf("ROM: rom.nes (beside the 3DSX)\n");
+    printf("Cache: extracted/chr_pixels.bin (beside the 3DSX)\n");
     printf("Y: close/return   X: reload   B: close\n");
     printf("Raw CHR patterns only; no NES screen layout is emulated.\n");
 }
