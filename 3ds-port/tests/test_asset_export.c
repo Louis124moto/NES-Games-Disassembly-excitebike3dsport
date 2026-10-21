@@ -52,7 +52,10 @@ int main(void)
     fclose(file);
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12.bin", (const unsigned char *)"\x29\x27\x22\x30", 4u)) return 9;
     if (!fileStartsWith("test_asset_export_output/ppu_palette_12_stream.bin", (const unsigned char *)"\x3F\x00\x08", 3u)) return 10;
-    if (!fileStartsWith("test_asset_export_output/ppu_stream_01.bin", (const unsigned char *)"\\x23\\xD0\\x60", 3u)) return 11;
+    {
+        const unsigned char streamMagic[3] = {0x23u, 0xD0u, 0x60u};
+        if (!fileStartsWith("test_asset_export_output/ppu_stream_01.bin", streamMagic, sizeof(streamMagic))) return 11;
+    }
     file = fopen("test_asset_export_output/ppu_snapshot_01.bin", "rb");
     if (file == NULL) return 12;
     {
