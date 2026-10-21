@@ -18,7 +18,7 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
        Physical screen (x,y) maps to framebuffer (y, 399-x). */
     const unsigned int fbX = screenY;
     const unsigned int fbY = 399u - screenX;
-    const unsigned int tileY = 49u - (fbY >> 3u);
+    const unsigned int tileY = fbY >> 3u;
     return ((((fbX >> 3u) * 50u) + tileY) * 64u
             + (fbX & 7u) * 8u + (fbY & 7u)) * 3u;
 }
