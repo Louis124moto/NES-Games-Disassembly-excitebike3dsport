@@ -16,10 +16,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$C1FD` | `sub_C1FD` | Pending | — |
 | `$C229` | `sub_C229` | Pending | — |
 | `$C27F` | `sub_C27F` | Pending | ; see con_0045 |
-| `$C2A9` | `sub_C2A9` | Pending | — |
-| `$C318` | `sub_C318` | Pending | calls: sub_D255_hide_all_sprites, sub_D23B, sub_D1A9 |
-| `$C32F` | `sub_C32F` | Pending | — |
-| `$C333` | `sub_C333` | Pending | — |
+| `$C2A9` | `sub_C2A9` | Analyzed (dispatcher trace; native integration pending) | Selects `$0040` animation dispatch or timer-gated setup-list dispatch via `$0041`, `$0044`, `tbl_C01C`, `tbl_C02A/$C033`; see `REFERENCE_MAPPING.md`. |
+| `$C318` | `sub_C318` | Analyzed (cleanup trace; native PPU integration pending) | Calls `sub_D255`, `sub_D23B`, `sub_D1A9`; zeroes scroll bytes and `$00FC`, then enters `sub_C333`. |
+| `$C32F` | `sub_C32F` | Translated in C (RAM-level helper; hardware integration pending) | `nesSubC32FMaskPpuCtrl`; masks bit 7 of `$10` shadow, not a native PPU implementation. |
+| `$C333` | `sub_C333` | Translated in C (RAM-level helper; hardware integration pending) | `nesSubC333WritePpuCtrl`; preserves the `$2000` shadow write semantics, not a native PPU implementation. |
 | `$C339` | `sub_C339` | Pending | — |
 | `$C3AF` | `sub_C3AF` | Pending | — |
 | `$C3B1` | `sub_C3B1` | Pending | — |
