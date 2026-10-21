@@ -190,15 +190,6 @@ static void loadChrRom(void)
     }
 
     romSize = (size_t)fileSize;
-    {
-        uint32_t hash = 2166136261u;
-        size_t i;
-        for (i = 0u; i < romSize; ++i) {
-            hash ^= rom[i];
-            hash *= 16777619u;
-        }
-        s_romFingerprint = hash;
-    }
     rom = (uint8_t *)malloc(romSize);
     if (rom == NULL) {
         fclose(file);
@@ -212,6 +203,17 @@ static void loadChrRom(void)
         return;
     }
     fclose(file);
+
+    /* Hash only after the ROM buffer has been allocated and read successfully. */
+    {
+        uint32_t hash = 2166136261u;
+        size_t i;
+        for (i = 0u; i < romSize; ++i) {
+            hash ^= rom[i];
+            hash *= 16777619u;
+        }
+        s_romFingerprint = hash;
+    }
 
     result = nesChrDecodeInes(rom, romSize, &s_pixels[0][0],
                               EXTRACTOR_MAX_TILES, &s_tileCount);
