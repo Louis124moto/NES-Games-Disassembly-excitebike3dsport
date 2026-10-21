@@ -25,7 +25,7 @@ void gameUpdate(void)
 {
     inputUpdate(&s_input);
     menusUpdate(&s_game, s_input.pressed);
-    if (!s_game.paused) {
+    if (!s_game.paused && s_game.menu_asm_state == 2u) {
         bikePhysicsUpdate(&s_game.bike, &s_input);
         collisionResolve(&s_game.bike);
         trackUpdate();
