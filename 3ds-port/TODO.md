@@ -193,3 +193,16 @@ For each routine or ASM block, record the following in `ASM_FUNCTION_INVENTORY.m
 - [ ] Run a clean 3DS build after integration and record evidence for the exact commit.
 
 **Current menu status:** one shared ASM input helper has been translated; the full title/main-menu state machine and authentic visual reconstruction are still incomplete. The new helper is not yet wired to a playable menu.
+
+
+## Main-menu implementation update — 2026-10-21
+
+- [x] Added a native C model of `sub_C7DE` cursor input and repeat-guard behavior, with host tests wired.
+- [x] Added a native C model of the confirmation branches from `ofs_000_C3BD_08`: selection 1/2 increments the state, selection 3/4 maps to states 12/13 and clears the selection, and selection 5 requests the source's RAM-clear path and sets the selection to 2.
+- [x] Connected the state-8 input and confirmation model to the native menu trace screen. The current screen displays option indices only; it does not invent menu labels or claim to reproduce original NES artwork.
+- [x] Added `tools/nes_chr_to_ppm.py` for source CHR tile inspection and documented the palette/PPU work still required.
+- [ ] Run the host suite; the new tests are wired but not yet confirmed passing.
+- [ ] Build the 3DS target on this same revision and verify both `.3dsx` and `.elf`.
+- [ ] Trace the exact menu option meanings and title-screen PPU/nametable/palette path before replacing index labels with authentic content.
+- [ ] Implement and test destination states 9, 12, and 13 and the full RAM-clear/reset path from the original ASM.
+- [ ] Verify menu navigation, confirm behavior, sound, timing, and title visuals against the NES reference.
