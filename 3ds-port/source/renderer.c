@@ -4,7 +4,14 @@
 #include "renderer.h"
 #include "asset_extractor.h"
 
-/* Diagnostic CHR atlas only; no placeholder game/menu is rendered. */
+/* 3DS framebuffer is 8x8 tiled; coordinates passed here are screen coordinates. */
+static size_t framebufferOffset(unsigned int x, unsigned int y, unsigned int height)
+{
+    const unsigned int flippedY = height - 1u - y;
+    return ((((x >> 3u) * (height >> 3u)) + (flippedY >> 3u)) * 64u
+            + (x & 7u) * 8u + (flippedY & 7u)) * 3u;
+}
+
 static void rendererDrawChrAtlas(void)
 {
     static const uint8_t shades[4] = {0u, 85u, 170u, 255u};
@@ -14,11 +21,14 @@ static void rendererDrawChrAtlas(void)
     size_t tileCount = 0u;
     unsigned int tile, row, col;
 
-    if (!assetExtractorIsActive()) return;
-    pixels = assetExtractorGetPixels(&tileCount);
     framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width < 240u || height < 400u) return;
+
+    /* Clear every frame, including after the viewer is closed. */
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+    if (!assetExtractorIsActive()) return;
+
+    pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     if (tileCount > 960u) tileCount = 960u;
 
@@ -30,7 +40,8 @@ static void rendererDrawChrAtlas(void)
                 const unsigned int x = tileX + col;
                 const unsigned int y = tileY + row;
                 const uint8_t shade = shades[pixels[tile * 64u + row * 8u + col] & 3u];
-                const unsigned int offset = 3u * (x * 240u + (239u - y));
+                const size_t offset = framebufferOffset(x, y, height);
+                /* BGR8 framebuffer: equal channels produce neutral grayscale. */
                 framebuffer[offset + 0u] = shade;
                 framebuffer[offset + 1u] = shade;
                 framebuffer[offset + 2u] = shade;
@@ -48,6 +59,7 @@ void rendererInit(void)
 
 void rendererBeginFrame(void)
 {
+    consoleSelect(NULL);
     consoleClear();
 }
 
@@ -57,20 +69,18 @@ void rendererDraw(const GameState *state)
     (void)state;
     (void)assetExtractorGetPixels(&tileCount);
 
-    /*
-     * This console is the bottom-screen log. Keep it visible even while the
-     * atlas viewer is closed, so startup/cache/ROM errors are immediately
-     * inspectable instead of hidden behind the Y toggle.
-     */
-    printf("EXCITEBIKE 3DS - ASSET LOG\n");
-    printf("CHR status: %s\n", assetExtractorGetStatus());
-    printf("Decoded tiles: %lu / 960\n", (unsigned long)tileCount);
-    printf("ROM path: rom.nes beside the launched 3DSX\n");
-    printf("Cache path: extracted/chr_pixels.bin beside the 3DSX\n");
+    /* Short lines fit the bottom-screen console without wrapping off-screen. */
+    printf("EXCITEBIKE 3DS / ASSET LOG\n");
+    printf("------------------------------\n");
+    printf("CHR: %.42s\n", assetExtractorGetStatus());
+    printf("Tiles: %lu / 960\n", (unsigned long)tileCount);
+    printf("ROM: rom.nes beside 3DSX\n");
+    printf("Cache: extracted/chr_pixels.bin\n");
     printf("Viewer: %s\n", assetExtractorIsActive() ? "OPEN" : "closed");
-    printf("Y: toggle atlas   X: retry extraction (viewer open)\n");
-    printf("B: close atlas   A: no action\n");
-    printf("NOTE: raw CHR patterns only; menu layout/palettes not yet emulated.\n");
+    printf("Y: toggle atlas\n");
+    printf("X: retry extraction (atlas open)\n");
+    printf("B: close atlas\n");
+    printf("Atlas = raw CHR tiles, not the menu.\n");
 }
 
 void rendererEndFrame(void)
