@@ -689,11 +689,85 @@ static int testSubC3BDConfirmSelection(void)
     return 0;
 }
 
+
+typedef struct {
+    uint8_t carry;
+    uint8_t zero;
+    uint8_t negative;
+} ReferenceCmpFlags;
+
+static ReferenceCmpFlags referenceCmpFlags6502(uint8_t lhs, uint8_t rhs)
+{
+    uint16_t raw = (uint16_t)lhs + (uint16_t)(rhs ^ 0xFFu) + 1u;
+    uint8_t result = (uint8_t)raw;
+    ReferenceCmpFlags flags;
+    flags.carry = (uint8_t)(raw > 0xFFu);
+    flags.zero = (uint8_t)(result == 0u);
+    flags.negative = (uint8_t)((result & 0x80u) != 0u);
+    return flags;
+}
+
+/* Exhaustive comparison/flag tests with an independent 6502 CMP reference. */
+static int testBatchAdditional20Boundaries(void)
+{
+    static const uint8_t edge[] = {0x00u,0x01u,0x7Fu,0x80u,0xFEu,0xFFu};
+    unsigned int a,b,f;
+    unsigned long checked=0u;
+
+    /* sub_CFDB: zero leaves the byte untouched; nonzero ANDs with $0F. */
+    for(a=0u;a<256u;++a) for(f=0u;f<256u;++f) {
+        uint8_t actual=(uint8_t)f;
+        uint8_t expected=(uint8_t)f;
+        nesSubCFDBClearUpperFlags((uint8_t)a,&actual);
+        if(a!=0u) expected=(uint8_t)(expected&0x0Fu);
+        if(actual!=expected) { fprintf(stderr,"sub_CFDB mismatch A=%02X flags=%02X\n",a,f); return 1; }
+        ++checked;
+    }
+
+    /* sub_CFCB: exhaustive high-byte compares and all low bytes against edges. */
+    for(a=0u;a<256u;++a) for(b=0u;b<256u;++b) {
+        ReferenceCmpFlags cmp=referenceCmpFlags6502((uint8_t)a,(uint8_t)b);
+        uint8_t actual=0x5Au,expected=0x5Au;
+        nesSubCFCBCompareObjectPosition((uint8_t)a,(uint8_t)b,0x80u,0x80u,&actual);
+        if(!cmp.carry) expected=(uint8_t)(expected|0x80u);
+        else if(a!=0u) expected=(uint8_t)(expected&0x0Fu);
+        if(actual!=expected) { fprintf(stderr,"sub_CFCB high mismatch %02X/%02X\n",a,b); return 2; }
+        ++checked;
+    }
+    for(a=0u;a<256u;++a) for(b=0u;b<256u;++b) {
+        uint8_t other=edge[b%6u];
+        ReferenceCmpFlags cmp=referenceCmpFlags6502((uint8_t)b,other);
+        uint8_t actual=0xA5u,expected=0xA5u;
+        nesSubCFCBCompareObjectPosition((uint8_t)a,(uint8_t)a,(uint8_t)b,other,&actual);
+        if(!cmp.carry) expected=(uint8_t)(expected|0x80u);
+        else if(a!=0u) expected=(uint8_t)(expected&0x0Fu);
+        if(actual!=expected) { fprintf(stderr,"sub_CFCB low mismatch %02X/%02X\n",b,other); return 3; }
+        ++checked;
+    }
+
+    /* sub_CFEA: all A, operand, and initial flag-byte combinations. */
+    for(a=0u;a<256u;++a) for(b=0u;b<256u;++b) {
+        ReferenceCmpFlags cmp=referenceCmpFlags6502((uint8_t)a,(uint8_t)b);
+        for(f=0u;f<256u;++f) {
+            uint8_t actual=(uint8_t)f;
+            uint8_t expected=(uint8_t)(f&0xF0u);
+            nesSubCFEAUpdateComparisonFlags((uint8_t)a,(uint8_t)b,&actual);
+            if(a!=0u && !cmp.zero)
+                expected=(uint8_t)(expected|(cmp.carry?2u:1u));
+            if(actual!=expected) { fprintf(stderr,"sub_CFEA mismatch A=%02X operand=%02X flags=%02X\n",a,b,f); return 4; }
+            ++checked;
+        }
+    }
+    printf("PASS: comparison/flag boundary audit (%lu cases).\n",checked);
+    return 0;
+}
+
 int main(void)
 {
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
+    if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: comparison/flag boundary audit\n",stderr); return 1; }
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\n", stderr); return 1; }
     if (testSubFF53Exact() != 0) { fputs("FAIL: sub_FF53\n", stderr); return 1; }
