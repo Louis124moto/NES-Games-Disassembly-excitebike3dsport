@@ -28,14 +28,15 @@ static const uint8_t s_nesMasterPalette[64][3] = {
     {204,210,120},{180,222,120},{168,226,144},{152,226,180},{160,214,228},{160,162,160},{0,0,0},{0,0,0}
 };
 
-/* Four selectable preview sub-palettes; each entry is a real NES master index.
- * They are previews until the game's own $3F00 writes/attribute assignments
- * are mapped from the original ASM and ROM. */
-static const uint8_t s_previewPalettes[4][4] = {
-    {0x0F, 0x00, 0x10, 0x30},
-    {0x0F, 0x06, 0x16, 0x26},
-    {0x0F, 0x01, 0x21, 0x31},
-    {0x0F, 0x09, 0x19, 0x29}
+/* Exact background sub-palettes from bank_FF.asm palette command streams:
+ * $D3D6, $D3E9, $D3FC and $D40F each write 8 bytes at $3F00.
+ * $D422 is another original background palette set. */
+static const uint8_t s_gamePaletteSets[5][2][4] = {
+    {{0x29,0x27,0x22,0x30},{0x29,0x27,0x18,0x36}}, /* _off_000_D3D6_12 */
+    {{0x01,0x1A,0x26,0x33},{0x01,0x11,0x0C,0x2C}}, /* _off_000_D3E9_13 */
+    {{0x02,0x26,0x1C,0x30},{0x02,0x29,0x19,0x39}}, /* _off_000_D3FC_14 */
+    {{0x00,0x26,0x22,0x30},{0x00,0x27,0x18,0x37}}, /* _off_000_D40F_15 */
+    {{0x02,0x19,0x22,0x30},{0x02,0x00,0x2D,0x10}}  /* _off_000_D422_16 */
 };
 
 static void rendererDrawChrAtlas(void)
@@ -51,7 +52,7 @@ static void rendererDrawChrAtlas(void)
     pixels = assetExtractorGetPixels(&tileCount);
     if (pixels == NULL || tileCount == 0u) return;
     if (tileCount > 960u) tileCount = 960u;
-    bank = assetExtractorGetPalette() & 3u;
+    bank = assetExtractorGetPalette() % 5u;
 
     for (tile = 0u; tile < tileCount; ++tile) {
         const unsigned int tileX = (tile % 50u) * 8u;
@@ -60,7 +61,7 @@ static void rendererDrawChrAtlas(void)
             for (col = 0u; col < 8u; ++col) {
                 const unsigned int x = tileX + col, y = tileY + row;
                 const uint8_t pixel = pixels[tile * 64u + row * 8u + col] & 3u;
-                const uint8_t nesIndex = s_previewPalettes[bank][pixel] & 0x3Fu;
+                const uint8_t nesIndex = s_gamePaletteSets[bank][tile % 2u][pixel] & 0x3Fu;
                 const uint8_t *rgb = s_nesMasterPalette[nesIndex];
                 const size_t offset = framebufferOffset(x, y, height);
                 framebuffer[offset + 0u] = rgb[2];
