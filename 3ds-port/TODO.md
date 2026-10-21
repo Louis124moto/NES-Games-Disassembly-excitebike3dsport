@@ -433,3 +433,14 @@ The existing `nesLocE96EApplyVerticalDelta` implementation covers only the first
 - [x] Increase atlas tile scale to 2× nearest-neighbour (25 columns × 15 rows, up to 375 visible tiles) so individual patterns can be inspected more easily.
 - [ ] Confirm CI build on latest commit succeeds.
 - [ ] Hardware validation required: confirm bottom log no longer flickers/clips and atlas spans the top screen at 2×. Raw CHR alone will still look abstract/noisy; faithful menu textures require nametable, attribute-table and sprite composition from the original PPU/ASM path.
+
+
+## CHR extractor legibility and START entry — 2026-10-21
+
+- [x] Replace guessed per-tile palette coloring with four-level grayscale based on the decoded 2bpp pixel indices. This avoids presenting arbitrary sub-palettes as if they were the true tile palette assignments.
+- [x] Add D-pad left/right page navigation through the full extracted CHR set (375 tiles per page at 2× scale), rather than showing only the first page.
+- [x] Wire START to leave the diagnostic viewer and enter a distinct native game-mode state; B returns to the diagnostic view.
+- [ ] Important limitation: START currently enters the native game-mode placeholder, not actual Excitebike gameplay. The source-faithful NES menu/PPU/gameplay execution path is not yet integrated; do not claim this is a playable game start until that runtime exists.
+- [ ] Verify latest host tests and 3DS build on the exact revision; verify the `.3dsx` publishing workflow.
+- [ ] Hardware test: confirm grayscale tile patterns are discernible, D-pad paging exposes all 512 extracted tiles (including last partial page), and START/B transition works without crash.
+- [ ] For faithful visual reconstruction, implement CHR-RAM support or document it as unsupported per ROM, preserve mapper/bank selection, and trace original nametable/attribute/OAM/palette writes. A raw CHR atlas cannot itself look like the game's menu or track.
