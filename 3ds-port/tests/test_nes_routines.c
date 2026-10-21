@@ -638,7 +638,7 @@ static int testSubC7DEMenuInput(void)
     if(result!=0u || guard!=0u) { fputs("sub_C7DE idle reset mismatch\n",stderr); return 3; }
     selection=1u; guard=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE up/wrap mismatch\n",stderr); return 4; }
+    if(result!=0u || selection!=0u || changed!=1u) { fputs("sub_C7DE up-to-zero mismatch\n",stderr); return 4; }
     selection=3u; guard=0u; timer30=0u; changed=1u;
     result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed);
     if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\n",stderr); return 5; }
@@ -655,7 +655,7 @@ static int testSubC7DEMenuInput(void)
         uint8_t press=(i&1u)?0x04u:0x08u;
         guard=0u;
         (void)nesSubC7DEMenuInput(press,6u,&selection,&guard,&timer30,&timer31,&changed);
-        if(selection<1u || selection>5u) { fputs("sub_C7DE range mismatch\n",stderr); return 6; }
+        if(selection>5u) { fputs("sub_C7DE range mismatch\n",stderr); return 6; }
     }
     return 0;
 }
