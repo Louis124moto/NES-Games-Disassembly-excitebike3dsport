@@ -304,3 +304,6 @@ Native test source includes a dedicated regression group; execution and 3DS comp
 - Status: native C translation and four regression scenarios added; CI/build verification pending at the time of this update. Do not mark tested or integrated until the latest workflow completes.
 - Implemented paths: compare the RAM tuple from `sub_C53A` with `$0068-$006A`; write the target tuple to `$0580,Y` when the candidate is greater; for states below 8, compare the ROM tuple from `sub_C522`; otherwise calculate the scaled value through the original `DEY/BMI`, `ADC #$3C`, carry/overflow, `SBC`, and shift loops.
 - Shared exit effects reproduced in C: `$0053`, `$0045=$18`, `$0049=$01`, `$0040=$01`, `$0044=$00`. The routine remains an isolated translation, not connected to the active menu runtime.
+
+
+| `$C43D` | `nesLocC43DHandleMenuState` | Translated + regression vectors; CI pending, runtime integration pending | — |
