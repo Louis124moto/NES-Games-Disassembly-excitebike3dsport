@@ -407,9 +407,9 @@ void assetExtractorUpdate(unsigned int pressedKeys)
         }
     }
     if (s_active && (pressedKeys & KEY_UP) != 0u) {
-        s_viewMode = (s_viewMode + 1u) % 3u;
+        s_viewMode = (s_viewMode + 1u) % 4u;
     } else if (s_active && (pressedKeys & KEY_DOWN) != 0u) {
-        s_viewMode = (s_viewMode + 2u) % 3u;
+        s_viewMode = (s_viewMode + 3u) % 4u;
     }
     if (s_active && s_viewMode == 1u) {
         if ((pressedKeys & KEY_RIGHT) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
