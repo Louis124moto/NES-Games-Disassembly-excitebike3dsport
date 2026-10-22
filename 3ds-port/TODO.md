@@ -639,3 +639,11 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 - [x] Root cause identified from libctru's existing framebuffer implementation: the renderer incorrectly treated the 3DS framebuffer as 8x8-tiled and used the wrong rotated-coordinate mapping. Replaced it with the established linear sideways offset `((screenX * 240) + (239 - screenY)) * 3`; also corrected RGB-to-BGR byte order required by `gfxInitDefault()`.
 - [ ] Rebuild from the latest `main` commit before the next console test; confirm the app is actually running the updated binary. Check all three pages after the framebuffer fix. This source correction is not yet hardware-verified.
 - [ ] Confirm that the color atlas variants and the on-device palette-colored atlas show recognizable tile shapes, then validate palette choice against known original game states. Stage 1 remains unaccepted.
+
+### User hardware report — atlas remains pixelated (2026-10-22)
+
+- [x] User reports that the on-device CHR atlas is still visually pixelated; some text-like tile shapes are distinguishable, but the atlas is not yet readable.
+- [ ] Do not conclude that the framebuffer correction failed until the exact running `.3dsx` revision is identified. The latest source on `main` contains the linear rotated BGR framebuffer correction from `bd0f3b7a327f231d720e309ca9dfb13eaafaf1ce`; that source change has not been verified on physical hardware.
+- [ ] Build the current `main` revision and test the same binary on physical New Nintendo 3DS. Record the source commit and whether the binary was rebuilt after the framebuffer correction.
+- [ ] Check pages 1–3 for tile shape, row/column ordering, orientation, color-channel order, and navigation. If the current build still shows pixel corruption, isolate framebuffer addressing from CHR decoding using a known deterministic test pattern before changing the renderer again.
+- [ ] Keep Stage 1 NOT ACCEPTED until the hardware results and source-data comparison are recorded. Do not start Stage 2.
