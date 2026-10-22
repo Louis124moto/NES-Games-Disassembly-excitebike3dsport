@@ -647,3 +647,12 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 - [ ] Build the current `main` revision and test the same binary on physical New Nintendo 3DS. Record the source commit and whether the binary was rebuilt after the framebuffer correction.
 - [ ] Check pages 1–3 for tile shape, row/column ordering, orientation, color-channel order, and navigation. If the current build still shows pixel corruption, isolate framebuffer addressing from CHR decoding using a known deterministic test pattern before changing the renderer again.
 - [ ] Keep Stage 1 NOT ACCEPTED until the hardware results and source-data comparison are recorded. Do not start Stage 2.
+
+
+### Framebuffer isolation diagnostic — 2026-10-22
+
+- [x] Add a fourth extractor view that draws a deterministic top-screen test pattern without reading CHR pixels or palettes: five 80-pixel vertical color bands (red, green, blue, white, black), an 8-pixel grid, and stronger 40-pixel axes. This isolates framebuffer coordinate mapping and BGR channel order from NES asset decoding.
+- [x] Expose the diagnostic through the existing Up/Down view cycle. Implementation commits: renderer `45406ac752a8603e8939fad6a6f250b1ae3735f7`; view navigation `545479d0aecef95f30c5181d861acce06c118c3a`.
+- [ ] Build the exact current `main` revision and test this diagnostic on physical New Nintendo 3DS. Expected: five clean vertical bands, no repeated horizontal pixel noise, and a regular grid. If this pattern is corrupted, investigate framebuffer mapping/flush/presentation; if it is clean, investigate CHR tile layout, palette selection, and tile scaling next.
+- [ ] Do not accept Stage 1 until the diagnostic and then the full 512-tile atlas render sharply with source-verified colors on hardware. No Stage 2 work before acceptance.
+- [ ] Host tests, 3DS build, and hardware test were not run by the editing environment for these commits; do not treat the diagnostic as validated until the user tests the built binary.
