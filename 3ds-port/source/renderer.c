@@ -88,6 +88,34 @@ static void rendererDrawChrAtlas(void)
     if (!assetExtractorIsActive() || s_gameStarted) return;
     pixels = assetExtractorGetPixels(&tileCount);
 
+    /* Diagnostic mode: known RGB/BGR blocks and 8-pixel grid, independent of CHR decode. */
+    if (assetExtractorGetViewMode() == 3u) {
+        unsigned int x, y;
+        for (y = 0u; y < 240u; ++y) {
+            for (x = 0u; x < 400u; ++x) {
+                uint8_t red, green, blue;
+                if (x < 80u) { red = 255u; green = 0u; blue = 0u; }
+                else if (x < 160u) { red = 0u; green = 255u; blue = 0u; }
+                else if (x < 240u) { red = 0u; green = 0u; blue = 255u; }
+                else if (x < 320u) { red = 255u; green = 255u; blue = 255u; }
+                else { red = 0u; green = 0u; blue = 0u; }
+                /* Grid every 8 pixels, with stronger axes every 40 pixels. */
+                if ((x % 40u) == 0u || (y % 40u) == 0u) {
+                    red = 255u; green = 255u; blue = 0u;
+                } else if ((x % 8u) == 0u || (y % 8u) == 0u) {
+                    red = (uint8_t)(red / 2u); green = (uint8_t)(green / 2u); blue = (uint8_t)(blue / 2u);
+                }
+                {
+                    const size_t offset = topFramebufferOffset(x, y);
+                    framebuffer[offset] = blue;
+                    framebuffer[offset + 1u] = green;
+                    framebuffer[offset + 2u] = red;
+                }
+            }
+        }
+        return;
+    }
+
     if (assetExtractorGetViewMode() == 2u) {
         size_t writes = 0u, tile, pixelX, pixelY;
         const size_t streamIndex = assetExtractorGetPpuStreamIndex();
