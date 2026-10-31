@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "asset_export.h"
+#include "nes_chr_decode.h"
 #include "nes_ppu_commands.h"
 
 static int fileStartsWith(const char *path, const unsigned char *magic, size_t count)
@@ -34,19 +35,40 @@ static int pngHasDimensions(const char *path, unsigned int width, unsigned int h
     return ok;
 }
 
+/* Decode one 16-byte CHR tile into 64 one-byte pixel indices. */
+static void decodeTile(const unsigned char *chr, unsigned char out[64])
+{
+    unsigned int row, col;
+    for (row = 0u; row < 8u; ++row) {
+        const unsigned char low = chr[row];
+        const unsigned char high = chr[row + 8u];
+        for (col = 0u; col < 8u; ++col) {
+            const unsigned int bit = 7u - col;
+            out[row * 8u + col] = (unsigned char)(((low >> bit) & 1u) |
+                                                  (((high >> bit) & 1u) << 1u));
+        }
+    }
+}
+
 int main(void)
 {
     const char *dir = "test_asset_export_output";
+    const char *bigDir = "test_asset_export_output_big";
     const unsigned char pngMagic[8] = {137u,80u,78u,71u,13u,10u,26u,10u};
-    unsigned char raw[16] = {0u};
-    unsigned char pixels[960u * 64u];
+    static unsigned char raw[960u * 16u];
+    static unsigned char pixels[960u * 64u];
+    static unsigned char bigRaw[1000u * 16u];
+    static unsigned char actual[1000u * 64u];
     char status[160];
     FILE *file;
-    size_t i;
+    size_t i, decoded = 0u;
     (void)mkdir(dir, 0777);
-    memset(pixels, 1, sizeof(pixels));
-    for (i = 0u; i < sizeof(raw); ++i) raw[i] = (unsigned char)i;
-    if (!assetExportWrite(dir, raw, sizeof(raw), pixels, 960u, status, sizeof(status))) {
+    (void)mkdir(bigDir, 0777);
+    for (i = 0u; i < sizeof(raw); ++i) raw[i] = (unsigned char)(i * 7u + 3u);
+    for (i = 0u; i < sizeof(bigRaw); ++i) bigRaw[i] = (unsigned char)(i * 11u + 5u);
+    if (nesChrDecodeRaw(raw, sizeof(raw), pixels, 960u, &decoded) != NES_CHR_DECODE_OK ||
+        decoded != 960u) return 21;
+    if (!assetExportWrite(dir, raw, sizeof(raw), pixels, 960u, NULL, status, sizeof(status))) {
         fprintf(stderr, "Export failed: %s\n", status);
         return 1;
     }
@@ -58,16 +80,15 @@ int main(void)
     file = fopen("test_asset_export_output/chr_raw.bin", "rb");
     if (file == NULL) return 3;
     {
-        unsigned char actual[sizeof(raw)];
-        if (fread(actual, 1u, sizeof(actual), file) != sizeof(actual) ||
-            memcmp(actual, raw, sizeof(raw)) != 0) { fclose(file); return 4; }
+        static unsigned char actualRaw[sizeof(raw)];
+        if (fread(actualRaw, 1u, sizeof(actualRaw), file) != sizeof(actualRaw) ||
+            memcmp(actualRaw, raw, sizeof(raw)) != 0) { fclose(file); return 4; }
     }
     fclose(file);
     file = fopen("test_asset_export_output/chr_pixels.bin", "rb");
     if (file == NULL) return 5;
     {
-        unsigned char actual[sizeof(pixels)];
-        if (fread(actual, 1u, sizeof(actual), file) != sizeof(actual) ||
+        if (fread(actual, 1u, sizeof(pixels), file) != sizeof(pixels) ||
             memcmp(actual, pixels, sizeof(pixels)) != 0) { fclose(file); return 6; }
     }
     fclose(file);
@@ -115,9 +136,50 @@ int main(void)
             strstr(manifest, "chr_atlas.png") == NULL ||
             strstr(manifest, "chr_pixels.ebp") == NULL ||
             strstr(manifest, "Color variants: chr_atlas_palette_12..18_subpalette_0..3.png") == NULL ||
-            strstr(manifest, "Color previews: ppu_preview_01..18.png") == NULL) { fclose(file); return 8; }
+            strstr(manifest, "Color previews: ppu_preview_01..18.png") == NULL ||
+            strstr(manifest, "ALL 960 tiles") == NULL) { fclose(file); return 8; }
     }
     fclose(file);
+
+    /* Sources beyond 960 tiles: exports must contain ALL tiles. */
+    if (nesChrDecodeRaw(bigRaw, sizeof(bigRaw), pixels, 960u, &decoded) != NES_CHR_DECODE_OK ||
+        decoded != 960u) return 22;
+    if (!assetExportWrite(bigDir, bigRaw, sizeof(bigRaw), pixels, 960u, NULL, status, sizeof(status))) {
+        fprintf(stderr, "Big export failed: %s\n", status);
+        return 23;
+    }
+    file = fopen("test_asset_export_output_big/chr_pixels.bin", "rb");
+    if (file == NULL) return 24;
+    {
+        unsigned char tile999[64], expected[64];
+        if (fseek(file, (long)(999u * 64u), SEEK_SET) != 0 ||
+            fread(tile999, 1u, sizeof(tile999), file) != sizeof(tile999)) { fclose(file); return 25; }
+        decodeTile(bigRaw + 999u * 16u, expected);
+        if (memcmp(tile999, expected, sizeof(tile999)) != 0) { fclose(file); return 26; }
+        if (fseek(file, 0L, SEEK_END) != 0 || ftell(file) != (long)(1000u * 64u)) { fclose(file); return 27; }
+    }
+    fclose(file);
+    file = fopen("test_asset_export_output_big/chr_pixels.ebp", "rb");
+    if (file == NULL) return 28;
+    {
+        unsigned char header[16];
+        if (fread(header, 1u, sizeof(header), file) != sizeof(header) ||
+            memcmp(header, "EBPX", 4u) != 0 || header[8] != 0xE8u ||
+            header[9] != 0x03u || header[10] != 0u || header[11] != 0u) {
+            fclose(file); return 29;
+        }
+    }
+    fclose(file);
+    file = fopen("test_asset_export_output_big/manifest.txt", "rb");
+    if (file == NULL) return 30;
+    {
+        char manifest[2048];
+        const size_t n = fread(manifest, 1u, sizeof(manifest)-1u, file);
+        manifest[n] = '\0';
+        if (strstr(manifest, "ALL 1000 tiles") == NULL) { fclose(file); return 31; }
+    }
+    fclose(file);
+
     (void)unlink("test_asset_export_output/chr_atlas.png");
     for (i = 12u; i <= 18u; ++i) { unsigned int sub; for (sub = 0u; sub < 4u; ++sub) { char path[160]; (void)snprintf(path, sizeof(path), "test_asset_export_output/chr_atlas_palette_%lu_subpalette_%u.png", (unsigned long)i, sub); (void)unlink(path); } }
     (void)unlink("test_asset_export_output/chr_raw.bin");
@@ -129,27 +191,15 @@ int main(void)
         (void)unlink(path);
     }
     (void)unlink("test_asset_export_output/manifest.txt");
-    (void)unlink("test_asset_export_output/ppu_palette_12.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_12_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_12_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_13.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_13_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_13_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_14.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_14_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_14_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_15.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_15_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_15_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_16.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_16_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_16_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_17.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_17_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_17_stream.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_18.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_18_mask.bin");
-    (void)unlink("test_asset_export_output/ppu_palette_18_stream.bin");
+    for (i = 12u; i <= 18u; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_palette_%lu.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_palette_%lu_mask.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_palette_%lu_stream.bin", (unsigned long)i);
+        (void)unlink(path);
+    }
     for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
         char path[128];
         (void)snprintf(path, sizeof(path), "test_asset_export_output/ppu_stream_%02lu.bin", (unsigned long)i);
@@ -158,6 +208,35 @@ int main(void)
         (void)unlink(path);
     }
     (void)rmdir(dir);
-    puts("PASS: native CHR raw/pixel/PNG/manifest export and honest palette metadata.");
+
+    (void)unlink("test_asset_export_output_big/chr_atlas.png");
+    for (i = 12u; i <= 18u; ++i) { unsigned int sub; for (sub = 0u; sub < 4u; ++sub) { char path[160]; (void)snprintf(path, sizeof(path), "test_asset_export_output_big/chr_atlas_palette_%lu_subpalette_%u.png", (unsigned long)i, sub); (void)unlink(path); } }
+    (void)unlink("test_asset_export_output_big/chr_raw.bin");
+    (void)unlink("test_asset_export_output_big/chr_pixels.bin");
+    (void)unlink("test_asset_export_output_big/chr_pixels.ebp");
+    for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_preview_%02lu.png", (unsigned long)i);
+        (void)unlink(path);
+    }
+    (void)unlink("test_asset_export_output_big/manifest.txt");
+    for (i = 12u; i <= 18u; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_palette_%lu.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_palette_%lu_mask.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_palette_%lu_stream.bin", (unsigned long)i);
+        (void)unlink(path);
+    }
+    for (i = 1u; i <= NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
+        char path[128];
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_stream_%02lu.bin", (unsigned long)i);
+        (void)unlink(path);
+        (void)snprintf(path, sizeof(path), "test_asset_export_output_big/ppu_snapshot_%02lu.bin", (unsigned long)i);
+        (void)unlink(path);
+    }
+    (void)rmdir(bigDir);
+    puts("PASS: native CHR raw/pixel/PNG/manifest export streams all tiles beyond the 960 cap.");
     return 0;
 }

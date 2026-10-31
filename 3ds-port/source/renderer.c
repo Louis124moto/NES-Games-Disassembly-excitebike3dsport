@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include "asset_extractor.h"
 #include "menus.h"
+#include "nes_active_stream.h"
 #include "nes_ppu_render.h"
 #include "nes_ppu_commands.h"
 
@@ -33,6 +34,18 @@ static uint8_t s_sourceNametableView[NES_PPU_NAMETABLE_BYTES];
 static uint8_t s_sourceAttributes[NES_PPU_ATTRIBUTE_BYTES];
 static uint8_t s_sourcePaletteView[NES_PPU_PALETTE_BYTES];
 static uint8_t s_unknownTiles[NES_PPU_NAMETABLE_BYTES];
+
+static const char *viewName(unsigned int mode)
+{
+    switch (mode) {
+    case 0u: return "CHR atlas";
+    case 1u: return "palette diagnostics";
+    case 2u: return "PPU snapshots";
+    case 3u: return "framebuffer pattern";
+    case 4u: return "active stream/OAM";
+    default: return "unknown";
+    }
+}
 
 /*
  * Draw a source-derived NES background centered on the 400x240 top screen.
@@ -190,8 +203,9 @@ static void rendererDrawChrAtlas(void)
         return;
     }
 
-    if (pixels == NULL || tileCount == 0u) return;
     /*
+     * Atlas view: decode the current page on demand (up to 375 tiles) so every
+     * source tile is reachable even when the total exceeds the eager 960 cap.
      * A standalone CHR tile has no assigned palette. Use the selected source
      * palette preset's first background subpalette for this diagnostic view;
      * the SD export also writes all seven presets x four subpalette variants.
@@ -199,24 +213,24 @@ static void rendererDrawChrAtlas(void)
     {
         uint8_t atlasPalette[32], atlasPaletteMask[32];
         size_t paletteWrites = 0u;
+        const uint8_t *pagePixels;
+        size_t pageTileCount = 0u;
         if (nesExcitebikePaletteSnapshot(assetExtractorGetPaletteIndex(),
                 atlasPalette, atlasPaletteMask, &paletteWrites) != NES_PPU_COMMAND_OK) {
             memset(atlasPalette, 0, sizeof(atlasPalette));
             memset(atlasPaletteMask, 0, sizeof(atlasPaletteMask));
         }
-        /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
-        firstTile = assetExtractorGetPage() * 375u;
-    if (firstTile >= tileCount) return;
-    tileCount -= firstTile;
-    if (tileCount > 375u) tileCount = 375u;
+        pagePixels = assetExtractorGetPagePixels(&pageTileCount, &firstTile);
+        if (pagePixels == NULL || pageTileCount == 0u) return;
+        tileCount = pageTileCount;
 
+    /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
     for (tile = 0u; tile < tileCount; ++tile) {
-        const size_t sourceTile = firstTile + tile;
         const unsigned int tileX = (tile % 25u) * 16u;
         const unsigned int tileY = (tile / 25u) * 16u;
         for (row = 0u; row < 8u; ++row) {
             for (col = 0u; col < 8u; ++col) {
-                const uint8_t pixel = pixels[sourceTile * 64u + row * 8u + col] & 3u;
+                const uint8_t pixel = pagePixels[tile * 64u + row * 8u + col] & 3u;
                 const size_t paletteEntry = pixel == 0u ? 0u : pixel;
                 uint8_t rgb[3];
                 const int known = atlasPaletteMask[paletteEntry] != 0u &&
@@ -238,7 +252,7 @@ static void rendererDrawChrAtlas(void)
                 }
             }
         }
-        }
+    }
     }
 }
 
@@ -262,8 +276,6 @@ void rendererBeginFrame(void)
 void rendererDraw(const GameState *state)
 {
     char logText[512];
-    size_t tileCount = 0u;
-    (void)assetExtractorGetPixels(&tileCount);
     if (s_menuActive && state != NULL) {
         if (!rendererDrawPpuBackground(state)) {
             consoleSelect(&s_bottomConsole);
@@ -279,7 +291,6 @@ void rendererDraw(const GameState *state)
         s_logInitialized = 0;
         return;
     }
-    (void)state;
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 2u) {
         size_t writes = 0u, i, nametableWritten = 0u, attributeWritten = 0u, paletteWritten = 0u;
         const char *sourceLabel = NULL;
@@ -357,6 +368,81 @@ void rendererDraw(const GameState *state)
         }
         return;
     }
+    if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 4u) {
+        size_t i, writeIndex, used;
+        size_t hiddenCount = 0u;
+        const unsigned int menuState = state != NULL ? (unsigned int)state->menu_asm_state : 0u;
+        const uint8_t ram0045 = state != NULL ? state->menu_ram0045 : 0u;
+        const int headerMatch = assetExtractorRomMatchesExcitebikeHeader();
+        NesActiveStreamInfo info;
+        char target[80];
+        const int ram0045Valid = nesExcitebikeActiveStream(ram0045, &info);
+        if (ram0045Valid) {
+            (void)snprintf(target, sizeof(target), "%s %s%s%s",
+                info.isPalette ? "PAL" : "PPU",
+                info.sourceLabel != NULL ? info.sourceLabel : "?",
+                info.hint != NULL ? " [" : "",
+                info.hint != NULL ? info.hint : "");
+        } else {
+            (void)snprintf(target, sizeof(target), "uncaptured");
+        }
+        used = (size_t)snprintf(logText, sizeof(logText),
+            "EXCITEBIKE 3DS / ACTIVE STREAM + OAM\n"
+            "------------------------------\n"
+            "ROM: %.44s\n"
+            "Header matches Excitebike: %s\n"
+            "Menu state $0041: %u (locked; Stage 1 pending)\n"
+            "Live $0045: $%02X -> %s\n",
+            assetExtractorGetRomIdentitySummary(),
+            headerMatch == 1 ? "yes" : (headerMatch == 0 ? "no" : "unknown"),
+            menuState, (unsigned int)ram0045, target);
+        for (writeIndex = 0u;
+             writeIndex < nesExcitebikeRam0045SetupWriteCount() && used < sizeof(logText);
+             ++writeIndex) {
+            const NesRam0045SetupWrite *write = nesExcitebikeRam0045SetupWrite(writeIndex);
+            char resolved[80];
+            NesActiveStreamInfo winfo;
+            int n;
+            if (write == NULL) continue;
+            if (state != NULL && write->asmState != state->menu_asm_state) continue;
+            if (nesExcitebikeActiveStream(write->ram0045, &winfo)) {
+                (void)snprintf(resolved, sizeof(resolved), "%s %s%s%s",
+                    winfo.isPalette ? "PAL" : "PPU",
+                    winfo.sourceLabel != NULL ? winfo.sourceLabel : "?",
+                    winfo.hint != NULL ? " [" : "",
+                    winfo.hint != NULL ? winfo.hint : "");
+            } else {
+                (void)snprintf(resolved, sizeof(resolved), "uncaptured");
+            }
+            n = snprintf(logText + used, sizeof(logText) - used,
+                "cmd%u: $0045=$%02X -> %s\n",
+                (unsigned int)write->commandIndex,
+                (unsigned int)write->ram0045, resolved);
+            if (n < 0 || (size_t)n >= sizeof(logText) - used) break;
+            used += (size_t)n;
+        }
+        if (state != NULL) {
+            for (i = 0u; i < 64u; ++i) {
+                if (state->menu_oam[i * 4u] == 0xF8u) ++hiddenCount;
+            }
+        }
+        if (used < sizeof(logText)) {
+            (void)snprintf(logText + used, sizeof(logText) - used,
+                "OAM: %lu visible / %lu hidden (Y=$F8 via sub_D255)\n"
+                "Live NMI consumer $D55A/$CC2D: not traced\n"
+                "D-pad up/down: change view; A: export; B: back\n",
+                state != NULL ? (unsigned long)(64u - hiddenCount) : 0u,
+                (unsigned long)hiddenCount);
+        }
+        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
+            consoleSelect(&s_bottomConsole);
+            consoleClear();
+            fputs(logText, stdout);
+            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
+            s_logInitialized = 1;
+        }
+        return;
+    }
     if (s_gameStarted) {
         (void)snprintf(logText, sizeof(logText),
             "EXCITEBIKE 3DS\n"
@@ -367,27 +453,30 @@ void rendererDraw(const GameState *state)
             "is not integrated yet.\n"
             "CHR tiles extracted: %lu\n"
             "B: return to asset viewer\n",
-            (unsigned long)tileCount);
+            (unsigned long)assetExtractorGetTotalTiles());
     } else {
         (void)snprintf(logText, sizeof(logText),
             "EXCITEBIKE 3DS / ASSET LOG\n"
             "------------------------------\n"
+            "ROM: %.44s\n"
             "CHR: %.36s\n"
-            "Tiles: %lu / 960\n"
+            "Tiles: %lu\n"
             "Source: rom.nes or CHR_ROM.chr\n"
-            "Exports: CHR, PNG, 7 palettes + 17 PPU snapshots\n"
+            "Exports: CHR, PNG, 7 palettes + 18 PPU snapshots\n"
             "Atlas: %s\n"
             "View: %s; page %lu/%lu\n"
             "D-pad left/right: page/palette\n"
-            "D-pad up/down: atlas/palette/PPU view\n"
+            "D-pad up/down: change view\n"
             "A: open/export; B: close/re-extract\n"
             "START: menu locked until Stage 1 passes\n"
             "Atlas uses grayscale indices, not game colors.\n",
-            assetExtractorGetStatus(), (unsigned long)tileCount,
+            assetExtractorGetRomIdentitySummary(),
+            assetExtractorGetStatus(),
+            (unsigned long)assetExtractorGetTotalTiles(),
             assetExtractorIsActive() ? "OPEN" : "closed",
-            assetExtractorGetViewMode() == 0u ? "CHR atlas" : (assetExtractorGetViewMode() == 1u ? "palette diagnostics" : "PPU snapshots"),
+            viewName(assetExtractorGetViewMode()),
             (unsigned long)(assetExtractorGetPage() + 1u),
-            (unsigned long)((tileCount + 374u) / 375u));
+            (unsigned long)((assetExtractorGetTotalTiles() + 374u) / 375u));
     }
     if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
         consoleClear();

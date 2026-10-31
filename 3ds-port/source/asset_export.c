@@ -3,8 +3,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "asset_export.h"
+#include "nes_chr_decode.h"
 #include "nes_ppu_commands.h"
 #include "nes_ppu_render.h"
+#include "nes_rom_identify.h"
 
 #define STBIW_ASSERT(x) ((void)0)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -22,10 +24,14 @@
 #define ATLAS_WIDTH 256
 #define ATLAS_HEIGHT 240
 #define ATLAS_RGB_BYTES ((size_t)ATLAS_WIDTH * (size_t)ATLAS_HEIGHT * 3u)
+#define EXPORT_CHUNK_TILES 64u
+#define EXPORT_EAGER_TILE_CAP 960u
 
 static uint8_t s_atlas[ATLAS_RGB_BYTES];
 /* Full-size RGB output is static to avoid a 184 KiB stack allocation on 3DS. */
 static uint8_t s_ppuPreview[NES_PPU_RGB_BYTES];
+/* Decode scratch for streamed pixel exports; sized for one chunk of tiles. */
+static uint8_t s_chunkPixels[EXPORT_CHUNK_TILES * 64u];
 
 static int makePath(char *out, size_t capacity, const char *directory, const char *name)
 {
@@ -45,35 +51,68 @@ static int writeBytes(const char *path, const uint8_t *bytes, size_t size)
     return ok;
 }
 
+/*
+ * Stream decoded pixels for every source tile in 64-tile chunks directly from
+ * the raw CHR, so exports are no longer capped at 960 tiles and no full-size
+ * decoded buffer is ever allocated.
+ */
+static int writeChunkPixels(FILE *file, const uint8_t *rawChr, size_t totalTiles)
+{
+    size_t first;
+    for (first = 0u; first < totalTiles; first += EXPORT_CHUNK_TILES) {
+        size_t chunkTiles = totalTiles - first;
+        size_t decoded = 0u;
+        if (chunkTiles > EXPORT_CHUNK_TILES) chunkTiles = EXPORT_CHUNK_TILES;
+        if (nesChrDecodeRaw(rawChr + first * 16u, chunkTiles * 16u,
+                            s_chunkPixels, EXPORT_CHUNK_TILES,
+                            &decoded) != NES_CHR_DECODE_OK ||
+            decoded != chunkTiles) {
+            return 0;
+        }
+        if (fwrite(s_chunkPixels, 1u, chunkTiles * 64u, file) != chunkTiles * 64u) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int writeDecodedPixelFile(const char *path, const uint8_t *rawChr, size_t totalTiles)
+{
+    FILE *file = fopen(path, "wb");
+    int ok;
+    if (file == NULL) return 0;
+    ok = writeChunkPixels(file, rawChr, totalTiles);
+    if (fclose(file) != 0) ok = 0;
+    return ok;
+}
 
 /*
  * Versioned, self-describing tile pack for native consumers.
  * Header (little-endian): "EBPX", u16 version=1, u16 headerBytes=16,
  * u32 tileCount, u8 tileWidth=8, u8 tileHeight=8, u8 format=1
  * (one byte per 2bpp pixel index 0..3), u8 reserved=0; then tileCount*64
- * pixel-index bytes in row-major tile order. chr_pixels.bin remains raw
- * for backwards compatibility with the existing viewer.
+ * pixel-index bytes in row-major tile order, streamed in chunks from rawChr.
+ * chr_pixels.bin remains raw for backwards compatibility with the existing
+ * viewer; both files now contain ALL source tiles.
  */
-static int writePixelPack(const char *path, const uint8_t *pixels, size_t tileCount)
+static int writePixelPackFile(const char *path, const uint8_t *rawChr, size_t totalTiles)
 {
     uint8_t header[16] = {
         'E', 'B', 'P', 'X', 1u, 0u, 16u, 0u,
         0u, 0u, 0u, 0u, 8u, 8u, 1u, 0u
     };
-    size_t countBytes = tileCount * 64u;
-    header[8] = (uint8_t)(tileCount & 0xFFu);
-    header[9] = (uint8_t)((tileCount >> 8u) & 0xFFu);
-    header[10] = (uint8_t)((tileCount >> 16u) & 0xFFu);
-    header[11] = (uint8_t)((tileCount >> 24u) & 0xFFu);
-    {
-        FILE *file = fopen(path, "wb");
-        int ok;
-        if (file == NULL) return 0;
-        ok = fwrite(header, 1u, sizeof(header), file) == sizeof(header) &&
-             fwrite(pixels, 1u, countBytes, file) == countBytes;
-        if (fclose(file) != 0) ok = 0;
-        return ok;
-    }
+    FILE *file;
+    int ok;
+    header[8] = (uint8_t)(totalTiles & 0xFFu);
+    header[9] = (uint8_t)((totalTiles >> 8u) & 0xFFu);
+    header[10] = (uint8_t)((totalTiles >> 16u) & 0xFFu);
+    header[11] = (uint8_t)((totalTiles >> 24u) & 0xFFu);
+    file = fopen(path, "wb");
+    if (file == NULL) return 0;
+    ok = fwrite(header, 1u, sizeof(header), file) == sizeof(header) &&
+         writeChunkPixels(file, rawChr, totalTiles);
+    if (fclose(file) != 0) ok = 0;
+    return ok;
 }
 
 /*
@@ -82,13 +121,13 @@ static int writePixelPack(const char *path, const uint8_t *pixels, size_t tileCo
  * than pretending that one palette assignment is correct for every tile.
  * Missing palette entries are checkerboarded magenta/black.
  */
-static void buildAtlas(const uint8_t *pixels, size_t tileCount,
+static void buildAtlas(const uint8_t *pixels, size_t decodedTileCount,
                        const uint8_t *palette, const uint8_t *paletteMask,
                        unsigned int subpalette)
 {
     size_t tile, y, x;
     memset(s_atlas, 0, sizeof(s_atlas));
-    for (tile = 0u; tile < tileCount; ++tile) {
+    for (tile = 0u; tile < decodedTileCount; ++tile) {
         const size_t tileX = (tile % 32u) * 8u;
         const size_t tileY = (tile / 32u) * 8u;
         for (y = 0u; y < 8u; ++y) {
@@ -118,7 +157,7 @@ static void buildAtlas(const uint8_t *pixels, size_t tileCount,
  * attribute/palette compositor as the runtime. Unwritten source bytes are
  * deliberately hatched instead of silently presented as authentic pixels.
  */
-static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
+static int buildPpuPreview(const uint8_t *pixels, size_t decodedTileCount,
                            const uint8_t *snapshot, const uint8_t *nametableMask,
                            const uint8_t *palette, const uint8_t *paletteMask)
 {
@@ -136,9 +175,9 @@ static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
     memcpy(attributes, snapshot + NES_PPU_NAMETABLE_BYTES,
            sizeof(attributes));
     for (tile = 0u; tile < NES_PPU_NAMETABLE_BYTES; ++tile) {
-        if (safeNametable[tile] >= tileCount) safeNametable[tile] = 0u;
+        if (safeNametable[tile] >= decodedTileCount) safeNametable[tile] = 0u;
     }
-    if (nesPpuRenderNametable(pixels, tileCount, safeNametable,
+    if (nesPpuRenderNametable(pixels, decodedTileCount, safeNametable,
                               attributes, palette, s_ppuPreview,
                               sizeof(s_ppuPreview)) != NES_PPU_RENDER_OK) {
         return 0;
@@ -154,7 +193,7 @@ static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
             (snapshot[NES_PPU_NAMETABLE_BYTES + (tileY / 4u) * 8u + (tileX / 4u)] >> shift) & 3u;
         const size_t chrTile = snapshot[tile];
         int known = nametableMask[tile] != 0u && nametableMask[attributeIndex] != 0u &&
-                    chrTile < tileCount && paletteMask[0] != 0u;
+                    chrTile < decodedTileCount && paletteMask[0] != 0u;
         size_t entry;
         for (entry = 1u; entry < 4u; ++entry) {
             if (paletteMask[paletteGroup * 4u + entry] == 0u) known = 0;
@@ -177,7 +216,8 @@ static int buildPpuPreview(const uint8_t *pixels, size_t tileCount,
 }
 
 int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChrBytes,
-                     const uint8_t *pixels, size_t tileCount,
+                     const uint8_t *pixels, size_t decodedTileCount,
+                     const NesRomIdentity *identity,
                      char *status, size_t statusCapacity)
 {
     char rawPath[512], pixelPath[512], pixelPackPath[512], pngPath[512], manifestPath[512];
@@ -185,12 +225,21 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
     struct stat st;
     FILE *file;
     int manifestLength;
+    size_t totalTiles, expectedDecoded;
     size_t paletteIndex, ppuStreamIndex;
     if (status != NULL && statusCapacity > 0u) status[0] = '\0';
     if (directory == NULL || rawChr == NULL || rawChrBytes == 0u ||
-        pixels == NULL || tileCount == 0u || tileCount > 960u) {
+        (rawChrBytes % 16u) != 0u || pixels == NULL ||
+        decodedTileCount == 0u || decodedTileCount > EXPORT_EAGER_TILE_CAP) {
         if (status != NULL && statusCapacity > 0u)
             (void)snprintf(status, statusCapacity, "Export rejected: invalid or unsupported CHR data.");
+        return 0;
+    }
+    totalTiles = rawChrBytes / 16u;
+    expectedDecoded = totalTiles < EXPORT_EAGER_TILE_CAP ? totalTiles : EXPORT_EAGER_TILE_CAP;
+    if (decodedTileCount != expectedDecoded) {
+        if (status != NULL && statusCapacity > 0u)
+            (void)snprintf(status, statusCapacity, "Export rejected: decoded tile count does not match the raw CHR tile count.");
         return 0;
     }
     if (stat(directory, &st) != 0) {
@@ -217,10 +266,10 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                 (void)snprintf(status, statusCapacity, "Could not resolve source palette preset 12.");
             return 0;
         }
-        buildAtlas(pixels, tileCount, palette, paletteMask, 0u);
+        buildAtlas(pixels, decodedTileCount, palette, paletteMask, 0u);
         if (!writeBytes(rawPath, rawChr, rawChrBytes) ||
-            !writeBytes(pixelPath, pixels, tileCount * 64u) ||
-            !writePixelPack(pixelPackPath, pixels, tileCount) ||
+            !writeDecodedPixelFile(pixelPath, rawChr, totalTiles) ||
+            !writePixelPackFile(pixelPackPath, rawChr, totalTiles) ||
             !stbi_write_png(pngPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3, s_atlas, ATLAS_WIDTH * 3)) {
             if (status != NULL && statusCapacity > 0u)
                 (void)snprintf(status, statusCapacity, "Export failed writing CHR/PNG files.");
@@ -238,7 +287,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                 (void)snprintf(fileName, sizeof(fileName), "chr_atlas_palette_%lu_subpalette_%u.png",
                                (unsigned long)(paletteIndex + 12u), subpalette);
                 if (!makePath(colorAtlasPath, sizeof(colorAtlasPath), directory, fileName)) return 0;
-                buildAtlas(pixels, tileCount, palette, paletteMask, subpalette);
+                buildAtlas(pixels, decodedTileCount, palette, paletteMask, subpalette);
                 if (!stbi_write_png(colorAtlasPath, ATLAS_WIDTH, ATLAS_HEIGHT, 3,
                                     s_atlas, ATLAS_WIDTH * 3)) {
                     if (status != NULL && statusCapacity > 0u)
@@ -294,7 +343,7 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
                 &writes) != NES_PPU_COMMAND_OK ||
             !writeBytes(streamPath, stream, streamSize) ||
             !writeBytes(snapshotPath, snapshot, sizeof(snapshot)) ||
-            !buildPpuPreview(pixels, tileCount, snapshot,
+            !buildPpuPreview(pixels, decodedTileCount, snapshot,
                 snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES,
                 snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u,
                 snapshot + NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES * 2u + 32u) ||
@@ -312,11 +361,12 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Embedded source header: Excitebike/header.bin = mapper 0, 16 KiB PRG, 8 KiB CHR-ROM, vertical mirroring\n"
         "Embedded PPU command lists are Excitebike-specific, not general data for arbitrary ROMs\n"
         "Raw source: chr_raw.bin (%lu bytes of CHR-ROM data)\n"
-        "Decoded pixels: chr_pixels.bin (raw compatibility file); chr_pixels.ebp (versioned EBPX tile pack, %lu tiles)\n"
+        "Decoded pixels: chr_pixels.bin (raw compatibility file, ALL %lu tiles); chr_pixels.ebp (versioned EBPX tile pack, ALL %lu tiles)\n"
         "EBPX v1 header: magic[4], version u16 LE, header size u16 LE, tile count u32 LE, tile width, height, pixel format (1=index byte), reserved; payload = 64 bytes/tile\n"
         "Preview: chr_atlas.png (256x240 RGB; source palette preset 12, subpalette 0; palette assignment is illustrative, not per-tile truth)\n"
         "Color variants: chr_atlas_palette_12..18_subpalette_0..3.png; one image per source palette preset and subpalette, unknown palette entries are magenta/black hatching\n"
-        "If source CHR contains more than the runtime cap, chr_raw.bin retains all bytes but decoded outputs include only the first 960 tiles.\n"
+        "chr_pixels.bin and chr_pixels.ebp are streamed from the complete raw CHR and contain ALL %lu tiles\n"
+        "chr_atlas.png and ppu_preview_*.png compose only the first %lu tiles; the on-device atlas pages through every tile\n"
         "Palette presets: ppu_palette_12..18.bin replay source PPU write lists; mask and stream binaries are included\n"
         "Presets are not a claim about which palette is active in a live menu state\n"
         "PPU command streams: slots 01..17 = table C0F6 indices 1..17; slot 18 = D631 (table index 25)\n"
@@ -327,11 +377,27 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         "Previews use source CHR + snapshot nametable/attributes/palette; no OAM sprites or scroll timing\n"
         "OAM/sprite state and compressed PRG graphics: NOT CAPTURED by this export\n"
         "Unknown/compressed PRG graphics: NOT CLAIMED EXTRACTED\n",
-        (unsigned long)rawChrBytes, (unsigned long)tileCount);
+        (unsigned long)rawChrBytes, (unsigned long)totalTiles, (unsigned long)totalTiles,
+        (unsigned long)totalTiles, (unsigned long)decodedTileCount);
     if (manifestLength < 0 || (size_t)manifestLength >= sizeof(manifest)) {
         if (status != NULL && statusCapacity > 0u)
             (void)snprintf(status, statusCapacity, "Manifest generation failed.");
         return 0;
+    }
+    if (identity != NULL && identity->headerValid != 0) {
+        char identitySummary[160];
+        int identityLength;
+        (void)nesRomIdentitySummary(identity, identitySummary, sizeof(identitySummary));
+        identityLength = snprintf(manifest + manifestLength, sizeof(manifest) - (size_t)manifestLength,
+            "ROM identity: %s\n"
+            "Header-level check only; PRG content identity is not claimed.\n",
+            identitySummary);
+        if (identityLength < 0 || (size_t)identityLength >= sizeof(manifest) - (size_t)manifestLength) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "Manifest generation failed.");
+            return 0;
+        }
+        manifestLength += identityLength;
     }
     file = fopen(manifestPath, "wb");
     if (file == NULL || fwrite(manifest, 1u, (size_t)manifestLength, file) != (size_t)manifestLength) {

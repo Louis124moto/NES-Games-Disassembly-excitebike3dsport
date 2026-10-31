@@ -10,7 +10,10 @@
  * - cold boot remains the diagnostic/CHR-inspector screen;
  * - START leaves diagnostics and enters the source-derived menu state machine;
  * - once in menu mode, controller edges are passed to the ASM-derived dispatcher;
- * - menu updates are now in the active 3DSX frame loop.
+ * - menu updates are now in the active 3DSX frame loop;
+ * - the menu GameState is always passed to rendererDraw so the active
+ *   stream/OAM trace view can report live $0041/$0045/OAM state even while
+ *   the diagnostic viewer is on screen.
  *
  * No extra menu controls are invented: B is not a diagnostic escape in menu mode.
  * The native menu model is still incomplete and menusRender currently reports
@@ -47,7 +50,7 @@ void gameUpdate(void)
 void gameRender(void)
 {
     rendererBeginFrame();
-    rendererDraw(s_menuActive ? &s_menuState : NULL);
+    rendererDraw(&s_menuState);
     rendererEndFrame();
 }
 
