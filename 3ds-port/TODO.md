@@ -91,8 +91,8 @@ This is the controlling project specification. If older checklist items conflict
 - [x] Add a source-derived PPU command-list interpreter and export seven verified palette command streams from `bank_FF.asm` D3D6–D450.
 - [x] Add a third diagnostic preview that composes source PPU snapshots and hatches tiles whose nametable bytes, attribute bytes, or required palette entries are unknown.
 - [x] Export 18 source PPU update streams (table indices 1–17 plus index 25/D631) with 4 KiB nametable/attribute snapshots, write masks, and palette snapshots.
-- [ ] Trace which palette list is active in each game state; complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
-- [ ] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes.
+- [x] Trace which palette list is active in each game state. (2026-10-30, write side only: the 18 setup-command `$0045` writes per menu state are tabulated in `nes_active_stream.c` and surfaced in extractor view 5; see the "ram_0045 active command-stream trace" section below. The live NMI consumer and dynamic indices `$00`/`$1A` remain untraced, so this is not yet full active-state proof.) [ ] Complete nametable/attribute/bank/OAM diagnostics and compressed/generated PRG graphics analysis.
+- [x] Remove the 960-tile decoded-preview cap or implement safe paging/streaming for all supported CHR sizes. (2026-10-30: raw CHR retained on the heap within the 8 MiB ROM limit; `chr_pixels.bin`/`chr_pixels.ebp` stream every tile in 64-tile chunks; the on-device atlas decodes 375-tile pages on demand; host regression `test_asset_export.c` verifies a 1000-tile export end to end. Hardware paging test beyond tile 960 still pending.)
 - [ ] Finish UI and error-path tests, including malformed headers, missing source, failed writes, stale cache, repeated extraction, palette navigation, and viewer mode changes.
 - [ ] Validate on physical New Nintendo 3DS and compare extracted data against the ROM/source reference.
 - [ ] Record a full acceptance report. **Stage 1 remains NOT ACCEPTED.**
@@ -592,7 +592,7 @@ Reference projects consulted for architecture, not copied wholesale:
 - [x] Version the CHR cache format and store an FNV-1a fingerprint of the complete ROM; reject a cache made from a different ROM and regenerate it.
 - [x] Remove nonfunctional L/R palette cycling. A raw CHR tile's final color palette depends on PPU nametable attributes and sprite attributes; arbitrary palette cycling would be misleading. Current grayscale preview intentionally visualizes the four decoded 2bpp indices.
 - [x] Keep 2× atlas paging (375 tiles/page), bounds-check page selection, and keep the bottom log persistent unless its content changes.
-- [ ] CI verification is required for the cache/header and renderer changes; host unit tests should cover cache fingerprint/version validation if cache logic is extracted into a host-testable module.
+- [x] CI verification is required for the cache/header and renderer changes; host unit tests should cover cache fingerprint/version validation if cache logic is extracted into a host-testable module. (2026-10-30: cache logic extracted into `nes_chr_cache.c` with `test_nes_chr_cache.c` covering fingerprint, magic, truncation, trailing data, invalid pixels, and the tile-count cap; CI was pending at push time.)
 - [ ] Hardware verification required on New Nintendo 3DS: check log line breaks, atlas bounds/orientation, page 1/page 2, X re-extraction, Y open/close, B close, and cold start with both valid and stale cache.
 - [ ] Remaining honest limitation: this extracts CHR-ROM tiles from iNES/NES 2.0 ROM images within configured size bounds. CHR-RAM cartridges need runtime PPU memory capture; full-color game/menu composition needs nametable, attribute table, OAM, palette RAM and mapper bank context. Do not mark full menu textures complete until these are implemented and tested.
 
@@ -656,3 +656,55 @@ Reference projects informed the architecture: NEStractor (CHR extraction), NES-S
 - [ ] Build the exact current `main` revision and test this diagnostic on physical New Nintendo 3DS. Expected: five clean vertical bands, no repeated horizontal pixel noise, and a regular grid. If this pattern is corrupted, investigate framebuffer mapping/flush/presentation; if it is clean, investigate CHR tile layout, palette selection, and tile scaling next.
 - [ ] Do not accept Stage 1 until the diagnostic and then the full 512-tile atlas render sharply with source-verified colors on hardware. No Stage 2 work before acceptance.
 - [ ] Host tests, 3DS build, and hardware test were not run by the editing environment for these commits; do not treat the diagnostic as validated until the user tests the built binary.
+
+
+
+## ram_0045 active command-stream trace — 2026-10-30
+
+**Evidence (source only, no invention):** `Excitebike/bank_val.inc` names ram_0045 values in its `con_0045_*` block — `con_0045_02` is commented "blue background" and `con_0045_18` is commented "title screen". ram_0045 is the index used with the PPU command-stream table at CPU `$C0F6` (ROM offset 0x0106). The embedded stream arrays in `nes_ppu_commands.c` cover exactly the table indices the menu setup lists write.
+
+**Index mapping (implemented in `nes_active_stream.c`, host-tested in `test_nes_active_stream.c`):**
+
+- `$01`-`$11` → static PPU update lists, array indices 0-16 (`nesExcitebikePpuStream`).
+- `$19` → the D631 stream, PPU array index 17.
+- `$12`-`$18` → the seven palette command lists D3D6-D450, array indices 0-6 (`nesExcitebikePaletteStream`).
+- `$00` and `$1A` are not captured statically; the API reports them as unresolved rather than guessing.
+
+**Setup-command `$0045` writes per menu state (18 rows, source-derived from the translated setup lists):**
+
+| State ($0041) | Command | $0045 value | Resolves to |
+|---|---|---|---|
+| 0 | 0 | `$02` | PPU D64B ("blue background") |
+| 0 | 1 | `$18` | PAL D450 ("title screen") |
+| 1 | 0 | `$06` | PPU stream 6 |
+| 1 | 1 | `$03` | PPU stream 3 |
+| 1 | 2 | `$18` | PAL D450 ("title screen") |
+| 2 | 0 | `$12` | PAL D3D6 |
+| 2 | 3 | `$17` | PAL D435 |
+| 2 | 4 | `$0E` | PPU stream 14 |
+| 3 | 0 | `$06` | PPU stream 6 |
+| 3 | 1 | `$04` | PPU stream 4 |
+| 4 | 0 | `$06` | PPU stream 6 |
+| 4 | 1 | `$09` | PPU stream 9 |
+| 4 | 3 | `$18` | PAL D450 ("title screen") |
+| 6 | 0 | `$06` | PPU stream 6 |
+| 6 | 1 | `$0F` | PPU stream 15 |
+| 6 | 2 | `$18` | PAL D450 ("title screen") |
+| 8 | 0 | `$11` | PPU D614 |
+| 13 | 0 | `$11` | PPU D614 (state 13 shares list 8) |
+
+States whose setup lists are not yet translated (5, 9, 10, 11, 12) intentionally have no rows.
+
+**Not yet proven:** the instruction-level reader of ram_0045 (consumers noted in `bank_val.inc` around ROM offsets 0x00056A / 0x000C3D, and the NMI path at `$D55A`/`$CC2D`) and dynamic indices `$00`/`$1A`. Extractor view 5 displays the write-side trace and live `$0041`/`$0045`/OAM state and explicitly labels the consumer as not traced. Do not treat this as a complete active-stream proof.
+
+**External references consulted for the architecture:** ognis1205/nesdev (rp2c02 PPU/OAM model) and SKyletoft/nes-emu (NROM loading with a citro2d framebuffer path), used as engineering references only; all Excitebike-specific data remains source-derived.
+
+
+## ROM identity, cache module, and 960-cap removal — 2026-10-30
+
+- [x] `nes_rom_identify.c/.h`: header-level iNES/NES 2.0 identity validation; canonical Excitebike = mapper 0, 16 KiB PRG-ROM, 8 KiB CHR-ROM, vertical mirroring. Honest summary for raw/unidentified sources. Host test `test_nes_rom_identify.c`. PRG content identity (checksums) is intentionally NOT claimed.
+- [x] `nes_chr_cache.c/.h`: version-3 `EBCHR03` cache (magic + NUL, u16 tile count, u32 FNV-1a ROM fingerprint, 64 bytes per tile) extracted from the runtime extractor into a host-testable module; stale-fingerprint, magic, truncation, trailing-data, invalid-pixel, and tile-count-cap rejections are covered by `test_nes_chr_cache.c`.
+- [x] 960-tile export cap removed: `assetExportWrite` streams `chr_pixels.bin`/`chr_pixels.ebp` from the complete raw CHR in 64-tile chunks (ALL tiles), `asset_extractor` retains the raw CHR on the heap and decodes 375-tile atlas pages on demand, and `test_asset_export.c` verifies a 1000-tile export (file sizes, EBPX u32 header count, spot-checked tile 999, manifest wording). `chr_atlas.png` and PPU preview PNGs still compose only the first 960 tiles; documented in the manifest.
+- [x] Extractor view 5 (active stream + OAM): ROM identity summary, header-match yes/no/unknown, live `$0041`/`$0045` from the menu GameState, per-state setup `$0045` writes, OAM visible/hidden counts (Y=`$F8` via sub_D255), and an explicit "NMI consumer not traced" line.
+- [ ] CI verification of these commits was pending at push time; check the `Verify NES routine translations` and `Build 3DS` workflow runs on `main` before treating host coverage as green.
+- [ ] Hardware verification on New 3DS remains required: atlas paging beyond tile 960, streamed export contents on SD, cache hit/miss, ROM identity line, and the active-stream view. **Stage 1 remains NOT ACCEPTED.**
