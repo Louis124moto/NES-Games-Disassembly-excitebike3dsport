@@ -1,4 +1,4 @@
-successfully downloaded text file (SHA: 1a943c27c50ca5fc9ee8d8264e4936ed6c45a2ef)# Excitebike 3DS — roadmap and task tracker
+# Excitebike 3DS — roadmap and task tracker
 
 ## User-approved specification and strict stage gates — 2026-10-21
 
@@ -751,3 +751,10 @@ The "Verify NES routine translations" workflow had been failing on every run sin
 - [x] Run #356 (commit `a39e0f7`): "Verify NES routine translations" completed successfully — the first green test run since 2026-10-21. All host suites pass: Python tools, nes_routines exhaustive 8-bit comparison, chr_decode, ROM identity (the NES 2.0 mapper fix is now CI-validated too), chr cache, active stream, PPU renderer, PPU commands, and the full asset export round-trip (PNG dimensions, EBPX header, all-tiles streaming beyond the 960 cap, manifest content).
 - [x] Build workflow green at `a39e0f7`; the `.3dsx` artifact therefore contains every pending fix: NES 2.0 ROM identity, single-buffered framebuffers, and full-extent per-view repaint.
 - [ ] Hardware retest pending with the `a39e0f7` (or later) CI artifact: the top-screen atlas must display the decoded Excitebike tiles (512 tiles, pages 1-2) rock-stable with no mush and no corner flicker, and the text screens must stay sharp. **Stage 1 remains NOT ACCEPTED.**
+
+## Hardware report follow-up 3 — 2026-11-01 (build of commit `a39e0f7`)
+
+- [x] Retest of the single-buffered build: the top-screen corner blink (offset 0) is RESOLVED, but the top-screen content still renders as mush — only short words ("best") are readable and textures remain illegible. The divergence-only theory is falsified: single buffering removed the corner flicker but did not make large per-frame repaints invisible on this console.
+- [x] New defect on the bottom screen: the bottom-left corner (offset 0) now flickers with the same signature the top screen previously showed. The bottom console is the only surface still rewritten every frame (consoleClear() plus a full log reprint), which confirms the rule observed on this console: ANY large per-frame rewrite of the scanned buffer is visible.
+- [x] Conclusion: the only configuration observed to hold a perfectly stable image on this console is ZERO framebuffer writes per frame (console text rendered once). Fixed in commit `85835db` (renderer.c): change-driven rendering — rendererWriteConsole() rebuilds the log text every frame but reprints the console only when the text changed; rendererTopNeedsRepaint() repaints the top screen only when the extractor-active/game/menu/view/page/palette/stream/tile-count inputs change; menu-mode rendering is gated on menu-state inputs. gfxSwapBuffers() is retained (hardware-verified no-op with double buffering disabled).
+- [ ] Hardware retest pending with the next CI artifact: both screens must be bit-stable at rest (no mush, no corner flicker); a single transition frame on view/page changes is expected and acceptable. If the settled top screen still shows artifacts, the defect is in the drawn content itself (photograph the settled screen for analysis); if a screen degrades without input, a view input is oscillating (the bottom log View/page lines would show it). **Stage 1 remains NOT ACCEPTED.**
