@@ -36,55 +36,60 @@ int main(void)
     }
     if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_BAD_MAGIC) return 8;
 
-    /* Truncated payload, then trailing data. */
+    /*
+     * The bad-magic write corrupted byte 0 of the same file the truncation
+     * block below copies from. Restore a complete valid cache first so the
+     * truncated file starts with valid magic and the short payload is the
+     * only defect. Regression dated 2026-11-01: this test failed with exit
+     * code 12 on every CI run since 2026-10-21 because the truncated file
+     * kept the corrupted first byte and the load legitimately reported
+     * BAD_MAGIC instead of TRUNCATED_PAYLOAD.
+     */
+    if (nesChrCacheSave(path, pixels, 512u, 0x12345678u) != NES_CHR_CACHE_OK) return 9;
+
+    /* Truncated payload. */
     {
         FILE *file = fopen(path, "rb");
         size_t got;
-        if (file == NULL) return 9;
+        if (file == NULL) return 10;
         got = fread(fileBytes, 1u, sizeof(fileBytes), file);
         fclose(file);
-        if (got != 14u + 512u * 64u) return 10;
+        if (got != 14u + 512u * 64u) return 11;
         file = fopen(path, "wb");
-        if (file == NULL) return 11;
+        if (file == NULL) return 12;
         (void)fwrite(fileBytes, 1u, 14u + 100u * 64u, file);
         fclose(file);
     }
-    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_TRUNCATED_PAYLOAD) return 12;
-    /*
-     * The file is still truncated here; restore a complete cache so the byte
-     * appended below is genuine trailing data rather than a short payload.
-     * Regression dated 2026-11-01: this test failed with exit code 14 on
-     * every CI run since 2026-10-21 because the trailing-data assertion ran
-     * against the truncated file and legitimately reported
-     * TRUNCATED_PAYLOAD. The cache implementation itself is correct.
-     */
-    if (nesChrCacheSave(path, pixels, 512u, 0x12345678u) != NES_CHR_CACHE_OK) return 13;
+    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_TRUNCATED_PAYLOAD) return 13;
+
+    /* Trailing data on a complete cache. */
+    if (nesChrCacheSave(path, pixels, 512u, 0x12345678u) != NES_CHR_CACHE_OK) return 14;
     {
         FILE *file = fopen(path, "ab");
-        if (file == NULL) return 14;
+        if (file == NULL) return 15;
         (void)fputc(0, file);
         fclose(file);
     }
-    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_TRAILING_DATA) return 15;
+    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_TRAILING_DATA) return 16;
 
     /* Invalid pixel index (>3) is rejected. */
-    if (nesChrCacheSave(path, pixels, 512u, 0x12345678u) != NES_CHR_CACHE_OK) return 16;
+    if (nesChrCacheSave(path, pixels, 512u, 0x12345678u) != NES_CHR_CACHE_OK) return 17;
     {
         FILE *file = fopen(path, "r+b");
-        if (file == NULL) return 17;
+        if (file == NULL) return 18;
         if (fseek(file, (long)(14u + 10u), SEEK_SET) != 0 || fputc(4, file) == EOF) {
             fclose(file);
-            return 18;
+            return 19;
         }
         fclose(file);
     }
-    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_INVALID_PIXEL) return 19;
+    if (nesChrCacheLoad(path, 0x12345678u, loaded, 512u, &count) != NES_CHR_CACHE_INVALID_PIXEL) return 20;
 
     /* Counts above the 960-tile cap are rejected at save and load time. */
-    if (nesChrCacheSave(path, pixels, 1000u, 0x12345678u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 20;
+    if (nesChrCacheSave(path, pixels, 1000u, 0x12345678u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 21;
     {
         FILE *file = fopen(path, "wb");
-        if (file == NULL) return 21;
+        if (file == NULL) return 22;
         (void)fwrite("EBCHR03", 1u, 8u, file);
         (void)fputc(0xE8, file); /* 1000 & 0xFF */
         (void)fputc(0x03, file); /* 1000 >> 8 */
@@ -92,13 +97,13 @@ int main(void)
         (void)fputc(0x34, file); (void)fputc(0x12, file);
         fclose(file);
     }
-    if (nesChrCacheLoad(path, 0x12345678u, loaded, 960u, &count) != NES_CHR_CACHE_BAD_TILE_COUNT) return 22;
+    if (nesChrCacheLoad(path, 0x12345678u, loaded, 960u, &count) != NES_CHR_CACHE_BAD_TILE_COUNT) return 23;
 
     /* NULL arguments. */
-    if (nesChrCacheSave(NULL, pixels, 512u, 1u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 23;
-    if (nesChrCacheSave(path, NULL, 512u, 1u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 24;
-    if (nesChrCacheLoad(path, 1u, NULL, 512u, &count) != NES_CHR_CACHE_INVALID_ARGUMENT) return 25;
-    if (nesChrCacheLoad(path, 1u, loaded, 512u, NULL) != NES_CHR_CACHE_INVALID_ARGUMENT) return 26;
+    if (nesChrCacheSave(NULL, pixels, 512u, 1u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 24;
+    if (nesChrCacheSave(path, NULL, 512u, 1u) != NES_CHR_CACHE_INVALID_ARGUMENT) return 25;
+    if (nesChrCacheLoad(path, 1u, NULL, 512u, &count) != NES_CHR_CACHE_INVALID_ARGUMENT) return 26;
+    if (nesChrCacheLoad(path, 1u, loaded, 512u, NULL) != NES_CHR_CACHE_INVALID_ARGUMENT) return 27;
 
     (void)unlink(path);
     return 0;
