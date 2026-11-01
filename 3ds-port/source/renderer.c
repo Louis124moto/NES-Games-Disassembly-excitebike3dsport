@@ -18,9 +18,16 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
     return (((size_t)screenX * 240u) + (239u - screenY)) * 3u;
 }
 
+/*
+ * libctru's gfx framebuffers are double buffered: after gfxSwapBuffers() the
+ * newly current backbuffer still holds whatever was rendered into it two
+ * frames earlier. Console text must therefore be re-rendered every frame;
+ * rendering it only when the text changes leaves the alternate backbuffer
+ * stale, so the hardware screen alternates between fresh text and stale
+ * pixels at half the refresh rate (mush and corner flicker observed on
+ * console on 2026-11-01, while single-frame photographs look clean).
+ */
 static PrintConsole s_bottomConsole;
-static char s_lastLog[512];
-static int s_logInitialized;
 static int s_gameStarted;
 static int s_menuActive;
 /* Static storage avoids putting a 184 KiB NES RGB frame on the 3DS stack. */
@@ -262,10 +269,8 @@ void rendererInit(void)
     consoleInit(GFX_TOP, NULL);
     consoleInit(GFX_BOTTOM, &s_bottomConsole);
     consoleSelect(&s_bottomConsole);
-    s_logInitialized = 0;
     s_gameStarted = 0;
     s_menuActive = 0;
-    s_lastLog[0] = '\0';
 }
 
 void rendererBeginFrame(void)
@@ -288,7 +293,6 @@ void rendererDraw(const GameState *state)
                   "Source-derived nametable rendered.\n"
                   "Sprite/OAM composition is not yet enabled.\n", stdout);
         }
-        s_logInitialized = 0;
         return;
     }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 2u) {
@@ -315,13 +319,9 @@ void rendererDraw(const GameState *state)
             "A: export; B: back\n",
             sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes,
             (unsigned long)nametableWritten, (unsigned long)attributeWritten, (unsigned long)paletteWritten);
-        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
-            consoleSelect(&s_bottomConsole);
-            consoleClear();
-            fputs(logText, stdout);
-            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
-            s_logInitialized = 1;
-        }
+        consoleSelect(&s_bottomConsole);
+        consoleClear();
+        fputs(logText, stdout);
         return;
     }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 1u) {
@@ -359,13 +359,9 @@ void rendererDraw(const GameState *state)
                 "D-pad left/right: palette; up/down: change view\n"
                 "A: export; B: back\n");
         }
-        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
-            consoleSelect(&s_bottomConsole);
-            consoleClear();
-            fputs(logText, stdout);
-            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
-            s_logInitialized = 1;
-        }
+        consoleSelect(&s_bottomConsole);
+        consoleClear();
+        fputs(logText, stdout);
         return;
     }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 4u) {
@@ -434,13 +430,9 @@ void rendererDraw(const GameState *state)
                 state != NULL ? (unsigned long)(64u - hiddenCount) : 0u,
                 (unsigned long)hiddenCount);
         }
-        if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
-            consoleSelect(&s_bottomConsole);
-            consoleClear();
-            fputs(logText, stdout);
-            (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
-            s_logInitialized = 1;
-        }
+        consoleSelect(&s_bottomConsole);
+        consoleClear();
+        fputs(logText, stdout);
         return;
     }
     if (s_gameStarted) {
@@ -478,12 +470,9 @@ void rendererDraw(const GameState *state)
             (unsigned long)(assetExtractorGetPage() + 1u),
             (unsigned long)((assetExtractorGetTotalTiles() + 374u) / 375u));
     }
-    if (!s_logInitialized || strcmp(logText, s_lastLog) != 0) {
-        consoleClear();
-        fputs(logText, stdout);
-        (void)snprintf(s_lastLog, sizeof(s_lastLog), "%s", logText);
-        s_logInitialized = 1;
-    }
+    consoleSelect(&s_bottomConsole);
+    consoleClear();
+    fputs(logText, stdout);
 }
 
 void rendererEndFrame(void)
@@ -497,7 +486,6 @@ void rendererEndFrame(void)
 void rendererSetGameStarted(int started)
 {
     s_gameStarted = started != 0;
-    s_logInitialized = 0;
 }
 
 void rendererExit(void)
@@ -508,5 +496,4 @@ void rendererExit(void)
 void rendererSetMenuActive(int active)
 {
     s_menuActive = active != 0;
-    s_logInitialized = 0;
 }
