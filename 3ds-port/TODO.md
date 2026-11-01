@@ -1,4 +1,4 @@
-# Excitebike 3DS — roadmap and task tracker
+successfully downloaded text file (SHA: 1a943c27c50ca5fc9ee8d8264e4936ed6c45a2ef)# Excitebike 3DS — roadmap and task tracker
 
 ## User-approved specification and strict stage gates — 2026-10-21
 
@@ -708,3 +708,15 @@ States whose setup lists are not yet translated (5, 9, 10, 11, 12) intentionally
 - [x] Extractor view 5 (active stream + OAM): ROM identity summary, header-match yes/no/unknown, live `$0041`/`$0045` from the menu GameState, per-state setup `$0045` writes, OAM visible/hidden counts (Y=`$F8` via sub_D255), and an explicit "NMI consumer not traced" line.
 - [ ] CI verification of these commits was pending at push time; check the `Verify NES routine translations` and `Build 3DS` workflow runs on `main` before treating host coverage as green.
 - [ ] Hardware verification on New 3DS remains required: atlas paging beyond tile 960, streamed export contents on SD, cache hit/miss, ROM identity line, and the active-stream view. **Stage 1 remains NOT ACCEPTED.**
+
+
+## Hardware report — 2026-11-01 (New Nintendo 3DS, CI build of commit `ffd48a0`)
+
+User-reported hardware observations with photographs of both screens:
+
+- [x] Extractor journal reports `Tiles: 512, page 1/2`: on-demand atlas paging renders and the tile count is plausible for an 8 KiB CHR-ROM.
+- [x] View 5 (active stream + OAM) renders on hardware and shows the ROM identity and live-state lines.
+- [x] PPU snapshot view (D470 stream) renders with correct counters (1309 writes, nametable 640/960, attributes 48/64, palette 0/32); palette view shows the D3D6 snapshot values.
+- [x] Defect confirmed: the user's `rom.nes` is a legitimate NES 2.0 dump of Excitebike, but the ROM identity line reported "NES 2.0 mapper 128" and "Header matches Excitebike: no". Root cause: `nesRomIdentifyHeader` read the NES 2.0 flags-7 low nibble (format bits) as mapper bits, so flags 7 = $08 produced mapper 128 instead of mapper 0. Fixed on 2026-11-01 in commit `103443c` with the correct NES 2.0 mapper formula (flags 6 high nibble | flags 7 high nibble | flags 8 low nibble << 8); the iNES mapper-32 regression vector was also corrected (flags 7 = $02, not $20). Hardware retest pending: the identity line should now read "NES 2.0 mapper 0, PRG 16 KiB, CHR-ROM 8 KiB" and "Header matches Excitebike: yes".
+- [ ] The CHR atlas remains pixelated/garbled on hardware across builds; this defect is NOT resolved. The view-3 deterministic framebuffer test pattern is the next isolation step: if the bands/grid are corrupted, investigate framebuffer mapping/flush; if clean, investigate CHR decode/page composition.
+- [ ] Re-verify the new ROM identity output and atlas sharpness with the next CI-committed `.3dsx`. **Stage 1 remains NOT ACCEPTED.**
