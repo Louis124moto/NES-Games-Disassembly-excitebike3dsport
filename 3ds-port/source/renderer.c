@@ -19,13 +19,19 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
 }
 
 /*
- * libctru's gfx framebuffers are double buffered: after gfxSwapBuffers() the
- * newly current backbuffer still holds whatever was rendered into it two
- * frames earlier. Console text must therefore be re-rendered every frame;
- * rendering it only when the text changes leaves the alternate backbuffer
- * stale, so the hardware screen alternates between fresh text and stale
- * pixels at half the refresh rate (mush and corner flicker observed on
- * console on 2026-11-01, while single-frame photographs look clean).
+ * libctru's gfx framebuffers are double buffered by default: gfxSwapBuffers()
+ * alternates the buffer returned by gfxGetFramebuffer(). Hardware observation
+ * on 2026-11-01 showed the LCD scanout did not follow that alternation on the
+ * test console: console text rendered only once stayed perfectly stable, while
+ * top-screen content redrawn every frame showed a ~30 Hz mix of fresh and
+ * stale pixels (mush with a flickering bottom-left corner; single-frame
+ * photographs look clean). rendererInit() therefore disables double
+ * buffering so the drawn buffer and the scanned buffer always agree.
+ * Consequences for this renderer:
+ *  - console text is re-rendered every frame (cheap and keeps it current);
+ *  - a full-buffer memset before drawing would flash a black sweep on the
+ *    scanned buffer, so every diagnostic view repaints its full extent with
+ *    identical content each frame instead of clearing first.
  */
 static PrintConsole s_bottomConsole;
 static int s_gameStarted;
@@ -104,7 +110,14 @@ static void rendererDrawChrAtlas(void)
     /* On libctru top-screen framebuffer dimensions are 240x400. */
     if (s_menuActive) return;
     if (framebuffer == NULL || width != 240u || height != 400u) return;
-    memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+    /*
+     * Single-buffered mode (see rendererInit): the LCD scans the buffer we
+     * draw into. Repainting identical content every frame is invisible, but
+     * a full-buffer memset flashes a black sweep, so each view repaints its
+     * full extent instead of clearing first. Undrawn areas keep their
+     * previous content; the consoleInit clear provides the initial black
+     * background.
+     */
     if (!assetExtractorIsActive() || s_gameStarted) return;
     pixels = assetExtractorGetPixels(&tileCount);
 
@@ -138,6 +151,7 @@ static void rendererDrawChrAtlas(void)
 
     if (assetExtractorGetViewMode() == 2u) {
         size_t writes = 0u, tile, pixelX, pixelY;
+        unsigned int bandX;
         const size_t streamIndex = assetExtractorGetPpuStreamIndex();
         if (nesExcitebikePpuSnapshot(streamIndex, s_sourceNametable, s_sourceNametableMask,
                                      s_sourcePalette, s_sourcePaletteMask, &writes) != NES_PPU_COMMAND_OK) return;
@@ -167,6 +181,21 @@ static void rendererDrawChrAtlas(void)
                                   s_sourceAttributes, s_sourcePaletteView,
                                   s_sourcePpuRgb, sizeof(s_sourcePpuRgb)) != NES_PPU_RENDER_OK) {
             memset(s_unknownTiles, 1, sizeof(s_unknownTiles));
+        }
+        /* Repaint the side bands so a view switch leaves no stale pixels. */
+        for (pixelY = 0u; pixelY < 240u; ++pixelY) {
+            for (bandX = 0u; bandX < 72u; ++bandX) {
+                const size_t bandOffset = topFramebufferOffset(bandX, (unsigned int)pixelY);
+                framebuffer[bandOffset] = 0u;
+                framebuffer[bandOffset + 1u] = 0u;
+                framebuffer[bandOffset + 2u] = 0u;
+            }
+            for (bandX = 328u; bandX < 400u; ++bandX) {
+                const size_t bandOffset = topFramebufferOffset(bandX, (unsigned int)pixelY);
+                framebuffer[bandOffset] = 0u;
+                framebuffer[bandOffset + 1u] = 0u;
+                framebuffer[bandOffset + 2u] = 0u;
+            }
         }
         for (pixelY = 0u; pixelY < 240u; ++pixelY) {
             for (pixelX = 0u; pixelX < 256u; ++pixelX) {
@@ -198,8 +227,8 @@ static void rendererDrawChrAtlas(void)
             uint8_t rgb[3] = {64u,64u,64u};
             unsigned int x, y;
             if (written[index] != 0u) (void)nesPpuColorToRgb(palette[index], rgb);
-            for (y = 1u; y < 59u; ++y) {
-                for (x = 1u; x < 49u; ++x) {
+            for (y = 0u; y < 60u; ++y) {
+                for (x = 0u; x < 50u; ++x) {
                     const size_t offset = topFramebufferOffset(cellX + x, cellY + y);
                     framebuffer[offset] = rgb[2];
                     framebuffer[offset + 1u] = rgb[1];
@@ -230,6 +259,26 @@ static void rendererDrawChrAtlas(void)
         pagePixels = assetExtractorGetPagePixels(&pageTileCount, &firstTile);
         if (pagePixels == NULL || pageTileCount == 0u) return;
         tileCount = pageTileCount;
+
+    /* Repaint the unused tail of the page so paging leaves no stale pixels. */
+    for (tile = pageTileCount; tile < 375u; ++tile) {
+        const unsigned int clearX = (unsigned int)(tile % 25u) * 16u;
+        const unsigned int clearY = (unsigned int)(tile / 25u) * 16u;
+        for (row = 0u; row < 8u; ++row) {
+            for (col = 0u; col < 8u; ++col) {
+                unsigned int dx, dy;
+                for (dy = 0u; dy < 2u; ++dy) {
+                    for (dx = 0u; dx < 2u; ++dx) {
+                        const size_t offset = topFramebufferOffset(clearX + col * 2u + dx,
+                                                                  clearY + row * 2u + dy);
+                        framebuffer[offset] = 0u;
+                        framebuffer[offset + 1u] = 0u;
+                        framebuffer[offset + 2u] = 0u;
+                    }
+                }
+            }
+        }
+    }
 
     /* 2x nearest-neighbour zoom: 375 tiles per page, with D-pad paging. */
     for (tile = 0u; tile < tileCount; ++tile) {
@@ -266,6 +315,18 @@ static void rendererDrawChrAtlas(void)
 void rendererInit(void)
 {
     gfxInitDefault();
+    /*
+     * Hardware observation 2026-11-01: with libctru's default double buffering
+     * the LCD scanout did not follow the gfxSwapBuffers() alternation on the
+     * test console (once-rendered console text stayed perfectly stable while
+     * every-frame-redrawn top-screen content alternated between fresh and
+     * stale pixels: mush plus a flickering bottom-left corner, clean in
+     * single-frame photographs). Disable double buffering so the buffer drawn
+     * into is always the buffer being scanned; per-frame repaints of
+     * identical content are then invisible.
+     */
+    gfxSetDoubleBuffering(GFX_TOP, false);
+    gfxSetDoubleBuffering(GFX_BOTTOM, false);
     consoleInit(GFX_TOP, NULL);
     consoleInit(GFX_BOTTOM, &s_bottomConsole);
     consoleSelect(&s_bottomConsole);
