@@ -27,11 +27,23 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
  * stale pixels (mush with a flickering bottom-left corner; single-frame
  * photographs look clean). rendererInit() therefore disables double
  * buffering so the drawn buffer and the scanned buffer always agree.
- * Consequences for this renderer:
- *  - console text is re-rendered every frame (cheap and keeps it current);
- *  - a full-buffer memset before drawing would flash a black sweep on the
- *    scanned buffer, so every diagnostic view repaints its full extent with
- *    identical content each frame instead of clearing first.
+ *
+ * Second hardware observation, same day: disabling double buffering removed
+ * the corner blink, but every large per-frame rewrite of the scanned buffer
+ * remained visible on this console. The top screen still rendered as mush,
+ * and the bottom screen - the only surface still rewritten every frame
+ * (consoleClear() plus a full log reprint) - developed the same offset-0
+ * corner flicker the top screen used to show. The only configuration
+ * observed to hold a perfectly stable image on this console is ZERO
+ * framebuffer writes per frame (console text rendered once). This renderer
+ * is therefore change-driven:
+ *  - rendererWriteConsole() rebuilds the log text every frame (CPU-only) and
+ *    reprints the console only when the text actually changed;
+ *  - rendererTopNeedsRepaint() redraws the top screen only when the
+ *    view/page/palette/stream/state inputs changed;
+ *  - a transition repaint may be caught once by the scanout; the settled
+ *    image is bit-stable. If the settled top screen still shows artifacts,
+ *    they are the drawn content itself, not a timing defect.
  */
 static PrintConsole s_bottomConsole;
 static int s_gameStarted;
@@ -47,6 +59,79 @@ static uint8_t s_sourceNametableView[NES_PPU_NAMETABLE_BYTES];
 static uint8_t s_sourceAttributes[NES_PPU_ATTRIBUTE_BYTES];
 static uint8_t s_sourcePaletteView[NES_PPU_PALETTE_BYTES];
 static uint8_t s_unknownTiles[NES_PPU_NAMETABLE_BYTES];
+/* Last text written to the bottom console (see rendererWriteConsole). */
+static char s_lastConsoleText[512];
+
+/*
+ * Store the last text written to the console with an explicit byte loop so
+ * the 3DS build stays free of copy/truncation warnings under -Wall -Wextra.
+ */
+static void rendererStoreConsoleText(const char *text)
+{
+    size_t i;
+    for (i = 0u; i + 1u < sizeof(s_lastConsoleText) && text[i] != '\0'; ++i) {
+        s_lastConsoleText[i] = text[i];
+    }
+    s_lastConsoleText[i] = '\0';
+}
+
+/*
+ * Change-driven console: the log text is rebuilt every frame, but the bottom
+ * framebuffer is touched only when the text differs from the last written
+ * copy. consoleClear() plus a full reprint happens only on state changes; in
+ * steady state this performs zero framebuffer writes, which is the only
+ * configuration observed stable on the test console.
+ */
+static void rendererWriteConsole(const char *text)
+{
+    consoleSelect(&s_bottomConsole);
+    if (strcmp(text, s_lastConsoleText) == 0) return;
+    consoleClear();
+    fputs(text, stdout);
+    rendererStoreConsoleText(text);
+}
+
+/*
+ * Change-driven top screen: every top-screen view is a pure function of the
+ * inputs compared below, so the framebuffer is repainted only when one of
+ * them changes. This is the documented fallback after single buffering alone
+ * did not stabilize the top screen, and it makes the failure mode
+ * deterministic: a settled screen that still shows artifacts is a content
+ * defect (photograph it), and a screen that repaints without input means an
+ * input below is oscillating (the bottom log View/page lines would show it).
+ */
+static int rendererTopNeedsRepaint(void)
+{
+    static int s_active = -1;
+    static int s_game = -1;
+    static int s_menu = -1;
+    static unsigned int s_view = 0xFFFFFFFFu;
+    static size_t s_page = (size_t)-1;
+    static size_t s_palette = (size_t)-1;
+    static size_t s_stream = (size_t)-1;
+    static size_t s_tiles = (size_t)-1;
+    const int active = assetExtractorIsActive() != 0;
+    const int game = s_gameStarted;
+    const int menu = s_menuActive;
+    const unsigned int view = assetExtractorGetViewMode();
+    const size_t page = (size_t)assetExtractorGetPage();
+    const size_t palette = active ? (size_t)assetExtractorGetPaletteIndex() : 0u;
+    const size_t stream = active ? (size_t)assetExtractorGetPpuStreamIndex() : 0u;
+    const size_t tiles = (size_t)assetExtractorGetTotalTiles();
+    const int dirty = (active != s_active) || (game != s_game) || (menu != s_menu) ||
+                      (view != s_view) || (page != s_page) || (palette != s_palette) ||
+                      (stream != s_stream) || (tiles != s_tiles);
+
+    s_active = active;
+    s_game = game;
+    s_menu = menu;
+    s_view = view;
+    s_page = page;
+    s_palette = palette;
+    s_stream = stream;
+    s_tiles = tiles;
+    return dirty;
+}
 
 static const char *viewName(unsigned int mode)
 {
@@ -111,12 +196,11 @@ static void rendererDrawChrAtlas(void)
     if (s_menuActive) return;
     if (framebuffer == NULL || width != 240u || height != 400u) return;
     /*
-     * Single-buffered mode (see rendererInit): the LCD scans the buffer we
-     * draw into. Repainting identical content every frame is invisible, but
-     * a full-buffer memset flashes a black sweep, so each view repaints its
-     * full extent instead of clearing first. Undrawn areas keep their
-     * previous content; the consoleInit clear provides the initial black
-     * background.
+     * Change-driven mode (see rendererInit and rendererTopNeedsRepaint): this
+     * function runs only when view inputs changed, so no view may rely on a
+     * previous-frame clear. Each view repaints its full 400x240 extent;
+     * undrawn areas keep their previous content; the consoleInit clear
+     * provides the initial black background.
      */
     if (!assetExtractorIsActive() || s_gameStarted) return;
     pixels = assetExtractorGetPixels(&tileCount);
@@ -322,8 +406,10 @@ void rendererInit(void)
      * every-frame-redrawn top-screen content alternated between fresh and
      * stale pixels: mush plus a flickering bottom-left corner, clean in
      * single-frame photographs). Disable double buffering so the buffer drawn
-     * into is always the buffer being scanned; per-frame repaints of
-     * identical content are then invisible.
+     * into is always the buffer being scanned. A same-day retest showed this
+     * removes the corner blink but does NOT make large per-frame repaints
+     * invisible on this console; the renderer is therefore also change-driven
+     * (see rendererWriteConsole and rendererTopNeedsRepaint).
      */
     gfxSetDoubleBuffering(GFX_TOP, false);
     gfxSetDoubleBuffering(GFX_BOTTOM, false);
@@ -343,16 +429,37 @@ void rendererDraw(const GameState *state)
 {
     char logText[512];
     if (s_menuActive && state != NULL) {
-        if (!rendererDrawPpuBackground(state)) {
-            consoleSelect(&s_bottomConsole);
-            consoleClear();
-            menusRender(state);
-        } else {
-            consoleSelect(&s_bottomConsole);
-            consoleClear();
-            fputs("EXCITEBIKE 3DS / PPU BACKGROUND\n"
-                  "Source-derived nametable rendered.\n"
-                  "Sprite/OAM composition is not yet enabled.\n", stdout);
+        /*
+         * Menu mode: write both screens only when the menu-state inputs
+         * changed (change-driven rendering; see the notes at the top of this
+         * file). Revisit this gate when an animated menu is integrated
+         * (Stage 2/3).
+         */
+        static int s_menuDrawn = 0;
+        static uint8_t s_lastAsmState = 0u;
+        static uint8_t s_lastSelection = 0u;
+        static uint8_t s_lastRam0045 = 0u;
+        static uint8_t s_lastPpuReady = 0u;
+        if (s_menuDrawn == 0 || state->menu_asm_state != s_lastAsmState ||
+            state->menu_selection != s_lastSelection ||
+            state->menu_ram0045 != s_lastRam0045 ||
+            state->menu_ppu_background_ready != s_lastPpuReady) {
+            s_menuDrawn = 1;
+            s_lastAsmState = state->menu_asm_state;
+            s_lastSelection = state->menu_selection;
+            s_lastRam0045 = state->menu_ram0045;
+            s_lastPpuReady = state->menu_ppu_background_ready;
+            if (!rendererDrawPpuBackground(state)) {
+                consoleSelect(&s_bottomConsole);
+                consoleClear();
+                /* menusRender writes the console directly; invalidate the cache. */
+                rendererStoreConsoleText("");
+                menusRender(state);
+            } else {
+                rendererWriteConsole("EXCITEBIKE 3DS / PPU BACKGROUND\n"
+                                     "Source-derived nametable rendered.\n"
+                                     "Sprite/OAM composition is not yet enabled.\n");
+            }
         }
         return;
     }
@@ -380,9 +487,7 @@ void rendererDraw(const GameState *state)
             "A: export; B: back\n",
             sourceLabel != NULL ? sourceLabel : "unknown", (unsigned long)writes,
             (unsigned long)nametableWritten, (unsigned long)attributeWritten, (unsigned long)paletteWritten);
-        consoleSelect(&s_bottomConsole);
-        consoleClear();
-        fputs(logText, stdout);
+        rendererWriteConsole(logText);
         return;
     }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 1u) {
@@ -420,9 +525,7 @@ void rendererDraw(const GameState *state)
                 "D-pad left/right: palette; up/down: change view\n"
                 "A: export; B: back\n");
         }
-        consoleSelect(&s_bottomConsole);
-        consoleClear();
-        fputs(logText, stdout);
+        rendererWriteConsole(logText);
         return;
     }
     if (!s_gameStarted && assetExtractorIsActive() && assetExtractorGetViewMode() == 4u) {
@@ -491,9 +594,7 @@ void rendererDraw(const GameState *state)
                 state != NULL ? (unsigned long)(64u - hiddenCount) : 0u,
                 (unsigned long)hiddenCount);
         }
-        consoleSelect(&s_bottomConsole);
-        consoleClear();
-        fputs(logText, stdout);
+        rendererWriteConsole(logText);
         return;
     }
     if (s_gameStarted) {
@@ -531,14 +632,23 @@ void rendererDraw(const GameState *state)
             (unsigned long)(assetExtractorGetPage() + 1u),
             (unsigned long)((assetExtractorGetTotalTiles() + 374u) / 375u));
     }
-    consoleSelect(&s_bottomConsole);
-    consoleClear();
-    fputs(logText, stdout);
+    rendererWriteConsole(logText);
 }
 
 void rendererEndFrame(void)
 {
-    rendererDrawChrAtlas();
+    /*
+     * Change-driven top screen: repaint only when view inputs changed (see
+     * rendererTopNeedsRepaint). gfxFlushBuffers() still runs every frame so
+     * console writes are published even on frames without a top repaint.
+     * gfxSwapBuffers() is retained: double buffering is disabled for both
+     * screens, so it alternates nothing (hardware-verified: once-drawn
+     * console text neither flickers nor blanks at 30 Hz with this call in
+     * place), and removing it would change an untested code path.
+     */
+    if (rendererTopNeedsRepaint()) {
+        rendererDrawChrAtlas();
+    }
     gfxFlushBuffers();
     gfxSwapBuffers();
     gspWaitForVBlank();
