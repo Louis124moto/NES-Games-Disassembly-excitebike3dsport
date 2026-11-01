@@ -24,10 +24,11 @@ int main(void)
     if (strstr(summary, "mapper 0") == NULL || strstr(summary, "PRG 16") == NULL ||
         strstr(summary, "CHR-ROM 8") == NULL) return 5;
 
-    /* Wrong mapper: no match. */
-    rom[7] = 0x20u;
+    /* Wrong mapper: iNES mapper 32 needs flags 7 low nibble = 2. */
+    rom[7] = 0x02u;
     if (nesRomIdentifyHeader(rom, sizeof(rom), &identity) != NES_ROM_IDENTIFY_OK) return 6;
-    if (identity.mapper != 32u || nesRomIdentityMatchesExcitebike(&identity) != 0) return 7;
+    if (identity.mapper != 32u || identity.isNes2 != 0 ||
+        nesRomIdentityMatchesExcitebike(&identity) != 0) return 7;
 
     /* CHR-RAM layout: no match. */
     memset(rom, 0, sizeof(rom));
@@ -36,12 +37,24 @@ int main(void)
     if (nesRomIdentifyHeader(rom, sizeof(rom), &identity) != NES_ROM_IDENTIFY_OK) return 8;
     if (identity.usesChrRam == 0 || nesRomIdentityMatchesExcitebike(&identity) != 0) return 9;
 
-    /* NES 2.0 header with the same layout: identifies and matches. */
+    /*
+     * NES 2.0 header with the same layout: identifies and matches.
+     * flags 7 = $08 sets the NES 2.0 format bits; its LOW nibble must NOT
+     * contribute mapper bits (regression: it previously reported mapper 128,
+     * which made a valid NES 2.0 Excitebike dump fail the hardware check).
+     */
     memset(rom, 0, sizeof(rom));
     rom[0] = 'N'; rom[1] = 'E'; rom[2] = 'S'; rom[3] = 0x1A;
     rom[4] = 1u; rom[5] = 1u; rom[6] = 1u; rom[7] = 0x08u;
     if (nesRomIdentifyHeader(rom, sizeof(rom), &identity) != NES_ROM_IDENTIFY_OK) return 10;
-    if (identity.isNes2 == 0 || nesRomIdentityMatchesExcitebike(&identity) != 1) return 11;
+    if (identity.isNes2 == 0 || identity.mapper != 0u ||
+        nesRomIdentityMatchesExcitebike(&identity) != 1) return 11;
+
+    /* NES 2.0 extended mapper bits (flags 8 low nibble): no match. */
+    rom[8] = 0x01u;
+    if (nesRomIdentifyHeader(rom, sizeof(rom), &identity) != NES_ROM_IDENTIFY_OK) return 18;
+    if (identity.mapper != 0x100u ||
+        nesRomIdentityMatchesExcitebike(&identity) != 0) return 19;
 
     /* Bad magic. */
     rom[3] = 0x00u;

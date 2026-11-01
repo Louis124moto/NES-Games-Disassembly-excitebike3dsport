@@ -16,10 +16,24 @@ NesRomIdentifyResult nesRomIdentifyHeader(const uint8_t *rom, size_t romSize,
 
     isNes2 = (rom[7] & 0x0Cu) == 0x08u;
     identity->isNes2 = isNes2;
-    identity->mapper = (unsigned int)(rom[6] >> 4) |
-                       ((unsigned int)(rom[7] & 0x0Fu) << 4);
     identity->verticalMirroring = (rom[6] & 0x01u) != 0;
     identity->trainer = (rom[6] & 0x04u) != 0;
+    if (!isNes2) {
+        /* iNES: mapper low nibble from flags 6, high nibble from flags 7 low. */
+        identity->mapper = (unsigned int)(rom[6] >> 4) |
+                           ((unsigned int)(rom[7] & 0x0Fu) << 4);
+    } else {
+        /*
+         * NES 2.0: flags 7 low nibble is the console/format field, NOT mapper
+         * bits. Mapper = flags 6 high nibble | flags 7 HIGH nibble | flags 8
+         * low nibble << 8. Reading flags 7 low nibble as mapper bits made a
+         * canonical NES 2.0 mapper-0 header (flags 7 = $08) report mapper 128
+         * on hardware (reported 2026-11-01).
+         */
+        identity->mapper = (unsigned int)(rom[6] >> 4) |
+                           ((unsigned int)(rom[7] & 0xF0u)) |
+                           (((unsigned int)(rom[8] & 0x0Fu)) << 8);
+    }
     identity->usesChrRam = rom[5] == 0u;
 
     if (!isNes2) {
