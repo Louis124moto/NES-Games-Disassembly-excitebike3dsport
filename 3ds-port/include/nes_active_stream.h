@@ -37,7 +37,8 @@
 #define NES_EXCITEBIKE_RAM0045_MIN_PALETTE 0x12u
 #define NES_EXCITEBIKE_RAM0045_MAX_PALETTE 0x18u
 #define NES_EXCITEBIKE_RAM0045_D631 0x19u
-#define NES_EXCITEBIKE_RAM0045_UNCAPTURED_HIGH 0x1Au
+/* Last valid selector in tbl_C0F6_lo / tbl_C111_hi ($00-$1A). */
+#define NES_EXCITEBIKE_RAM0045_MAX_TABLE_INDEX 0x1Au
 
 typedef struct {
     int valid;              /* 1 when ram0045 maps to a captured static stream */
