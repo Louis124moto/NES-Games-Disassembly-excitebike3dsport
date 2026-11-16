@@ -45,6 +45,19 @@ static size_t topFramebufferOffset(unsigned int screenX, unsigned int screenY)
  *    image is bit-stable. If the settled top screen still shows artifacts,
  *    they are the drawn content itself, not a timing defect.
  */
+/*
+ * Top-screen pixel format (root-cause finding, 2026-11-16, from libctru source
+ * and the official devkitPro 3ds-examples/graphics/bitmap/24bit-color example):
+ * consoleInit(screen, ...) in libctru calls
+ * gfxSetScreenFormat(screen, GSP_RGB565_OES), i.e. 2 bytes per pixel. This
+ * renderer writes 3-byte BGR8 pixels directly into the top framebuffer using
+ * topFramebufferOffset(), so the top screen must NEVER be passed to
+ * consoleInit(): the LCD would scan out the 3-byte data as 2-byte RGB565 pixels
+ * (garbled "mush" while the 16-bit bottom console text stays sharp). The
+ * official example keeps the console and the raw 24-bit image on different
+ * screens for exactly this reason. Only the bottom screen is a console here.
+ * Hardware confirmation of this fix is pending (see 3ds-port/TODO.md).
+ */
 static PrintConsole s_bottomConsole;
 static int s_gameStarted;
 static int s_menuActive;
@@ -133,6 +146,20 @@ static int rendererTopNeedsRepaint(void)
     return dirty;
 }
 
+/*
+ * Fill the whole top framebuffer with black (BGR8, 240x400 sideways storage).
+ * Used once at startup, because the top screen is no longer a console that
+ * clears itself on init, and whenever the viewer closes so no stale atlas
+ * pixels stay on screen.
+ */
+static void rendererClearTop(void)
+{
+    u16 width = 0u, height = 0u;
+    uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
+    if (framebuffer == NULL || width != 240u || height != 400u) return;
+    memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+}
+
 static const char *viewName(unsigned int mode)
 {
     switch (mode) {
@@ -202,7 +229,11 @@ static void rendererDrawChrAtlas(void)
      * undrawn areas keep their previous content; the consoleInit clear
      * provides the initial black background.
      */
-    if (!assetExtractorIsActive() || s_gameStarted) return;
+    if (!assetExtractorIsActive() || s_gameStarted) {
+        /* Viewer closed: blank the top screen instead of leaving the last atlas page. */
+        rendererClearTop();
+        return;
+    }
     pixels = assetExtractorGetPixels(&tileCount);
 
     /* Diagnostic mode: known RGB/BGR blocks and 8-pixel grid, independent of CHR decode. */
@@ -413,7 +444,15 @@ void rendererInit(void)
      */
     gfxSetDoubleBuffering(GFX_TOP, false);
     gfxSetDoubleBuffering(GFX_BOTTOM, false);
-    consoleInit(GFX_TOP, NULL);
+    /*
+     * Top screen = raw 24-bit BGR8 pixels (gfxInitDefault's format). Do NOT call
+     * consoleInit(GFX_TOP, ...): it would switch the top screen to RGB565 (see
+     * the note above s_bottomConsole). Setting the format explicitly is a no-op
+     * guard (gfxSetScreenFormat only records the format when the framebuffers
+     * are already large enough) and then the screen is cleared to black once.
+     */
+    gfxSetScreenFormat(GFX_TOP, GSP_BGR8_OES);
+    rendererClearTop();
     consoleInit(GFX_BOTTOM, &s_bottomConsole);
     consoleSelect(&s_bottomConsole);
     s_gameStarted = 0;
