@@ -464,6 +464,30 @@ void rendererBeginFrame(void)
     consoleSelect(&s_bottomConsole);
 }
 
+/*
+ * One-line description of what the NMI upload (vec_C23B_NMI -> sub_C27F) does
+ * for a ram_0045 value, from the source trace documented in nes_active_stream.h.
+ */
+static void rendererDescribeRam0045(uint8_t ram0045, char *out, size_t outSize)
+{
+    NesActiveStreamInfo info;
+    const NesRam0045Target target = nesExcitebikeRam0045Target(ram0045);
+    if (nesExcitebikeActiveStream(ram0045, &info)) {
+        (void)snprintf(out, outSize, "%s %s%s%s%s",
+            info.isPalette ? "PAL" : "PPU",
+            info.sourceLabel != NULL ? info.sourceLabel : "?",
+            info.hint != NULL ? " [" : "",
+            info.hint != NULL ? info.hint : "",
+            info.hint != NULL ? "]" : "");
+    } else if (target.kind == NES_RAM0045_TARGET_DYNAMIC_BUFFER) {
+        (void)snprintf(out, outSize, "dynamic buffer $%04X", (unsigned int)target.cpuAddress);
+    } else if (target.kind == NES_RAM0045_TARGET_ZERO_PAGE_LIST) {
+        (void)snprintf(out, outSize, "list $%04X (not in CDL)", (unsigned int)target.cpuAddress);
+    } else {
+        (void)snprintf(out, outSize, "outside table");
+    }
+}
+
 void rendererDraw(const GameState *state)
 {
     char logText[512];
@@ -573,18 +597,8 @@ void rendererDraw(const GameState *state)
         const unsigned int menuState = state != NULL ? (unsigned int)state->menu_asm_state : 0u;
         const uint8_t ram0045 = state != NULL ? state->menu_ram0045 : 0u;
         const int headerMatch = assetExtractorRomMatchesExcitebikeHeader();
-        NesActiveStreamInfo info;
         char target[80];
-        const int ram0045Valid = nesExcitebikeActiveStream(ram0045, &info);
-        if (ram0045Valid) {
-            (void)snprintf(target, sizeof(target), "%s %s%s%s",
-                info.isPalette ? "PAL" : "PPU",
-                info.sourceLabel != NULL ? info.sourceLabel : "?",
-                info.hint != NULL ? " [" : "",
-                info.hint != NULL ? info.hint : "");
-        } else {
-            (void)snprintf(target, sizeof(target), "uncaptured");
-        }
+        rendererDescribeRam0045(ram0045, target, sizeof(target));
         used = (size_t)snprintf(logText, sizeof(logText),
             "EXCITEBIKE 3DS / ACTIVE STREAM + OAM\n"
             "------------------------------\n"
@@ -600,19 +614,10 @@ void rendererDraw(const GameState *state)
              ++writeIndex) {
             const NesRam0045SetupWrite *write = nesExcitebikeRam0045SetupWrite(writeIndex);
             char resolved[80];
-            NesActiveStreamInfo winfo;
             int n;
             if (write == NULL) continue;
             if (state != NULL && write->asmState != state->menu_asm_state) continue;
-            if (nesExcitebikeActiveStream(write->ram0045, &winfo)) {
-                (void)snprintf(resolved, sizeof(resolved), "%s %s%s%s",
-                    winfo.isPalette ? "PAL" : "PPU",
-                    winfo.sourceLabel != NULL ? winfo.sourceLabel : "?",
-                    winfo.hint != NULL ? " [" : "",
-                    winfo.hint != NULL ? winfo.hint : "");
-            } else {
-                (void)snprintf(resolved, sizeof(resolved), "uncaptured");
-            }
+            rendererDescribeRam0045(write->ram0045, resolved, sizeof(resolved));
             n = snprintf(logText + used, sizeof(logText) - used,
                 "cmd%u: $0045=$%02X -> %s\n",
                 (unsigned int)write->commandIndex,
@@ -628,7 +633,7 @@ void rendererDraw(const GameState *state)
         if (used < sizeof(logText)) {
             (void)snprintf(logText + used, sizeof(logText) - used,
                 "OAM: %lu visible / %lu hidden (Y=$F8 via sub_D255)\n"
-                "Live NMI consumer $D55A/$CC2D: not traced\n"
+                "NMI $C23B->$C27F reads $0045, clears it\n"
                 "D-pad up/down: change view; A: export; B: back\n",
                 state != NULL ? (unsigned long)(64u - hiddenCount) : 0u,
                 (unsigned long)hiddenCount);

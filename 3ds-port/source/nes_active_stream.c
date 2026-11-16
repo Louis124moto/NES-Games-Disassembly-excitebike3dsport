@@ -38,12 +38,57 @@ int nesExcitebikeActiveStream(uint8_t ram0045, NesActiveStreamInfo *info)
         info->arrayIndex = 17u; /* slot 18 in nesExcitebikePpuStream indexing */
         stream = nesExcitebikePpuStream(info->arrayIndex, &streamSize, &info->sourceLabel);
     } else {
-        /* $00 (cleared at reset) and $1A (26) are not captured statically. */
+        /*
+         * $00 is the dynamic RAM buffer at $0301 and $1A the zero-page list at
+         * $00A1: neither is a static ROM list; see nesExcitebikeRam0045Target.
+         */
         return 0;
     }
     if (stream == NULL) return 0;
     info->valid = 1;
     return 1;
+}
+
+/*
+ * tbl_C0F6_lo / tbl_C111_hi (Excitebike/bank_FF.asm lines 336-396, CPU
+ * $C0F6-$C12B), combined as (hi << 8) | lo for ram_0045 = $00-$1A.
+ */
+static const uint16_t s_ram0045ListAddress[NES_EXCITEBIKE_RAM0045_TABLE_ENTRIES] = {
+    0x0301u, 0xD470u, 0xD64Bu, 0xD6D4u, 0xD717u, 0xD84Au, 0xD63Au, 0xD59Eu,
+    0xD5B4u, 0xD796u, 0xD5C8u, 0xD5DEu, 0xD5EFu, 0xD605u, 0xD524u, 0xD7FAu,
+    0xD623u, 0xD614u, 0xD3D6u, 0xD3E9u, 0xD3FCu, 0xD40Fu, 0xD422u, 0xD435u,
+    0xD450u, 0xD631u, 0x00A1u
+};
+
+NesRam0045Target nesExcitebikeRam0045Target(uint8_t ram0045)
+{
+    NesRam0045Target target;
+    target.kind = NES_RAM0045_TARGET_OUT_OF_TABLE;
+    target.cpuAddress = 0u;
+    if (ram0045 >= NES_EXCITEBIKE_RAM0045_TABLE_ENTRIES) return target;
+    target.cpuAddress = s_ram0045ListAddress[ram0045];
+    if (ram0045 == NES_EXCITEBIKE_RAM0045_DYNAMIC_BUFFER)
+        target.kind = NES_RAM0045_TARGET_DYNAMIC_BUFFER;
+    else if (ram0045 == NES_EXCITEBIKE_RAM0045_ZERO_PAGE_LIST)
+        target.kind = NES_RAM0045_TARGET_ZERO_PAGE_LIST;
+    else
+        target.kind = NES_RAM0045_TARGET_STATIC_LIST;
+    return target;
+}
+
+uint8_t nesExcitebikeNmiRamFor2001(uint8_t ram0045, uint8_t ramFor2001, int *wroteMask)
+{
+    if (wroteMask != NULL) *wroteMask = 0;
+    if (ram0045 != 0u) return ramFor2001; /* BNE bra_C24B: $2001 untouched */
+    if (wroteMask != NULL) *wroteMask = 1;
+    return (uint8_t)(ramFor2001 | 0x1Au);
+}
+
+void nesExcitebikeNmiUploadAck(uint8_t *ram0045, uint8_t *ram0300, uint8_t *ram0301)
+{
+    if (ram0300 != NULL) *ram0300 = 0u;
+    if (ram0301 != NULL) *ram0301 = 0u;
+    if (ram0045 != NULL) *ram0045 = 0u;
 }
 
 /*

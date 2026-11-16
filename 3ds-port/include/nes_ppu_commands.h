@@ -21,7 +21,10 @@ typedef enum {
  * Interpret the original Excitebike PPU update-list format used by sub_D3C1.
  * Bytes are address-hi, address-lo, control, then either control&0x3F literal
  * bytes or one repeated byte when bit 6 is set. Bit 7 selects +32 PPU stride.
- * A zero control byte terminates the list.
+ * A zero FIRST byte of a record (address-hi) is the end token, exactly as in
+ * sub_D3C1 (LDA (ptr),Y / BNE at $D3C6-$D3C8). A zero control byte inside a
+ * record is rejected here as a conservative guard; the original would not stop
+ * there but write 256 bytes (DEX wraps from 0), and no source list contains it.
  */
 NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t streamSize,
                                               uint8_t *ppuRam, uint8_t *writtenMask,
