@@ -39,7 +39,7 @@ A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excit
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-> **Current status: early porting / source-translation stage. This is not yet a playable faithful port.** The native application scaffold and build infrastructure exist, and multiple routines have C translations and regression coverage. A newly added batch of 20 ASM entry translations is present in source, headers, and the host-test runner, but execution of that batch's tests and a corresponding 3DS build are still pending. No full-game equivalence result is claimed.
+> **Current status: early porting / source-translation stage. This is not yet a playable faithful port.** The native application scaffold and build infrastructure exist, and multiple routines have C translations and regression coverage. The 20-entry ASM translation batch dated 2026-10-21 passed its host regression workflow and 3DS build in CI (runs 39577668191 and 39577668163, revision `601e7e3`); gameplay integration and full-game equivalence are still not demonstrated. No full-game fidelity result is claimed.
 
 ## Project goals
 
@@ -61,10 +61,10 @@ Counts below deliberately distinguish inventory, implementation, test execution,
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`. This includes helpers, aliases, and labels that may not be standalone routines. |
 | Newly documented translations | 20 ASM entries in the batch dated 2026-10-21 have C implementations and header declarations. This is a batch count, **not** a reconciled project-wide total. |
 | Latest batch in test runner | A dedicated regression group is wired into `3ds-port/tests/test_nes_routines.c`. |
-| Latest batch tests executed | **Not yet confirmed.** Do not count the batch as test-passing until the test executable actually runs successfully. |
-| Latest batch 3DS build | **Pending confirmation** for the current code revision. |
+| Latest batch tests executed | Passed in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`). |
+| Latest batch 3DS build | Passed in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`); this does not prove gameplay integration. |
 | Latest batch integrated into gameplay | No integration has been demonstrated for this batch. |
-| Full-game fidelity | Not achieved. There is no documented end-to-end scenario comparison establishing a complete faithful game. |
+| Latest Stage 1 source trace | 2026-11-16: top-screen BGR8/RGB565 conflict corrected in code; `ram_0045` NMI reader and 27-entry table traced. Dynamic buffer writer census started; runtime replay and New 3DS validation remain open. |\n| Full-game fidelity | Not achieved. There is no documented end-to-end scenario comparison establishing a complete faithful game. |
 
 A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
@@ -223,3 +223,10 @@ Sprite/OAM composition, scroll and mapper bank changes are not implemented by
 this background-only renderer. The C regression test is
 `3ds-port/tests/test_nes_ppu_render.c`; CI compiles and runs it.
 
+
+
+## Stage 1 source-audit update — 2026-11-16
+
+Two source-led changes were integrated on `main`: the top screen no longer receives `consoleInit(GFX_TOP)` (which selects RGB565 while the renderer writes BGR8), and the live `ram_0045` reader is traced through `vec_C23B_NMI → sub_C27F → sub_D3C1`. The earlier `$D55A/$CC2D` consumer attribution was corrected. The 27-entry table now distinguishes static ROM lists, the dynamic buffer at `$0301`, and the zero-page list at `$00A1`.
+
+The 2026-11-16 host regression workflow passed on the trace commit; the matching 3DS build is tracked in [CI run 43955143207](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/43955143207). These source and CI milestones do **not** accept Stage 1: physical New Nintendo 3DS confirmation, dynamic-buffer replay, complete active-state selection, and the remaining extractor requirements are still open. See `3ds-port/TODO.md`.
