@@ -23,6 +23,18 @@ int nesPpuColorToRgb(uint8_t nesColor, uint8_t rgb[3])
     return 1;
 }
 
+int nesAtlasPaletteIndex(unsigned int mode, unsigned int pixel)
+{
+    if (mode >= 8u || pixel > 3u) return -1;
+    if (pixel == 0u) return 0; /* universal background colour */
+    return (int)(mode * 4u + pixel); /* modes 0-3 -> $3F00.., 4-7 -> $3F10.. */
+}
+
+uint8_t nesAtlasGrayShade(unsigned int pixel)
+{
+    return pixel > 3u ? 0u : (uint8_t)(pixel * 85u);
+}
+
 int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
                           const uint8_t *nametable, const uint8_t *attributes,
                           const uint8_t *palette, uint8_t *rgb,

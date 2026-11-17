@@ -11,6 +11,34 @@ static int testColorLookup(void)
     return 0;
 }
 
+static int testAtlasPaletteModes(void)
+{
+    unsigned int mode, pixel;
+    /* Pixel 0 is the universal background in every real-palette mode. */
+    for (mode = 0u; mode < 8u; ++mode)
+        if (nesAtlasPaletteIndex(mode, 0u) != 0) return 1;
+    /* Background subpalettes: $3F00 + 4*n + pixel. */
+    if (nesAtlasPaletteIndex(0u, 1u) != 1 || nesAtlasPaletteIndex(0u, 3u) != 3) return 2;
+    if (nesAtlasPaletteIndex(1u, 1u) != 5 || nesAtlasPaletteIndex(3u, 3u) != 15) return 3;
+    /* Sprite subpalettes: $3F10 + 4*n + pixel. */
+    if (nesAtlasPaletteIndex(4u, 1u) != 17 || nesAtlasPaletteIndex(4u, 3u) != 19) return 4;
+    if (nesAtlasPaletteIndex(7u, 3u) != 31) return 5;
+    /* Grayscale and invalid input claim no palette entry. */
+    if (nesAtlasPaletteIndex(NES_ATLAS_MODE_GRAYSCALE, 1u) != -1) return 6;
+    if (nesAtlasPaletteIndex(9u, 1u) != -1 || nesAtlasPaletteIndex(0u, 4u) != -1) return 7;
+    if (NES_ATLAS_MODE_COUNT != 9u) return 8;
+    /* Every reachable index stays inside the 32-byte palette RAM. */
+    for (mode = 0u; mode < 8u; ++mode)
+        for (pixel = 0u; pixel < 4u; ++pixel) {
+            const int index = nesAtlasPaletteIndex(mode, pixel);
+            if (index < 0 || index > 31) return 9;
+        }
+    if (nesAtlasGrayShade(0u) != 0u || nesAtlasGrayShade(1u) != 85u ||
+        nesAtlasGrayShade(2u) != 170u || nesAtlasGrayShade(3u) != 255u ||
+        nesAtlasGrayShade(4u) != 0u) return 10;
+    return 0;
+}
+
 int main(void)
 {
     uint8_t *pixels = (uint8_t *)calloc(NES_PPU_MAX_TILES * 64u, 1u);
@@ -23,7 +51,9 @@ int main(void)
     };
     size_t i;
     const int colorResult = testColorLookup();
+    const int atlasResult = testAtlasPaletteModes();
     if (colorResult != 0) { fprintf(stderr, "NES color lookup failed: %d\\n", colorResult); return 1; }
+    if (atlasResult != 0) { fprintf(stderr, "Atlas palette modes failed: %d\\n", atlasResult); free(pixels); free(rgb); return 1; }
     if (pixels == NULL || rgb == NULL) { free(pixels); free(rgb); return 1; }
     memset(nametable, 0, sizeof(nametable));
     memset(attributes, 0, sizeof(attributes));

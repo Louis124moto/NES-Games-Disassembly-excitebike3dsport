@@ -21,6 +21,8 @@ size_t assetExtractorGetPage(void);
 void assetExtractorSetPage(size_t page);
 unsigned int assetExtractorGetViewMode(void); /* 0: CHR atlas, 1: source PPU palette diagnostics, 2: PPU snapshots, 3: framebuffer pattern, 4: active stream/OAM trace */
 size_t assetExtractorGetPaletteIndex(void); /* 0..6 maps to source tables 12..18 */
+/* CHR atlas palette mode (nes_ppu_render.h): 0-3 bg, 4-7 sprite subpalettes, 8 grayscale (default). */
+unsigned int assetExtractorGetAtlasMode(void);
 size_t assetExtractorGetPpuStreamIndex(void); /* 0..16 maps to static PPU lists 1..17 */
 /* Complete source tile count (rawChrBytes/16); may exceed the eager 960 cap. */
 size_t assetExtractorGetTotalTiles(void);

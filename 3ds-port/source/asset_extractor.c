@@ -8,6 +8,7 @@
 #include "nes_chr_cache.h"
 #include "nes_chr_decode.h"
 #include "nes_ppu_commands.h"
+#include "nes_ppu_render.h"
 #include "nes_rom_identify.h"
 
 /*
@@ -52,6 +53,7 @@ static int s_attempted;
 static size_t s_page;
 static unsigned int s_viewMode;
 static size_t s_paletteIndex;
+static unsigned int s_atlasMode = NES_ATLAS_MODE_GRAYSCALE; /* CHR atlas palette choice, see nes_ppu_render.h */
 static size_t s_ppuStreamIndex;
 static char s_status[160] = "Starting native CHR extraction...";
 
@@ -376,6 +378,7 @@ void assetExtractorInit(const char *executablePath)
     s_page = 0u;
     s_viewMode = 0u;
     s_paletteIndex = 0u;
+    s_atlasMode = NES_ATLAS_MODE_GRAYSCALE;
     s_ppuStreamIndex = 0u;
     s_tileCount = 0u;
     s_totalTiles = 0u;
@@ -428,6 +431,11 @@ void assetExtractorUpdate(unsigned int pressedKeys)
         if ((pressedKeys & KEY_RIGHT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
         if ((pressedKeys & KEY_LEFT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + NES_EXCITEBIKE_PPU_STREAM_COUNT - 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
     } else if (s_active && s_viewMode == 0u) {
+        /* X/Y: atlas palette mode (grayscale, bg 0-3, sprite 0-3); L/R: source palette preset. */
+        if ((pressedKeys & KEY_X) != 0u) s_atlasMode = (s_atlasMode + 1u) % NES_ATLAS_MODE_COUNT;
+        if ((pressedKeys & KEY_Y) != 0u) s_atlasMode = (s_atlasMode + NES_ATLAS_MODE_COUNT - 1u) % NES_ATLAS_MODE_COUNT;
+        if ((pressedKeys & KEY_R) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
+        if ((pressedKeys & KEY_L) != 0u) s_paletteIndex = (s_paletteIndex + 6u) % 7u;
         if ((pressedKeys & KEY_RIGHT) != 0u && s_totalTiles > 0u) {
             const size_t pages = (s_totalTiles + EXTRACTOR_PAGE_TILES - 1u) / EXTRACTOR_PAGE_TILES;
             s_page = (s_page + 1u) % pages;
@@ -502,6 +510,11 @@ void assetExtractorSetPage(size_t page)
 unsigned int assetExtractorGetViewMode(void)
 {
     return s_viewMode;
+}
+
+unsigned int assetExtractorGetAtlasMode(void)
+{
+    return s_atlasMode;
 }
 
 size_t assetExtractorGetPaletteIndex(void)

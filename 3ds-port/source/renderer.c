@@ -121,6 +121,7 @@ static int rendererTopNeedsRepaint(void)
     static unsigned int s_view = 0xFFFFFFFFu;
     static size_t s_page = (size_t)-1;
     static size_t s_palette = (size_t)-1;
+    static unsigned int s_atlasMode = 0xFFFFFFFFu;
     static size_t s_stream = (size_t)-1;
     static size_t s_tiles = (size_t)-1;
     const int active = assetExtractorIsActive() != 0;
@@ -129,10 +130,12 @@ static int rendererTopNeedsRepaint(void)
     const unsigned int view = assetExtractorGetViewMode();
     const size_t page = (size_t)assetExtractorGetPage();
     const size_t palette = active ? (size_t)assetExtractorGetPaletteIndex() : 0u;
+    const unsigned int atlasMode = active ? assetExtractorGetAtlasMode() : 0u;
     const size_t stream = active ? (size_t)assetExtractorGetPpuStreamIndex() : 0u;
     const size_t tiles = (size_t)assetExtractorGetTotalTiles();
     const int dirty = (active != s_active) || (game != s_game) || (menu != s_menu) ||
                       (view != s_view) || (page != s_page) || (palette != s_palette) ||
+                      (atlasMode != s_atlasMode) ||
                       (stream != s_stream) || (tiles != s_tiles);
 
     s_active = active;
@@ -141,6 +144,7 @@ static int rendererTopNeedsRepaint(void)
     s_view = view;
     s_page = page;
     s_palette = palette;
+    s_atlasMode = atlasMode;
     s_stream = stream;
     s_tiles = tiles;
     return dirty;
@@ -158,6 +162,14 @@ static void rendererClearTop(void)
     uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width != 240u || height != 400u) return;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+}
+
+static const char *atlasModeName(unsigned int mode)
+{
+    static const char *const names[NES_ATLAS_MODE_COUNT] = {
+        "BG 0", "BG 1", "BG 2", "BG 3", "SPR 0", "SPR 1", "SPR 2", "SPR 3", "grayscale"
+    };
+    return mode < NES_ATLAS_MODE_COUNT ? names[mode] : "?";
 }
 
 static const char *viewName(unsigned int mode)
@@ -357,12 +369,18 @@ static void rendererDrawChrAtlas(void)
     /*
      * Atlas view: decode the current page on demand (up to 375 tiles) so every
      * source tile is reachable even when the total exceeds the eager 960 cap.
-     * A standalone CHR tile has no assigned palette. Use the selected source
-     * palette preset's first background subpalette for this diagnostic view;
-     * the SD export also writes all seven presets x four subpalette variants.
+     * A standalone CHR tile has no assigned palette, and colouring every tile
+     * with one fixed subpalette is wrong for most of them (reported on
+     * hardware 2026-11-17: tiles came out red/green/light blue). Like the CHR
+     * viewers of existing NES debuggers, the view is grayscale by default and
+     * X/Y pick a background or sprite subpalette of the selected source
+     * palette preset (L/R). A pixel whose palette entry the preset never
+     * writes stays gray instead of being hatched; the SD export still writes
+     * all seven presets x four subpalette variants.
      */
     {
         uint8_t atlasPalette[32], atlasPaletteMask[32];
+        const unsigned int atlasMode = assetExtractorGetAtlasMode();
         size_t paletteWrites = 0u;
         const uint8_t *pagePixels;
         size_t pageTileCount = 0u;
@@ -402,14 +420,13 @@ static void rendererDrawChrAtlas(void)
         for (row = 0u; row < 8u; ++row) {
             for (col = 0u; col < 8u; ++col) {
                 const uint8_t pixel = pagePixels[tile * 64u + row * 8u + col] & 3u;
-                const size_t paletteEntry = pixel == 0u ? 0u : pixel;
+                const int paletteEntry = nesAtlasPaletteIndex(atlasMode, pixel);
                 uint8_t rgb[3];
-                const int known = atlasPaletteMask[paletteEntry] != 0u &&
-                                  nesPpuColorToRgb(atlasPalette[paletteEntry], rgb);
                 unsigned int dy, dx;
-                if (!known) {
-                    const uint8_t shade = ((col / 2u + row / 2u + tile) & 1u) != 0u ? 192u : 64u;
-                    rgb[0] = shade; rgb[1] = 0u; rgb[2] = shade;
+                if (paletteEntry < 0 || atlasPaletteMask[paletteEntry] == 0u ||
+                    !nesPpuColorToRgb(atlasPalette[paletteEntry], rgb)) {
+                    const uint8_t shade = nesAtlasGrayShade(pixel);
+                    rgb[0] = shade; rgb[1] = shade; rgb[2] = shade;
                 }
                 for (dy = 0u; dy < 2u; ++dy) {
                     for (dx = 0u; dx < 2u; ++dx) {
@@ -490,7 +507,7 @@ static void rendererDescribeRam0045(uint8_t ram0045, char *out, size_t outSize)
 
 void rendererDraw(const GameState *state)
 {
-    char logText[512];
+    char logText[768]; /* default view text is ~510 bytes with worst-case arguments */
     if (s_menuActive && state != NULL) {
         /*
          * Menu mode: write both screens only when the menu-state inputs
@@ -663,18 +680,21 @@ void rendererDraw(const GameState *state)
             "Exports: CHR, PNG, 7 palettes + 18 PPU snapshots\n"
             "Atlas: %s\n"
             "View: %s; page %lu/%lu\n"
-            "D-pad left/right: page/palette\n"
-            "D-pad up/down: change view\n"
+            "Atlas palette: %s (preset %lu/7)\n"
+            "D-pad left/right: page; up/down: view\n"
+            "X/Y: atlas palette; L/R: preset\n"
             "A: open/export; B: close/re-extract\n"
             "START: menu locked until Stage 1 passes\n"
-            "Atlas uses grayscale indices, not game colors.\n",
+            "Gray = no palette; colours are per subpalette.\n",
             assetExtractorGetRomIdentitySummary(),
             assetExtractorGetStatus(),
             (unsigned long)assetExtractorGetTotalTiles(),
             assetExtractorIsActive() ? "OPEN" : "closed",
             viewName(assetExtractorGetViewMode()),
             (unsigned long)(assetExtractorGetPage() + 1u),
-            (unsigned long)((assetExtractorGetTotalTiles() + 374u) / 375u));
+            (unsigned long)((assetExtractorGetTotalTiles() + 374u) / 375u),
+            atlasModeName(assetExtractorGetAtlasMode()),
+            (unsigned long)(assetExtractorGetPaletteIndex() + 1u));
     }
     rendererWriteConsole(logText);
 }
