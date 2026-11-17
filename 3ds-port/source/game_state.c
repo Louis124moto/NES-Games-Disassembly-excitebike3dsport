@@ -55,6 +55,9 @@ void gameStateReset(GameState *state)
     state->menu_ppu_ctrl = 0u;
     state->menu_ppu_mask = 0u;
     state->menu_ppu_background_ready = 0u;
+    state->menu_ram_for_2001 = 0u;
+    state->menu_ppu_palette_loaded = 0u;
+    state->menu_ppu_revision = 0u;
     memset(state->menu_ppu_palette, 0, sizeof(state->menu_ppu_palette));
     memset(state->menu_oam, 0xF8, sizeof(state->menu_oam));
     memset(state->menu_ppu_nametables, 0, sizeof(state->menu_ppu_nametables));

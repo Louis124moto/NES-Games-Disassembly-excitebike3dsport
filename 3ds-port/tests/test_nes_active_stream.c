@@ -111,5 +111,62 @@ int main(void)
         if (r45 != 0u) return 36;
         nesExcitebikeNmiUploadAck(NULL, NULL, NULL);
     }
+
+    /*
+     * sub_C27F model on the menu PPU: expectations below were hand-parsed from the
+     * list bytes (record = addr-hi, addr-lo, control, data; bit 6 repeats one byte).
+     */
+    {
+        uint8_t nt[NES_MENU_NAMETABLE_BYTES], pal[NES_MENU_PALETTE_BYTES];
+        uint8_t nt0[NES_MENU_NAMETABLE_BYTES], pal0[NES_MENU_PALETTE_BYTES];
+        uint8_t r45;
+        size_t k;
+        memset(nt, 0, sizeof(nt)); memset(pal, 0, sizeof(pal));
+        nt[0x100] = 0x55u; pal[30] = 0x44u;
+
+        /* $02 "blue background": 23 E3 4B AA / 23 F2 44 FF / 20 83 5A 27 ... */
+        r45 = 0x02u;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_APPLIED) return 40;
+        if (r45 != 0u) return 41;
+        for (k = 0u; k < 0x0Bu; ++k) if (nt[0x3E3u + k] != 0xAAu) return 42;
+        if (nt[0x3E2u] != 0u || nt[0x3EEu] != 0u) return 43;
+        for (k = 0u; k < 4u; ++k) if (nt[0x3F2u + k] != 0xFFu) return 44;
+        for (k = 0u; k < 0x1Au; ++k) if (nt[0x083u + k] != 0x27u) return 45;
+        if (nt[0x082u] != 0u || nt[0x09Du] != 0u) return 46;
+        if (nt[0x100] != 0x55u) return 47;          /* cumulative: untouched byte survives */
+        if (pal[30] != 0x44u) return 48;
+
+        /* $18 "title screen" palette list D450: 28 bytes from $3F00; $3F10.. mirror $3F00.. */
+        r45 = 0x18u;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_APPLIED || r45 != 0u) return 49;
+        if (pal[0] != 0x02u || pal[1] != 0x0Fu || pal[2] != 0x30u || pal[3] != 0x21u) return 50;
+        if (pal[16] != pal[0] || pal[20] != pal[4] || pal[24] != pal[8]) return 51; /* mirrors */
+        if (pal[17] != 0x20u || pal[18] != 0x16u || pal[19] != 0x0Fu) return 52;
+        if (pal[21] != 0x27u || pal[22] != 0x13u || pal[23] != 0x3Cu) return 53;
+        if (pal[30] != 0x44u) return 54;            /* beyond the 28 written bytes */
+        if (nt[0x3E3u] != 0xAAu) return 55;         /* earlier nametable upload preserved */
+
+        /* Not modelled: index 0, $1A and out-of-table values leave everything untouched. */
+        memcpy(nt0, nt, sizeof(nt)); memcpy(pal0, pal, sizeof(pal));
+        r45 = 0x00u;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_NONE || r45 != 0u) return 56;
+        r45 = 0x1Au;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_UNSUPPORTED || r45 != 0x1Au) return 57;
+        r45 = 0x1Bu;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_UNSUPPORTED || r45 != 0x1Bu) return 58;
+        r45 = 0xFFu;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_UNSUPPORTED || r45 != 0xFFu) return 59;
+        if (memcmp(nt, nt0, sizeof(nt)) != 0 || memcmp(pal, pal0, sizeof(pal)) != 0) return 60;
+        if (nesExcitebikeNmiUploadStatic(NULL, nt, pal) != NES_NMI_UPLOAD_UNSUPPORTED) return 61;
+        r45 = 0x02u;
+        if (nesExcitebikeNmiUploadStatic(&r45, NULL, pal) != NES_NMI_UPLOAD_UNSUPPORTED || r45 != 0x02u) return 62;
+        if (nesExcitebikeNmiUploadStatic(&r45, nt, NULL) != NES_NMI_UPLOAD_UNSUPPORTED || r45 != 0x02u) return 63;
+
+        /* Every static index $01-$19 executes and is acknowledged. */
+        for (k = 1u; k <= 0x19u; ++k) {
+            r45 = (uint8_t)k;
+            if (nesExcitebikeNmiUploadStatic(&r45, nt, pal) != NES_NMI_UPLOAD_APPLIED || r45 != 0u) return 64;
+        }
+    }
     return 0;
 }

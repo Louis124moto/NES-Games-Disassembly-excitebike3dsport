@@ -1,3 +1,4 @@
+#include <3ds.h>
 #include "game.h"
 #include "asset_extractor.h"
 #include "game_state.h"
@@ -8,7 +9,8 @@
 /*
  * Runtime routing:
  * - cold boot remains the diagnostic/CHR-inspector screen;
- * - START leaves diagnostics and enters the source-derived menu state machine;
+ * - START (once CHR is loaded) leaves diagnostics and enters the source-derived
+ *   menu state machine plus the native NMI/PPU upload model (menusNmiUpload);
  * - once in menu mode, controller edges are passed to the ASM-derived dispatcher;
  * - menu updates are now in the active 3DSX frame loop;
  * - the menu GameState is always passed to rendererDraw so the active
@@ -39,12 +41,24 @@ void gameUpdate(void)
     inputUpdate(&s_input);
 
     if (!s_menuActive) {
-        /* Stage 1 is not accepted yet: keep the original menu path locked. */
+        /*
+         * Stage 1 was accepted by the owner on 2026-11-17 (see TODO.md). START
+         * enters the Stage 2 original-menu path, but only once the CHR source
+         * is loaded: the menu model needs real tiles and must not run on air.
+         * The press is consumed here so the menu does not see it as a NES press.
+         */
+        if ((s_input.pressed & KEY_START) && assetExtractorGetTotalTiles() > 0u) {
+            s_menuActive = 1;
+            gameStateReset(&s_menuState);
+            rendererSetMenuActive(1);
+            return;
+        }
         assetExtractorUpdate(s_input.pressed);
         return;
     }
 
     menusUpdate(&s_menuState, s_input.held, s_input.pressed);
+    menusNmiUpload(&s_menuState); /* vblank: end of the frame, like vec_C23B_NMI */
 }
 
 void gameRender(void)

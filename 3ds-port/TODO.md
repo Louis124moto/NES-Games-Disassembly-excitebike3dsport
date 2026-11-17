@@ -29,7 +29,9 @@ This is the controlling project specification. If older checklist items conflict
 
 **No later stage may begin until the current stage is fully tested and accepted.** Work on `main` only; do not create a branch for this workflow. The original disassembly remains unchanged.
 
-#### Stage 1 — Native extractor (current stage; gate CLOSED)
+#### Stage 1 — Native extractor (ACCEPTED BY OWNER DECISION 2026-11-17; see note below)
+
+**Owner decision, 2026-11-17:** the project owner reported that the extractor/atlas works ("ça marche") and asked to move to Stage 2. This acceptance rests on that report only: there is no photographed or reproducible evidence in the repository, no per-criterion verification of the unchecked items below, and it is not stated whether the test ran on hardware or in an emulator. The unchecked items stay open as follow-up debt; they no longer gate Stage 2 work.
 
 - [ ] Audit the current extractor and its real 3DSX startup path against every requirement above.
 - [ ] Verify supported ROM/header and graphics-memory cases from source evidence; document unsupported cases instead of implying universal compatibility.
@@ -51,7 +53,7 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
-#### Stage 2 — Original NES menu (blocked until Stage 1 accepted)
+#### Stage 2 — Original NES menu (STARTED 2026-11-17)
 
 - [ ] Trace the menu startup sequence and each setup command/handler from the original ASM.
 - [ ] Connect verified CHR, PPU palette writes, nametable/attributes, OAM/sprites, banks, scroll, and timing into the native renderer.
@@ -821,3 +823,21 @@ Hardware report (user, New 3DS): the top-screen display is now correct ("ça s'a
 - [x] `Build Nintendo 3DS homebrew` run 44037438495 on `cde4f46` passed (devkitARM compile and artifact upload; the 3DS binaries are produced from sources that include the top-screen BGR8 fix, the ram_0045 trace and the atlas palette modes). This is the first 3DS compile of those changes, so the earlier "3DS build not run" caveats are resolved for compilation. It says nothing about on-device behaviour.
 - [x] The run on `8b8be4d` had failed before compiling: `pkg.devkitpro.org` returned HTTP 403 while `dkp-pacman -S 3ds-dev` re-downloaded 20 packages that the `devkitpro/devkitarm` image already contained. The workflow now uses `--needed` with up to three attempts (`cde4f46`). Not a source defect.
 - [ ] Hardware retest of the atlas palette modes remains open. **Stage 1 remains NOT ACCEPTED.**
+
+## Stage 2 step 1 — NMI upload model and reachable menu — 2026-11-17 (host-tested; no hardware run)
+
+Done (source-derived, host-tested):
+- `nesExcitebikeNmiUploadStatic` (nes_active_stream.c) models sub_C27F for static lists `$01-$19`: it selects the list through the verified tbl_C0F6_lo/tbl_C111_hi mapping, runs it with sub_D3C1 semantics on the CURRENT nametable/palette model (lists are cumulative), then clears ram_0045. Palette mirroring `$3F10/14/18/1C -> $3F00/04/08/0C` is applied on copy-in and copy-out. Expected values in tests/test_nes_active_stream.c were hand-parsed from the list bytes; a mutation of the mirror rule is caught (exit 51).
+- `menusNmiUpload` (menus.c) follows vec_C23B_NMI order: `$2001` is written (`ram_for_2001 | $1A`) only when ram_0045 is zero, then the static upload runs. `menu_ppu_background_ready` is set only when the mask enables the background (bit 3) AND a palette list has really been executed.
+- game.c: START (consumed, not forwarded to the menu) enters the menu path once CHR is loaded; every menu frame runs `menusUpdate` then `menusNmiUpload`.
+- renderer.c: the BG pattern table follows PPUCTRL bit 4 (`$10` -> CHR tiles 256..511); the redraw gate includes the upload revision.
+- GameState: `menu_ppu_palette` widened to 32 bytes (full palette RAM), plus `menu_ram_for_2001`, `menu_ppu_palette_loaded`, `menu_ppu_revision`.
+
+Not done / open (nothing here is claimed as working):
+- [ ] Sprites/OAM composition is still not drawn; the cursor and any sprite is missing.
+- [ ] Dynamic buffer `$0300/$0301` (ram_0045 == 0 path) and zero-page list `$1A` are not modelled; the model leaves the PPU untouched for them. The writers per menu state are still unmapped.
+- [ ] The setup sequencer is translated only for states 0,1,4,6,7,8,13; other states hold for inspection.
+- [ ] Whether the setup code waits for the NMI acknowledgement before issuing the next command has not been verified against the ASM; the native order (set during menusUpdate, consumed at the end of the same frame) is an assumption to check.
+- [ ] Scroll registers and timing are not applied to the renderer.
+- [ ] Nothing compared against a real NES reference screenshot yet; hardware/emulator run of this step is pending.
+- [ ] Possible pattern-table issue in exported PNG previews (asset_export may use table 0 regardless of PPUCTRL) still to verify.

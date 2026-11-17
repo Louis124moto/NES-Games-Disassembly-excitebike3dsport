@@ -112,3 +112,7 @@ On successful pushes to `main`, GitHub Actions compiles the project and commits 
 The live `ram_0045` reader is the NMI path `vec_C23B_NMI → sub_C27F → sub_D3C1`. The table has 27 entries (`$00-$1A`): `$01-$19` are static lists, `$00` points at the dynamic buffer beginning at `$0301` with cursor `$0300`, and `$1A` points at the zero-page list at `$00A1`. The previous `$D55A/$CC2D` reader attribution was incorrect.
 
 A first-pass source census now records the buffer initializers and append paths around `C5B5`, `C8ED`, `C935-C978`, `CB77`, `CC32-CC67`, `D11F-D2F7`, and the per-object command setup at `F5F8/F5FD/F602` and `F6E0/F6E5/F6EA`. This is not yet a frame-accurate replay: mapping each path to its caller/game state and proving which structures reach the `$00` table entry remain open. The source disassembly is unchanged.
+
+## Stage 2 (original menu) — first step, 2026-11-17
+
+Press START on the extractor screen (once CHR is loaded) to enter the source-derived menu path. Each menu frame runs the translated sequencer and then a native model of the NMI upload (`menusNmiUpload`), which executes the real ROM palette/PPU lists on a nametable/palette model; the top screen draws the resulting background with the pattern table selected by PPUCTRL. Sprites/OAM, the dynamic buffer, scrolling and several menu states are not implemented yet, so this is not a faithful title screen yet. See `TODO.md` ("Stage 2 step 1") for the open items.

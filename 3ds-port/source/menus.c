@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <3ds.h>
+#include "nes_active_stream.h"
 #include "menus.h"
 #include "nes_routines.h"
 
@@ -432,4 +433,31 @@ void menusRender(const GameState *state)
         printf("Title graphics, palette/nametable mapping, and option names are not yet reconstructed.\n");
         printf("This is an input/state trace, not the original NES title screen.\n");
     }
+}
+
+void menusNmiUpload(GameState *state)
+{
+    NesActiveStreamInfo info;
+    int wroteMask = 0;
+    int isPalette = 0;
+    NesNmiUploadResult result;
+
+    if (state == 0) return;
+    /* vec_C23B_NMI: $2001 is only (re)written when ram_0045 is zero. */
+    state->menu_ram_for_2001 = nesExcitebikeNmiRamFor2001(state->menu_ram0045,
+                                                          state->menu_ram_for_2001, &wroteMask);
+    if (wroteMask) state->menu_ppu_mask = state->menu_ram_for_2001;
+
+    if (state->menu_ram0045 != 0u && nesExcitebikeActiveStream(state->menu_ram0045, &info)) {
+        isPalette = info.isPalette;
+    }
+    result = nesExcitebikeNmiUploadStatic(&state->menu_ram0045, state->menu_ppu_nametables,
+                                          state->menu_ppu_palette);
+    if (result == NES_NMI_UPLOAD_APPLIED) {
+        if (isPalette) state->menu_ppu_palette_loaded = 1u;
+        state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
+    }
+    /* Background is drawable only when the NMI enabled it AND real palette data exists. */
+    state->menu_ppu_background_ready =
+        (uint8_t)(((state->menu_ppu_mask & 0x08u) != 0u && state->menu_ppu_palette_loaded) ? 1u : 0u);
 }

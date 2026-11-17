@@ -83,6 +83,31 @@ uint8_t nesExcitebikeNmiRamFor2001(uint8_t ram0045, uint8_t ramFor2001, int *wro
  */
 void nesExcitebikeNmiUploadAck(uint8_t *ram0045, uint8_t *ram0300, uint8_t *ram0301);
 
+typedef enum {
+    NES_NMI_UPLOAD_NONE = 0,    /* ram_0045 == 0: only the dynamic buffer would run; not modelled, state untouched */
+    NES_NMI_UPLOAD_APPLIED,     /* static list executed on the model and ram_0045 cleared */
+    NES_NMI_UPLOAD_UNSUPPORTED  /* $1A, >= $1B, bad arguments or a malformed list: state untouched */
+} NesNmiUploadResult;
+
+#define NES_MENU_NAMETABLE_BYTES 2048u
+#define NES_MENU_PALETTE_BYTES 32u
+
+/*
+ * Native model of sub_C27F for a STATIC list ($01-$19): run the list that
+ * tbl_C0F6_lo/tbl_C111_hi select for *ram0045 with sub_D3C1 semantics on top of
+ * the CURRENT PPU model, then clear ram_0045 (the NMI acknowledgement). Lists
+ * are cumulative on the real PPU, so existing nametable and palette bytes that
+ * the list does not touch are preserved.
+ *   nametables: CPU-side mirror of PPU $2000-$27FF (2 KiB, attributes included)
+ *   palette   : PPU palette RAM $3F00-$3F1F; entries $10/$14/$18/$1C mirror
+ *               $00/$04/$08/$0C exactly as on the PPU
+ * The dynamic buffer ($00) and the zero-page list ($1A) are not modelled; the
+ * state is left untouched for them instead of being fabricated.
+ */
+NesNmiUploadResult nesExcitebikeNmiUploadStatic(uint8_t *ram0045,
+                                                uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                uint8_t palette[NES_MENU_PALETTE_BYTES]);
+
 /* Source-derived ram_0045 writes performed by each menu setup command list. */
 typedef struct {
     uint8_t asmState;        /* ram_0041 state whose setup list writes ram_0045 */

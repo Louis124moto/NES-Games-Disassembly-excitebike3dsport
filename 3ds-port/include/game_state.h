@@ -38,7 +38,11 @@ typedef struct {
     uint8_t menu_ppu_mask;
     /* Valid only after the source-derived menu path has populated these PPU values. */
     uint8_t menu_ppu_background_ready;
-    uint8_t menu_ppu_palette[16];
+    /* PPU palette RAM $3F00-$3F1F (BG 0-15, sprite 16-31; $10/$14/$18/$1C mirror $00/$04/$08/$0C). */
+    uint8_t menu_ppu_palette[32];
+    uint8_t menu_ram_for_2001;        /* ram_for_2001: written only by the NMI model */
+    uint8_t menu_ppu_palette_loaded;  /* a palette list ($12-$19) has been executed */
+    uint8_t menu_ppu_revision;        /* incremented per applied static upload (redraw trigger) */
     uint8_t menu_oam[256];
     /* CPU-side mirror of PPU $2000-$27FF used by sub_D23B/sub_D260. */
     uint8_t menu_ppu_nametables[2048];

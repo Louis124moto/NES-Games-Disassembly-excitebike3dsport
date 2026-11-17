@@ -200,6 +200,12 @@ static int rendererDrawPpuBackground(const GameState *state)
     if (state == NULL || state->menu_ppu_background_ready == 0u) return 0;
     if (framebuffer == NULL || width != 240u || height != 400u) return 0;
     pixels = assetExtractorGetPixels(&tileCount);
+    /* PPUCTRL bit 4 selects the BG pattern table: $10 -> tiles 256..511 of the CHR. */
+    if (pixels != NULL && (state->menu_ppu_ctrl & 0x10u) != 0u) {
+        if (tileCount <= 256u) return 0;
+        pixels += 256u * 64u;
+        tileCount -= 256u;
+    }
     if (pixels == NULL || nesPpuRenderNametable(
             pixels, tileCount,
             state->menu_ppu_nametables,
@@ -520,15 +526,18 @@ void rendererDraw(const GameState *state)
         static uint8_t s_lastSelection = 0u;
         static uint8_t s_lastRam0045 = 0u;
         static uint8_t s_lastPpuReady = 0u;
+        static uint8_t s_lastRevision = 0u;
         if (s_menuDrawn == 0 || state->menu_asm_state != s_lastAsmState ||
             state->menu_selection != s_lastSelection ||
             state->menu_ram0045 != s_lastRam0045 ||
-            state->menu_ppu_background_ready != s_lastPpuReady) {
+            state->menu_ppu_background_ready != s_lastPpuReady ||
+            state->menu_ppu_revision != s_lastRevision) {
             s_menuDrawn = 1;
             s_lastAsmState = state->menu_asm_state;
             s_lastSelection = state->menu_selection;
             s_lastRam0045 = state->menu_ram0045;
             s_lastPpuReady = state->menu_ppu_background_ready;
+            s_lastRevision = state->menu_ppu_revision;
             if (!rendererDrawPpuBackground(state)) {
                 consoleSelect(&s_bottomConsole);
                 consoleClear();

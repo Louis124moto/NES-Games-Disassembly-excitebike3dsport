@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nes_active_stream.h"
 #include "nes_ppu_commands.h"
 
@@ -82,6 +83,48 @@ uint8_t nesExcitebikeNmiRamFor2001(uint8_t ram0045, uint8_t ramFor2001, int *wro
     if (ram0045 != 0u) return ramFor2001; /* BNE bra_C24B: $2001 untouched */
     if (wroteMask != NULL) *wroteMask = 1;
     return (uint8_t)(ramFor2001 | 0x1Au);
+}
+
+/* Scratch PPU address space for one list run (see nesExcitebikeNmiUploadStatic). */
+static uint8_t s_uploadRam[NES_PPU_ADDRESS_SPACE];
+static uint8_t s_uploadMask[NES_PPU_ADDRESS_SPACE];
+
+/* PPU palette mirroring: $3F10/$3F14/$3F18/$3F1C read and write $3F00/$3F04/$3F08/$3F0C. */
+static size_t uploadPaletteSlot(size_t index)
+{
+    index &= 0x1Fu;
+    if (index >= 0x10u && (index & 0x03u) == 0u) index -= 0x10u;
+    return index;
+}
+
+NesNmiUploadResult nesExcitebikeNmiUploadStatic(uint8_t *ram0045,
+                                                uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                uint8_t palette[NES_MENU_PALETTE_BYTES])
+{
+    NesActiveStreamInfo info;
+    const uint8_t *stream;
+    size_t streamSize = 0u, writes = 0u, i;
+
+    if (ram0045 == NULL || nametables == NULL || palette == NULL) return NES_NMI_UPLOAD_UNSUPPORTED;
+    if (*ram0045 == 0u) return NES_NMI_UPLOAD_NONE;
+    if (!nesExcitebikeActiveStream(*ram0045, &info)) return NES_NMI_UPLOAD_UNSUPPORTED;
+    stream = info.isPalette
+        ? nesExcitebikePaletteStream(info.arrayIndex, &streamSize, NULL)
+        : nesExcitebikePpuStream(info.arrayIndex, &streamSize, NULL);
+    if (stream == NULL) return NES_NMI_UPLOAD_UNSUPPORTED;
+
+    memset(s_uploadRam, 0, sizeof(s_uploadRam));
+    memset(s_uploadMask, 0, sizeof(s_uploadMask));
+    memcpy(&s_uploadRam[0x2000u], nametables, NES_MENU_NAMETABLE_BYTES);
+    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) s_uploadRam[0x3F00u + uploadPaletteSlot(i)] = palette[i];
+    if (nesPpuApplyCommandStream(stream, streamSize, s_uploadRam, s_uploadMask,
+                                 sizeof(s_uploadRam), &writes) != NES_PPU_COMMAND_OK) {
+        return NES_NMI_UPLOAD_UNSUPPORTED; /* caller state is still untouched */
+    }
+    memcpy(nametables, &s_uploadRam[0x2000u], NES_MENU_NAMETABLE_BYTES);
+    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) palette[i] = s_uploadRam[0x3F00u + uploadPaletteSlot(i)];
+    *ram0045 = 0u;
+    return NES_NMI_UPLOAD_APPLIED;
 }
 
 void nesExcitebikeNmiUploadAck(uint8_t *ram0045, uint8_t *ram0300, uint8_t *ram0301)
