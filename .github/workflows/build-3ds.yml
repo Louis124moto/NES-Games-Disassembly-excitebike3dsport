@@ -26,7 +26,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nintendo 3DS development libraries
-        run: dkp-pacman -S --noconfirm 3ds-dev
+        # The devkitpro/devkitarm image already ships the 3ds-dev group, so
+        # --needed skips every package that is up to date instead of
+        # re-downloading all 20 (a 403 from pkg.devkitpro.org on one of those
+        # redundant downloads failed the build on 2026-11-17). The retry only
+        # matters if something really is missing and the mirror hiccups.
+        run: |
+          for attempt in 1 2 3; do
+            if dkp-pacman -S --needed --noconfirm 3ds-dev; then exit 0; fi
+            echo "dkp-pacman attempt $attempt failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          exit 1
 
       - name: Compile homebrew
         run: make -C 3ds-port
