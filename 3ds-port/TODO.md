@@ -815,3 +815,9 @@ Hardware report (user, New 3DS): the top-screen display is now correct ("ça s'a
 - [x] Host evidence: `test_nes_ppu_render` covers the mapping for all eight modes, grayscale and invalid input, and fails under a mutation (pixel 0 mapped per mode). All eight C suites and the Python tests pass; `renderer.c` and `asset_extractor.c` pass `-fsyntax-only` against a stub `<3ds.h>`. No 3DS build was run here. The bottom text buffer was enlarged to 768 bytes (the default view needs about 510 with worst-case arguments).
 - [ ] Not done: tile-to-palette assignment as the game does it (nametable/attribute for backgrounds, OAM attribute for sprites). The atlas lets the viewer choose a palette; it does not know which one a tile uses. That belongs to the nametable/OAM work in the open items above.
 - [ ] Hardware retest: grayscale default shows crisp tile shapes; X/Y change colours; with preset 1, SPR modes should give a red/white palette for rider tiles; B closes and blanks the top screen. **Stage 1 remains NOT ACCEPTED.**
+
+### CI build record — 2026-11-17
+
+- [x] `Build Nintendo 3DS homebrew` run 44037438495 on `cde4f46` passed (devkitARM compile and artifact upload; the 3DS binaries are produced from sources that include the top-screen BGR8 fix, the ram_0045 trace and the atlas palette modes). This is the first 3DS compile of those changes, so the earlier "3DS build not run" caveats are resolved for compilation. It says nothing about on-device behaviour.
+- [x] The run on `8b8be4d` had failed before compiling: `pkg.devkitpro.org` returned HTTP 403 while `dkp-pacman -S 3ds-dev` re-downloaded 20 packages that the `devkitpro/devkitarm` image already contained. The workflow now uses `--needed` with up to three attempts (`cde4f46`). Not a source defect.
+- [ ] Hardware retest of the atlas palette modes remains open. **Stage 1 remains NOT ACCEPTED.**
