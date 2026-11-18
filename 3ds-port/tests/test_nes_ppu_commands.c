@@ -83,12 +83,68 @@ static int testVerticalNametableMirroring(void)
     return 0;
 }
 
+
+static int testAllSourceStreams(void)
+{
+    uint8_t nametable[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+    uint8_t nametableMask[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
+    uint8_t palette[32], paletteMask[32];
+    size_t i, writes = 0u, streamSize = 0u;
+    const char *label = NULL;
+    for (i = 0u; i < NES_EXCITEBIKE_PPU_STREAM_COUNT; ++i) {
+        const uint8_t *stream = nesExcitebikePpuStream(i, &streamSize, &label);
+        if (stream == NULL || streamSize == 0u || label == NULL) return 1;
+        if (nesExcitebikePpuSnapshot(i, nametable, nametableMask,
+                                     palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) return 2;
+        if (writes == 0u) return 3;
+    }
+    for (i = 0u; i < NES_EXCITEBIKE_PALETTE_STREAM_COUNT; ++i) {
+        const uint8_t *stream = nesExcitebikePaletteStream(i, &streamSize, &label);
+        if (stream == NULL || streamSize == 0u || label == NULL) return 4;
+        if (nesExcitebikePaletteSnapshot(i, palette, paletteMask, &writes) != NES_PPU_COMMAND_OK) return 5;
+        if (writes == 0u) return 6;
+    }
+    puts("PASS: all 18 source PPU streams and all 7 palette streams parse and replay.");
+    return 0;
+}
+
+static int testMalformedRecords(void)
+{
+    const uint8_t truncatedHeader[] = {0x20u, 0x00u};
+    const uint8_t zeroControl[] = {0x20u, 0x00u, 0x00u, 0x11u, 0x00u};
+    const uint8_t zeroCount[] = {0x20u, 0x00u, 0x40u, 0x11u, 0x00u};
+    const uint8_t badAddress[] = {0x40u, 0x00u, 0x01u, 0x11u, 0x00u};
+    const uint8_t truncatedLiteral[] = {0x20u, 0x00u, 0x02u, 0x11u, 0x00u};
+    const uint8_t truncatedRepeat[] = {0x20u, 0x00u, 0x41u};
+    uint8_t ram[NES_PPU_ADDRESS_SPACE], mask[NES_PPU_ADDRESS_SPACE];
+    size_t writes = 0u;
+    memset(ram, 0, sizeof(ram)); memset(mask, 0, sizeof(mask));
+    if (nesPpuApplyCommandStream(truncatedHeader, sizeof(truncatedHeader), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_TRUNCATED) return 1;
+    if (nesPpuApplyCommandStream(zeroControl, sizeof(zeroControl), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_INVALID_COUNT) return 2;
+    if (nesPpuApplyCommandStream(zeroCount, sizeof(zeroCount), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_INVALID_COUNT) return 3;
+    if (nesPpuApplyCommandStream(badAddress, sizeof(badAddress), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_ADDRESS_RANGE) return 4;
+    if (nesPpuApplyCommandStream(truncatedLiteral, sizeof(truncatedLiteral), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_TRUNCATED) return 5;
+    if (nesPpuApplyCommandStream(truncatedRepeat, sizeof(truncatedRepeat), ram, mask,
+                                 sizeof(ram), &writes) != NES_PPU_COMMAND_TRUNCATED) return 6;
+    puts("PASS: malformed PPU records are rejected instead of silently accepted.");
+    return 0;
+}
+
 int main(void)
 {
     int result = testLiteralAndFillCommands();
     if (result != 0) { fprintf(stderr, "PPU command interpreter test failed: %d\n", result); return 1; }
     result = testVerticalNametableMirroring();
     if (result != 0) { fprintf(stderr, "Nametable mirroring test failed: %d\\n", result); return 1; }
+    result = testMalformedRecords();
+    if (result != 0) { fprintf(stderr, "Malformed PPU record test failed: %d\\n", result); return 1; }
+    result = testAllSourceStreams();
+    if (result != 0) { fprintf(stderr, "Source stream sweep failed: %d\\n", result); return 1; }
     result = testSourceNametableStreams();
     if (result != 0) { fprintf(stderr, "Source PPU snapshot test failed: %d\\n", result); return 1; }
     result = testSourcePaletteStreams();
