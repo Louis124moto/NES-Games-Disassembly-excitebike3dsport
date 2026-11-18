@@ -251,10 +251,7 @@ NesPpuCommandResult nesPpuApplyCommandStreamMirrored(
         address = ((size_t)stream[offset] << 8u) | stream[offset + 1u];
         control = stream[offset + 2u];
         offset += 3u;
-        if (control == 0u) {
-            *writeCount = writes;
-            return NES_PPU_COMMAND_OK;
-        }
+        if (control == 0u) return NES_PPU_COMMAND_INVALID_COUNT;
         count = (size_t)(control & 0x3Fu);
         stride = (control & 0x80u) != 0u ? 32u : 1u;
         repeat = (control & 0x40u) != 0u;
