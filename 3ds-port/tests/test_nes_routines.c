@@ -928,6 +928,36 @@ static int testLocCBA3SetTimerAndAdvance(void)
     return 0;
 }
 
+
+static int testSubD1C7BuildOamGrid(void)
+{
+    uint8_t oam[256];
+    NesSubD1C7OamGridState s;
+    memset(oam, 0xEE, sizeof(oam));
+    memset(&s, 0, sizeof(s));
+    s.ram0000_x=0x10u; s.ram0001_y=0x20u; s.ram0002_tile=0x30u;
+    s.ram0003_grid=0x22u; s.ram0004_oamBase=0x40u;
+    s.ram000A_markerBits=0x01u; s.ram000B_attribute=0x33u;
+    if(nesSubD1C7BuildOamGrid(oam,&s)!=4u || s.ram0008_maxIndex!=4u ||
+       s.ram0002_tile!=0x33u || s.ram000A_markerBits!=0u ||
+       s.ram0000_x!=0x20u || s.ram0009_y!=0x30u) return 1;
+    /* Column-major 2x2 layout, with marker $FC in the first even slot. */
+    if(oam[0x40u]!=0x20u || oam[0x41u]!=0xFCu || oam[0x42u]!=0x33u || oam[0x43u]!=0x10u) return 2;
+    if(oam[0x44u]!=0x28u || oam[0x45u]!=0x30u || oam[0x46u]!=0x33u || oam[0x47u]!=0x10u) return 3;
+    if(oam[0x48u]!=0x20u || oam[0x49u]!=0x31u || oam[0x4Au]!=0x33u || oam[0x4Bu]!=0x18u) return 4;
+    if(oam[0x4Cu]!=0x28u || oam[0x4Du]!=0x32u || oam[0x4Eu]!=0x33u || oam[0x4Fu]!=0x18u) return 5;
+
+    /* OAM page indexing wraps at $FF, just like the 6502 zero-page pointer low byte. */
+    memset(oam,0xEE,sizeof(oam)); memset(&s,0,sizeof(s));
+    s.ram0000_x=0xF8u; s.ram0001_y=0x40u; s.ram0002_tile=0x70u;
+    s.ram0003_grid=0x21u; s.ram0004_oamBase=0xFCu; s.ram000B_attribute=0x22u;
+    if(nesSubD1C7BuildOamGrid(oam,&s)!=2u) return 6;
+    if(oam[0xFCu]!=0x40u || oam[0xFDu]!=0x70u || oam[0xFEu]!=0x22u || oam[0xFFu]!=0xF8u) return 7;
+    if(oam[0x00u]!=0x40u || oam[0x01u]!=0x71u || oam[0x02u]!=0x22u || oam[0x03u]!=0xF8u) return 8;
+    puts("PASS: sub_D1C7 OAM tile/attribute grid, marker bits and byte wrap.");
+    return 0;
+}
+
 int main(void)
 {
     if (testLocCBA3SetTimerAndAdvance() != 0) { fputs("FAIL: loc_CBA3 timer/state advance\\n", stderr); return 1; }
