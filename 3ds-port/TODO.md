@@ -59,14 +59,16 @@ The previous owner-decision acceptance was premature. The current native menu is
 
 - [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
-- [ ] A4 — Fully classify state $09 and trace its entry/setup/exit call graph; it currently runs a live object/scroll frame path and is not proven to be a menu.
+- [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
 - [ ] A5 — Trace every reachable setup command's transitive calls and PPU/APU/RAM side effects, including timers and NMI ordering.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [ ] B2 — Verify every reachable menu PPU stream against parser semantics, including bounds/terminators/palette mirroring and unsupported writes.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
 - [ ] B5/B6/B7 — Trace and render every menu OAM sprite and reconstruct authentic screens from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
-- [ ] C1/C2/C3/C4/C5 — Complete source-faithful input, all design choices, shared transitions, save/load edge cases and return paths.
+- [ ] C1/C2 — Complete source-faithful input and title/course-selector navigation.
+- [ ] C3 — Implement all six design-menu routes, including list-5/state-9 editor setup/return, save/load and title return.
+- [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
 - [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch.
 - [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
 - [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
