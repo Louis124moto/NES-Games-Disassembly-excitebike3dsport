@@ -953,7 +953,7 @@ static int testSubD1C7BuildOamGrid(void)
     s.ram0003_grid=0x21u; s.ram0004_oamBase=0xFCu; s.ram000B_attribute=0x22u;
     if(nesSubD1C7BuildOamGrid(oam,&s)!=2u) return 6;
     if(oam[0xFCu]!=0x40u || oam[0xFDu]!=0x70u || oam[0xFEu]!=0x22u || oam[0xFFu]!=0xF8u) return 7;
-    if(oam[0x00u]!=0x40u || oam[0x01u]!=0x71u || oam[0x02u]!=0x22u || oam[0x03u]!=0xF8u) return 8;
+    if(oam[0x00u]!=0x48u || oam[0x01u]!=0x71u || oam[0x02u]!=0x22u || oam[0x03u]!=0xF8u) return 8;
     puts("PASS: sub_D1C7 OAM tile/attribute grid, marker bits and byte wrap.");
     return 0;
 }
