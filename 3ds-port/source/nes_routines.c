@@ -1661,11 +1661,11 @@ void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *
 uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
                             uint8_t *selection, uint8_t *repeatGuard,
                             uint8_t *timer30, uint8_t *timer31,
-                            uint8_t *selectionChanged)
+                            uint8_t *selectionChanged, uint8_t *ram00FF)
 {
     uint8_t y;
     if (selection == NULL || repeatGuard == NULL || timer30 == NULL ||
-        timer31 == NULL || selectionChanged == NULL || count < 2u)
+        timer31 == NULL || selectionChanged == NULL || ram00FF == NULL || count < 2u)
         return 0u;
 
     y = *selection;
