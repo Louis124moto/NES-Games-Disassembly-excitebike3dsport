@@ -107,8 +107,9 @@ static int uploadRunStream(const uint8_t *stream, size_t streamSize,
     memset(s_uploadMask, 0, sizeof(s_uploadMask));
     memcpy(&s_uploadRam[0x2000u], nametables, NES_MENU_NAMETABLE_BYTES);
     for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) s_uploadRam[0x3F00u + uploadPaletteSlot(i)] = palette[i];
-    if (nesPpuApplyCommandStream(stream, streamSize, s_uploadRam, s_uploadMask,
-                                 sizeof(s_uploadRam), &writes) != NES_PPU_COMMAND_OK) {
+    if (nesPpuApplyCommandStreamMirrored(stream, streamSize, s_uploadRam, s_uploadMask,
+                                         sizeof(s_uploadRam), &writes,
+                                         NES_PPU_MIRROR_VERTICAL) != NES_PPU_COMMAND_OK) {
         return 0;
     }
     memcpy(nametables, &s_uploadRam[0x2000u], NES_MENU_NAMETABLE_BYTES);
