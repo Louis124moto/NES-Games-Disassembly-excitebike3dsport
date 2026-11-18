@@ -875,3 +875,13 @@ Still open (Stage 2 is NOT complete):
 - [ ] Not compared with a real NES capture; not run on hardware or in an emulator in this step.
 - [ ] Expected list contents ($02, $18, $19, $1A) were hand-parsed from the ROM bytes by the same author as the code; an independent check against an emulator trace is still needed.
 - [ ] The Famicom keyboard/other-peripheral paths (if any) were not examined.
+
+## Hardware report — 2026-11-18 (New Nintendo 3DS, owner test)
+
+- [x] The owner confirms the runtime extractor displays CHR textures sharply and without geometric distortion. The atlas is grayscale by design; this confirms the grayscale inspection path, not the in-game palette assignment.
+- [x] The owner confirms the native menu starts and its selection responds to controls on physical hardware.
+- [ ] The owner reports that the original menu boxes/artwork are still not reproduced correctly. This remains a Stage 2 visual-fidelity issue; do not substitute invented rectangles or labels.
+- [x] Commit `2bc8d15`: render the 256x240 NES PPU image into a centered 320x240 4:3 viewport on the 400x240 New 3DS top screen (nearest-neighbour horizontal scale, 40-pixel side bars); track all 256 OAM bytes and both scroll registers in the change-driven redraw gate.
+- [x] Commit `8707ef5`: report a missing $1000 CHR pattern table or PPU nametable-render error on the bottom diagnostic screen rather than silently falling back to the textual menu trace.
+- [ ] Retest the 4:3 viewport and new PPU failure diagnostics on physical hardware. The 3DS build passed for `2bc8d15`; the verification workflow for `8707ef5` is pending at the time of this note.
+- [ ] Obtain a hardware capture of the title menu and compare it with the original NES image before claiming the menu boxes/artwork are fixed.
