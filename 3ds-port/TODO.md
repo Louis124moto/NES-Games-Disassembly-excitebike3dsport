@@ -53,20 +53,22 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
-#### Stage 2 — Original NES menu (ACCEPTED BY OWNER DECISION 2026-11-18, without hardware test; see note below)
+#### Stage 2 — Original NES menu (REOPENED 2026-11-18; IN PROGRESS; blocks Stage 3)
 
-**Owner decision, 2026-11-18:** the owner asked to re-verify Stage 2 and move to Stage 3 "même sans test matériel". This acceptance rests on host tests and ASM audit only: no hardware or emulator run, no NES reference capture, no sound, no scroll/second nametable, tape format is a file substitute, and the race-flow states (2/3/4/5/6/7/9/0A/0B) are not ported. Re-verification on 2026-11-18 fixed the setup prelude trigger to the exact ASM rule (`ram_0044==0` at bra_C2ED; the extra pending flag was removed). Open items stay as debt.
+The previous owner-decision acceptance was premature. The current native menu is an input/state trace with partial PPU rendering, not a fully reconstructed original menu. The owner has now explicitly requested that Stage 2 be completed before any Stage 3 work continues. The source audit and current gaps are tracked in `3ds-port/STAGE2_TRACE.md`. No hardware/reference-capture acceptance is claimed.
 
-- [ ] Trace the menu startup sequence and each setup command/handler from the original ASM.
-- [ ] Connect verified CHR, PPU palette writes, nametable/attributes, OAM/sprites, banks, scroll, and timing into the native renderer.
-- [ ] Reproduce authentic title/menu appearance, colors, layout, cursor, transitions, and controller behavior.
-- [ ] Compare each menu state and transition against the original NES reference, including edge cases and reset/start behavior.
-- [ ] Run host tests, exact-commit 3DS build, and hardware checks; record evidence.
-- [ ] Accept Stage 2 only after the entire menu path in scope matches the source; do not proceed to Course 1 before acceptance.
+- [x] Identify the original state dispatch table (`tbl_C000`), setup-list selector (`tbl_C01C_index`), and command-list pointers (`tbl_C02A_lo`/`tbl_C033_hi`); see `3ds-port/STAGE2_TRACE.md`.
+- [ ] Trace every reachable menu state and every setup command, including transitive calls and PPU/APU side effects; distinguish title, course/design, tape, and return paths.
+- [ ] Connect source-confirmed CHR, palette RAM, nametable/attributes, OAM/sprites, PPU control/mask, scroll, and frame timing into the active renderer.
+- [ ] Reproduce authentic title/menu artwork and layout; remove placeholder labels/selection text and prove all visible tiles/sprites against source data.
+- [ ] Complete the state transitions and controller behavior for every menu state in scope, including wraparound, confirm/cancel, reset, and return paths.
+- [ ] Compare deterministic frame/state captures against the original NES reference or a trusted emulator; record the ROM identity, frame, PPU/OAM state, and expected output.
+- [ ] Run all host tests, an exact-commit 3DS build, and New 3DS hardware tests; record CI/build/test evidence.
+- [ ] Accept Stage 2 only after the complete original menu flow in scope is integrated and fidelity-checked. Stage 3 remains blocked until then.
 
-#### Stage 3 — First course / first race (STARTED 2026-11-18 — source trace and isolated setup helpers; nothing playable; see 3ds-port/STAGE3_TRACE.md)
+#### Stage 3 — First course / first race (BLOCKED until Stage 2 acceptance; source-trace work already exists but must not advance)
 
-- [x] Trace the state-2 entry and six-command setup-list order; see `3ds-port/STAGE3_TRACE.md`.
+- [x] (Existing research only) Trace the state-2 entry and six-command setup-list order; see `3ds-port/STAGE3_TRACE.md`. Do not implement further Stage 3 work until Stage 2 passes.
 - [x] Trace `sub_ECE4` and `tbl_E6A1` for the three `sub_D13F` calls (X = `$00/$04/$08`); the dynamic PPU upload execution at `loc_C289/sub_D3C1` remains unported.
 - [ ] Integrate the `sub_ECE4` builder into a source-faithful `sub_D13F` model with the three ordered PPU uploads; do not mark command 3 complete before the PPU effects are represented.
 - [ ] Establish the player slot through source-confirmed initialization, RAM writers, input path, and update callers; never infer it from slot number.
