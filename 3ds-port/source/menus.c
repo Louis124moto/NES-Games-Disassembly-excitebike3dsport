@@ -29,8 +29,9 @@ static int menusRunSetupSequence(GameState *state)
     /* ...then ram_0030_timer is checked before even the prelude runs. */
     if (state->menu_timer30 != 0u) return 1;
 
-    if (state->menu_sequence_preface_pending != 0u) {
+    if (state->menu_ram0044 == 0u) {
         /*
+         * bra_C2ED: LDY ram_0044 / INC / DEY / BMI-style test: prelude iff the OLD ram_0044 is 0.
          * sub_C318 calls sub_D255 (fill all 256 OAM bytes with $F8),
          * sub_D23B/sub_D260 (clear two 1 KiB nametables to $FC with zero
          * attribute tables), then sub_D1A9 (reset both scroll registers).
@@ -41,11 +42,8 @@ static int menusRunSetupSequence(GameState *state)
                                 &state->menu_scroll_x, &state->menu_scroll_y,
                                 &state->menu_ppu_ctrl, &state->menu_ppu_mask);
         state->menu_ram0044 = 1u;
-        state->menu_sequence_preface_pending = 0u;
         return 1;
     }
-
-    if (state->menu_ram0044 == 0u) return 1;
 
     /*
      * sub_C2A9 bra_C2ED: the command list is NOT selected by ram_0041 directly but through
@@ -288,7 +286,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram004A = 0u;
             state->menu_ram03F7 = 0x0Fu;
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
-            state->menu_sequence_preface_pending = 1u;
             state->menu_asm_state = 2u;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
@@ -317,7 +314,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_asm_state = (selected == 2u) ? 8u : 1u;
             state->menu_ram03F2 = selected;
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
-            state->menu_sequence_preface_pending = 1u;
         }
     } else if (state->menu_asm_state == 1u) {
         /* ofs_000_C395_01 remaps LEFT/RIGHT onto the vertical selector. */
@@ -338,7 +334,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram0043 = state->menu_selection;
             nesSubC3AFIncrementState(&state->menu_asm_state);
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
-            state->menu_sequence_preface_pending = 1u;
         }
     } else if (state->menu_asm_state == 8u) {
         state->menu_action_x = nesSubC7DEMenuInput(
@@ -360,8 +355,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
                 &state->menu_selection, &state->menu_ram03F2,
                 &state->menu_clear_ram_requested,
                 &state->menu_ram0040, &state->menu_ram0044);
-            if (state->menu_ram0040 == 0u)
-                state->menu_sequence_preface_pending = 1u;
         }
 
         /*
@@ -393,7 +386,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram004B = 0u;
             state->menu_ram00FB = 0u;
             memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
-            state->menu_sequence_preface_pending = 1u;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
         }
@@ -428,7 +420,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram00FB = 0x40u;
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044); /* sub_C3AF's reset */
             nesLocCC6BUpdateMenuState(&state->menu_asm_state, state->menu_ram004B);
-            state->menu_sequence_preface_pending = 1u;
         }
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;

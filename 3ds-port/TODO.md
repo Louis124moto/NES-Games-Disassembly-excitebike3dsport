@@ -53,7 +53,9 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
-#### Stage 2 — Original NES menu (STARTED 2026-11-17)
+#### Stage 2 — Original NES menu (ACCEPTED BY OWNER DECISION 2026-11-18, without hardware test; see note below)
+
+**Owner decision, 2026-11-18:** the owner asked to re-verify Stage 2 and move to Stage 3 "même sans test matériel". This acceptance rests on host tests and ASM audit only: no hardware or emulator run, no NES reference capture, no sound, no scroll/second nametable, tape format is a file substitute, and the race-flow states (2/3/4/5/6/7/9/0A/0B) are not ported. Re-verification on 2026-11-18 fixed the setup prelude trigger to the exact ASM rule (`ram_0044==0` at bra_C2ED; the extra pending flag was removed). Open items stay as debt.
 
 - [ ] Trace the menu startup sequence and each setup command/handler from the original ASM.
 - [ ] Connect verified CHR, PPU palette writes, nametable/attributes, OAM/sprites, banks, scroll, and timing into the native renderer.
@@ -62,7 +64,7 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Run host tests, exact-commit 3DS build, and hardware checks; record evidence.
 - [ ] Accept Stage 2 only after the entire menu path in scope matches the source; do not proceed to Course 1 before acceptance.
 
-#### Stage 3 — First course / first race (blocked until Stage 2 accepted)
+#### Stage 3 — First course / first race (STARTED 2026-11-18 — trace only, nothing playable; see 3ds-port/STAGE3_TRACE.md)
 
 - [ ] Trace the original first-course entry and all dependencies before integrating gameplay.
 - [ ] Establish the player slot through source-confirmed initialization, RAM writers, input path, and update callers; never infer it from slot number.

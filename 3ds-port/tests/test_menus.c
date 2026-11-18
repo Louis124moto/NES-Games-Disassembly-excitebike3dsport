@@ -180,7 +180,6 @@ static int testState4DynamicWrite(void)
     if (s == NULL) return 1;
     s->menu_asm_state = 4u;
     s->menu_ram0043 = 2u;
-    s->menu_sequence_preface_pending = 1u;
     s->menu_ram0040 = 0u;
     s->menu_ram0044 = 0u;
     /* prelude, command 0 ($06), command 1 ($09), command 2 (buffer) */
@@ -204,7 +203,6 @@ static int testState7Setup(void)
     unsigned int i;
     if (s == NULL) return 1;
     s->menu_asm_state = 12u; /* tbl_C01C_index[$0C] = 7 -> off_C07A_07 */
-    s->menu_sequence_preface_pending = 1u;
     s->menu_ram05A0[0] = 1u; s->menu_ram05A0[1] = 2u; s->menu_ram05A0[2] = 3u;
     s->menu_ram05C3[0] = 4u; s->menu_ram05C3[1] = 5u; s->menu_ram05C3[2] = 6u;
     for (i = 0u; i < 256u; ++i) s->menu_ram06E0[i] = (uint8_t)(i * 3u + 1u);
