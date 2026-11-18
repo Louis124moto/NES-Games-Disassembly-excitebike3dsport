@@ -234,7 +234,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] B7. Verify menu palettes and palette transitions using the actual PPU palette RAM writes; account for palette mirroring and PPUMASK grayscale/emphasis if used.
 
 ### C. Menu input and transitions
-- [ ] C1. Compare `sub_C7DE` byte-for-byte with native input: repeat guard, timer, Select/Start priority, Up/Down, and exact wrap rules.
+- [x] C1. `sub_C7DE` input semantics and RAM side effects are translated/tested: repeat guard, `$0030/$0031` timers, Select/Down/Up priority, wrap rules, and `$00FF` write only on cursor movement.
 - [ ] C2. Complete title and selector navigation/confirmation and the transitions into all destination states.
 - [ ] C3. Complete all six design-menu choices: implement list 5/state-9 setup handoff and B-button return to state 8; preserve state-10 race handoff for Stage 3; finish save/load and return-to-title paths.
 - [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
@@ -299,6 +299,22 @@ Source-backed observations:
 - `loc_D19B` waits for PPU vblank, updates PPUCTRL and scroll registers, and returns to the frame loop.
 
 This is demonstrably a live per-frame object/scroll update path, not a static menu draw routine. The design-menu selection value 2 enters state $09 (via `$C3D2`). However, the available excerpts do not prove whether state $09 is a track editor, a design preview, or a gameplay mode. **Do not map it to a guessed screen or silently treat it as a completed menu.** A4 remains open until its entry setup, state-specific table selection, object meaning, and exit conditions are traced end-to-end.
+
+### `sub_C7DE` input equivalence checkpoint (commit `b2fa4fb21146`)
+
+The native menu input helper now preserves the complete menu-visible side effects of the ASM routine:
+
+- Reads NES press-edge bits `$3C`: Select `$20`, Start `$10`, Up `$08`, Down `$04`.
+- Clears `ram_0049` only when none of those four buttons is pressed; otherwise sets `ram_0031_timer=$5D` before checking the repeat guard.
+- Honors the existing `ram_0049` guard; a guarded input does not move the selection or change `ram_00FF`.
+- Priority is Select, then Down, then Up, then Start. Down/Select wrap to index 0; Up from index 0 wraps to `count-1`.
+- Start sets `ram_0030_timer=4` and returns action X=4 without changing selection.
+- The source writes `ram_00FF=1` only through `bra_C817` on cursor movement (Up/Down/Select); Start jumps directly to `bra_C81B` and must not set it. The model now stores this byte in `GameState.menu_ram00FF`.
+- State 1 remaps physical Left/Right to the NES Up/Down bits before calling the helper, matching `ofs_000_C395_01`.
+
+Host vectors cover down/up wrap, six-entry wrap, Select priority, Start, repeat-guard hold, idle guard reset, and 1,000 bounded selection updates. Exact commit `b2fa4fb2114615ac84bc1b360fe40b0a8a4e471b`: host verification run 44359040421 passed; New 3DS build run 44359040418 passed.
+
+C1 is complete. C2 (full title/selector transition flow) remains open; this helper equivalence alone does not complete the menu state machine.
 
 ### Setup list 5: state-$09 course-design editor initialization
 
