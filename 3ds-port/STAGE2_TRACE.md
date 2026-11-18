@@ -184,6 +184,19 @@ The current renderer can composite 8x8 sprites, including palette selection, pri
 
 **B5 remains open:** the title/selector/design cursor path is represented, but the shared-transition OAM records and state-9 editor sprites are not yet emitted by the active C runtime. The renderer's sprite capability does not substitute for the missing source OAM writers.
 
+### `sub_D1C7` OAM grid helper checkpoint (commit `73d87350db7c`)
+
+Added `nesSubD1C7BuildOamGrid()`, a source-faithful isolated translation of the shared OAM tile/attribute and position writer:
+
+- Calculates the 8-bit `rows * columns` count from the high/low nibbles of `ram_0003`.
+- Writes tile and attribute bytes in the ASM order, including the even-index `ram_000A` marker-bit shift and special tile `$FC` behavior.
+- Writes the Y/X position grid in column-major order, advancing coordinates by eight pixels.
+- Preserves 8-bit OAM pointer wrap and the `ram_0002`, `ram_000A`, `ram_0000`, `ram_0008`, and `ram_0009` scratch effects.
+
+Host regression covers a 2x2 grid, marker tile behavior, column-major placement, and OAM address wrap. Exact commit `73d87350db7ca19196e23d5178d27a1f6c0bf3d8`: host verification run 44360512660 passed.
+
+**Not yet integrated:** `nesSubE1A3PrepareObjectSprite()` still does not call this helper through the state-9 list-5 runtime path. B5 remains open until the full editor OAM call chain is wired and compared.
+
 ### PPU command parser validation checkpoint (commit `ad608e0b0d18`)
 
 - `testAllSourceStreams` replays every one of the 18 static PPU streams and all 7 palette streams through the source parser and checks that each has a nonzero write count.
