@@ -76,3 +76,74 @@ void nesRaceSetupC875Head(NesRaceRam *r)
     if (x == 0u) x = 0x02u;
     r->zp[(uint8_t)(0x78u + x)] >>= 1;
 }
+
+
+/*
+ * sub_ECE4 / loc_ECE4, CPU $ECE4 (ROM $002CF4).
+ * Build the two source-defined 32-byte dynamic PPU command payloads in
+ * $0400-$0446. The $0502/$0525 writes are intentional 6502 absolute-indexed
+ * page crossings when X becomes $FF; do not clamp them to page $04.
+ *
+ * The following JMP loc_C289 -> sub_D3C1 PPU execution is outside this helper.
+ */
+static void nesRaceSetupWrite0400_05FF(NesRaceRam *r, uint16_t address, uint8_t value)
+{
+    if (address >= 0x0400u && address <= 0x04FFu) {
+        r->pg04[address - 0x0400u] = value;
+    } else if (address >= 0x0500u && address <= 0x05FFu) {
+        r->pg05[address - 0x0500u] = value;
+    }
+}
+
+int nesRaceSetupECE4(NesRaceRam *r, unsigned int tableOffset)
+{
+    static const uint8_t tbl_E6A1[12] = {
+        0x22u, 0x64u, 0x62u, 0xC0u,
+        0x22u, 0x74u, 0x63u, 0xE0u,
+        0x21u, 0x83u, 0xFCu, 0xC0u
+    };
+    uint8_t x;
+    unsigned int i;
+
+    if (r == 0 || (tableOffset != 0u && tableOffset != 4u && tableOffset != 8u))
+        return 0;
+
+    /* LDY #$03; four table reads are stored in reverse scratch order. */
+    for (i = 0u; i < 4u; ++i)
+        r->zp[5u - i] = tbl_E6A1[tableOffset + i];
+
+    r->pg04[0x00u] = r->zp[0x05u];
+    r->pg04[0x01u] = r->zp[0x02u];
+    r->pg04[0x02u] = 0x20u;
+
+    /*
+     * Match the paired STA abs,X / DEX / STA abs,X / DEX / BPL loop.
+     * At X=$00 the second STA uses X=$FF, producing $0502.
+     */
+    x = 0x20u;
+    for (;;) {
+        nesRaceSetupWrite0400_05FF(r, (uint16_t)(0x0403u + x), r->zp[0x03u]);
+        x = (uint8_t)(x - 1u);
+        nesRaceSetupWrite0400_05FF(r, (uint16_t)(0x0403u + x), r->zp[0x04u]);
+        x = (uint8_t)(x - 1u);
+        if ((x & 0x80u) != 0u) break;
+    }
+
+    r->pg04[0x23u] = (uint8_t)(r->zp[0x05u] ^ 0x04u);
+    r->pg04[0x24u] = r->zp[0x02u];
+    r->pg04[0x25u] = 0x20u;
+
+    x = 0x20u;
+    for (;;) {
+        nesRaceSetupWrite0400_05FF(r, (uint16_t)(0x0426u + x), r->zp[0x03u]);
+        x = (uint8_t)(x - 1u);
+        nesRaceSetupWrite0400_05FF(r, (uint16_t)(0x0426u + x), r->zp[0x04u]);
+        x = (uint8_t)(x - 1u);
+        if ((x & 0x80u) != 0u) break;
+    }
+
+    r->pg04[0x46u] = 0x00u;
+    r->zp[0x00u] = 0x00u;
+    r->zp[0x01u] = 0x04u;
+    return 1;
+}
