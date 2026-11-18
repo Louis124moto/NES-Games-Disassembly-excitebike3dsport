@@ -63,7 +63,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [ ] A5 — Trace every reachable setup command's transitive calls and PPU/APU/RAM side effects, including timers and NMI ordering.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
-- [ ] B2 — Verify every reachable menu PPU stream against parser semantics, including bounds/terminators/palette mirroring and unsupported writes.
+- [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
 - [ ] B5/B6/B7 — Trace and render every menu OAM sprite and reconstruct authentic screens from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [ ] C1/C2 — Complete source-faithful input and title/course-selector navigation.
