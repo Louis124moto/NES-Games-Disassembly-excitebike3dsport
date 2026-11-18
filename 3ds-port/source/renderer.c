@@ -195,6 +195,9 @@ static uint8_t s_bgOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
 /* Result of the last sprite composition (shown in the bottom log). */
 static int s_spriteResult = NES_PPU_RENDER_OK;
 static size_t s_spritePixels;
+static size_t s_bgChrTileCount;
+static int s_bgRenderResult;
+static int s_bgRenderReason;
 
 /*
  * Rendering disabled ($2001 bits 3/4 clear): the PPU shows the universal backdrop
@@ -229,23 +232,42 @@ static int rendererDrawPpuBackground(const GameState *state)
     size_t tileCount = 0u;
     unsigned int x, y;
 
-    if (state == NULL || state->menu_ppu_background_ready == 0u) return 0;
-    if (framebuffer == NULL || width != 240u || height != 400u) return 0;
+    s_bgRenderReason = 0;
+    s_bgRenderResult = NES_PPU_RENDER_OK;
+    s_bgChrTileCount = 0u;
+    if (state == NULL || state->menu_ppu_background_ready == 0u) {
+        s_bgRenderReason = 1;
+        return 0;
+    }
+    if (framebuffer == NULL || width != 240u || height != 400u) {
+        s_bgRenderReason = 2;
+        return 0;
+    }
     pixels = assetExtractorGetPixels(&tileCount);
+    s_bgChrTileCount = tileCount;
     const uint8_t *const chrAll = pixels;
     const size_t chrAllCount = tileCount;
     /* PPUCTRL bit 4 selects the BG pattern table: $10 -> tiles 256..511 of the CHR. */
     if (pixels != NULL && (state->menu_ppu_ctrl & 0x10u) != 0u) {
-        if (tileCount <= 256u) return 0;
+        if (tileCount <= 256u) {
+            s_bgRenderReason = 3;
+            return 0;
+        }
         pixels += 256u * 64u;
         tileCount -= 256u;
     }
-    if (pixels == NULL || nesPpuRenderNametableOpaque(
+    if (pixels == NULL || tileCount == 0u) {
+        s_bgRenderReason = 4;
+        return 0;
+    }
+    s_bgRenderResult = nesPpuRenderNametableOpaque(
             pixels, tileCount,
             state->menu_ppu_nametables,
             &state->menu_ppu_nametables[NES_PPU_NAMETABLE_BYTES],
             state->menu_ppu_palette, s_ppuRgb, sizeof(s_ppuRgb),
-            s_bgOpaque, sizeof(s_bgOpaque)) != NES_PPU_RENDER_OK) {
+            s_bgOpaque, sizeof(s_bgOpaque));
+    if (s_bgRenderResult != NES_PPU_RENDER_OK) {
+        s_bgRenderReason = 5;
         return 0;
     }
 
@@ -613,6 +635,16 @@ void rendererDraw(const GameState *state)
                 /* menusRender writes the console directly; invalidate the cache. */
                 rendererStoreConsoleText("");
                 menusRender(state);
+                if (s_bgRenderReason == 3) {
+                    printf("PPU BG unavailable: PPUCTRL selects $1000 but CHR has only %lu tiles.\n",
+                           (unsigned long)s_bgChrTileCount);
+                } else if (s_bgRenderReason == 5) {
+                    printf("PPU BG renderer error: %d (CHR tiles %lu, PPUCTRL %02X).\n",
+                           s_bgRenderResult, (unsigned long)s_bgChrTileCount,
+                           (unsigned int)state->menu_ppu_ctrl);
+                } else if (s_bgRenderReason == 4) {
+                    printf("PPU BG unavailable: no decoded CHR data.\n");
+                }
             } else {
                 char menuLog[256];
                 snprintf(menuLog, sizeof(menuLog),
