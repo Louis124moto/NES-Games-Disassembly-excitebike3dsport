@@ -62,9 +62,9 @@ static int testVerticalNametableMirroring(void)
     const uint8_t stream[] = {
         0x20,0x00,0x01,0x11,
         0x24,0x00,0x01,0x22,
+        0x30,0x00,0x01,0x55,
         0x28,0x00,0x01,0x33,
         0x2C,0x00,0x01,0x44,
-        0x30,0x00,0x01,0x55,
         0x00
     };
     uint8_t ram[NES_PPU_ADDRESS_SPACE], mask[NES_PPU_ADDRESS_SPACE];
@@ -78,7 +78,7 @@ static int testVerticalNametableMirroring(void)
     memset(ram,0,sizeof(ram)); memset(mask,0,sizeof(mask)); writes=0u;
     if (nesPpuApplyCommandStreamMirrored(stream,sizeof(stream),ram,mask,sizeof(ram),
                                          &writes,NES_PPU_MIRROR_HORIZONTAL)!=NES_PPU_COMMAND_OK) return 3;
-    if (ram[0x2000u]!=0x33u || ram[0x2400u]!=0x55u) return 4;
+    if (ram[0x2000u]!=0x55u || ram[0x2400u]!=0x44u) return 4;
     puts("PASS: mapper nametable mirroring (vertical/horizontal) and $3000 mirror.");
     return 0;
 }
