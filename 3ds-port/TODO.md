@@ -60,7 +60,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
-- [ ] A5 — Trace every reachable setup command's transitive calls and PPU/APU/RAM side effects, including timers and NMI ordering.
+- [ ] A5 — List 5's six commands and C5C2 state writes are inventoried; finish transitive traces for `sub_E1A3`, `sub_EC25`, `loc_EC47`, C820 dynamic PPU upload and remaining list-3 dependencies.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
