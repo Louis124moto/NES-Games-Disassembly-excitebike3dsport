@@ -300,7 +300,9 @@ Command 5 (`$C5C2-$C61E`) details:
 - Initializes `ram_00B0-$00B3` to `[$21,$05,$05,$03]`, sets `ram_0064=8`, `ram_00E0=9`, `ram_00B4=$7A`.
 - Increments `ram_0040` and `ram_0047`, calls `sub_EC25` with A=`$D0`, then jumps to `loc_EC47`.
 
-**Unresolved dependencies before list 5 can be ported:** full `sub_E1A3` OAM/object initialization, `sub_EC25` sprite write semantics, `loc_EC47` continuation, the state-9 object arrays and the PPU dynamic list upload. Do not replace these with a static placeholder bike or approximate object state.
+**Existing isolated translations:** `nesSubE1F9SelectObjectSprite()` and `nesSubE1A3PrepareObjectSprite()` already model the object-selection/table preparation path; `testNewE1F9` and `testSubE1A3Exact` cover selected branches. `nesSubC621CopyPage()` and `nesSubEC3BCopyPageDescending()` also exist. These helpers are not yet wired into the list-5 runtime sequence.
+
+**Unresolved dependencies before list 5 can be accepted:** the final `sub_D1C7` OAM record emitter, direct `sub_EC25`/`loc_EC47` sprite writes, full state-9 object-array backing, C820's dynamic PPU uploads, and the `$0047` split-scroll timing. Do not replace these with a static placeholder bike or approximate object state.
 
 ### List-5 object/OAM dependency trace (source audit)
 
@@ -313,7 +315,7 @@ The final editor setup command is more than a few OAM constants:
 - `loc_EC47` writes OAM slot `$0234-$0237`: Y=`$CF`, tile=`ram_05E0`, attributes=0, X=`$E4`.
 - `sub_EC3B` copies the 256-byte editor buffer `$05E0-$06DF` back to `$06E0-$07DF` using X wrap. This is the editor's commit/save-back path when leaving state 9.
 
-This narrows the work but does not close A5: `sub_E1F9` and `sub_D1C7` still require complete instruction-level traces, and the editor's dynamic PPU/scroll split is not yet implemented.
+This narrows the work but does not close A5: E1F9/E1A3 helpers already have host vectors, while D1C7's final OAM emission, EC25/EC47 integration, C820 dynamic PPU upload and the editor's PPU/scroll split are still missing.
 
 ### State $09 classification: course-design/editor loop
 
