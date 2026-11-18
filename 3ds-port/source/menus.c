@@ -322,7 +322,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         state->menu_action_x = nesSubC7DEMenuInput(
             selectorButtons, 5u, &state->menu_selection,
             &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed);
+            &state->menu_timer31, &changed, &state->menu_ram00FF);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorX[5] = {0x48u, 0x60u, 0x78u, 0x90u, 0xA8u};
@@ -339,7 +339,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         state->menu_action_x = nesSubC7DEMenuInput(
             nesButtons, 6u, &state->menu_selection,
             &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed);
+            &state->menu_timer31, &changed, &state->menu_ram00FF);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             /* tbl_C08B_spr_Y indexed by ram_0042, exactly as bra_C3EA. */
