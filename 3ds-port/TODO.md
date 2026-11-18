@@ -65,7 +65,8 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
-- [ ] B5/B6/B7 — Trace and render every menu OAM sprite and reconstruct authentic screens from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
+- [ ] B5 — Cursor OAM is represented; implement the shared transition OAM writers (`$CCEF/$CD15`) and state-9 editor sprites (`sub_D1C7`, `sub_EC25`, `loc_EC47`).
+- [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [ ] C1/C2 — Complete source-faithful input and title/course-selector navigation.
 - [ ] C3 — Implement all six design-menu routes, including list-5/state-9 editor setup/return, save/load and title return.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
