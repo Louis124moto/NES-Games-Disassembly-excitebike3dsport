@@ -117,6 +117,36 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
 - [ ] D6. Accept Stage 2 only after A–D pass. Keep Stage 3 blocked until then.
 
+### State $09: active-frame path, not yet classified as a menu
+
+The source handler `ofs_000_C97C_09` is:
+
+```asm
+JSR sub_CA1B
+JSR sub_EB17
+JSR sub_DA6A
+JSR sub_DBFE
+JSR sub_E70B
+JSR sub_F4FF
+JSR sub_F68D
+JSR sub_F755
+JSR sub_C229
+JMP loc_D19B
+```
+
+Source-backed observations:
+
+- `sub_CA1B` copies the current held-controller byte `ram_btn_hold` to `ram_005C_obj`.
+- `sub_DA6A` advances horizontal scroll from `ram_0060` and toggles `ram_004D_base_nametable` on carry.
+- `sub_DBFE` updates `ram_03BF`, `ram_0050_scroll_X`, and toggles `ram_004E_base_nametable` on carry.
+- `sub_E70B` iterates object slots 3..0 and adjusts object values/animation state.
+- `sub_F4FF` selects a table through `ram_0043` and has an explicit state-$09 branch.
+- `sub_F68D` and `sub_F755` inspect/update object slots and their associated data.
+- `sub_C229` resets three bytes in each of `$05A0` and `$05C3`.
+- `loc_D19B` waits for PPU vblank, updates PPUCTRL and scroll registers, and returns to the frame loop.
+
+This is demonstrably a live per-frame object/scroll update path, not a static menu draw routine. The design-menu selection value 2 enters state $09 (via `$C3D2`). However, the available excerpts do not prove whether state $09 is a track editor, a design preview, or a gameplay mode. **Do not map it to a guessed screen or silently treat it as a completed menu.** A4 remains open until its entry setup, state-specific table selection, object meaning, and exit conditions are traced end-to-end.
+
 ### Shared transition dispatcher: completed branch trace (`$CB2C-$CC7C`)
 
 All three state handlers `$03/$06/$0B` enter the same code. `ram_0044` is an index into the four-entry pointer tables `tbl_C12C_lo`/`tbl_C130_hi`:
