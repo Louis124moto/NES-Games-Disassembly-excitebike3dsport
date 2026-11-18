@@ -138,6 +138,31 @@ The existing `GameState.menu_ppu_nametables[2048]` and `nes_active_stream.c` scr
 - `loc_D19B`/ `sub_D1B3` preserve the upper PPUCTRL nibble and combine it with `ram_004E_base_nametable`; this is part of the active scroll/raster path and must be modelled separately from the static menu setup.
 - This verifies stream selection and pattern-table selection, **not** complete menu composition. The native renderer still needs the exact nametable mirroring/base selection, scroll/raster, and all OAM paths before the artwork can be accepted.
 
+### Mirroring implementation checkpoint (commit `79a3f28136bc`)
+
+Implemented in the native PPU command path:
+
+- Added `nesPpuApplyCommandStreamMirrored()` with explicit horizontal/vertical mirroring modes; retained the original flat helper as a compatibility wrapper.
+- Added canonical PPU address handling for `$3000-$3EFF` mirrors and palette aliases.
+- Routed Excitebike static stream uploads and source PPU snapshots through **vertical** mirroring, matching iNES header flag 6 = `$01`.
+- Added host vectors that distinguish vertical from horizontal mirroring and verify the `$3000` alias.
+
+Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
+- Host workflow `Verify NES routine translations`: success (run 44356209040).
+- New 3DS/devkitARM build workflow: success (run 44356209037).
+
+Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
+
+### Menu scroll/raster path audit
+
+- `sub_C318` performs the menu setup prelude: hides sprites, clears nametable/attribute memory, resets scroll through `sub_D1A9`, clears `ram_scroll_X`, `ram_0050_scroll_X`, `ram_scroll_Y`, and `ram_0051_scroll_Y`, then sets PPUCTRL to `$10`.
+- `vec_C23B_NMI` calls the split/raster path only when `ram_0047 != 0`: `sub_D0AB` updates per-object vertical band values, then `sub_D14E` waits for vblank, calls `sub_D1B3`, updates PPUCTRL/scroll, updates OAM for non-state-9, waits a source-timed delay, then writes the second nametable base and scroll values.
+- `sub_D1B3` writes `ram_for_2000 | ram_004E_base_nametable` to PPUCTRL, then writes `ram_0050_scroll_X` and `ram_0051_scroll_Y` to PPU scroll.
+- The second half of `sub_D14E` writes `ram_for_2000 | ram_004D_base_nametable`, then `ram_scroll_X` and `ram_scroll_Y`. This is a mid-frame split, not a single static scroll value.
+- The menu prelude explicitly zeroes both scroll pairs. `ram_0047` is raised in race setup (`ofs_001_C875_02_06`) and in gameplay object logic (`$EBAE)); it is cleared on menu-return paths (`$CA33`, `$CAA7`). The raster path is therefore primarily the race/return transition path, but it must be preserved for the Stage 2 shared transitions when the flag is still set.
+
+B4 is **traced, not implemented**. The current menu state model does not yet reproduce the two-phase `ram_0047` raster/OAM update. Do not replace it with `menu_scroll_x/y` alone.
+
 ## Ordered completion plan — work one item at a time
 
 The boxes below are the complete known Stage 2 work queue. A box is checked only when the corresponding source audit, implementation, and regression evidence exist. "Menu state flow" excludes race simulation itself, but must correctly hand off to the race state.
@@ -153,8 +178,8 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 ### B. PPU, OAM, and visual reconstruction
 - [x] B1 (selection trace) — Map the static `$01-$19`, palette `$12-$18`, dynamic `$00`, and zero-page `$1A` sources and verify NROM/PPUCTRL pattern-table selection. The renderer fidelity portion remains open under B3-B7.
 - [ ] B2. Verify the native PPU command parser against every stream reachable from menu setup lists; test terminators, lengths, PPU address bounds, palette mirroring, and unsupported writes.
-- [ ] B3. Model the full two-nametable PPU address space and nametable mirroring selected by the source; current renderer reads a fixed 960-byte background plus one attribute table and does not yet prove correct base nametable selection.
-- [ ] B4. Integrate source scroll writes (`$2005/$2000`), split/scanline behavior, and NMI ordering; do not replace raster effects with a guessed static scroll.
+- [ ] B3. Address mirroring is implemented and CI-tested (commit `79a3f28136bc`); still render both physical nametables using the selected base nametable and scroll, instead of only page A.
+- [ ] B4. Source scroll/raster path traced (`sub_D0AB`, `sub_D14E`, `sub_D1B3`); implement the two-phase `$0047` NMI update and validate its scanline/OAM timing.
 - [ ] B5. Trace every menu OAM writer and all cursor/decoration sprites, sprite priority, flips, size, scanline limits, and visibility; render all supported source attributes.
 - [ ] B6. Reconstruct authentic title, selector, design, save/load, and transition artwork from actual CHR + PPU writes; remove diagnostic text/placeholder rendering from the normal menu path.
 - [ ] B7. Verify menu palettes and palette transitions using the actual PPU palette RAM writes; account for palette mirroring and PPUMASK grayscale/emphasis if used.
