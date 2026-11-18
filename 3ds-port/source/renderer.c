@@ -260,12 +260,11 @@ static int rendererDrawPpuBackground(const GameState *state)
         s_bgRenderReason = 4;
         return 0;
     }
-    s_bgRenderResult = nesPpuRenderNametableOpaque(
-            pixels, tileCount,
-            state->menu_ppu_nametables,
-            &state->menu_ppu_nametables[NES_PPU_NAMETABLE_BYTES],
-            state->menu_ppu_palette, s_ppuRgb, sizeof(s_ppuRgb),
-            s_bgOpaque, sizeof(s_bgOpaque));
+    s_bgRenderResult = nesPpuRenderMirroredNametablesOpaque(
+            pixels, tileCount, state->menu_ppu_nametables,
+            state->menu_ppu_palette, state->menu_ppu_ctrl,
+            state->menu_scroll_x, state->menu_scroll_y,
+            s_ppuRgb, sizeof(s_ppuRgb), s_bgOpaque, sizeof(s_bgOpaque));
     if (s_bgRenderResult != NES_PPU_RENDER_OK) {
         s_bgRenderReason = 5;
         return 0;
