@@ -39,7 +39,7 @@ A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excit
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-> **Current status (2026-11-18): Stage 2 original menu reopened and in progress; Stage 3 is blocked.** Stage 1 remains owner-accepted with documented verification debt. The native menu responds to controls according to the owner report, but its original artwork/layout and complete menu flow are not yet faithfully reproduced. Stage 2 has not passed hardware/reference comparison and must be completed before further Stage 3 implementation. No playable race or full-game fidelity result is claimed.
+> **Current status (2026-11-18): Stage 2 original menu reopened and in progress; Stage 3 is blocked.** The native PPU path now models the ROM's vertical nametable mirroring and renders both physical nametables using PPUCTRL base selection and scroll; host tests and the New 3DS build pass on commit `76abf59affc0`. The split/raster path, full transitions and original-NES visual comparison remain unfinished. Stage 1 remains owner-accepted with documented verification debt. The native menu responds to controls according to the owner report, but its original artwork/layout and complete menu flow are not yet faithfully reproduced. Stage 2 has not passed hardware/reference comparison and must be completed before further Stage 3 implementation. No playable race or full-game fidelity result is claimed.
 
 ## Project goals
 
