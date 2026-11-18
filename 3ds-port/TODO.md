@@ -57,14 +57,19 @@ This is the controlling project specification. If older checklist items conflict
 
 The previous owner-decision acceptance was premature. The current native menu is an input/state trace with partial PPU rendering, not a fully reconstructed original menu. The owner has now explicitly requested that Stage 2 be completed before any Stage 3 work continues. The source audit and current gaps are tracked in `3ds-port/STAGE2_TRACE.md`. No hardware/reference-capture acceptance is claimed.
 
-- [x] Identify the original state dispatch table (`tbl_C000`), setup-list selector (`tbl_C01C_index`), and command-list pointers (`tbl_C02A_lo`/`tbl_C033_hi`); see `3ds-port/STAGE2_TRACE.md`.
-- [ ] Trace every reachable menu state and every setup command, including transitive calls and PPU/APU side effects; distinguish title, course/design, tape, and return paths.
-- [ ] Connect source-confirmed CHR, palette RAM, nametable/attributes, OAM/sprites, PPU control/mask, scroll, and frame timing into the active renderer.
-- [ ] Reproduce authentic title/menu artwork and layout; remove placeholder labels/selection text and prove all visible tiles/sprites against source data.
-- [ ] Complete the state transitions and controller behavior for every menu state in scope, including wraparound, confirm/cancel, reset, and return paths.
-- [ ] Compare deterministic frame/state captures against the original NES reference or a trusted emulator; record the ROM identity, frame, PPU/OAM state, and expected output.
-- [ ] Run all host tests, an exact-commit 3DS build, and New 3DS hardware tests; record CI/build/test evidence.
-- [ ] Accept Stage 2 only after the complete original menu flow in scope is integrated and fidelity-checked. Stage 3 remains blocked until then.
+- [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
+- [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
+- [ ] A4 — Fully classify state $09 and trace its entry/setup/exit call graph; it currently runs a live object/scroll frame path and is not proven to be a menu.
+- [ ] A5 — Trace every reachable setup command's transitive calls and PPU/APU/RAM side effects, including timers and NMI ordering.
+- [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
+- [ ] B1/B2 — Verify every menu PPU stream (static, dynamic, zero-page and palette) against source parser semantics, including bounds/terminators/mirroring.
+- [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
+- [ ] B5/B6/B7 — Trace and render every menu OAM sprite and reconstruct authentic screens from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
+- [ ] C1/C2/C3/C4/C5 — Complete source-faithful input, all design choices, shared transitions, save/load edge cases and return paths.
+- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch.
+- [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
+- [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
+- [ ] D6 — Accept Stage 2 only after all menu routes are integrated and fidelity-checked. Stage 3 remains blocked.
 
 #### Stage 3 — First course / first race (BLOCKED until Stage 2 acceptance; source-trace work already exists but must not advance)
 
