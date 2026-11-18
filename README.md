@@ -39,7 +39,7 @@ A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excit
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-> **Current status: early porting / source-translation stage. This is not yet a playable faithful port.** The native application scaffold and build infrastructure exist, and multiple routines have C translations and regression coverage. The 20-entry ASM translation batch dated 2026-10-21 passed its host regression workflow and 3DS build in CI (runs 39577668191 and 39577668163, revision `601e7e3`); gameplay integration and full-game equivalence are still not demonstrated. No full-game fidelity result is claimed.
+> **Current status (2026-11-18): Stage 3 source-trace and isolated setup-translation work; not a playable faithful port.** Stage 1 and Stage 2 were accepted by owner decision with documented verification debt. The New 3DS owner report confirms the extractor atlas is sharp and the menu responds to controls, but the original menu artwork is still incorrect. Stage 3 has no playable race yet. The latest `sub_ECE4` buffer-builder code and regression vectors are committed, but CI execution and the matching 3DS build are pending. No complete race or full-game fidelity result is claimed.
 
 ## Project goals
 
@@ -54,30 +54,46 @@ The original NES disassembly is the behavioral reference. Its source files must 
 
 ## Progress dashboard
 
-Counts below deliberately distinguish inventory, implementation, test execution, gameplay integration, and fidelity validation. They are not interchangeable.
-
 | Measure | Current evidence-based status |
 |---|---|
-| Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`. This includes helpers, aliases, and labels that may not be standalone routines. |
-| Newly documented translations | 20 ASM entries in the batch dated 2026-10-21 have C implementations and header declarations. This is a batch count, **not** a reconciled project-wide total. |
-| Latest batch in test runner | A dedicated regression group is wired into `3ds-port/tests/test_nes_routines.c`. |
-| Latest batch tests executed | Passed in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`). |
-| Latest batch 3DS build | Passed in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`); this does not prove gameplay integration. |
-| Latest batch integrated into gameplay | No integration has been demonstrated for this batch. |
-| Latest Stage 1 source trace | 2026-11-16: top-screen BGR8/RGB565 conflict corrected in code; `ram_0045` NMI reader and 27-entry table traced. Dynamic buffer writer census started; runtime replay and New 3DS validation remain open. |\n| Full-game fidelity | Not achieved. There is no documented end-to-end scenario comparison establishing a complete faithful game. |
+| Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
+| Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
+| Stage 2 — original menu | Accepted by owner decision on 2026-11-18; owner reports controls work on New 3DS, but authentic boxes/artwork and NES capture comparison remain open. |
+| Stage 3 — first race | Started 2026-11-18. State-2 setup trace and isolated helper translations exist; no playable race or player physics implementation is claimed. |
+| Latest code batch | `nesRaceSetupECE4` builds the source-derived dynamic PPU command buffers for table offsets 0, 4, and 8, including the original page-crossing writes. |
+| Latest host test / 3DS build | Pending for the new `sub_ECE4` batch; do not infer a pass from earlier CI runs. |
+| Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
+
+A function definition, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
 A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
-## Runtime integration update — 2026-10-21
+## Current implementation status — 2026-11-18
 
-The diagnostic screen remains the cold-start view. Pressing START now resets the native menu model and routes subsequent frames through `menusUpdate()`; the CHR atlas is suppressed in menu mode. The menu-related C modules are included in the 3DSX target. This is an integration milestone only: the current `menusRender()` still emits a textual ASM-state trace and does **not** draw the original NES title screen. Menu state transitions, setup command lists, PPU data reconstruction, and fidelity validation remain incomplete; Menu input is mapped to the NES controller bit layout; no extra B-to-diagnostic or X-help behavior is added in menu mode.
+### Extractor and original menu
 
-## Current menu/graphics work
+- Stage 1 was accepted by owner decision on 2026-11-17. Its remaining source-audit, edge-case, export, and reproducibility items remain follow-up debt; this is not a claim that every extractor criterion has been independently verified.
+- Stage 2 was accepted by owner decision on 2026-11-18 without a hardware/NES capture comparison. The owner subsequently confirmed that the native menu starts and responds to controls on a physical New Nintendo 3DS. The original menu boxes/artwork are still not reproduced correctly.
+- Commit `2bc8d15` added a centered 4:3 viewport and full OAM/scroll redraw tracking. Commit `8707ef5` added explicit PPU render-failure diagnostics. The viewport/diagnostic changes still need a fresh hardware retest and a title-menu capture comparison.
+- Do not replace missing source-confirmed menu art with invented rectangles, labels, or placeholder graphics.
 
-The native menu currently translates input/state behavior for ASM states 0, 1, and 8, including `sub_C7DE`, `sub_C3AF/sub_C3B1`, the state-8 choice branches, choice-5 RAM clearing, cursor-table coordinates, and timer projection. The setup sequencer is still only partially ported: states 0/1/8 have source-derived command lists, but state 2 and destination states 9/10/12 do not have complete setup lists. State 13 shares the verified state-8 setup and its entry wait is translated; the later `$FF` branch still depends on unported `sub_EC3B`/`loc_CC6B`. Therefore the title-to-selector input trace is **not a finished menu port**, and state 2 deliberately does not launch placeholder gameplay. Option names and authentic title-screen layout are not inferred from numeric selection indices.
+### Stage 3 — first course
 
-Graphics extraction has a one-command Python pipeline (`3ds-port/tools/extract_nes_assets.py`) and a native C extractor built into the homebrew. At startup, the `.3dsx` checks the adjacent `rom.nes` (or supported raw `CHR_ROM.chr` fallback), loads or refreshes the decoded cache, and writes exports under `extracted/`. The runtime inspector displays a grayscale CHR atlas; it is not itself the color-screen viewer. Exports include `chr_raw.bin`, backwards-compatible raw `chr_pixels.bin`, a self-describing `chr_pixels.ebp` (EBPX v1: 16-byte little-endian header followed by 64 one-byte 2bpp pixel indices per tile), `chr_atlas.png`, palette/PPU snapshots and streams, 18 source-derived 256x240 RGB previews (`ppu_preview_01.png` through `ppu_preview_18.png`), and `manifest.txt`. The color previews replay static PPU command lists from the disassembly and hatch unverified regions; they are not complete live game frames and omit active-state selection, sprites/OAM, scroll timing, and dynamic PPU writes. The Python pipeline remains available for PNG/JSON/header outputs on a PC. It accepts iNES/NES 2.0 CHR-ROM or verified raw CHR ranges. No ROM dump is checked into the repository. On revision `2fb6e14470a604c32785e7e4f6c3bc68392ddfbd`, the Python extraction tests, host C routine suite, runtime iNES decoder tests, and state-13 entry regression test passed in [CI run 39525039178](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039178). The matching 3DS build also passed in [CI run 39525039042](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39525039042). These checks validate compilation and tests, not full menu fidelity.
+The current source trace is `3ds-port/STAGE3_TRACE.md`. It records the state-2 entry, six setup commands, and the original race-frame call order. The setup module currently contains isolated translations for C551, C869, the post-D13F portion of C820, C5A3, C566, and the head of C875. The newly added `nesRaceSetupECE4` translates the `$ECE4` dynamic PPU command-buffer builder for the three records in `tbl_E6A1`.
 
+Important limits:
+
+- `sub_ECE4` is only the buffer builder. The jump to `loc_C289` and execution by `sub_D3C1` are not yet represented by this helper.
+- `sub_D13F` calls the builder three times in source order (X = 0, 4, 8); the complete PPU side effects still need a native model.
+- State-2 list index 2 is not yet wired into the active setup sequencer.
+- Player-slot identity, player input/update path, track decoding, opponents, race timing, scoring, collision, crash/recovery, and authentic physics remain unverified.
+- Placeholder modules for physics/collision/track/audio remain excluded from the runtime build. No generic physics may be presented as the NES game's behavior.
+
+### Tracking files
+
+- `3ds-port/TODO.md` is the controlling roadmap and acceptance record.
+- `3ds-port/STAGE3_TRACE.md` contains the active first-race source trace.
+- A file named `progress.md` is not present in this repository; do not treat an old summary as a current progress record.
 
 ## Repository layout
 
@@ -154,7 +170,7 @@ Use these states consistently:
 
 Only claim the states supported by evidence. Host tests do not replace hardware/build validation, and isolated routine tests do not establish complete-game fidelity. Record CI run links and code revisions in the task tracker when available.
 
-## Stage 1 implementation status — extractor (NOT ACCEPTED)
+## Stage 1 implementation status — extractor (owner-accepted by decision 2026-11-17; verification debt remains)
 
 The first native extraction/export pass is integrated into the 3DSX runtime. It is a partial Stage 1 implementation, not a completed or validated extractor.
 
@@ -174,21 +190,22 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 - The loaded ROM is validated at the header level against canonical Excitebike (mapper 0, 16 KiB PRG-ROM, 8 KiB CHR-ROM) and the identity summary is shown on the bottom screen and in the manifest. This is a header signature check only; PRG content identity is not claimed. Hardware validation remains pending.
 - CHR-RAM is reported as requiring runtime PPU capture; it is not falsely treated as CHR-ROM. The repository’s standalone `Excitebike/CHR_ROM.chr` can be copied beside the `.3dsx` under the exact name `CHR_ROM.chr` to inspect the verified raw 8 KiB CHR dump without a full ROM file.
 - Seven source-defined palette command streams from `bank_FF.asm` addresses D3D6–D450 are replayed through a native interpreter matching `sub_D3C1` write-list semantics. Their 32-byte snapshots, write masks, and raw command streams are exported. Each of the 18 source PPU command snapshots now also exports a 256x240 RGB PNG by composing decoded CHR tiles with its source-derived nametable, attributes and palette values; missing/unverified tiles are hatched. The versioned `chr_pixels.ebp` uses a 16-byte little-endian EBPX v1 header followed by 64 one-byte pixel indices per tile, while `chr_pixels.bin` remains unchanged for compatibility. These are diagnostic/static command-list replays, not full live-game screens. The active palette choice for each live game state, selecting the correct PPU stream for each game state, runtime identity validation for arbitrary ROMs, compressed/generated PRG graphics analysis, sprites/OAM, scrolling, and timing remain unintegrated. The canonical mapper-0 Excitebike source has no CHR banking. Static nametable/attribute snapshots from 18 source command streams are exported with write masks.
-- This implementation has not been accepted on physical New Nintendo 3DS hardware. Host tests and a successful 3DS build are necessary but not sufficient for the Stage 1 gate.
+- The owner accepted Stage 1 by decision on 2026-11-17. This is not a requirement-by-requirement hardware fidelity report; the unchecked items above remain follow-up debt.
 
 `stb_image_write.h` is vendored from the public-domain stb project (Sean Barrett; v1.16) and is compiled into the native homebrew. No Python program is needed at runtime.
 
 ## Current next priorities
 
-The mandatory staged acceptance gates above control all work. Do not use this list as permission to work on later stages in parallel.
+The controlling Stage 3 work order is in `3ds-port/TODO.md` and `3ds-port/STAGE3_TRACE.md`:
 
-1. Complete and validate the native `.3dsx` extractor (Stage 1), including SD exports, source-derived graphics/data diagnostics, regression tests, an exact-revision 3DS build, and hardware verification.
-2. Only after Stage 1 is formally accepted, reconstruct and validate the original menu (Stage 2).
-3. Only after Stage 2 is formally accepted, implement and validate Course 1, including the exact player motorcycle physics and all required race behavior (Stage 3).
-4. Continue through subsequent original game states in source order, opening one stage at a time and recording acceptance evidence in `3ds-port/TODO.md`.
+1. Complete the source-faithful `sub_D13F` path by integrating the three `sub_ECE4` buffer builds with the `loc_C289/sub_D3C1` dynamic PPU uploads.
+2. Continue the remaining C875 command tail and its traced dependencies.
+3. Integrate state-2 setup list index 2 into the source-ordered setup sequencer.
+4. Establish player-slot identity from initialization, RAM writers, and update callers before implementing any player physics.
+5. Keep Stage 3 in progress until a complete first-race scenario is playable and compared with the original NES behavior. Do not substitute placeholder physics or skip unresolved PPU/race dependencies.
 
-The runtime CHR cache now persists decoded tile pixels to the SD card and reloads them on subsequent launches. It remains a diagnostic tile cache, not a reconstructed title-screen texture pack. The menu remains blocked until Stage 1 is accepted. After that gate opens, integrate and validate menu setup commands and trace exact PPU tile/palette placement before proceeding to the first race. The detailed live checklist is in [`3ds-port/TODO.md`](3ds-port/TODO.md). The state-13 `$FF` completion branch has been translated and tested; the full menu remains incomplete while state 2 and destination states 9/10/12 are unported. See [`ASM_FUNCTION_INVENTORY.md`](3ds-port/ASM_FUNCTION_INVENTORY.md) for the label-by-label index and [`REFERENCE_MAPPING.md`](3ds-port/REFERENCE_MAPPING.md) for trace details and open questions.
-
+Stage 2's authentic menu artwork and hardware/reference comparison remain explicit follow-up debt; no complete menu fidelity claim is made.
+ 
 ## Upstream source and credits
 
 The original disassembly originates from [NES Games Disassembly](https://github.com/cyneprepou4uk/NES-Games-Disassembly). Preserve relevant upstream credits and follow the original project's applicable terms when reusing or redistributing its work.
