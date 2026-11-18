@@ -117,6 +117,28 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
 - [ ] D6. Accept Stage 2 only after A–D pass. Keep Stage 3 blocked until then.
 
+### Setup list 3: source-level command trace (`$C052-$C05A`)
+
+This list is selected for states `$03/$06/$0B` and is currently **not executed by the native setup sequencer**. The source commands are:
+
+| Index | Routine | Exact observed effects | Native status |
+|---:|---|---|---|
+| 0 | `ofs_001_C55E_03_01` | Writes `ram_0045=$06`; the NMI later uploads PPU stream 6 and clears the request. | Not wired into list 3 |
+| 1 | `ofs_001_C56A_03_02` | Writes `ram_0033_timer=$04`, then `ram_0045=$04`. | Not wired into list 3 |
+| 2 | `ofs_001_C455_03_03` | Starts with stream `$08`. If `ram_0041 < 8`, it only posts a stream when `ram_0046 != 0`, in which case it uses `$07`; if `ram_0041 >= 8`, it posts `$08`. | Not wired into list 3 |
+| 3 | `ofs_001_C5A7_03_04` | Loads A=0 and jumps to `loc_C92C`; its tuple/index writes are handled by `sub_C92C` and downstream table lookups. | Helper translation exists, sequencer integration absent |
+| 4 | `ofs_001_C485_03_05` | Calls `sub_C53A` to fetch the current 3-byte tuple from `$0580+`; compares it with the tuple at `$0068-$006A`; may copy the latter into `$0580+`; otherwise compares against the ROM tuple via `sub_C522`. It then computes `ram_0053` using 8-bit arithmetic based on `ram_03F8` and the tuple difference, with overflow path `$FF`, and stores the result. | Helper translation exists in `nesSubC485UpdateMenuSelection`; sequencer integration absent |
+
+Transitive dependencies for command 4:
+
+- `sub_C53A` loads `ram_0043`, calls `sub_CB06`, then reads the three-byte tuple at `$0580,Y`.
+- `sub_CB06` calls `sub_CB13`; `sub_CB13` computes a 3-byte tuple offset from `ram_0043`, with special case 5 returning base `$20`, and adds `$10` when `ram_0046` is set. `sub_CB06` adds `$23` when `ram_03F2` is nonzero.
+- `sub_C522` uses `sub_CB13` and reads the ROM tuple from `tbl_C091`.
+- The comparison and distance calculation in `$C485-$C512` uses unsigned 8-bit carry/borrow and wrap behavior; it must not be simplified to ordinary signed arithmetic.
+- Existing host helper tests cover `nesSubC485UpdateMenuSelection`, `nesSubC522SelectOptionTuple`, `nesSubC53AReadMenuTuple`, and `nesSubCB06/CB13` behavior, but they do not prove that the runtime setup sequencer invokes these routines in order.
+
+**Next implementation dependency:** add the missing state bytes and a complete RAM view needed by the C5A7/C485 routines, then wire all five list-3 commands into the sequencer. Do not mark the list complete just because the individual arithmetic helper already has unit vectors.
+
 ### State $09: active-frame path, not yet classified as a menu
 
 The source handler `ofs_000_C97C_09` is:
