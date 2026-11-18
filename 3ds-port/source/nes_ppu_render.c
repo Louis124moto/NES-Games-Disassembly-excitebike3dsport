@@ -81,6 +81,60 @@ int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
     return NES_PPU_RENDER_OK;
 }
 
+
+/*
+ * Mapper-0 Excitebike uses vertical mirroring: A/B are adjacent horizontally
+ * and repeat vertically. Render each physical page once, then sample the
+ * logical 2x2 nametable space selected by PPUCTRL bits 0-1 and $2005 scroll.
+ * Static scratch avoids large frame buffers on the 3DS stack.
+ */
+static uint8_t s_mirrorPageRgb[2][NES_PPU_RGB_BYTES];
+static uint8_t s_mirrorPageOpaque[2][NES_PPU_WIDTH * NES_PPU_HEIGHT];
+
+int nesPpuRenderMirroredNametablesOpaque(
+    const uint8_t *chrPixels, size_t tileCount,
+    const uint8_t nametables[NES_PPU_VERTICAL_MIRROR_BYTES],
+    const uint8_t *palette, uint8_t ppuCtrl, uint8_t scrollX, uint8_t scrollY,
+    uint8_t *rgb, size_t rgbCapacity, uint8_t *opaque, size_t opaqueCapacity)
+{
+    unsigned int page, x, y;
+    const unsigned int baseX = (ppuCtrl & 0x01u) != 0u ? 256u : 0u;
+    const unsigned int baseY = (ppuCtrl & 0x02u) != 0u ? 240u : 0u;
+    int result;
+
+    if (chrPixels == NULL || nametables == NULL || palette == NULL ||
+        rgb == NULL || opaque == NULL)
+        return NES_PPU_RENDER_INVALID_ARGUMENT;
+    if (rgbCapacity < NES_PPU_RGB_BYTES ||
+        opaqueCapacity < (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT)
+        return NES_PPU_RENDER_OUTPUT_TOO_SMALL;
+
+    for (page = 0u; page < 2u; ++page) {
+        const uint8_t *const pageData = &nametables[page * NES_PPU_NAMETABLE_PAGE_BYTES];
+        result = nesPpuRenderNametableOpaque(
+            chrPixels, tileCount, pageData, pageData + NES_PPU_NAMETABLE_BYTES,
+            palette, s_mirrorPageRgb[page], sizeof(s_mirrorPageRgb[page]),
+            s_mirrorPageOpaque[page], sizeof(s_mirrorPageOpaque[page]));
+        if (result != NES_PPU_RENDER_OK) return result;
+    }
+
+    for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
+        for (x = 0u; x < NES_PPU_WIDTH; ++x) {
+            const unsigned int worldX = baseX + (unsigned int)scrollX + x;
+            const unsigned int worldY = baseY + (unsigned int)scrollY + y;
+            const unsigned int sourcePage = (worldX >> 8u) & 1u;
+            const unsigned int sourceX = worldX & 0xFFu;
+            const unsigned int sourceY = worldY % NES_PPU_HEIGHT;
+            const size_t sourcePixel = (size_t)sourceY * NES_PPU_WIDTH + sourceX;
+            const size_t destinationPixel = (size_t)y * NES_PPU_WIDTH + x;
+            memcpy(&rgb[destinationPixel * 3u],
+                   &s_mirrorPageRgb[sourcePage][sourcePixel * 3u], 3u);
+            opaque[destinationPixel] = s_mirrorPageOpaque[sourcePage][sourcePixel];
+        }
+    }
+    return NES_PPU_RENDER_OK;
+}
+
 int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
                           const uint8_t *nametable, const uint8_t *attributes,
                           const uint8_t *palette, uint8_t *rgb,
