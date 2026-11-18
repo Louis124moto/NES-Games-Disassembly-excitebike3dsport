@@ -153,6 +153,28 @@ Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
 
 Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
 
+### Menu/editor OAM writer inventory (source audit)
+
+The menu's visible sprites are not limited to sprite 0. Source writes identified in `bank_FF.asm`:
+
+| Source routine/address | OAM range | Role and data |
+|---|---|---|
+| `sub_D255` / `$D255-$D25C` | `$0200-$02FF` | Initializes all 64 sprites by filling all 256 OAM bytes with Y=`$F8`. |
+| `$C2E6-$C2E9`, `sub_C409` | `$0200-$0203` | Title cursor: Y from `tbl_C080_spr_Y` (80/90/A0), tile `$FA`, X from `tbl_C088_spr_X` (50/48/4C), attributes 0. |
+| `sub_C3EF` and selector/design callers | `$0200` | Updates cursor Y; selector X choices are `tbl_C083_spr_X` (48/60/78/90/A8), design Y choices are `tbl_C08B_spr_Y` (30/48/78/90/A8/C0). |
+| `ofs_001_C820_02_03` / `ofs_001_C820_05_03` | `$0200-$0203` | Hides sprite 0 during course/editor setup (Y=`$BF`, tile=`$FF`, X=`$F7`). |
+| `ofs_001_C5C2_05_06` | `$0228-$022F` | Copies `tbl_C178` bytes `C7 DB 00 E0 C7 DD 00 E8`; also calls `sub_E1A3` to prepare an object sprite and increments the split-raster flag. |
+| `sub_D1C7` via `sub_E1A3` | Variable OAM slots from `ram_0004_t01_data_oam_address` | Shared multi-record OAM writer; destination/stride/count depend on `ram_0003_t02` and `ram_0004`. Not yet integrated into list 5. |
+| `sub_EC25` | `$0230-$0233` | Editor sprite: Y supplied in A, tile `$CA`, attributes 0, X from `tbl_E6F6[ram_00C2+2]`. |
+| `loc_EC47` | `$0234-$0237` | Editor sprite: Y `$CF`, tile from `ram_05E0`, attributes 0, X `$E4`. |
+| `$CCEF-$CD12` | `$02C0-$02CF` and `$02D0` | Shared transition animation: creates four sprites with Y=`$44`, tile from `tbl_C147`, attr 0, X from a calculated value; hides the next sprite at `$02D0`. |
+| `$CD15-$CD1B` | `$02C0-$02C7` | Copies eight bytes from `tbl_C150_spr_data` (two four-byte sprite records) to OAM. |
+| `sub_D14E` | `$0200-$02EC` | For non-state-9 modes hides sprites from `$02EC` down through `$0200`, then updates split-screen OAM/scroll; state 9 deliberately skips this blanket hide. |
+
+The current renderer can composite 8x8 sprites, including palette selection, priority, flips, OAM ordering, and the 8-sprites-per-scanline limit. PPUCTRL is `$10` in the menu prelude, so the source selects 8x8 sprites and pattern table `$0000`; the 8x16 unsupported path is not required for these menu/editor states.
+
+**B5 remains open:** the title/selector/design cursor path is represented, but the shared-transition OAM records and state-9 editor sprites are not yet emitted by the active C runtime. The renderer's sprite capability does not substitute for the missing source OAM writers.
+
 ### PPU command parser validation checkpoint (commit `ad608e0b0d18`)
 
 - `testAllSourceStreams` replays every one of the 18 static PPU streams and all 7 palette streams through the source parser and checks that each has a nonzero write count.
