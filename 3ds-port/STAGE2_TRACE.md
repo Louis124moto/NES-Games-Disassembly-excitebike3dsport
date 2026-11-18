@@ -153,6 +153,15 @@ Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
 
 Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
 
+### Additional `sub_D14E` timing and OAM preparation facts
+
+- `sub_D11F` prepares a 17-byte dynamic PPU command: address `$23A0`, fill count `$0E`, then fourteen `$FE` bytes, with `ram_0312=0`. This is issued before the split.
+- For state 9, `sub_D14E` keeps X=`$43` (67 outer iterations) because the `CMP #$09 / BEQ bra_D17E` branch skips the non-editor sprite-hide and object-copy path.
+- The state-9 delay loop at `$D17E-$D184` is exactly 6,431 6502 CPU cycles: 67 iterations of `LDY #$12`, an 18-count `DEY/BNE` inner loop (89 cycles), `DEX`, and the outer `BNE` (taken 66 times). This is about 56.6 NTSC scanlines, before the surrounding routine overhead.
+- The routine first waits while PPUSTATUS bit 6 (sprite-0 hit) remains set. Since the editor setup initially places sprite 0 at Y=`$BF`, the synchronization point is expected to be after that hit clears near the pre-render line; the second scroll pair therefore lands roughly 56.6 scanlines into the following frame plus the exact surrounding overhead. Do not hardcode a guessed split line from the loop alone; capture/measure it.
+- Non-state-9 paths use X=`$28` (40 iterations) but first call `sub_D0C6` and `sub_D0F4`: D0C6 refreshes four 4-byte records in `$03C0-$03CF` from the `$03D9` data through `sub_E7FC`; D0F4 copies seven bytes `$03D9-$03DF` to `$03D1-$03D7`, constructs a dynamic PPU command at `$2356`, and jumps to `loc_D2A3`.
+- The split routine is therefore state-dependent. A single global scroll value or a fixed unverified split line is not source-faithful.
+
 ### Menu/editor OAM writer inventory (source audit)
 
 The menu's visible sprites are not limited to sprite 0. Source writes identified in `bank_FF.asm`:
