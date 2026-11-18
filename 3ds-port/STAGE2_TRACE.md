@@ -88,7 +88,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 ### A. State graph and source trace
 - [x] A1. Inventory all 14 state handlers, setup-list selector values, and all nine setup-list command sequences.
 - [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
-- [ ] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes.
+- [x] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes (see the transition-dispatcher trace below).
 - [ ] A4. Trace the complete state-$09 path and prove whether it is menu transition, pre-race, post-race, or gameplay support.
 - [ ] A5. Trace each reachable setup command's full transitive calls and RAM/PPU/APU side effects; include `$30-$3D` timers and one-command-per-NMI sequencing.
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
@@ -116,6 +116,26 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] D4. Run full host test suite and exact-commit devkitARM/New 3DS build; retain CI links and commit SHA.
 - [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
 - [ ] D6. Accept Stage 2 only after A–D pass. Keep Stage 3 blocked until then.
+
+### Shared transition dispatcher: completed branch trace (`$CB2C-$CC7C`)
+
+All three state handlers `$03/$06/$0B` enter the same code. `ram_0044` is an index into the four-entry pointer tables `tbl_C12C_lo`/`tbl_C130_hi`:
+
+| `ram_0044` | Target | Source behavior |
+|---:|---|---|
+| 0 | `ofs_CB3B_00` | Copies `ram_03F2` to selection `ram_0042` when `ram_0041 < 8`. If `ram_0053 >= 4`, or state `>=8`, it skips the selection update. Otherwise, when `ram_0046` is set, it advances `ram_0043` with a special blink/half-rate path for selection 4 and `ram_03F8`; then sets `ram_0046=1`, `ram_004B=1`, and starts timer `$0033 = 7` (`$04 + $03`). |
+| 1 | `ofs_CB77_01` | Waits until `ram_0033_timer=0`. Sets table index 4, copies seven bytes from `ram_03D9,Y` to dynamic PPU buffer `ram_0304,X`, calls `sub_C94B`, writes `ram_03AD=$20` if `ram_004B != 0` else `$31`, then sets `ram_0033_timer = ram_03AD + 3` and increments `ram_0044`. |
+| 2 | `ofs_CBA4_02` | If timer is zero, starts the next timer and increments `ram_0044`. Otherwise waits until timer reaches `ram_03AD`. At that point, if `ram_004B=0` and no A/B/Start/Select hold is active, calls `sub_CC15` then `loc_CC7D`; otherwise calls `sub_CC6B`. The latter increments `ram_0041`; when `ram_004B=0`, it clamps states `>=9` to state 8. |
+| 3 | `ofs_CC6B_03` | Calls `sub_C3AF` (increments `ram_0041`, clears `ram_0040/$0044`). If `ram_004B != 0`, returns. Otherwise keeps the new state below 9, or sets it to 8 if it reached/exceeded 9. |
+
+Additional effects in the transition's timed phase:
+
+- `sub_CC15` compares `ram_0033_timer` with `ram_03AD - $10`. At the matching frame and when the `$20` frame divider is zero, it posts PPU list `$0D`, `$0B`, or `$0C` depending on `ram_0052_track_finished_flag` and `ram_004B`.
+- Otherwise `sub_CC15` builds a dynamic PPU command from `tbl_C134` into `ram_0301+`; unless frame flag `ram_003F & $10` is set, it uses `sub_C971` and `sub_DFA2` to append values derived from `ram_0053`.
+- `loc_CC7D` chooses a table entry using `ram_0053-1`, `tbl_C0DA`, `tbl_C0DE`, and `tbl_C0E8`, then jumps to `loc_D1C7` to update OAM/data. When `ram_002F_timer` is nonzero it writes fixed object fields before the update; otherwise `sub_DD6F` derives a value and may start a ten-tick timer.
+- `ofs_CBA4_02`'s ten-frame branch uses `tbl_C0DA/C0DE/C0E2/C0E5`, calls `sub_CCCA` for three entries, derives `ram_00FB`, `ram_0056`, `ram_0054/$0055`, and may post PPU list `$0A`. This branch's rendering dependencies (`sub_CCCA` -> `loc_D1C7`) remain part of A5/B5, not a completed renderer claim.
+
+**Interpretation:** these shared handlers implement a timed selection/transition animation and PPU/OAM updates, not a static independent screen. They are in Stage 2 because title/design selections pass through them. The exact visual result remains blocked on the called PPU/OAM routines and source asset mapping.
 
 ## PPU/NMI path
 
