@@ -187,7 +187,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [x] A1. Inventory all 14 state handlers, setup-list selector values, and all nine setup-list command sequences.
 - [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
 - [x] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes (see the transition-dispatcher trace below).
-- [ ] A4. Trace the complete state-$09 path and prove whether it is menu transition, pre-race, post-race, or gameplay support.
+- [x] A4. Classify state-$09 as the interactive course-design/editor loop, distinct from race states `$02/$05/$0A`; trace its entry, per-frame path and B-button return to state `$08`. Its setup list 5/editor implementation remains a separate C3 handoff dependency.
 - [ ] A5. Trace each reachable setup command's full transitive calls and RAM/PPU/APU side effects; include `$30-$3D` timers and one-command-per-NMI sequencing.
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
 
@@ -203,7 +203,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 ### C. Menu input and transitions
 - [ ] C1. Compare `sub_C7DE` byte-for-byte with native input: repeat guard, timer, Select/Start priority, Up/Down, and exact wrap rules.
 - [ ] C2. Complete title and selector navigation/confirmation and the transitions into all destination states.
-- [ ] C3. Complete all six design-menu choices, including the paths through states 9, 12 and 13 and return to title.
+- [ ] C3. Complete all six design-menu choices: implement list 5/state-9 setup handoff and B-button return to state 8; preserve state-10 race handoff for Stage 3; finish save/load and return-to-title paths.
 - [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
 - [ ] C5. Complete save/load error, retry, header mismatch, missing file, corrupt file, and successful return behavior; clearly document differences from the original recorder hardware.
 
@@ -266,6 +266,28 @@ Source-backed observations:
 - `loc_D19B` waits for PPU vblank, updates PPUCTRL and scroll registers, and returns to the frame loop.
 
 This is demonstrably a live per-frame object/scroll update path, not a static menu draw routine. The design-menu selection value 2 enters state $09 (via `$C3D2`). However, the available excerpts do not prove whether state $09 is a track editor, a design preview, or a gameplay mode. **Do not map it to a guessed screen or silently treat it as a completed menu.** A4 remains open until its entry setup, state-specific table selection, object meaning, and exit conditions are traced end-to-end.
+
+### State $09 classification: course-design/editor loop
+
+The design menu state `$08` has six choices. The state handler at `$C3BD-$C3E7` routes:
+- selection 0 -> state `$09`, with `ram_03F2=0`;
+- selection 1 -> state `$0A` (race handler; Stage 3);
+- selection 2 -> state `$09`, preserving the existing `ram_03F2` mode value;
+- selection 3 -> state `$0C` (save);
+- selection 4 -> state `$0D` (load);
+- selection 5 -> clear `$0021-$00FF` and return to title state `$00`.
+
+State `$09` is not the title menu or race loop. It uses setup-list index 5 (`off_C064_05`) and then runs a dedicated active-frame course-design path. The per-frame handler:
+1. copies controller hold to `ram_005C_obj` (`sub_CA1B`);
+2. updates object/course state (`sub_EB17`);
+3. updates horizontal scroll and nametable page (`sub_DA6A`, `sub_DBFE`);
+4. updates object animation and track data (`sub_E70B`, `sub_F4FF`);
+5. updates object/collision-related state (`sub_F68D`, `sub_F755`);
+6. resets row buffers (`sub_C229`) and waits for vblank via `loc_D19B`.
+
+**Return to design menu:** in `sub_EB17`, when the editor's mode/object gates permit input and `ram_0049=0`, the held B-button bit (`ram_005C_obj & $40`, after two ASLs) enters `bra_EBA8`. That branch calls `sub_C3B1` and `sub_EC3B`, then writes `ram_0047=0`, `ram_0042=0`, and `ram_0041=8`. This is the editor's explicit return to the six-choice design menu. Other branches process editor controls and course data; they are not a menu cursor.
+
+**Scope boundary:** Stage 2 must implement the design-menu choices and the correct setup/return handoff. The full interactive course editor in state 9 is not itself a menu screen; its editing mechanics can be tracked separately from the Stage 3 race. However, the current native setup sequencer does not implement list 5, so selecting a state-9 option is not yet a working handoff. C3 remains open until the state-9 setup list is source-faithfully executed and the editor can return to state 8 without placeholders.
 
 ### Shared transition dispatcher: completed branch trace (`$CB2C-$CC7C`)
 
