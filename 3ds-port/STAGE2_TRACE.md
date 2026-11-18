@@ -106,6 +106,21 @@ The native active-stream table maps the source `tbl_C0F6_lo/tbl_C111_hi` index t
 | `$00` | `$0301` | Dynamic RAM | `sub_D3C1` reads the variable command buffer at `$0301`; epilogue clears `$0300/$0301` |
 | `$1A` | `$00A1` | Zero-page RAM | `sub_D3C1` reads the list at `$00A1`; used by the tape-load header display |
 
+### Cartridge mirroring and the two physical nametables
+
+The checked-in `Excitebike/header.bin` is the 16-byte iNES header `4E 45 53 1A 01 01 01 00 00 00 00 00 00 00 00 00`. Header byte 6 is `$01`: mapper 0 with **vertical nametable mirroring** (two physical 1 KiB nametables).
+
+The physical mapping is therefore:
+
+| PPU address range | Physical 1 KiB page |
+|---|---|
+| `$2000-$23FF` | nametable A (page 0) |
+| `$2400-$27FF` | nametable B (page 1) |
+| `$2800-$2BFF` | mirror of A |
+| `$2C00-$2FFF` | mirror of B |
+
+The existing `GameState.menu_ppu_nametables[2048]` and `nes_active_stream.c` scratch PPU memory already reserve the two physical pages A/B. However, `rendererDrawPpuBackground()` currently passes only page A's first 960 tile bytes and its 64 attribute bytes to `nesPpuRenderNametableOpaque()`. It therefore does not render page B when PPUCTRL/scroll selects it, and the PPU command interpreter does not yet normalize `$2800-$2FFF` writes onto A/B. The source mirroring fact is now established; the renderer/address-mirroring implementation remains open under B3.
+
 ### Screen setup paths observed in the current native model
 
 - Title: list 0 posts `$02` (`$D64B`), then `$18` (`$D450`).
