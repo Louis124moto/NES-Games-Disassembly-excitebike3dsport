@@ -235,7 +235,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 
 ### C. Menu input and transitions
 - [x] C1. `sub_C7DE` input semantics and RAM side effects are translated/tested: repeat guard, `$0030/$0031` timers, Select/Down/Up priority, wrap rules, and `$00FF` write only on cursor movement.
-- [ ] C2. Complete title and selector navigation/confirmation and the transitions into all destination states.
+- [x] C2. Title entries 0/1 -> state 1, title entry 2 -> state 8, selector navigation and confirmation -> state 2 are implemented and covered by the menu frame-model tests. The destination race runtime remains Stage 3.
 - [ ] C3. Complete all six design-menu choices: implement list 5/state-9 setup handoff and B-button return to state 8; preserve state-10 race handoff for Stage 3; finish save/load and return-to-title paths.
 - [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
 - [ ] C5. Complete save/load error, retry, header mismatch, missing file, corrupt file, and successful return behavior; clearly document differences from the original recorder hardware.
@@ -299,6 +299,20 @@ Source-backed observations:
 - `loc_D19B` waits for PPU vblank, updates PPUCTRL and scroll registers, and returns to the frame loop.
 
 This is demonstrably a live per-frame object/scroll update path, not a static menu draw routine. The design-menu selection value 2 enters state $09 (via `$C3D2`). However, the available excerpts do not prove whether state $09 is a track editor, a design preview, or a gameplay mode. **Do not map it to a guessed screen or silently treat it as a completed menu.** A4 remains open until its entry setup, state-specific table selection, object meaning, and exit conditions are traced end-to-end.
+
+### Title and course-selector handoff checkpoint (commit `630a6a4b77a0`)
+
+The integrated menu frame-model tests now cover:
+- Title menu cursor positions, Down/Up wrap and held-key repeat guard.
+- Title entry 0 -> selector state 1, with the source mode/setup flags.
+- Title entry 1 -> selector state 1, preserving `ram_03F2=1`.
+- Title entry 2 -> design menu state 8 (via the `designMenu()` setup path).
+- Selector Left/Right remapped to Up/Down, all five X positions and wraparound.
+- Selector Start -> race handoff state 2, selected course in `ram_0043`, and reset setup sequencer flags.
+
+Exact commit `630a6a4b77a0c4ec4ef3ec0d75935b95718d0689`: host verification run 44359376152 passed; New 3DS build run 44359376392 passed.
+
+C2 is complete for the title/selector menu boundary. State 2's setup/race is still outside Stage 2; design-menu branches to state 9/10/12/13 remain under C3.
 
 ### `sub_C7DE` input equivalence checkpoint (commit `b2fa4fb21146`)
 
