@@ -65,7 +65,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
-- [ ] B5 — Cursor OAM is represented; implement the shared transition OAM writers (`$CCEF/$CD15`) and state-9 editor sprites (`sub_D1C7`, `sub_EC25`, `loc_EC47`).
+- [ ] B5 — `sub_D1C7` now has an isolated, host-tested OAM-grid helper; integrate it with `sub_E1A3` in list 5, then implement shared transition OAM (`$CCEF/$CD15`) and direct editor sprites (`sub_EC25`, `loc_EC47`).
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [x] C1 — `sub_C7DE` input and `$00FF` side effects match source and pass host vectors; exact commit `b2fa4fb21146` also passes the New 3DS build.
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
