@@ -81,6 +81,48 @@ Lists 2 and 5 are assigned to the three race states. Lists 3, 4, 7 and 8 are not
 - State `$09` calls `sub_CA1B`, `sub_EB17`, `sub_DA6A`, `sub_DBFE`, `sub_E70B`, `sub_F4FF`, `sub_F68D`, `sub_F755`, and `sub_C229`, then jumps to `loc_D19B`. It must not be treated as a simple menu state; its exact place in the user-facing flow needs further call-graph tracing.
 - Save/load states `$0C/$0D` use `ram_0048` as the main-thread transfer handshake. State `$0D` validates the four-byte `tbl_C180` header before reading the 256-byte data block; state `$0C` writes the 64-byte header/data block plus 256-byte payload. The file backend is a deliberate hardware-interface replacement, not an emulation of analog tape signals.
 
+### Menu `ram_0045` PPU stream selection: verified mapping pass
+
+The native active-stream table maps the source `tbl_C0F6_lo/tbl_C111_hi` index to the literal lists in `nes_ppu_commands.c`. The following mappings are source-backed (CPU address, not a guessed screen label):
+
+| `ram_0045` | CPU source | Kind | Meaning in menu flow |
+|---:|---|---|---|
+| `$02` | `$D64B` | Static PPU | Title state 0 first setup command; source hint "blue background" |
+| `$03` | `$D6D4` | Static PPU | Selector state 1 second setup command |
+| `$04` | `$D717` | Static PPU | Shared state-$03/$06/$0B transition command; sets `ram_0033_timer=$04` |
+| `$06` | `$D63A` | Static PPU | Selector/design/shared-transition setup |
+| `$07` | `$D59E` | Static PPU | Conditional shared transition stream when `ram_0041<8` and `ram_0046!=0` |
+| `$08` | `$D5B4` | Static PPU | Shared transition stream when `ram_0041>=8` |
+| `$09` | `$D796` | Static PPU | State 4/7 timed transition list |
+| `$0A` | `$D5C8` | Static PPU | Shared transition ten-frame branch |
+| `$0B` | `$D5DE` | Static PPU | Shared transition completion branch |
+| `$0C` | `$D5EF` | Static PPU | Shared transition completion branch |
+| `$0D` | `$D605` | Static PPU | Shared transition completion branch |
+| `$0F` | `$D7FA` | Static PPU | Design state 8 second setup command |
+| `$10` | `$D623` | Static PPU | Tape-save setup after restoring stored track data |
+| `$11` | `$D614` | Static PPU | Tape-load setup |
+| `$12-$18` | `$D3D6-$D450` | Palette | Seven palette lists; `$18` is used by title/selector/design setup |
+| `$19` | `$D631` | Static PPU | Error/diagnostic PPU list used by tape/transition code |
+| `$00` | `$0301` | Dynamic RAM | `sub_D3C1` reads the variable command buffer at `$0301`; epilogue clears `$0300/$0301` |
+| `$1A` | `$00A1` | Zero-page RAM | `sub_D3C1` reads the list at `$00A1`; used by the tape-load header display |
+
+### Screen setup paths observed in the current native model
+
+- Title: list 0 posts `$02` (`$D64B`), then `$18` (`$D450`).
+- Course selector: list 1 posts `$06` (`$D63A`), `$03` (`$D6D4`), then `$18`.
+- Design menu: list 6 posts `$06`, `$0F` (`$D7FA`), then `$18`.
+- State 4/7 transition: list 4 posts `$06`, `$09`, then creates a dynamic `$0300` command from `tbl_C13C`; final command posts `$18`.
+- Shared transition list 3: posts `$06`, `$04`, then conditionally `$07` or `$08`; later commands use `loc_C92C` and `sub_C485`.
+- Tape save: list 7 clears the temporary RAM range, restores the four-byte recorder header and saved track data, copies `$06E0-$07DF` to `$05E0-$06DF`, then posts `$10`.
+- Tape load: list 8 posts `$11`, then performs the recorder/file transfer and may post dynamic `$1A` or error `$19` output.
+
+### CHR and PPUCTRL constraints
+
+- The original ROM is mapper 0 / NROM in the checked-in source header, so there is no mapper bank-switch sequence for menu CHR in this project.
+- The setup prelude `sub_C318` writes PPUCTRL `$10`: background pattern table is `$1000` (CHR tile indices 256..511); sprite pattern table bit 3 is clear (`$0000`, tile indices 0..255).
+- `loc_D19B`/ `sub_D1B3` preserve the upper PPUCTRL nibble and combine it with `ram_004E_base_nametable`; this is part of the active scroll/raster path and must be modelled separately from the static menu setup.
+- This verifies stream selection and pattern-table selection, **not** complete menu composition. The native renderer still needs the exact nametable mirroring/base selection, scroll/raster, and all OAM paths before the artwork can be accepted.
+
 ## Ordered completion plan — work one item at a time
 
 The boxes below are the complete known Stage 2 work queue. A box is checked only when the corresponding source audit, implementation, and regression evidence exist. "Menu state flow" excludes race simulation itself, but must correctly hand off to the race state.
@@ -94,7 +136,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
 
 ### B. PPU, OAM, and visual reconstruction
-- [ ] B1. Trace all menu PPU stream indices selected through `ram_0045`, including dynamic stream `$00`, zero-page stream `$1A`, and palette streams `$12-$19`; prove the CHR bank/pattern-table selection for each screen.
+- [x] B1 (selection trace) — Map the static `$01-$19`, palette `$12-$18`, dynamic `$00`, and zero-page `$1A` sources and verify NROM/PPUCTRL pattern-table selection. The renderer fidelity portion remains open under B3-B7.
 - [ ] B2. Verify the native PPU command parser against every stream reachable from menu setup lists; test terminators, lengths, PPU address bounds, palette mirroring, and unsupported writes.
 - [ ] B3. Model the full two-nametable PPU address space and nametable mirroring selected by the source; current renderer reads a fixed 960-byte background plus one attribute table and does not yet prove correct base nametable selection.
 - [ ] B4. Integrate source scroll writes (`$2005/$2000`), split/scanline behavior, and NMI ordering; do not replace raster effects with a guessed static scroll.
