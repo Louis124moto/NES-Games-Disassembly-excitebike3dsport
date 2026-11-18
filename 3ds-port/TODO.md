@@ -68,7 +68,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [ ] B5 — Cursor OAM is represented; implement the shared transition OAM writers (`$CCEF/$CD15`) and state-9 editor sprites (`sub_D1C7`, `sub_EC25`, `loc_EC47`).
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [x] C1 — `sub_C7DE` input and `$00FF` side effects match source and pass host vectors; exact commit `b2fa4fb21146` also passes the New 3DS build.
-- [ ] C2 — Complete title/course-selector navigation and all transition/handoff branches.
+- [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
 - [ ] C3 — Implement all six design-menu routes, including list-5/state-9 editor setup/return, save/load and title return.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
 - [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch.
