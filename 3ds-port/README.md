@@ -116,3 +116,5 @@ A first-pass source census now records the buffer initializers and append paths 
 ## Stage 2 (original menu) — first step, 2026-11-17
 
 Press START on the extractor screen (once CHR is loaded) to enter the source-derived menu path. Each menu frame runs the translated sequencer and then a native model of the NMI upload (`menusNmiUpload`), which executes the real ROM palette/PPU lists on a nametable/palette model; the top screen draws the resulting background with the pattern table selected by PPUCTRL. Sprites/OAM, the dynamic buffer, scrolling and several menu states are not implemented yet, so this is not a faithful title screen yet. See `TODO.md` ("Stage 2 step 1") for the open items.
+
+Update 2026-11-18: the menu path now covers the title menu, the track selector, the design menu and the track save/load states ($0C/$0D, stored in `sdmc:/3ds/excitebike3ds_tracks.bin` instead of the Famicom Data Recorder). Press START on the extractor screen to enter it; while a load waits for a missing file, B leaves the menu. The race engine, sound and scrolling are not implemented, so this is not yet a complete replica; see `TODO.md` ("Stage 2 step 2").

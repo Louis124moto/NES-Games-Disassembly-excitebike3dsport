@@ -189,6 +189,38 @@ static const char *viewName(unsigned int mode)
  * This path remains gated until the ASM translation has populated a complete
  * PPU snapshot; it must not render zero-initialized placeholder memory as art.
  */
+/* Non-zero where the background pixel is not colour 0 (sprite behind-BG priority). */
+static uint8_t s_bgOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
+
+/* Result of the last sprite composition (shown in the bottom log). */
+static int s_spriteResult = NES_PPU_RENDER_OK;
+static size_t s_spritePixels;
+
+/*
+ * Rendering disabled ($2001 bits 3/4 clear): the PPU shows the universal backdrop
+ * colour (palette RAM $3F00) over the whole picture. Only drawn once a palette list
+ * has really been executed; before that there is no source colour to claim.
+ */
+static int rendererDrawBackdrop(const GameState *state)
+{
+    u16 width = 0u, height = 0u;
+    uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
+    uint8_t rgb[3];
+    unsigned int x, y;
+    if (state == NULL || state->menu_ppu_palette_loaded == 0u) return 0;
+    if (framebuffer == NULL || width != 240u || height != 400u) return 0;
+    if (nesPpuColorToRgb((uint8_t)(state->menu_ppu_palette[0] & 0x3Fu), rgb) == 0) return 0;
+    for (y = 0u; y < 240u; ++y) {
+        for (x = 0u; x < 400u; ++x) {
+            const size_t dst = topFramebufferOffset(x, y);
+            framebuffer[dst] = rgb[2];
+            framebuffer[dst + 1u] = rgb[1];
+            framebuffer[dst + 2u] = rgb[0];
+        }
+    }
+    return 1;
+}
+
 static int rendererDrawPpuBackground(const GameState *state)
 {
     u16 width = 0u, height = 0u;
@@ -200,19 +232,29 @@ static int rendererDrawPpuBackground(const GameState *state)
     if (state == NULL || state->menu_ppu_background_ready == 0u) return 0;
     if (framebuffer == NULL || width != 240u || height != 400u) return 0;
     pixels = assetExtractorGetPixels(&tileCount);
+    const uint8_t *const chrAll = pixels;
+    const size_t chrAllCount = tileCount;
     /* PPUCTRL bit 4 selects the BG pattern table: $10 -> tiles 256..511 of the CHR. */
     if (pixels != NULL && (state->menu_ppu_ctrl & 0x10u) != 0u) {
         if (tileCount <= 256u) return 0;
         pixels += 256u * 64u;
         tileCount -= 256u;
     }
-    if (pixels == NULL || nesPpuRenderNametable(
+    if (pixels == NULL || nesPpuRenderNametableOpaque(
             pixels, tileCount,
             state->menu_ppu_nametables,
             &state->menu_ppu_nametables[NES_PPU_NAMETABLE_BYTES],
-            state->menu_ppu_palette, s_ppuRgb, sizeof(s_ppuRgb)) != NES_PPU_RENDER_OK) {
+            state->menu_ppu_palette, s_ppuRgb, sizeof(s_ppuRgb),
+            s_bgOpaque, sizeof(s_bgOpaque)) != NES_PPU_RENDER_OK) {
         return 0;
     }
+
+    /* OAM sprites (the menu cursor) over the background; unsupported features draw nothing. */
+    s_spritePixels = 0u;
+    s_spriteResult = nesPpuRenderSprites(chrAll, chrAllCount, state->menu_oam,
+                                         state->menu_ppu_palette, state->menu_ppu_ctrl,
+                                         state->menu_ppu_mask, s_bgOpaque, s_ppuRgb, sizeof(s_ppuRgb),
+                                         &s_spritePixels);
 
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     /* NES background is 256 pixels wide; center it in the 400-pixel 3DS display. */
@@ -527,7 +569,12 @@ void rendererDraw(const GameState *state)
         static uint8_t s_lastRam0045 = 0u;
         static uint8_t s_lastPpuReady = 0u;
         static uint8_t s_lastRevision = 0u;
-        if (s_menuDrawn == 0 || state->menu_asm_state != s_lastAsmState ||
+        static uint8_t s_lastMask = 0u;
+        static uint8_t s_lastCtrl = 0u;
+        static uint8_t s_lastSprite[4];
+        if (s_menuDrawn == 0 ||
+            state->menu_ppu_mask != s_lastMask || state->menu_ppu_ctrl != s_lastCtrl ||
+            memcmp(s_lastSprite, state->menu_oam, sizeof(s_lastSprite)) != 0 || state->menu_asm_state != s_lastAsmState ||
             state->menu_selection != s_lastSelection ||
             state->menu_ram0045 != s_lastRam0045 ||
             state->menu_ppu_background_ready != s_lastPpuReady ||
@@ -538,16 +585,37 @@ void rendererDraw(const GameState *state)
             s_lastRam0045 = state->menu_ram0045;
             s_lastPpuReady = state->menu_ppu_background_ready;
             s_lastRevision = state->menu_ppu_revision;
-            if (!rendererDrawPpuBackground(state)) {
+            s_lastMask = state->menu_ppu_mask;
+            s_lastCtrl = state->menu_ppu_ctrl;
+            memcpy(s_lastSprite, state->menu_oam, sizeof(s_lastSprite));
+            if (state->menu_ppu_background_ready == 0u && rendererDrawBackdrop(state)) {
+                /* $2001 has rendering off (setup frames): the PPU shows only the backdrop. */
+                consoleSelect(&s_bottomConsole);
+                consoleClear();
+                rendererStoreConsoleText("");
+                menusRender(state);
+            } else if (!rendererDrawPpuBackground(state)) {
                 consoleSelect(&s_bottomConsole);
                 consoleClear();
                 /* menusRender writes the console directly; invalidate the cache. */
                 rendererStoreConsoleText("");
                 menusRender(state);
             } else {
-                rendererWriteConsole("EXCITEBIKE 3DS / PPU BACKGROUND\n"
-                                     "Source-derived nametable rendered.\n"
-                                     "Sprite/OAM composition is not yet enabled.\n");
+                char menuLog[256];
+                snprintf(menuLog, sizeof(menuLog),
+                         "EXCITEBIKE 3DS / ORIGINAL MENU\n"
+                         "State %u  sel %u  list %02X\n"
+                         "OAM0 Y%02X T%02X A%02X X%02X\n"
+                         "Sprites: %s (%u px)\n",
+                         (unsigned int)state->menu_asm_state, (unsigned int)state->menu_selection,
+                         (unsigned int)state->menu_ram0045,
+                         (unsigned int)state->menu_oam[0], (unsigned int)state->menu_oam[1],
+                         (unsigned int)state->menu_oam[2], (unsigned int)state->menu_oam[3],
+                         s_spriteResult == NES_PPU_RENDER_OK ? "drawn"
+                         : (s_spriteResult == NES_PPU_RENDER_UNSUPPORTED ? "UNSUPPORTED (8x16/behind-BG)"
+                                                                         : "error"),
+                         (unsigned int)s_spritePixels);
+                rendererWriteConsole(menuLog);
             }
         }
         return;

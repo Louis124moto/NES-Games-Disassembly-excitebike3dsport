@@ -29,7 +29,8 @@ typedef struct {
     uint8_t menu_timer31;
     uint8_t menu_timer33;
     uint8_t menu_timer34;
-    uint8_t menu_ram0300[6];
+    /* RAM $0300-$031F: $0300 = buffer length, $0301.. = sub_D3C1 records (dynamic PPU buffer) */
+    uint8_t menu_ram0300[32];
     uint8_t menu_ram004D_EF[0xA3];
     uint8_t menu_sequence_preface_pending;
     uint8_t menu_scroll_x;
@@ -43,7 +44,15 @@ typedef struct {
     uint8_t menu_ram_for_2001;        /* ram_for_2001: written only by the NMI model */
     uint8_t menu_ppu_palette_loaded;  /* a palette list ($12-$19) has been executed */
     uint8_t menu_ppu_revision;        /* incremented per applied static upload (redraw trigger) */
+    /* ram_oam ($0200): sprite 0 = ram_spr_Y/T/A/X = menu_oam[0..3] (the menu cursor). */
     uint8_t menu_oam[256];
+    /* RAM $0060-$009F (tape block 1): [1..4] = tbl_C180 header, [5..7] = $0065.., [8..10] = $0068.. */
+    uint8_t menu_ram0060[64];
+    uint8_t menu_ramA0[16];    /* RAM $00A0-$00AF: zero-page PPU list used by con_0045_1A */
+    uint8_t menu_nmi_enabled;  /* $2000 bit 7: sub_C32F clears it, sub_C339 sets it (main thread / NMI) */
+    uint8_t menu_tape_phase;   /* main-thread progress of the Famicom data-recorder handoff */
+    uint8_t menu_ram05A0[4];
+    uint8_t menu_ram05C3[4];
     /* CPU-side mirror of PPU $2000-$27FF used by sub_D23B/sub_D260. */
     uint8_t menu_ppu_nametables[2048];
     uint8_t menu_selection_changed;
@@ -53,9 +62,6 @@ typedef struct {
     uint8_t menu_ram0044;
     uint8_t menu_ram004A;
     uint8_t menu_ram03F7;
-    uint8_t menu_sprite_y;
-    uint8_t menu_sprite_x;
-    uint8_t menu_sprite_attribute;
     uint8_t menu_ram03F0;
     uint8_t menu_ram03F3;
     uint8_t menu_ram0046;
@@ -66,7 +72,6 @@ typedef struct {
     uint8_t menu_ram03F8;
     uint8_t menu_ram0045;
     uint8_t menu_ram00FB;
-    uint8_t menu_sprite_tile;
 } GameState;
 
 void gameStateReset(GameState *state);

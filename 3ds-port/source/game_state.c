@@ -35,9 +35,6 @@ void gameStateReset(GameState *state)
     state->menu_ram0044 = 0u;
     state->menu_ram004A = 0u;
     state->menu_ram03F7 = 0u;
-    state->menu_sprite_y = 0xF8u; /* sub_D255 hides OAM sprites during setup */
-    state->menu_sprite_x = 0u;
-    state->menu_sprite_attribute = 0u;
     /* ofs_001_C2BD_00_01 runs through the setup command sequencer. */
     state->menu_ram03F0 = 0u;
     state->menu_ram03F3 = 0u;
@@ -49,7 +46,6 @@ void gameStateReset(GameState *state)
     state->menu_ram03F8 = 0u;
     state->menu_ram0045 = 0u;
     state->menu_ram00FB = 0u;
-    state->menu_sprite_tile = 0u;
     state->menu_scroll_x = 0u;
     state->menu_scroll_y = 0u;
     state->menu_ppu_ctrl = 0u;
@@ -60,5 +56,11 @@ void gameStateReset(GameState *state)
     state->menu_ppu_revision = 0u;
     memset(state->menu_ppu_palette, 0, sizeof(state->menu_ppu_palette));
     memset(state->menu_oam, 0xF8, sizeof(state->menu_oam));
+    memset(state->menu_ram0060, 0, sizeof(state->menu_ram0060));
+    memset(state->menu_ramA0, 0, sizeof(state->menu_ramA0));
+    state->menu_nmi_enabled = 1u;
+    state->menu_tape_phase = 0u;
+    memset(state->menu_ram05A0, 0, sizeof(state->menu_ram05A0));
+    memset(state->menu_ram05C3, 0, sizeof(state->menu_ram05C3));
     memset(state->menu_ppu_nametables, 0, sizeof(state->menu_ppu_nametables));
 }

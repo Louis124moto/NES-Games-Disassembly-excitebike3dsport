@@ -1,5 +1,6 @@
 #include <3ds.h>
 #include "game.h"
+#include "menu_tape_file.h"
 #include "asset_extractor.h"
 #include "game_state.h"
 #include "input.h"
@@ -50,6 +51,7 @@ void gameUpdate(void)
         if ((s_input.pressed & KEY_START) && assetExtractorGetTotalTiles() > 0u) {
             s_menuActive = 1;
             gameStateReset(&s_menuState);
+            menusSetTapeIo(menuTapeFileIo()); /* data-recorder stand-in for the save/load states */
             rendererSetMenuActive(1);
             return;
         }
@@ -57,8 +59,18 @@ void gameUpdate(void)
         return;
     }
 
-    menusUpdate(&s_menuState, s_input.held, s_input.pressed);
-    menusNmiUpload(&s_menuState); /* vblank: end of the frame, like vec_C23B_NMI */
+    /*
+     * Port-only escape, NOT in the original: with no recorder signal the original main thread
+     * waits forever with NMI off (frozen picture). With no saved track file the load state
+     * would trap the player the same way, so B leaves the menu path instead.
+     */
+    if (menusTapeWaiting(&s_menuState) && (s_input.pressed & KEY_B)) {
+        s_menuActive = 0;
+        rendererSetMenuActive(0);
+        return;
+    }
+
+    menusNmiFrame(&s_menuState, s_input.held, s_input.pressed); /* one vec_C23B_NMI per frame */
 }
 
 void gameRender(void)

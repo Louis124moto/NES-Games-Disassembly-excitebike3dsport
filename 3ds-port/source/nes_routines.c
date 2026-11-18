@@ -1653,7 +1653,9 @@ void nesSubCFEAUpdateComparisonFlags(uint8_t ram007C, uint8_t ram00AC, uint8_t *
 /*
  * sub_C7DE: source-level menu cursor/input helper.
  * NES controller bits: Select=$20, Start=$10, Up=$08, Down=$04.
- * The exclusive bound and asymmetric wrap match the ASM; selection 0 is valid.
+ * The exclusive bound matches the ASM; Down past the last entry wraps to 0 (the
+ * "LDY #$01" at $C80F falls through into the DEY at $C811), Up from 0 wraps to
+ * count-1. Corrected 2026-11-17: an earlier version wrapped Down to 1.
  * This models this helper's RAM effects, not the complete menu state machine.
  */
 uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
@@ -1683,7 +1685,8 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
      */
     if ((buttonPress & 0x20u) != 0u || (buttonPress & 0x04u) != 0u) {
         y = (uint8_t)(y + 1u);
-        if (y >= count) y = 1u;
+        /* bra_C80A: INY/CPY/BCC else "LDY #$01" FALLS THROUGH into bra_C811 "DEY" -> 0. */
+        if (y >= count) y = 0u;
         *selectionChanged = 1u;
     } else if ((buttonPress & 0x08u) != 0u) {
         y = (uint8_t)(y - 1u);
@@ -1737,8 +1740,9 @@ uint8_t nesSubC41CState13Entry(uint8_t *ram0044, uint8_t *ram0048)
 {
     if (ram0044 == NULL || ram0048 == NULL) return 0u;
     if (*ram0044 == 0u) {
+        /* bra_C450 stores the SAME accumulator (2) into ram_0048 and ram_0044. */
         *ram0048 = 2u;
-        *ram0044 = 1u;
+        *ram0044 = 2u;
         return 0u;
     }
     return (uint8_t)(*ram0048 == 0xFFu);
@@ -1793,12 +1797,18 @@ void nesLocC43DHandleMenuState(uint8_t *ram0044, uint8_t *ram0048,
     if (ram0041 != NULL) nesLocCC6BUpdateMenuState(ram0041, ram004B);
 }
 
-/* loc_CC6B: INC $0041; if $004B is zero, clamp states >= 9 to state 8. */
+/*
+ * loc_CC6B (after sub_C3AF's INC $0041 and its flag reset, done by the caller):
+ * LDA $004B; BNE rts; LDY $0041; CPY #$09; BCC +2; LDA #$08; STA $0041.
+ * With $004B == 0 the accumulator still holds that zero when the branch is taken,
+ * so states below 9 become 0 (title) and states >= 9 become 8 (design menu).
+ * Corrected 2026-11-17: the "< 9 -> 0" half was missing.
+ */
 void nesLocCC6BUpdateMenuState(uint8_t *ram0041, uint8_t ram004B)
 {
     if (ram0041 == NULL) return;
     *ram0041 = (uint8_t)(*ram0041 + 1u);
-    if (ram004B == 0u && *ram0041 >= 9u) *ram0041 = 8u;
+    if (ram004B == 0u) *ram0041 = (*ram0041 >= 9u) ? 8u : 0u;
 }
 
 

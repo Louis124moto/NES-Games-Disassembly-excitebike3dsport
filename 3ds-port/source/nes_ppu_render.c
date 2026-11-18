@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "nes_ppu_render.h"
+#include <string.h>
 
 /* Common NTSC palette used by the original extraction reference. */
 static const uint8_t s_nesRgb[64][3] = {
@@ -35,12 +36,15 @@ uint8_t nesAtlasGrayShade(unsigned int pixel)
     return pixel > 3u ? 0u : (uint8_t)(pixel * 85u);
 }
 
-int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
-                          const uint8_t *nametable, const uint8_t *attributes,
-                          const uint8_t *palette, uint8_t *rgb,
-                          size_t rgbCapacity)
+int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
+                                const uint8_t *nametable, const uint8_t *attributes,
+                                const uint8_t *palette, uint8_t *rgb,
+                                size_t rgbCapacity, uint8_t *opaque,
+                                size_t opaqueCapacity)
 {
     size_t y, x;
+    if (opaque != NULL && opaqueCapacity < (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT)
+        return NES_PPU_RENDER_OUTPUT_TOO_SMALL;
     if (chrPixels == NULL || nametable == NULL || attributes == NULL ||
         palette == NULL || rgb == NULL) return NES_PPU_RENDER_INVALID_ARGUMENT;
     if (tileCount == 0u || tileCount > NES_PPU_MAX_TILES)
@@ -71,7 +75,84 @@ int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
             rgb[dst] = s_nesRgb[nesColor][0];
             rgb[dst + 1u] = s_nesRgb[nesColor][1];
             rgb[dst + 2u] = s_nesRgb[nesColor][2];
+            if (opaque != NULL) opaque[y * NES_PPU_WIDTH + x] = colorIndex != 0u ? 1u : 0u;
         }
     }
+    return NES_PPU_RENDER_OK;
+}
+
+int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
+                          const uint8_t *nametable, const uint8_t *attributes,
+                          const uint8_t *palette, uint8_t *rgb,
+                          size_t rgbCapacity)
+{
+    return nesPpuRenderNametableOpaque(chrPixels, tileCount, nametable, attributes,
+                                       palette, rgb, rgbCapacity, NULL, 0u);
+}
+
+int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
+                        const uint8_t *oam, const uint8_t *palette,
+                        uint8_t ppuCtrl, uint8_t ppuMask,
+                        const uint8_t *bgOpaque,
+                        uint8_t *rgb, size_t rgbCapacity, size_t *drawn)
+{
+    size_t i, line, written = 0u;
+    const size_t tileBase = (ppuCtrl & 0x08u) != 0u ? 256u : 0u;
+    uint8_t occupied[NES_PPU_WIDTH];
+
+    if (drawn != NULL) *drawn = 0u;
+    if (chrPixels == NULL || oam == NULL || palette == NULL || rgb == NULL)
+        return NES_PPU_RENDER_INVALID_ARGUMENT;
+    if (tileCount == 0u) return NES_PPU_RENDER_INVALID_TILE_COUNT;
+    if (rgbCapacity < NES_PPU_RGB_BYTES) return NES_PPU_RENDER_OUTPUT_TOO_SMALL;
+    for (i = 16u; i < 32u; ++i) {
+        if (palette[i] > 0x3Fu) return NES_PPU_RENDER_INVALID_PALETTE;
+    }
+    if ((ppuMask & 0x10u) == 0u) return NES_PPU_RENDER_OK; /* sprites disabled */
+
+    /* Pre-scan: refuse (draw nothing) when an on-screen sprite needs an unmodelled feature. */
+    for (i = 0u; i < 64u; ++i) {
+        const unsigned int top = (unsigned int)oam[i * 4u] + 1u;
+        if (top >= NES_PPU_HEIGHT) continue; /* Y >= $EF: never visible */
+        if ((ppuCtrl & 0x20u) != 0u) return NES_PPU_RENDER_UNSUPPORTED;
+        if ((oam[i * 4u + 2u] & 0x20u) != 0u && bgOpaque == NULL) return NES_PPU_RENDER_UNSUPPORTED;
+        if (tileBase + oam[i * 4u + 1u] >= tileCount) return NES_PPU_RENDER_MISSING_TILE;
+    }
+
+    for (line = 0u; line < NES_PPU_HEIGHT; ++line) {
+        unsigned int onLine = 0u;
+        memset(occupied, 0, sizeof(occupied));
+        for (i = 0u; i < 64u; ++i) {
+            const unsigned int top = (unsigned int)oam[i * 4u] + 1u;
+            const uint8_t attr = oam[i * 4u + 2u];
+            unsigned int row, col;
+            size_t tile;
+            if (top >= NES_PPU_HEIGHT || line < top || line >= top + 8u) continue;
+            if (++onLine > 8u) break; /* sprite overflow: later sprites are not drawn */
+            row = (unsigned int)(line - top);
+            if ((attr & 0x80u) != 0u) row = 7u - row;
+            tile = tileBase + oam[i * 4u + 1u];
+            for (col = 0u; col < 8u; ++col) {
+                const unsigned int sx = (unsigned int)oam[i * 4u + 3u] + col;
+                const unsigned int srcCol = (attr & 0x40u) != 0u ? 7u - col : col;
+                uint8_t pixel, nesColor;
+                size_t dst;
+                if (sx >= NES_PPU_WIDTH) continue;
+                if (sx < 8u && (ppuMask & 0x04u) == 0u) continue; /* left 8 px clipped */
+                pixel = chrPixels[tile * 64u + row * 8u + srcCol];
+                if (pixel > 3u) return NES_PPU_RENDER_INVALID_PIXEL;
+                if (pixel == 0u || occupied[sx] != 0u) continue; /* transparent / lower index wins */
+                occupied[sx] = 1u; /* sprite-vs-sprite priority is resolved before sprite-vs-background */
+                if ((attr & 0x20u) != 0u && bgOpaque[line * NES_PPU_WIDTH + sx] != 0u) continue;
+                nesColor = palette[16u + (size_t)(attr & 3u) * 4u + pixel];
+                dst = (line * NES_PPU_WIDTH + sx) * 3u;
+                rgb[dst] = s_nesRgb[nesColor][0];
+                rgb[dst + 1u] = s_nesRgb[nesColor][1];
+                rgb[dst + 2u] = s_nesRgb[nesColor][2];
+                ++written;
+            }
+        }
+    }
+    if (drawn != NULL) *drawn = written;
     return NES_PPU_RENDER_OK;
 }

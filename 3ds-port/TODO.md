@@ -841,3 +841,35 @@ Not done / open (nothing here is claimed as working):
 - [ ] Scroll registers and timing are not applied to the renderer.
 - [ ] Nothing compared against a real NES reference screenshot yet; hardware/emulator run of this step is pending.
 - [ ] Possible pattern-table issue in exported PNG previews (asset_export may use table 0 regardless of PPUCTRL) still to verify.
+
+## Stage 2 step 2 — ASM audit of the menu and completion of states 0/1/8/12/13 — 2026-11-18 (host-tested; no hardware or emulator run)
+
+Audit against Excitebike/bank_FF.asm found and fixed these defects in the earlier translation (each now has a hand-derived test; mutations of every fix are caught):
+- All menu logic runs INSIDE vec_C23B_NMI (sub_C2A9). The native frame order was inverted; `menusNmiFrame` now runs: `$2001` enable when ram_0045 == 0 -> upload (sub_C27F) -> timers (sub_D310) -> joypad -> menu dispatch.
+- The setup command list is selected through `tbl_C01C_index[ram_0041]`, not by ram_0041 itself (design menu $08 -> list 6, state $0C -> list 7, state $0D -> list 8, state $07 -> list 4, state $06 -> list 3). The old code ran the state-13 list for state 8.
+- The last command of lists 4 and 6 (ofs_001_C514 falls into C518) did not set ram_0049/ram_0040/ram_0044, so those setups never finished.
+- sub_C7DE: Down past the last entry wrapped to 1; the ASM (`LDY #$01` falls through into `DEY`) wraps to 0.
+- ofs_000_C41C_0D stores 2 (not 1) in ram_0044; loc_CC6B stores 0 when ram_004B == 0 and the state is below 9 (the `< 9 -> 0` half was missing); it also resets ram_0040/ram_0044 through sub_C3AF.
+- loc_CA85 (design-menu entry 5) clears $0021-$00FF: ram_0045, timers $33/$34, ram_0046/0048/004B, $004D-$00EF and ram_00FB were not cleared.
+- The cursor sprite was kept in side fields and never written to OAM; sprite 0 is now `menu_oam[0..3]` (Y/tile/attr/X).
+- Rendering is disabled by sub_D24F every setup frame (`$2001 = 0`): the model blanks the picture exactly then.
+- Timers $30-$3D count down once per 11 frames (sub_D310), not every frame.
+
+New in this step:
+- Dynamic PPU buffer ($0300/$0301, ram_0045 == 0) and zero-page list ($1A -> $00A1) uploads (`nesExcitebikeNmiUploadDynamic/ZeroPage`).
+- Sprite compositor `nesPpuRenderSprites` (Y+1, flips, subpalettes, 8 per scanline, lower index wins, left-8 clip, behind-background priority via an opacity map, PPUCTRL bit 3 sprite table). 8x16 sprites are refused, not guessed.
+- State 8 (design menu, 6 entries, all confirm branches), state 7/12 setup commands (tbl_C180, sub_C621), states 12/13 handlers, and the main-thread handoff of the Famicom Data Recorder routines (sub_C6C8 save, sub_C739 load incl. the $19 and $1A error/feedback lists and retry loop).
+- tests/test_menus.c (via tests/host_stub/3ds.h) is run by .github/workflows/test-nes-routines.yml.
+
+Deliberate deviations from the original (not exact, stated plainly):
+- **Tape recorder**: the real routines bit-bang `$4016`; the port stores the same two blocks ($0060-$009F, $05E0-$06DF, each with a 16-bit count-of-1-bits checksum) in `sdmc:/3ds/excitebike3ds_tracks.bin`. The retry/error behaviour (lists $19/$1A) is derived from the ASM, but the file format is not the tape signal format.
+- With no saved file, load waits forever like a console without a recorder; the port adds B to leave the menu path (not in the original).
+
+Still open (Stage 2 is NOT complete):
+- [ ] Handlers for states 4/7 (ofs_000_C465) and the setup lists 2/3/5 (race, results) are not ported; states 2/3/5/6/9/$0A/$0B run the race engine (Stage 3).
+- [ ] Sound: ram_00FB / $4015 / $4011 requests are recorded in state but nothing is played.
+- [ ] Scroll registers and the second nametable are not rendered; only nametable 0 is drawn.
+- [ ] Timing is per 3DS frame (60 Hz); the NES NMI is 60.0988 Hz and there is no mid-frame PPU behaviour.
+- [ ] Not compared with a real NES capture; not run on hardware or in an emulator in this step.
+- [ ] Expected list contents ($02, $18, $19, $1A) were hand-parsed from the ROM bytes by the same author as the code; an independent check against an emulator trace is still needed.
+- [ ] The Famicom keyboard/other-peripheral paths (if any) were not examined.

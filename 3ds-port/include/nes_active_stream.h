@@ -91,6 +91,31 @@ typedef enum {
 
 #define NES_MENU_NAMETABLE_BYTES 2048u
 #define NES_MENU_PALETTE_BYTES 32u
+#define NES_MENU_DYNAMIC_BUFFER_BYTES 32u /* RAM $0300-$031F */
+
+#define NES_MENU_ZERO_PAGE_LIST_BYTES 16u /* RAM $00A0-$00AF */
+
+/*
+ * sub_C27F with ram_0045 == $1A (con_0045_1A): tbl_C0F6_lo/tbl_C111_hi point
+ * sub_D3C1 at $00A1, so the record stream lives in ramA0[1..] ($00A0 is a length
+ * byte that the list itself does not read). Only ram_0045 == $1A runs; any other
+ * value returns NONE. On success ram_0045 is cleared (the NMI acknowledgement).
+ */
+NesNmiUploadResult nesExcitebikeNmiUploadZeroPage(uint8_t *ram0045,
+                                                  uint8_t ramA0[NES_MENU_ZERO_PAGE_LIST_BYTES],
+                                                  uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                  uint8_t palette[NES_MENU_PALETTE_BYTES]);
+
+/*
+ * sub_C27F with ram_0045 == 0: tbl_C0F6_lo/tbl_C111_hi entry $00 points sub_D3C1
+ * at $0301, so the dynamic buffer is executed (ram0300[1..]; ram0300[0] is the
+ * buffer length byte). A first byte of zero is the end token (nothing happens).
+ * On success $0300 and $0301 are cleared exactly like the ASM epilogue. A
+ * malformed buffer returns UNSUPPORTED and leaves everything untouched.
+ */
+NesNmiUploadResult nesExcitebikeNmiUploadDynamic(uint8_t ram0300[NES_MENU_DYNAMIC_BUFFER_BYTES],
+                                                 uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                 uint8_t palette[NES_MENU_PALETTE_BYTES]);
 
 /*
  * Native model of sub_C27F for a STATIC list ($01-$19): run the list that

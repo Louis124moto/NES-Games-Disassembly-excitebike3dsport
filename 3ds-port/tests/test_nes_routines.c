@@ -626,7 +626,7 @@ static int testSubC7DEMenuInput(void)
 
     selection=4u; guard=0u; timer30=0u; timer31=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=1u || guard!=1u || timer31!=0x5Du || changed!=1u) {
+    if(result!=0u || selection!=0u || guard!=1u || timer31!=0x5Du || changed!=1u) {
         fputs("sub_C7DE down/wrap mismatch\n",stderr); return 1;
     }
     selection=2u; guard=1u; timer31=0u; changed=1u;
@@ -648,7 +648,7 @@ static int testSubC7DEMenuInput(void)
     if(result!=0u || selection!=3u || changed!=1u) { fputs("sub_C7DE Select priority mismatch\\n",stderr); return 7; }
     selection=5u; guard=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x04u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=1u || changed!=1u) { fputs("sub_C7DE six-entry down wrap mismatch\\n",stderr); return 8; }
+    if(result!=0u || selection!=0u || changed!=1u) { fputs("sub_C7DE six-entry down wrap mismatch\\n",stderr); return 8; }
     selection=0u; guard=0u; changed=0u;
     result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
     if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE zero up wrap mismatch\\n",stderr); return 9; }
@@ -814,6 +814,10 @@ static int testState13Completion(void)
     state = 13u; nesLocCC6BUpdateMenuState(&state, 0u); if (state != 8u) return 2;
     state = 8u; nesLocCC6BUpdateMenuState(&state, 1u); if (state != 9u) return 3;
     state = 0xFFu; nesLocCC6BUpdateMenuState(&state, 1u); if (state != 0u) return 4;
+    state = 1u; nesLocCC6BUpdateMenuState(&state, 1u); if (state != 2u) return 5;  /* $004B != 0: plain INC */
+    state = 1u; nesLocCC6BUpdateMenuState(&state, 0u); if (state != 0u) return 6;  /* STA $0041 with A = 0 */
+    state = 8u; nesLocCC6BUpdateMenuState(&state, 0u); if (state != 8u) return 7;  /* 9 -> clamp to 8 */
+    state = 0xFFu; nesLocCC6BUpdateMenuState(&state, 0u); if (state != 0u) return 8; /* wraps to 0, < 9 */
     puts("PASS: state-13 sub_EC3B copy and loc_CC6B clamp/wrap paths.");
     return 0;
 }
@@ -2229,10 +2233,11 @@ static int testBatchAdditional20(void)
     }
     {
         uint8_t index=0u, value=0u;
-        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=1u||value!=2u)return 34;
-        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=1u||value!=2u)return 35;
+        /* ofs_000_C41C_0D: LDA #2 ... bra_C450 STA $0048 / STA $0044 -> both become 2 */
+        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=2u||value!=2u)return 34;
+        if(nesSubC41CState13Entry(&index,&value)!=0u||index!=2u||value!=2u)return 35;
         value=0xFFu;
-        if(nesSubC41CState13Entry(&index,&value)!=1u||index!=1u||value!=0xFFu)return 36;
+        if(nesSubC41CState13Entry(&index,&value)!=1u||index!=2u||value!=0xFFu)return 36;
     }
     puts("PASS: additional ASM batch: compare branches, buffer writes, RAM clearing, PPU polling, controller latch and sprite setup.");
     return 0;

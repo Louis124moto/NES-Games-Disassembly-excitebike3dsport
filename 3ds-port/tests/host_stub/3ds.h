@@ -1,0 +1,17 @@
+#ifndef HOST_STUB_3DS_H
+#define HOST_STUB_3DS_H
+/*
+ * Host-only stand-in for <3ds.h>: just the libctru key bits that menus.c uses, so
+ * the menu state machine can be compiled and tested with plain gcc. Values are
+ * libctru's KEY_* bit positions. Never used by the devkitARM build (-Itests is not
+ * on its include path).
+ */
+#define KEY_A (1u << 0)
+#define KEY_B (1u << 1)
+#define KEY_SELECT (1u << 2)
+#define KEY_START (1u << 3)
+#define KEY_RIGHT (1u << 4)
+#define KEY_LEFT (1u << 5)
+#define KEY_UP (1u << 6)
+#define KEY_DOWN (1u << 7)
+#endif

@@ -11,11 +11,22 @@
  * then selected from the original tbl_C01C_index/tbl_C02A/tbl_C033 sequence.
  * Menu setup lists are translated command-by-command where all transitive effects are known. Unsupported commands remain blocked rather than replaced with guessed behavior.
  */
+/* tbl_C01C_index: ram_0041 -> index of the setup command list (off_C06x_xx tables). */
+static uint8_t menusSetupListIndex(uint8_t asmState)
+{
+    static const uint8_t tblC01C[14] = {0u, 1u, 2u, 3u, 4u, 2u, 3u, 4u, 6u, 5u, 2u, 3u, 7u, 8u};
+    return asmState < 14u ? tblC01C[asmState] : 0xFFu;
+}
+
 static int menusRunSetupSequence(GameState *state)
 {
     uint8_t commandIndex;
+    uint8_t listIndex;
 
-    /* sub_C2A9 checks ram_0030_timer before running even the prelude. */
+    /* bra_C2ED: sub_D24F_disable_rendering ($2001 = 0) runs first, every frame of the setup path. */
+    state->menu_ppu_mask = 0u;
+
+    /* ...then ram_0030_timer is checked before even the prelude runs. */
     if (state->menu_timer30 != 0u) return 1;
 
     if (state->menu_sequence_preface_pending != 0u) {
@@ -25,7 +36,7 @@ static int menusRunSetupSequence(GameState *state)
          * attribute tables), then sub_D1A9 (reset both scroll registers).
          * $2001 is disabled by sub_D24F and $2000 becomes $10.
          */
-        state->menu_sprite_y = 0xF8u;
+        state->menu_oam[0] = 0xF8u;
         nesSubC318InitializePpu(state->menu_oam, state->menu_ppu_nametables,
                                 &state->menu_scroll_x, &state->menu_scroll_y,
                                 &state->menu_ppu_ctrl, &state->menu_ppu_mask);
@@ -37,21 +48,29 @@ static int menusRunSetupSequence(GameState *state)
     if (state->menu_ram0044 == 0u) return 1;
 
     /*
+     * sub_C2A9 bra_C2ED: the command list is NOT selected by ram_0041 directly but through
+     * tbl_C01C_index (LDA tbl_C01C_index,X with X = ram_0041). Corrected 2026-11-17: this
+     * code used ram_0041 itself, which ran the state-13 list for state 8 (design menu) and
+     * the state-4 list for state 7, among others.
+     */
+    listIndex = menusSetupListIndex(state->menu_asm_state);
+
+    /*
      * Never walk beyond a translated command table. In the 6502, this
      * index is consumed by a real pointer table; incrementing indefinitely
      * in the native stub would fabricate state and eventually wrap.
      */
-    if (state->menu_asm_state == 0u) {
+    if (listIndex == 0u) {
         if (state->menu_ram0044 > 2u) return 1;
-    } else if (state->menu_asm_state == 1u) {
+    } else if (listIndex == 1u) {
         if (state->menu_ram0044 > 3u) return 1;
-    } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
+    } else if (listIndex == 8u) {
         if (state->menu_ram0044 > 2u) return 1;
-    } else if (state->menu_asm_state == 4u) {
+    } else if (listIndex == 4u) {
         if (state->menu_ram0044 > 4u) return 1;
-    } else if (state->menu_asm_state == 6u) {
+    } else if (listIndex == 6u) {
         if (state->menu_ram0044 > 3u) return 1;
-    } else if (state->menu_asm_state == 7u) {
+    } else if (listIndex == 7u) {
         if (state->menu_ram0044 > 3u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
@@ -60,20 +79,20 @@ static int menusRunSetupSequence(GameState *state)
     commandIndex = (uint8_t)(state->menu_ram0044 - 1u);
     state->menu_ram0044 = (uint8_t)(state->menu_ram0044 + 1u);
 
-    if (state->menu_asm_state == 0u) {
+    if (listIndex == 0u) {
         if (commandIndex == 0u) {
             /* ofs_001_C2BD_00_01 + sub_C409 */
             state->menu_ram03F8 = 0x04u;
             state->menu_ram0045 = 0x02u;
-            state->menu_sprite_tile = 0xFAu;
-            state->menu_sprite_x = 0x50u; /* tbl_C088_spr_X[0] */
-            state->menu_sprite_attribute = 0u;
+            state->menu_oam[1] = 0xFAu;
+            state->menu_oam[3] = 0x50u; /* tbl_C088_spr_X[0] */
+            state->menu_oam[2] = 0u;
             state->menu_ram0046 = 0u;
             if (state->menu_ram03F0 == 0u) state->menu_ram00FB = 1u;
             state->menu_ram03F0 = (state->menu_ram03F0 >= 2u)
                 ? 0u : (uint8_t)(state->menu_ram03F0 + 1u);
             state->menu_timer31 = 0x38u;
-            state->menu_sprite_y = 0x80u; /* tbl_C080_spr_Y[0] */
+            state->menu_oam[0] = 0x80u; /* tbl_C080_spr_Y[0] */
             return 1;
         }
         if (commandIndex == 1u) {
@@ -84,7 +103,7 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 1u) {
+    } else if (listIndex == 1u) {
         if (commandIndex == 0u) {
             /* ofs_001_C55E_01_01 */
             state->menu_ram0045 = 0x06u;
@@ -94,13 +113,13 @@ static int menusRunSetupSequence(GameState *state)
             /* ofs_001_C3F3_01_02 */
             state->menu_ram00FB = 0x04u;
             state->menu_ram0045 = 0x03u;
-            state->menu_sprite_tile = 0xFAu;
-            state->menu_sprite_x = 0x48u; /* tbl_C088_spr_X[1] */
-            state->menu_sprite_attribute = 0u;
+            state->menu_oam[1] = 0xFAu;
+            state->menu_oam[3] = 0x48u; /* tbl_C088_spr_X[1] */
+            state->menu_oam[2] = 0u;
             state->menu_ram0046 = 0u;
             state->menu_selection = 0u; /* returned A stored in ram_0042 */
             state->menu_timer34 = 0x2Du;
-            state->menu_sprite_y = 0xB0u;
+            state->menu_oam[0] = 0xB0u;
             return 1;
         }
         if (commandIndex == 2u) {
@@ -111,7 +130,7 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 4u) {
+    } else if (listIndex == 4u) {
         if (commandIndex == 0u) { /* ofs_001_C55E_04_01 */
             state->menu_ram0045 = 0x06u;
             return 1;
@@ -128,36 +147,56 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0300[4] = (uint8_t)(state->menu_ram0043 + 1u);
             return 1;
         }
-        if (commandIndex == 3u) { /* ofs_001_C514_04_04 */
+        if (commandIndex == 3u) { /* ofs_001_C514_04_04: $18, then falls into C518 */
             state->menu_ram0045 = 0x18u;
+            state->menu_repeat_guard = 1u;
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 6u) {
+    } else if (listIndex == 6u) {
         if (commandIndex == 0u) { /* ofs_001_C55E_06_01 */
             state->menu_ram0045 = 0x06u;
             return 1;
         }
         if (commandIndex == 1u) { /* ofs_001_C575_06_02 */
             state->menu_ram0043 = 0x05u;
-            state->menu_sprite_x = 0x4Cu; /* tbl_C088_spr_X[2]; sub_C409 does not write sprite Y */
-            state->menu_sprite_tile = 0xFAu;
-            state->menu_sprite_attribute = 0u;
+            state->menu_oam[3] = 0x4Cu; /* tbl_C088_spr_X[2]; sub_C409 does not write sprite Y */
+            state->menu_oam[1] = 0xFAu;
+            state->menu_oam[2] = 0u;
             state->menu_ram0046 = 0u;
             state->menu_ram0045 = 0x0Fu;
             return 1;
         }
-        if (commandIndex == 2u) { /* ofs_001_C514_06_03 */
+        if (commandIndex == 2u) { /* ofs_001_C514_06_03: $18, then falls into C518 */
             state->menu_ram0045 = 0x18u;
+            state->menu_repeat_guard = 1u;
+            state->menu_ram0040 = 1u;
+            state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 7u) {
+    } else if (listIndex == 7u) {
         if (commandIndex == 0u) { /* ofs_001_C869_07_01: clear $004D-$00EF */
             memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
             return 1;
         }
-        if (commandIndex == 1u) { /* ofs_001_C586_07_02 depends on sub_C621 */
-            state->menu_ram0044 = (uint8_t)(commandIndex + 1u);
-            return 1; /* hold at this command; do not skip the unported dependency */
+        if (commandIndex == 1u) { /* ofs_001_C586_07_02 (+ sub_C621, tbl_C180) */
+            static const uint8_t tblC180[4] = {0x17u, 0x01u, 0x00u, 0x01u};
+            int x;
+            /*
+             * X = 3..0: $0061+X = tbl_C180[X]; for X < 3 first $0065+X = $05A0+X and
+             * $0068+X = $05C3+X (the copy runs before the table store of the same X).
+             */
+            for (x = 3; x >= 0; --x) {
+                if (x < 3) {
+                    state->menu_ram0060[5 + x] = state->menu_ram05A0[x];
+                    state->menu_ram0060[8 + x] = state->menu_ram05C3[x];
+                }
+                state->menu_ram0060[1 + x] = tblC180[x];
+            }
+            memcpy(state->menu_ram05E0, state->menu_ram06E0, sizeof(state->menu_ram05E0)); /* sub_C621 */
+            state->menu_ram0045 = 0x10u; /* con_0045_10 */
+            return 1;
         }
         if (commandIndex == 2u) { /* ofs_001_C518_07_03 */
             state->menu_repeat_guard = 1u;
@@ -165,7 +204,7 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
-    } else if (state->menu_asm_state == 8u || state->menu_asm_state == 13u) {
+    } else if (listIndex == 8u) {
         if (commandIndex == 0u) {
             /* ofs_001_C582_08_01 */
             state->menu_ram0045 = 0x11u;
@@ -265,7 +304,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorY[3] = {0x80u, 0x90u, 0xA0u};
             if (state->menu_selection < 3u)
-                state->menu_sprite_y = cursorY[state->menu_selection];
+                state->menu_oam[0] = cursorY[state->menu_selection];
             state->menu_ram03F2 = 0u;
         } else {
             uint8_t selected = state->menu_selection;
@@ -292,8 +331,8 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorX[5] = {0x48u, 0x60u, 0x78u, 0x90u, 0xA8u};
             if (state->menu_selection < 5u)
-                state->menu_sprite_x = cursorX[state->menu_selection];
-            state->menu_sprite_attribute = 0u; /* bra_C411 writes zero */
+                state->menu_oam[3] = cursorX[state->menu_selection];
+            state->menu_oam[2] = 0u; /* bra_C411 writes zero */
             state->menu_ram0046 = 0u;
         } else {
             state->menu_ram0043 = state->menu_selection;
@@ -313,7 +352,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
                 0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u
             };
             if (state->menu_selection < 6u)
-                state->menu_sprite_y = cursorY[state->menu_selection];
+                state->menu_oam[0] = cursorY[state->menu_selection];
         }
         if (state->menu_action_x != 0u) {
             nesSubC3BDConfirmSelection(
@@ -340,23 +379,56 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram0043 = 0u;
             state->menu_ram0044 = 0u;
             state->menu_ram004A = 0u;
+            /*
+             * loc_CA85 clears every byte of $0021-$00FF, so the other modelled bytes in that
+             * range go to zero too: ram_0045 ($45), the $0033/$0034 timers, ram_0046,
+             * ram_0048, ram_004B, $004D-$00EF, ram_00FB. ram_0042 is saved and restored
+             * (it stays 2), and ram_03F2/ram_03F0 live outside the cleared page.
+             */
+            state->menu_ram0045 = 0u;
+            state->menu_timer33 = 0u;
+            state->menu_timer34 = 0u;
+            state->menu_ram0046 = 0u;
+            state->menu_ram0048 = 0u;
+            state->menu_ram004B = 0u;
+            state->menu_ram00FB = 0u;
+            memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
             state->menu_sequence_preface_pending = 1u;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
-            /* ram_0042=2 is preserved; ram_03F2 lives outside the cleared page. */
         }
-    } else if (state->menu_asm_state == 13u) {
+    } else if (state->menu_asm_state == 12u || state->menu_asm_state == 13u) {
         /*
-         * ofs_000_C41C_0D entry path: with ram_0044 == 0, write 2 to
-         * ram_0048 and 1 to ram_0044. The later ram_0048 == $FF branch
-         * depends on sub_EC3B/loc_CC6B and remains explicitly unported.
+         * ofs_000_C43D_0C (tape SAVE, ram_0048 = 1) and ofs_000_C41C_0D (tape LOAD, ram_0048 = 2).
+         * With ram_0044 == 0 the handler only posts the request (bra_C44E / bra_C450). The main
+         * thread (menusMainThreadStep) then runs the data-recorder routine and stores $FF in
+         * ram_0048 when it is done; only then does the handler finish.
          */
-        if (nesSubC41CState13Entry(&state->menu_ram0044,
-                                   &state->menu_ram0048) != 0u) {
-            /* ofs_000_C41C_0D: copy $05E0 page to $06E0, set $00FB=$40, then loc_CC6B. */
-            nesSubEC3BCopy256(state->menu_ram05E0, state->menu_ram06E0);
+        uint8_t done;
+        if (state->menu_asm_state == 13u) {
+            done = nesSubC41CState13Entry(&state->menu_ram0044, &state->menu_ram0048);
+        } else if (state->menu_ram0044 == 0u) {
+            state->menu_ram0048 = 1u;
+            state->menu_ram0044 = 1u;
+            done = 0u;
+        } else {
+            done = (uint8_t)(state->menu_ram0048 == 0xFFu);
+        }
+        if (done != 0u) {
+            if (state->menu_asm_state == 13u) {
+                /* $C428-$C437: $0065+X -> $05A0+X and $0068+X -> $05C3+X (X = 2..0), then sub_EC3B. */
+                int x;
+                for (x = 2; x >= 0; --x) {
+                    state->menu_ram05A0[x] = state->menu_ram0060[5 + x];
+                    state->menu_ram05C3[x] = state->menu_ram0060[8 + x];
+                }
+                nesSubEC3BCopy256(state->menu_ram05E0, state->menu_ram06E0);
+            }
+            /* loc_C447 */
             state->menu_ram00FB = 0x40u;
+            nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044); /* sub_C3AF's reset */
             nesLocCC6BUpdateMenuState(&state->menu_asm_state, state->menu_ram004B);
+            state->menu_sequence_preface_pending = 1u;
         }
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
@@ -381,19 +453,16 @@ void menusRender(const GameState *state)
            (unsigned int)state->menu_ram03F2,
            (unsigned int)state->menu_clear_ram_requested);
 
-    printf("cursor X/Y: %02X/%02X\n", (unsigned int)state->menu_sprite_x, (unsigned int)state->menu_sprite_y);
+    printf("cursor X/Y: %02X/%02X\n", (unsigned int)state->menu_oam[3], (unsigned int)state->menu_oam[0]);
     if (state->menu_ram0040 == 0u) {
         printf("ASM setup sequencer: active (ram_0044=%u)\n",
                (unsigned int)state->menu_ram0044);
-        if (state->menu_asm_state != 0u &&
-            state->menu_asm_state != 1u &&
-            state->menu_asm_state != 4u &&
-            state->menu_asm_state != 6u &&
-            state->menu_asm_state != 7u &&
-            state->menu_asm_state != 8u &&
-            state->menu_asm_state != 13u) {
-            printf("Setup command list for state %u is not ported yet.\n",
-                   (unsigned int)state->menu_asm_state);
+        {
+            const uint8_t list = menusSetupListIndex(state->menu_asm_state);
+            if (list == 2u || list == 3u || list == 5u || list == 0xFFu) {
+                printf("Setup command list %u (state %u) belongs to the race flow: not ported.\n",
+                       (unsigned int)list, (unsigned int)state->menu_asm_state);
+            }
         }
         if (state->show_help)
             printf("Only source-verified command effects are applied; incomplete transitive routines remain blocked.\n");
@@ -435,6 +504,13 @@ void menusRender(const GameState *state)
     }
 }
 
+static void menusRefreshDrawable(GameState *state)
+{
+    /* Background is drawable only when $2001 enables it AND real palette data exists. */
+    state->menu_ppu_background_ready =
+        (uint8_t)(((state->menu_ppu_mask & 0x08u) != 0u && state->menu_ppu_palette_loaded) ? 1u : 0u);
+}
+
 void menusNmiUpload(GameState *state)
 {
     NesActiveStreamInfo info;
@@ -448,16 +524,142 @@ void menusNmiUpload(GameState *state)
                                                           state->menu_ram_for_2001, &wroteMask);
     if (wroteMask) state->menu_ppu_mask = state->menu_ram_for_2001;
 
+    /* sub_C27F: ram_0045 selects the list; index 0 is the dynamic buffer at $0301. */
     if (state->menu_ram0045 != 0u && nesExcitebikeActiveStream(state->menu_ram0045, &info)) {
         isPalette = info.isPalette;
     }
-    result = nesExcitebikeNmiUploadStatic(&state->menu_ram0045, state->menu_ppu_nametables,
-                                          state->menu_ppu_palette);
+    if (state->menu_ram0045 == 0u) {
+        result = nesExcitebikeNmiUploadDynamic(state->menu_ram0300, state->menu_ppu_nametables,
+                                               state->menu_ppu_palette);
+    } else if (state->menu_ram0045 == 0x1Au) {
+        result = nesExcitebikeNmiUploadZeroPage(&state->menu_ram0045, state->menu_ramA0,
+                                                state->menu_ppu_nametables, state->menu_ppu_palette);
+    } else {
+        result = nesExcitebikeNmiUploadStatic(&state->menu_ram0045, state->menu_ppu_nametables,
+                                              state->menu_ppu_palette);
+    }
     if (result == NES_NMI_UPLOAD_APPLIED) {
         if (isPalette) state->menu_ppu_palette_loaded = 1u;
         state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
     }
-    /* Background is drawable only when the NMI enabled it AND real palette data exists. */
-    state->menu_ppu_background_ready =
-        (uint8_t)(((state->menu_ppu_mask & 0x08u) != 0u && state->menu_ppu_palette_loaded) ? 1u : 0u);
+    menusRefreshDrawable(state);
+}
+
+static MenusTapeIo s_tapeIo;
+static int s_tapeIoSet;
+
+void menusSetTapeIo(const MenusTapeIo *io)
+{
+    if (io != 0) { s_tapeIo = *io; s_tapeIoSet = 1; }
+    else { memset(&s_tapeIo, 0, sizeof(s_tapeIo)); s_tapeIoSet = 0; }
+}
+
+enum {
+    TAPE_IDLE = 0,       /* main loop bra_C1D8: waiting for ram_0048 to become positive */
+    TAPE_READ_BLOCK0,    /* sub_C739 after C32F/C716: sub_C792 reads block 0 */
+    TAPE_WAIT_ERROR_19,  /* con_0045_19 posted, NMI back on, waiting for the acknowledgement */
+    TAPE_WAIT_HEADER,    /* con_0045_1A posted (header bytes shown), waiting for the acknowledgement */
+    TAPE_WAIT_HEADER_BAD,/* same list, but the header mismatched: restart afterwards */
+    TAPE_READ_BLOCK1     /* sub_C726 + sub_C792: block 1 */
+};
+
+int menusTapeWaiting(const GameState *state)
+{
+    return state != 0 && state->menu_nmi_enabled == 0u &&
+           (state->menu_tape_phase == TAPE_READ_BLOCK0 || state->menu_tape_phase == TAPE_READ_BLOCK1);
+}
+
+/* Error path bra_C744_loop: con_0045_19, sub_C339 (NMI on), wait for the NMI to consume it. */
+static void tapePostError19(GameState *state)
+{
+    state->menu_ram0045 = 0x19u;
+    state->menu_nmi_enabled = 1u;
+    state->menu_tape_phase = TAPE_WAIT_ERROR_19;
+}
+
+/*
+ * Main-thread half of the tape handoff, run once between two NMIs. Mirrors the loop at
+ * bra_C1D8 ($C1D8-$C1F4) and sub_C6C8 / sub_C739 ($C6C8-$C7DC) with the recorder replaced by
+ * the MenusTapeIo back end.
+ */
+static void menusMainThreadStep(GameState *state)
+{
+    static const uint8_t tblC180[4] = {0x17u, 0x01u, 0x00u, 0x01u};
+    uint8_t buffer[64];
+    int r;
+    unsigned int y, mismatches;
+
+    switch (state->menu_tape_phase) {
+    case TAPE_IDLE:
+        /* LDA ram_0048; BMI loop; BEQ loop -> only values $01-$7F start a transfer. */
+        if (state->menu_ram0048 == 0u || (state->menu_ram0048 & 0x80u) != 0u) return;
+        state->menu_nmi_enabled = 0u; /* sub_C32F */
+        if (state->menu_ram0048 == 1u) {
+            /* sub_C6C8: write block 0 ($0060, $40 bytes) then block 1 ($05E0, $100 bytes). */
+            if (s_tapeIoSet && s_tapeIo.save != 0) {
+                (void)s_tapeIo.save(s_tapeIo.ctx, state->menu_ram0060, state->menu_ram05E0);
+            }
+            state->menu_ram0048 = 0xFFu;      /* loc_C1ED */
+            state->menu_nmi_enabled = 1u;     /* sub_C339 */
+        } else {
+            state->menu_tape_phase = TAPE_READ_BLOCK0; /* sub_C739 */
+        }
+        return;
+    case TAPE_READ_BLOCK0:
+        if (!s_tapeIoSet || s_tapeIo.readBlock == 0) return; /* waits for tape signal forever */
+        r = s_tapeIo.readBlock(s_tapeIo.ctx, 0u, buffer, sizeof(buffer));
+        if (r == 0) return;
+        if (r < 0) { tapePostError19(state); return; }
+        memcpy(state->menu_ram0060, buffer, sizeof(buffer)); /* STA (ram_000E),Y */
+        /* $C751-$C77D: bytes 1..4 -> $00A4..$00A7, counted against tbl_C180; list shown at $224F. */
+        mismatches = 0u;
+        for (y = 1u; y <= 4u; ++y) {
+            state->menu_ramA0[3u + y] = buffer[y];
+            if (buffer[y] != tblC180[y - 1u]) ++mismatches;
+        }
+        state->menu_ramA0[8] = 0u;
+        state->menu_ramA0[0] = 0x07u;
+        state->menu_ramA0[1] = 0x22u;
+        state->menu_ramA0[2] = 0x4Fu;
+        state->menu_ramA0[3] = 0x04u;
+        state->menu_ram0045 = 0x1Au;
+        state->menu_nmi_enabled = 1u; /* sub_C339 */
+        state->menu_tape_phase = mismatches != 0u ? TAPE_WAIT_HEADER_BAD : TAPE_WAIT_HEADER;
+        return;
+    case TAPE_WAIT_ERROR_19:
+    case TAPE_WAIT_HEADER_BAD:
+        if (state->menu_ram0045 != 0u) return; /* spin until the NMI consumed the list */
+        state->menu_nmi_enabled = 0u;          /* bra_C739_loop: sub_C32F, read block 0 again */
+        state->menu_tape_phase = TAPE_READ_BLOCK0;
+        return;
+    case TAPE_WAIT_HEADER:
+        if (state->menu_ram0045 != 0u) return;
+        state->menu_nmi_enabled = 0u;          /* sub_C32F, sub_C726 */
+        state->menu_tape_phase = TAPE_READ_BLOCK1;
+        return;
+    case TAPE_READ_BLOCK1:
+        if (!s_tapeIoSet || s_tapeIo.readBlock == 0) return;
+        r = s_tapeIo.readBlock(s_tapeIo.ctx, 1u, state->menu_ram05E0, sizeof(state->menu_ram05E0));
+        if (r == 0) return;
+        if (r < 0) { tapePostError19(state); return; } /* BCS bra_C744_loop (restarts at block 0) */
+        state->menu_ram0048 = 0xFFu;           /* loc_C1ED */
+        state->menu_nmi_enabled = 1u;          /* sub_C339 */
+        state->menu_tape_phase = TAPE_IDLE;
+        return;
+    default:
+        state->menu_tape_phase = TAPE_IDLE;
+        return;
+    }
+}
+
+void menusNmiFrame(GameState *state, unsigned int heldKeys, unsigned int pressedKeys)
+{
+    if (state == 0) return;
+    /* While the main thread owns the CPU with NMI disabled (sub_C32F) no vec_C23B_NMI runs. */
+    if (state->menu_nmi_enabled != 0u) {
+        menusNmiUpload(state);                         /* C32F, $2001, OAM DMA, sub_C27F */
+        menusUpdate(state, heldKeys, pressedKeys);     /* D310 timers, joypad, sub_C2A9 */
+        menusRefreshDrawable(state);                   /* $2001 as left at the end of the NMI */
+    }
+    menusMainThreadStep(state);                        /* bra_C1D8 loop, between two NMIs */
 }

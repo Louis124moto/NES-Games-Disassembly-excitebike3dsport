@@ -97,13 +97,32 @@ static size_t uploadPaletteSlot(size_t index)
     return index;
 }
 
+/* Run one sub_D3C1 list on the nametable/palette model; the caller's arrays change only on success. */
+static int uploadRunStream(const uint8_t *stream, size_t streamSize,
+                           uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                           uint8_t palette[NES_MENU_PALETTE_BYTES])
+{
+    size_t writes = 0u, i;
+    memset(s_uploadRam, 0, sizeof(s_uploadRam));
+    memset(s_uploadMask, 0, sizeof(s_uploadMask));
+    memcpy(&s_uploadRam[0x2000u], nametables, NES_MENU_NAMETABLE_BYTES);
+    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) s_uploadRam[0x3F00u + uploadPaletteSlot(i)] = palette[i];
+    if (nesPpuApplyCommandStream(stream, streamSize, s_uploadRam, s_uploadMask,
+                                 sizeof(s_uploadRam), &writes) != NES_PPU_COMMAND_OK) {
+        return 0;
+    }
+    memcpy(nametables, &s_uploadRam[0x2000u], NES_MENU_NAMETABLE_BYTES);
+    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) palette[i] = s_uploadRam[0x3F00u + uploadPaletteSlot(i)];
+    return 1;
+}
+
 NesNmiUploadResult nesExcitebikeNmiUploadStatic(uint8_t *ram0045,
                                                 uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
                                                 uint8_t palette[NES_MENU_PALETTE_BYTES])
 {
     NesActiveStreamInfo info;
     const uint8_t *stream;
-    size_t streamSize = 0u, writes = 0u, i;
+    size_t streamSize = 0u;
 
     if (ram0045 == NULL || nametables == NULL || palette == NULL) return NES_NMI_UPLOAD_UNSUPPORTED;
     if (*ram0045 == 0u) return NES_NMI_UPLOAD_NONE;
@@ -112,18 +131,39 @@ NesNmiUploadResult nesExcitebikeNmiUploadStatic(uint8_t *ram0045,
         ? nesExcitebikePaletteStream(info.arrayIndex, &streamSize, NULL)
         : nesExcitebikePpuStream(info.arrayIndex, &streamSize, NULL);
     if (stream == NULL) return NES_NMI_UPLOAD_UNSUPPORTED;
-
-    memset(s_uploadRam, 0, sizeof(s_uploadRam));
-    memset(s_uploadMask, 0, sizeof(s_uploadMask));
-    memcpy(&s_uploadRam[0x2000u], nametables, NES_MENU_NAMETABLE_BYTES);
-    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) s_uploadRam[0x3F00u + uploadPaletteSlot(i)] = palette[i];
-    if (nesPpuApplyCommandStream(stream, streamSize, s_uploadRam, s_uploadMask,
-                                 sizeof(s_uploadRam), &writes) != NES_PPU_COMMAND_OK) {
-        return NES_NMI_UPLOAD_UNSUPPORTED; /* caller state is still untouched */
-    }
-    memcpy(nametables, &s_uploadRam[0x2000u], NES_MENU_NAMETABLE_BYTES);
-    for (i = 0u; i < NES_MENU_PALETTE_BYTES; ++i) palette[i] = s_uploadRam[0x3F00u + uploadPaletteSlot(i)];
+    if (!uploadRunStream(stream, streamSize, nametables, palette)) return NES_NMI_UPLOAD_UNSUPPORTED;
     *ram0045 = 0u;
+    return NES_NMI_UPLOAD_APPLIED;
+}
+
+NesNmiUploadResult nesExcitebikeNmiUploadZeroPage(uint8_t *ram0045,
+                                                  uint8_t ramA0[NES_MENU_ZERO_PAGE_LIST_BYTES],
+                                                  uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                  uint8_t palette[NES_MENU_PALETTE_BYTES])
+{
+    if (ram0045 == NULL || ramA0 == NULL || nametables == NULL || palette == NULL)
+        return NES_NMI_UPLOAD_UNSUPPORTED;
+    if (*ram0045 != 0x1Au) return NES_NMI_UPLOAD_NONE;
+    if (!uploadRunStream(&ramA0[1], NES_MENU_ZERO_PAGE_LIST_BYTES - 1u, nametables, palette))
+        return NES_NMI_UPLOAD_UNSUPPORTED;
+    *ram0045 = 0u;
+    return NES_NMI_UPLOAD_APPLIED;
+}
+
+NesNmiUploadResult nesExcitebikeNmiUploadDynamic(uint8_t ram0300[NES_MENU_DYNAMIC_BUFFER_BYTES],
+                                                 uint8_t nametables[NES_MENU_NAMETABLE_BYTES],
+                                                 uint8_t palette[NES_MENU_PALETTE_BYTES])
+{
+    if (ram0300 == NULL || nametables == NULL || palette == NULL) return NES_NMI_UPLOAD_UNSUPPORTED;
+    if (ram0300[1] == 0u) { /* first addr-hi is the end token: sub_D3C1 does nothing */
+        ram0300[0] = 0u;
+        return NES_NMI_UPLOAD_NONE;
+    }
+    if (!uploadRunStream(&ram0300[1], NES_MENU_DYNAMIC_BUFFER_BYTES - 1u, nametables, palette))
+        return NES_NMI_UPLOAD_UNSUPPORTED;
+    /* sub_C27F epilogue: only $0300 and $0301 are cleared (the rest of the page keeps stale bytes). */
+    ram0300[0] = 0u;
+    ram0300[1] = 0u;
     return NES_NMI_UPLOAD_APPLIED;
 }
 
