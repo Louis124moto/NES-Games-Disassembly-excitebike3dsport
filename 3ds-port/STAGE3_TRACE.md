@@ -21,11 +21,12 @@ Translated line by line, host-tested with hand-derived expectations (mutation-ch
 - cmd 1 (C551), cmd 2 (C869), cmd 4 (C5A3), cmd 5 (C566): complete.
 - cmd 3 (C820): everything after `JSR sub_D13F` (clear $0340-$03EF, fill $0400-$057F, sprite 0, $E8-$EB).
 - cmd 6 (C875): head up to `LSR ram_0078,X` at bra_C8DB, including the `LDA ram_0019,X` with X=$FF reading $0018 (zero-page wrap).
+- `sub_ECE4` buffer builder: the three `tbl_E6A1` records at offsets 0/4/8, both 32-byte dynamic command payloads, terminator, pointer `$0400`, and the `$0502/$0525` page-crossing writes. PPU execution via `loc_C289/sub_D3C1` is not part of this helper.
 
-NOT ported: `sub_D13F`/`sub_ECE4` (needs tbl_E6A1 and the $0400 buffer upload via loc_C289), cmd 6 tail from bra_C8DE (`ram_0046` test, `tbl_C158`, `sub_DFA2`, `sub_C522`, `sub_C53A`, `sub_C935`/`sub_DF7F`, `ram_03F8` adjust), PPU lists $12-$17 and $01 contents, and the wiring into `menus.c` (list index 2 still reports "not ported"). The module is not called by the game yet.
+NOT ported: the complete `sub_D13F` sequence and its three ordered dynamic PPU uploads through `loc_C289/sub_D3C1`; cmd 6 tail from bra_C8DE (`ram_0046` test, `tbl_C158`, `sub_DFA2`, `sub_C522`, `sub_C53A`, `sub_C935`/`sub_DF7F`, `ram_03F8` adjust); PPU lists $12-$17 and $01 contents; and the wiring into `menus.c` (list index 2 still reports "not ported"). The isolated helpers are not called by the game yet.
 
 ## Next slice
-Trace and port `sub_ECE4`+tbl_E6A1, then the cmd 6 tail (`sub_C522`, `sub_C53A`, `sub_C935`, `sub_DF7F`, `sub_DFA2`), then wire list 2 into the setup sequencer; after that `sub_E1A3` and the player object (`ram_00B0`/`ram_00B4` writers).
+Model `loc_C289/sub_D3C1` and integrate the three `sub_D13F` buffer builds in source order; then trace and port the C875 tail (`ram_0046`, `tbl_C158`, `sub_DFA2`, `sub_C522`, `sub_C53A`, `sub_C935/sub_DF7F`, `ram_03F8` adjustment). Only after the complete six-command list is represented should it be wired into the setup sequencer; then trace `sub_E1A3` and the player object (`ram_00B0`/`ram_00B4` writers).
 
 
 ## Source trace and native translation — sub_ECE4 / loc_ECE4 (2026-11-18)
