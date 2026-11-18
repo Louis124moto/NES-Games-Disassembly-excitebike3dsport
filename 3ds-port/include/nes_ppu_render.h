@@ -10,6 +10,8 @@
 #define NES_PPU_TILES_HIGH 30u
 #define NES_PPU_NAMETABLE_BYTES 960u
 #define NES_PPU_ATTRIBUTE_BYTES 64u
+#define NES_PPU_NAMETABLE_PAGE_BYTES 1024u
+#define NES_PPU_VERTICAL_MIRROR_BYTES (2u * NES_PPU_NAMETABLE_PAGE_BYTES)
 #define NES_PPU_PALETTE_BYTES 16u
 #define NES_PPU_RGB_BYTES (NES_PPU_WIDTH * NES_PPU_HEIGHT * 3u)
 #define NES_PPU_MAX_TILES 960u
@@ -83,6 +85,13 @@ int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
                                 const uint8_t *palette, uint8_t *rgb,
                                 size_t rgbCapacity, uint8_t *opaque,
                                 size_t opaqueCapacity);
+
+/* Compose two vertical-mirrored physical nametables with PPUCTRL base bits and $2005 scroll. */
+int nesPpuRenderMirroredNametablesOpaque(
+    const uint8_t *chrPixels, size_t tileCount,
+    const uint8_t nametables[NES_PPU_VERTICAL_MIRROR_BYTES],
+    const uint8_t *palette, uint8_t ppuCtrl, uint8_t scrollX, uint8_t scrollY,
+    uint8_t *rgb, size_t rgbCapacity, uint8_t *opaque, size_t opaqueCapacity);
 
 int nesPpuRenderNametable(const uint8_t *chrPixels, size_t tileCount,
                           const uint8_t *nametable,
