@@ -325,7 +325,7 @@ void nesSubCFE3MaskFlags(uint8_t *ram005C);
 uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
                             uint8_t *selection, uint8_t *repeatGuard,
                             uint8_t *timer30, uint8_t *timer31,
-                            uint8_t *selectionChanged);
+                            uint8_t *selectionChanged, uint8_t *ram00FF);
 void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030, uint8_t *ram0031, uint8_t *ram0034);
 void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);
