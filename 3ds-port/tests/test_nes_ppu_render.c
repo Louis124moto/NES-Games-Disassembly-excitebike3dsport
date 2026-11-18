@@ -162,6 +162,46 @@ done:
     return rc;
 }
 
+
+static int testVerticalMirroredNametables(void)
+{
+    uint8_t chr[2u * 64u];
+    uint8_t nt[NES_PPU_VERTICAL_MIRROR_BYTES];
+    uint8_t palette[NES_PPU_PALETTE_BYTES] = {
+        0x0Fu,0x16u,0x21u,0x30u, 0x0Fu,0x16u,0x21u,0x30u,
+        0x0Fu,0x16u,0x21u,0x30u, 0x0Fu,0x16u,0x21u,0x30u
+    };
+    uint8_t *rgb = (uint8_t *)calloc(NES_PPU_RGB_BYTES, 1u);
+    uint8_t *opaque = (uint8_t *)calloc((size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT, 1u);
+    unsigned int i;
+    int rc = 0;
+    if (rgb == NULL || opaque == NULL) { free(rgb); free(opaque); return 1; }
+    memset(chr, 1, 64u);
+    memset(chr + 64u, 2, 64u);
+    memset(nt, 0, sizeof(nt));
+    memset(nt + NES_PPU_NAMETABLE_PAGE_BYTES, 1, NES_PPU_NAMETABLE_BYTES);
+    /* Both attribute tables select subpalette 0. */
+    if (nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x10u, 0u, 0u,
+            rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 2;
+    if (rc == 0 && (!pixelIs(rgb, 0u, 0u, 0x16u) || opaque[0] == 0u)) rc = 3;
+    /* PPUCTRL bit 0 selects physical nametable B. */
+    if (rc == 0 && nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x11u, 0u, 0u,
+            rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 4;
+    if (rc == 0 && !pixelIs(rgb, 0u, 0u, 0x21u)) rc = 5;
+    /* Horizontal scroll crosses A -> B at pixel 1; both pages remain visible. */
+    if (rc == 0 && nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x10u, 255u, 0u,
+            rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 6;
+    if (rc == 0 && (!pixelIs(rgb, 0u, 0u, 0x16u) || !pixelIs(rgb, 1u, 0u, 0x21u))) rc = 7;
+    /* PPUCTRL bit 1 is the lower logical row; vertical mirroring repeats page A. */
+    if (rc == 0 && nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x12u, 0u, 0u,
+            rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 8;
+    if (rc == 0 && !pixelIs(rgb, 0u, 0u, 0x16u)) rc = 9;
+    for (i = 0u; i < 64u; ++i) { if (chr[i] != 1u || chr[64u + i] != 2u) rc = 10; }
+    free(rgb); free(opaque);
+    if (rc == 0) puts("PASS: two-page vertical-mirrored nametable composition, base selection and scroll.");
+    return rc;
+}
+
 int main(void)
 {
     uint8_t *pixels = (uint8_t *)calloc(NES_PPU_MAX_TILES * 64u, 1u);
@@ -175,8 +215,10 @@ int main(void)
     size_t i;
     const int colorResult = testColorLookup();
     const int atlasResult = testAtlasPaletteModes();
+    const int mirrorResult = testVerticalMirroredNametables();
     if (colorResult != 0) { fprintf(stderr, "NES color lookup failed: %d\\n", colorResult); return 1; }
     if (atlasResult != 0) { fprintf(stderr, "Atlas palette modes failed: %d\\n", atlasResult); free(pixels); free(rgb); return 1; }
+    if (mirrorResult != 0) { fprintf(stderr, "Mirrored nametable renderer failed: %d\\n", mirrorResult); free(pixels); free(rgb); return 1; }
     if (pixels == NULL || rgb == NULL) { free(pixels); free(rgb); return 1; }
     memset(nametable, 0, sizeof(nametable));
     memset(attributes, 0, sizeof(attributes));
