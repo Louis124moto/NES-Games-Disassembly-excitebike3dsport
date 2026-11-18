@@ -118,6 +118,23 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram03F1);
 
 
+
+/* Source-faithful scratch state for sub_D1C7's rectangular OAM tile/attribute writer. */
+typedef struct NesSubD1C7OamGridState {
+    uint8_t ram0000_x;
+    uint8_t ram0001_y;
+    uint8_t ram0002_tile;
+    uint8_t ram0003_grid; /* high nibble = rows, low nibble = columns */
+    uint8_t ram0004_oamBase;
+    uint8_t ram0008_maxIndex;
+    uint8_t ram0009_y;
+    uint8_t ram000A_markerBits;
+    uint8_t ram000B_attribute;
+} NesSubD1C7OamGridState;
+
+/* Translate sub_D1C7; returns the 8-bit rows*columns tile/attribute record count. */
+uint8_t nesSubD1C7BuildOamGrid(uint8_t oam[256], NesSubD1C7OamGridState *state);
+
 typedef struct NesPreparedSpriteCommand {
     uint8_t scratch0, scratch1, scratch2, scratch3, scratch4, scratchB, transformY;
 } NesPreparedSpriteCommand;
