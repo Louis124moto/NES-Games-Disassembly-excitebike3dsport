@@ -153,6 +153,17 @@ Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
 
 Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
 
+### PPU command parser validation checkpoint (commit `ad608e0b0d18`)
+
+- `testAllSourceStreams` replays every one of the 18 static PPU streams and all 7 palette streams through the source parser and checks that each has a nonzero write count.
+- `testDynamicBuffer` exercises the variable `$0300` list, confirms its PPU write, and verifies that only `$0300/$0301` are cleared by the NMI epilogue.
+- `testTapeLoad` exercises the zero-page `$00A1` list (`ram_0045=$1A`) while displaying an invalid tape header; it checks the expected nametable writes and PPU revision change.
+- The parser now rejects a zero control/count record with `NES_PPU_COMMAND_INVALID_COUNT` rather than silently accepting it as a successful end; the true terminator remains a zero first byte (address high).
+- Regression vectors cover truncated headers/literal/repeat payloads, invalid addresses, zero controls/counts, palette mirroring, and both vertical/horizontal nametable mapping.
+- Exact commit `ad608e0b0d18b4331e5a8cb3143fbdbabbfb86ff`: host verification run 44357605524 succeeded; New 3DS build run 44357605310 succeeded.
+
+This closes B2's parser/replay validation. It does not prove the screen artwork is correct; visual and OAM fidelity remain B5-B7 and D2-D5.
+
 ### Two-nametable renderer implementation checkpoint (commit `76abf59affc0734c`)
 
 Implemented and integrated:
@@ -193,7 +204,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 
 ### B. PPU, OAM, and visual reconstruction
 - [x] B1 (selection trace) — Map the static `$01-$19`, palette `$12-$18`, dynamic `$00`, and zero-page `$1A` sources and verify NROM/PPUCTRL pattern-table selection. The renderer fidelity portion remains open under B3-B7.
-- [ ] B2. Verify the native PPU command parser against every stream reachable from menu setup lists; test terminators, lengths, PPU address bounds, palette mirroring, and unsupported writes.
+- [x] B2. Verified all 18 static PPU streams and all 7 palette streams, dynamic `$0300` upload, zero-page `$00A1` tape-load path, malformed records, bounds, terminators and palette mirroring with host tests. See validation checkpoint below.
 - [x] B3. Implemented mapper-0 vertical address mirroring plus two-page composition using PPUCTRL base nametable bits and `$2005` scroll; host regressions cover A/B selection and horizontal scroll across the page boundary. Hardware/reference comparison remains D2/D3.
 - [ ] B4. Source scroll/raster path traced (`sub_D0AB`, `sub_D14E`, `sub_D1B3`); implement the two-phase `$0047` NMI update and validate its scanline/OAM timing.
 - [ ] B5. Trace every menu OAM writer and all cursor/decoration sprites, sprite priority, flips, size, scanline limits, and visibility; render all supported source attributes.
