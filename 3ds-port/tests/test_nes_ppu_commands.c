@@ -55,10 +55,40 @@ static int testSourcePaletteStreams(void)
     return 0;
 }
 
+
+static int testVerticalNametableMirroring(void)
+{
+    /* Writes to $2800/$2C00 and $3000 alias the two physical vertical-mirror pages. */
+    const uint8_t stream[] = {
+        0x20,0x00,0x01,0x11,
+        0x24,0x00,0x01,0x22,
+        0x28,0x00,0x01,0x33,
+        0x2C,0x00,0x01,0x44,
+        0x30,0x00,0x01,0x55,
+        0x00
+    };
+    uint8_t ram[NES_PPU_ADDRESS_SPACE], mask[NES_PPU_ADDRESS_SPACE];
+    size_t writes = 0u;
+    memset(ram,0,sizeof(ram)); memset(mask,0,sizeof(mask));
+    if (nesPpuApplyCommandStreamMirrored(stream,sizeof(stream),ram,mask,sizeof(ram),
+                                         &writes,NES_PPU_MIRROR_VERTICAL)!=NES_PPU_COMMAND_OK) return 1;
+    if (writes!=5u || ram[0x2000u]!=0x55u || ram[0x2400u]!=0x44u ||
+        mask[0x2000u]!=1u || mask[0x2400u]!=1u || mask[0x2800u]!=0u) return 2;
+    /* Horizontal mirroring maps both top pages to A and both bottom pages to B. */
+    memset(ram,0,sizeof(ram)); memset(mask,0,sizeof(mask)); writes=0u;
+    if (nesPpuApplyCommandStreamMirrored(stream,sizeof(stream),ram,mask,sizeof(ram),
+                                         &writes,NES_PPU_MIRROR_HORIZONTAL)!=NES_PPU_COMMAND_OK) return 3;
+    if (ram[0x2000u]!=0x33u || ram[0x2400u]!=0x55u) return 4;
+    puts("PASS: mapper nametable mirroring (vertical/horizontal) and $3000 mirror.");
+    return 0;
+}
+
 int main(void)
 {
     int result = testLiteralAndFillCommands();
     if (result != 0) { fprintf(stderr, "PPU command interpreter test failed: %d\n", result); return 1; }
+    result = testVerticalNametableMirroring();
+    if (result != 0) { fprintf(stderr, "Nametable mirroring test failed: %d\\n", result); return 1; }
     result = testSourceNametableStreams();
     if (result != 0) { fprintf(stderr, "Source PPU snapshot test failed: %d\\n", result); return 1; }
     result = testSourcePaletteStreams();
