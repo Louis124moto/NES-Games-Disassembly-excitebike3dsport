@@ -748,6 +748,68 @@ uint8_t nesSubE1F9SelectObjectSprite(uint8_t x,const uint8_t r9c[4],const uint8_
     if(rdc[x]==0u)return (frameFlags&2u)!=0u?0x13u:rac[x];
     return (rdc[x]&0x80u)!=0u?0x15u:0x14u;
 }
+
+/* sub_D1C7: write tile/attribute bytes, then lay out a column-major sprite grid. */
+uint8_t nesSubD1C7BuildOamGrid(uint8_t oam[256], NesSubD1C7OamGridState *state)
+{
+    uint8_t rows, columns, maxIndex = 0u, spriteIndex = 0u, oamOffset = 1u;
+    uint8_t rowCount, columnCount;
+    if (oam == NULL || state == NULL) return 0u;
+    rows = (uint8_t)(state->ram0003_grid >> 4u);
+    columns = (uint8_t)(state->ram0003_grid & 0x0Fu);
+
+    /* Repeated-add multiplication matches the 6502's 8-bit scratch result. */
+    rowCount = rows;
+    while (rowCount != 0u) {
+        maxIndex = (uint8_t)(maxIndex + columns);
+        --rowCount;
+    }
+    state->ram0008_maxIndex = maxIndex;
+
+    /* Tile/attribute pass. X starts at zero; Y starts at OAM byte offset one. */
+    while (spriteIndex != maxIndex) {
+        uint8_t tile;
+        if ((spriteIndex & 1u) == 0u) {
+            const uint8_t marker = (uint8_t)(state->ram000A_markerBits & 1u);
+            state->ram000A_markerBits >>= 1u;
+            if (marker != 0u) {
+                tile = 0xFCu;
+            } else {
+                tile = state->ram0002_tile;
+                state->ram0002_tile = (uint8_t)(state->ram0002_tile + 1u);
+            }
+        } else {
+            tile = state->ram0002_tile;
+            state->ram0002_tile = (uint8_t)(state->ram0002_tile + 1u);
+        }
+        oam[(uint8_t)(state->ram0004_oamBase + oamOffset)] = tile;
+        oam[(uint8_t)(state->ram0004_oamBase + (uint8_t)(oamOffset + 1u))] =
+            state->ram000B_attribute;
+        oamOffset = (uint8_t)(oamOffset + 4u);
+        ++spriteIndex;
+    }
+
+    /* Position pass: each column advances X by eight; each row advances Y by eight. */
+    oamOffset = 0u;
+    columnCount = columns;
+    do {
+        rowCount = rows;
+        state->ram0009_y = state->ram0001_y;
+        do {
+            oam[(uint8_t)(state->ram0004_oamBase + oamOffset)] = state->ram0009_y;
+            state->ram0009_y = (uint8_t)(state->ram0009_y + 8u);
+            oamOffset = (uint8_t)(oamOffset + 3u);
+            oam[(uint8_t)(state->ram0004_oamBase + oamOffset)] = state->ram0000_x;
+            oamOffset = (uint8_t)(oamOffset + 1u);
+            --rowCount;
+        } while (rowCount != 0u);
+        state->ram0000_x = (uint8_t)(state->ram0000_x + 8u);
+        --columnCount;
+    } while (columnCount != 0u);
+
+    return maxIndex;
+}
+
 uint8_t nesSubE1A3PrepareObjectSprite(uint8_t x,uint8_t oamAddress,
     const uint8_t ram0080[4],const uint8_t ram008C[4],const uint8_t ram009C[4],
     const uint8_t ram00BC[4],const uint8_t ram0370[4],const uint8_t ram0036[4],
