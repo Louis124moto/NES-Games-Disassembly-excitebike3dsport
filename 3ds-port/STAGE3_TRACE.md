@@ -16,5 +16,13 @@ Status: **source trace only. No gameplay code is ported yet.** Everything below 
 ## Not yet traced (required before any gameplay is accepted)
 Player-slot establishment (commands 6/`sub_E1A3`/`sub_EC25`/`loc_EC47`, RAM writers of the player object, input via `ram_005C`), every subroutine in the frame handler above, PPU lists $01/$12–$17 contents, `sub_D14E` raster-split wait (sprite-0 hit), track data decoding, opponents, timers, scoring, crashes/collisions.
 
+## Ported so far (2026-11-18) — `source/nes_race_setup.c`, test `tests/test_nes_race_setup.c`
+Translated line by line, host-tested with hand-derived expectations (mutation-checked on the zero-page wrap):
+- cmd 1 (C551), cmd 2 (C869), cmd 4 (C5A3), cmd 5 (C566): complete.
+- cmd 3 (C820): everything after `JSR sub_D13F` (clear $0340-$03EF, fill $0400-$057F, sprite 0, $E8-$EB).
+- cmd 6 (C875): head up to `LSR ram_0078,X` at bra_C8DB, including the `LDA ram_0019,X` with X=$FF reading $0018 (zero-page wrap).
+
+NOT ported: `sub_D13F`/`sub_ECE4` (needs tbl_E6A1 and the $0400 buffer upload via loc_C289), cmd 6 tail from bra_C8DE (`ram_0046` test, `tbl_C158`, `sub_DFA2`, `sub_C522`, `sub_C53A`, `sub_C935`/`sub_DF7F`, `ram_03F8` adjust), PPU lists $12-$17 and $01 contents, and the wiring into `menus.c` (list index 2 still reports "not ported"). The module is not called by the game yet.
+
 ## Next slice
-Port commands 1, 2, 4, 5 (pure data writes) with host tests, then 3 and 6 once `sub_ECE4`, `sub_E1A3` are traced.
+Trace and port `sub_ECE4`+tbl_E6A1, then the cmd 6 tail (`sub_C522`, `sub_C53A`, `sub_C935`, `sub_DF7F`, `sub_DFA2`), then wire list 2 into the setup sequencer; after that `sub_E1A3` and the player object (`ram_00B0`/`ram_00B4` writers).

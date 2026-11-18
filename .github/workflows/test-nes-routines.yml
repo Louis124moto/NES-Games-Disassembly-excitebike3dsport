@@ -33,6 +33,9 @@ on:
       - "3ds-port/include/asset_export.h"
       - "3ds-port/include/third_party/stb_image_write.h"
       - "3ds-port/tests/test_nes_chr_decode.c"
+      - "3ds-port/source/nes_race_setup.c"
+      - "3ds-port/include/nes_race_setup.h"
+      - "3ds-port/tests/test_nes_race_setup.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
@@ -114,6 +117,12 @@ jobs:
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
       - name: Test native CHR exports
         run: ./test_asset_export
+      - name: Compile race setup test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_race_setup.c 3ds-port/tests/test_nes_race_setup.c -o test_nes_race_setup
+
+      - name: Run race setup test
+        run: ./test_nes_race_setup
+
       - name: Compile menu frame-model test
         # menus.c only needs libctru's KEY_* bits; tests/host_stub/3ds.h supplies them on the host.
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include -I3ds-port/tests/host_stub 3ds-port/source/menus.c 3ds-port/source/menu_tape_file.c 3ds-port/source/nes_routines.c 3ds-port/source/nes_active_stream.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/game_state.c 3ds-port/tests/test_menus.c -o test_menus
