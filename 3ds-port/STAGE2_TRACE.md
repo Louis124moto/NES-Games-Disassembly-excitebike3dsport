@@ -314,6 +314,17 @@ Exact commit `630a6a4b77a0c4ec4ef3ec0d75935b95718d0689`: host verification run 4
 
 C2 is complete for the title/selector menu boundary. State 2's setup/race is still outside Stage 2; design-menu branches to state 9/10/12/13 remain under C3.
 
+### Design-menu branch coverage checkpoint
+
+The existing `testDesignConfirm` exercises all six selection values in `ofs_000_C3BD_08`:
+- 0 and 1 -> state `$0A` (race handoff; Stage 3).
+- 2 -> state `$09` (course-design editor; list 5 remains unsupported).
+- 3 -> state `$0C` (save), with the file-backed recorder replacement covered by `testTapeSave`.
+- 4 -> state `$0D` (load), including missing-file, header mismatch, retry/checksum failure and successful return in `testTapeLoad`.
+- 5 -> clear `$0021-$00FF`, return to state `$00`, restore selection 2.
+
+Thus the menu's six-way branch decision and the save/load/title-return paths are covered. The unresolved menu destination is state 9: it enters setup list 5, which is deliberately held by the current sequencer because its object/OAM/PPU dependencies are not integrated. The state-10 race path is a Stage 3 destination, not an unfinished menu cursor branch.
+
 ### `sub_C7DE` input equivalence checkpoint (commit `b2fa4fb21146`)
 
 The native menu input helper now preserves the complete menu-visible side effects of the ASM routine:
