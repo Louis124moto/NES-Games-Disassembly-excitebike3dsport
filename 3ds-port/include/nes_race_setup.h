@@ -41,5 +41,9 @@ void nesRaceSetupC566(NesRaceRam *r);
  * sub_C522, sub_C53A, sub_C935 ...) is NOT ported.
  */
 void nesRaceSetupC875Head(NesRaceRam *r);
+/* sub_ECE4: build the two dynamic PPU command buffers for X = 0, 4, or 8.
+ * Returns 0 for an invalid table offset. PPU execution at loc_C289 is separate.
+ */
+int nesRaceSetupECE4(NesRaceRam *r, unsigned int tableOffset);
 
 #endif
