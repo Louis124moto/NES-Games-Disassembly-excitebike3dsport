@@ -103,6 +103,7 @@ static int testTitleNavigation(void)
     menusNmiFrame(s, K_UP, 0u);
     CHECK(s->menu_selection == 1u, 35);
     /* Title entry 1 confirms into the course selector and preserves the selected title mode. */
+    menusNmiFrame(s, 0u, 0u); /* release clears the source repeat guard */
     menusNmiFrame(s, K_START, K_START);
     CHECK(s->menu_asm_state == 1u && s->menu_ram03F2 == 1u, 37);
     /* cursor X/tile/attribute stay as written by sub_C409 */
