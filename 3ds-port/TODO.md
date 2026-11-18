@@ -64,9 +64,11 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Run host tests, exact-commit 3DS build, and hardware checks; record evidence.
 - [ ] Accept Stage 2 only after the entire menu path in scope matches the source; do not proceed to Course 1 before acceptance.
 
-#### Stage 3 — First course / first race (STARTED 2026-11-18 — trace only, nothing playable; see 3ds-port/STAGE3_TRACE.md)
+#### Stage 3 — First course / first race (STARTED 2026-11-18 — source trace and isolated setup helpers; nothing playable; see 3ds-port/STAGE3_TRACE.md)
 
-- [ ] Trace the original first-course entry and all dependencies before integrating gameplay.
+- [x] Trace the state-2 entry and six-command setup-list order; see `3ds-port/STAGE3_TRACE.md`.
+- [x] Trace `sub_ECE4` and `tbl_E6A1` for the three `sub_D13F` calls (X = `$00/$04/$08`); the dynamic PPU upload execution at `loc_C289/sub_D3C1` remains unported.
+- [ ] Integrate the `sub_ECE4` builder into a source-faithful `sub_D13F` model with the three ordered PPU uploads; do not mark command 3 complete before the PPU effects are represented.
 - [ ] Establish the player slot through source-confirmed initialization, RAM writers, input path, and update callers; never infer it from slot number.
 - [ ] Reproduce course/terrain data and rendering, opponent behavior, race timing, start/countdown, scoring, and state transitions as source-confirmed.
 - [ ] Translate and verify the actual player motorcycle path: acceleration, braking, speed/gear behavior where applicable, overheating/cooling, jumping, posture, landing, crashes, collisions, and recovery.
@@ -152,7 +154,7 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
 | Latest host routine test execution | **Passed** in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`), including the new CBA3 regression vector and the existing menu routine suite. |
 | Latest completed 3DS build | **Passed** in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`). Note: `nes_routines.c` remains excluded from the active runtime target, so this verifies the homebrew scaffold/build, not gameplay integration. |
-| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Strict sequential gates: Stage 1 extractor → Stage 2 original menu → Stage 3 first race → subsequent original game flow. Later stages stay blocked until current-stage acceptance. |
+| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Stage 1 and Stage 2 were accepted by owner decision with explicit verification debt; Stage 3 is active. No playable race or full-game fidelity is claimed. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
@@ -885,3 +887,15 @@ Still open (Stage 2 is NOT complete):
 - [x] Commit `8707ef5`: report a missing $1000 CHR pattern table or PPU nametable-render error on the bottom diagnostic screen rather than silently falling back to the textual menu trace.
 - [ ] Retest the 4:3 viewport and new PPU failure diagnostics on physical hardware. The 3DS build passed for `2bc8d15`; the verification workflow for `8707ef5` is pending at the time of this note.
 - [ ] Obtain a hardware capture of the title menu and compare it with the original NES image before claiming the menu boxes/artwork are fixed.
+
+
+## Stage 3 batch — sub_ECE4 dynamic PPU buffer builder — 2026-11-18
+
+- [x] Inspect `sub_ECE4` at CPU `$ECE4` / ROM `$002CF4` and `tbl_E6A1` at CPU `$E6A1` / ROM `$0026B1`.
+- [x] Translate the four-byte table copy and both dynamic command payload builders into `nesRaceSetupECE4`.
+- [x] Preserve the 6502 absolute-indexed page-crossing writes to `$0502` and `$0525` when X wraps to `$FF`.
+- [x] Add regression vectors for all three table offsets, payload bytes, headers, terminator, pointer, invalid offset, and untouched guard bytes.
+- [ ] Run the race setup host test and full host workflow on the resulting commit; record CI run and SHA.
+- [ ] Build the 3DS target on the same revision.
+- [ ] Integrate the three `sub_D13F` calls and the `loc_C289/sub_D3C1` PPU command execution in exact source order. Until then, `sub_ECE4` is an isolated buffer-builder translation, not a complete PPU upload.
+- [ ] Continue with the `C875` tail only after the command-3 PPU path has been modeled; then integrate state-2 list index 2 into the setup sequencer.
