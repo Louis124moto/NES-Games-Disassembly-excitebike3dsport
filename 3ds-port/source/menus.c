@@ -296,7 +296,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         state->menu_action_x = nesSubC7DEMenuInput(
             nesButtons, 3u, &state->menu_selection,
             &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed);
+            &state->menu_timer31, &changed, &state->menu_ram00FF);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorY[3] = {0x80u, 0x90u, 0xA0u};
