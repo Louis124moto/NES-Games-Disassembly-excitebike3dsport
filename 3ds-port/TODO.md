@@ -200,9 +200,11 @@ The completed/in-progress module lists below are historical implementation track
 - [ ] Complete all menu setup/dispatch states and transitive routine dependencies before claiming faithful menu navigation.
 - [ ] Run host regressions and a clean 3DSX build on this integration revision; runtime wiring is not yet build-verified in this commit.
 
-## Immediate priority — finish the complete menu, then Course 1 only
+## Historical planning snapshot — 2026-10-21 (superseded by the controlling 2026-11-18 stage decisions above)
 
-**Latest evidence:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
+This section records the earlier menu-first plan. Stage 1 and Stage 2 were subsequently accepted by owner decision as documented at the top of this file, and Stage 3 is now active. Use the Stage 3 checklist and `3ds-port/STAGE3_TRACE.md` for current work; the open menu/artwork items below remain verification debt, not a reason to invent race behavior or skip the current Stage 3 dependencies.
+
+**Latest evidence at the time of this historical snapshot:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
 
 **Execution order is mandatory:** do not begin the course implementation until the menu has passed its end-to-end acceptance gate. Do not implement courses 2+ in parallel with Course 1.
 
