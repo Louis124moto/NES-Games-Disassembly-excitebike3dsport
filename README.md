@@ -39,7 +39,7 @@ A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excit
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-> **Current status (2026-11-18): Stage 3 source-trace and isolated setup-translation work; not a playable faithful port.** Stage 1 and Stage 2 were accepted by owner decision with documented verification debt. The New 3DS owner report confirms the extractor atlas is sharp and the menu responds to controls, but the original menu artwork is still incorrect. Stage 3 has no playable race yet. The latest `sub_ECE4` buffer-builder code and regression vectors are committed, but CI execution and the matching 3DS build are pending. No complete race or full-game fidelity result is claimed.
+> **Current status (2026-11-18): Stage 2 original menu reopened and in progress; Stage 3 is blocked.** Stage 1 remains owner-accepted with documented verification debt. The native menu responds to controls according to the owner report, but its original artwork/layout and complete menu flow are not yet faithfully reproduced. Stage 2 has not passed hardware/reference comparison and must be completed before further Stage 3 implementation. No playable race or full-game fidelity result is claimed.
 
 ## Project goals
 
@@ -58,8 +58,8 @@ The original NES disassembly is the behavioral reference. Its source files must 
 |---|---|
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
-| Stage 2 — original menu | Accepted by owner decision on 2026-11-18; owner reports controls work on New 3DS, but authentic boxes/artwork and NES capture comparison remain open. |
-| Stage 3 — first race | Started 2026-11-18. State-2 setup trace and isolated helper translations exist; no playable race or player physics implementation is claimed. |
+| Stage 2 — original menu | REOPENED / IN PROGRESS (2026-11-18); input/state paths are partial, original artwork/layout and complete flow remain unverified. Stage 3 blocked. |
+| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
 | Latest code batch | `nesRaceSetupECE4` builds the source-derived dynamic PPU command buffers for table offsets 0, 4, and 8, including the original page-crossing writes. |
 | Latest host test / 3DS build | Pending for the new `sub_ECE4` batch; do not infer a pass from earlier CI runs. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
@@ -73,7 +73,7 @@ A function definition, matching name/address, passing unit test, successful buil
 ### Extractor and original menu
 
 - Stage 1 was accepted by owner decision on 2026-11-17. Its remaining source-audit, edge-case, export, and reproducibility items remain follow-up debt; this is not a claim that every extractor criterion has been independently verified.
-- Stage 2 was accepted by owner decision on 2026-11-18 without a hardware/NES capture comparison. The owner subsequently confirmed that the native menu starts and responds to controls on a physical New Nintendo 3DS. The original menu boxes/artwork are still not reproduced correctly.
+- Stage 2 was previously marked accepted prematurely and is now reopened at the owner's request (2026-11-18). The owner report says the native menu responds to controls on New 3DS, but original boxes/artwork and complete menu flow are not faithfully reproduced. See `3ds-port/STAGE2_TRACE.md`; Stage 3 is blocked.
 - Commit `2bc8d15` added a centered 4:3 viewport and full OAM/scroll redraw tracking. Commit `8707ef5` added explicit PPU render-failure diagnostics. The viewport/diagnostic changes still need a fresh hardware retest and a title-menu capture comparison.
 - Do not replace missing source-confirmed menu art with invented rectangles, labels, or placeholder graphics.
 
@@ -196,13 +196,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 
 ## Current next priorities
 
-The controlling Stage 3 work order is in `3ds-port/TODO.md` and `3ds-port/STAGE3_TRACE.md`:
-
-1. Complete the source-faithful `sub_D13F` path by integrating the three `sub_ECE4` buffer builds with the `loc_C289/sub_D3C1` dynamic PPU uploads.
-2. Continue the remaining C875 command tail and its traced dependencies.
-3. Integrate state-2 setup list index 2 into the source-ordered setup sequencer.
-4. Establish player-slot identity from initialization, RAM writers, and update callers before implementing any player physics.
-5. Keep Stage 3 in progress until a complete first-race scenario is playable and compared with the original NES behavior. Do not substitute placeholder physics or skip unresolved PPU/race dependencies.
+Stage 2 is the active and only implementation priority. Follow `3ds-port/TODO.md` and `3ds-port/STAGE2_TRACE.md`: finish the original menu state/command trace, complete source-derived PPU/OAM/scroll rendering, reconstruct authentic menu artwork and transitions, and validate against the original NES. Stage 3 work in `3ds-port/STAGE3_TRACE.md` is parked until Stage 2 is accepted.
 
 Stage 2's authentic menu artwork and hardware/reference comparison remain explicit follow-up debt; no complete menu fidelity claim is made.
  
