@@ -199,7 +199,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
 - [x] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes (see the transition-dispatcher trace below).
 - [x] A4. Classify state-$09 as the interactive course-design/editor loop, distinct from race states `$02/$05/$0A`; trace its entry, per-frame path and B-button return to state `$08`. Its setup list 5/editor implementation remains a separate C3 handoff dependency.
-- [ ] A5. Trace each reachable setup command's full transitive calls and RAM/PPU/APU side effects; include `$30-$3D` timers and one-command-per-NMI sequencing.
+- [ ] A5. Finish transitive traces for all reachable setup commands. List 5's six commands and C5C2 state writes are now inventoried; `sub_E1A3`, `sub_EC25`, `loc_EC47`, C820 dynamic PPU uploads and remaining list-3 dependencies still need full traces.
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
 
 ### B. PPU, OAM, and visual reconstruction
@@ -277,6 +277,30 @@ Source-backed observations:
 - `loc_D19B` waits for PPU vblank, updates PPUCTRL and scroll registers, and returns to the frame loop.
 
 This is demonstrably a live per-frame object/scroll update path, not a static menu draw routine. The design-menu selection value 2 enters state $09 (via `$C3D2`). However, the available excerpts do not prove whether state $09 is a track editor, a design preview, or a gameplay mode. **Do not map it to a guessed screen or silently treat it as a completed menu.** A4 remains open until its entry setup, state-specific table selection, object meaning, and exit conditions are traced end-to-end.
+
+### Setup list 5: state-$09 course-design editor initialization
+
+List 5 (`off_C064_05`) is selected for state `$09`. It is not currently accepted by `menusRunSetupSequence`; the native sequencer stops at the unsupported-list guard. Its six commands are:
+
+| Index | Routine | Source effects |
+|---:|---|---|
+| 0 | `ofs_001_C551_05_01` | For state `$09 >= 8`, posts `ram_0045=$12` (palette stream); unlike states below 8, it does not add `ram_0043`. |
+| 1 | `ofs_001_C869_05_02` | Clears CPU RAM `$004D-$00EF`. |
+| 2 | `ofs_001_C820_05_03` | Calls `sub_D13F` (three `sub_ECE4` calls at X=0,4,8); sets dynamic PPU pointer `$0000=$0300`, posts `ram_0045=$01`, clears `$0340-$03EF`, fills `$0400-$047F=$3B` and `$0480-$057F/$0500-$057F=$3D`, initializes sprite 0 as Y=`$BF`, tile=`$FF`, X=`$F7`, and sets `$00E8-$00EB` to `$3F,$1F,$25,$0A`. Dynamic PPU upload is source-faithful only after the complete `sub_D13F/sub_ECE4/sub_D3C1` path is integrated; see `STAGE3_TRACE.md`. |
+| 3 | `ofs_001_C5A3_05_04` | Posts `ram_0045=$17`. |
+| 4 | `ofs_001_C562_05_05` | Posts `ram_0045=$05`. |
+| 5 | `ofs_001_C5C2_05_06` | Initializes the editor's object/course state and initial OAM. |
+
+Command 5 (`$C5C2-$C61E`) details:
+
+- Sets `ram_00B7=1`; calls `sub_C621`, which copies all 256 bytes `$06E0-$07DF` to `$05E0-$06DF` using the 8-bit X wrap.
+- Clears `ram_00BC+1`, `ram_00BC+2`, `ram_00C4`, `ram_00C0`, `ram_0049`, and `ram_00C0+2`; then sets `ram_05E0=1`.
+- Sets object fields `ram_00AC=6`, `ram_008C=$A0`, `ram_0080=$10`; sets OAM write pointer `$0004=4`, `$000B=0`, and calls `sub_E1A3`.
+- Copies `tbl_C178[0..7]` to OAM `$0228-$022F`.
+- Initializes `ram_00B0-$00B3` to `[$21,$05,$05,$03]`, sets `ram_0064=8`, `ram_00E0=9`, `ram_00B4=$7A`.
+- Increments `ram_0040` and `ram_0047`, calls `sub_EC25` with A=`$D0`, then jumps to `loc_EC47`.
+
+**Unresolved dependencies before list 5 can be ported:** full `sub_E1A3` OAM/object initialization, `sub_EC25` sprite write semantics, `loc_EC47` continuation, the state-9 object arrays and the PPU dynamic list upload. Do not replace these with a static placeholder bike or approximate object state.
 
 ### State $09 classification: course-design/editor loop
 
