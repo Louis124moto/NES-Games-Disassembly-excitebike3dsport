@@ -71,6 +71,7 @@ typedef struct {
     uint8_t menu_ram03F8;
     uint8_t menu_ram0045;
     uint8_t menu_ram00FB;
+    uint8_t menu_ram00FF; /* set by sub_C7DE on Up/Down/Select, consumed by later state logic */
 } GameState;
 
 void gameStateReset(GameState *state);
