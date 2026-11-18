@@ -1697,6 +1697,7 @@ uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
     }
 
     *selection = y;
+    if (*selectionChanged != 0u) *ram00FF = 1u; /* bra_C817; Start jumps directly to bra_C81B */
     *repeatGuard = (uint8_t)(*repeatGuard + 1u);
     return ((buttonPress & 0x20u) != 0u ||
             (buttonPress & 0x04u) != 0u ||
