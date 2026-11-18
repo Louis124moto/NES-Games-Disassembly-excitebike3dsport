@@ -72,7 +72,7 @@ static int testVerticalNametableMirroring(void)
     memset(ram,0,sizeof(ram)); memset(mask,0,sizeof(mask));
     if (nesPpuApplyCommandStreamMirrored(stream,sizeof(stream),ram,mask,sizeof(ram),
                                          &writes,NES_PPU_MIRROR_VERTICAL)!=NES_PPU_COMMAND_OK) return 1;
-    if (writes!=5u || ram[0x2000u]!=0x55u || ram[0x2400u]!=0x44u ||
+    if (writes!=5u || ram[0x2000u]!=0x33u || ram[0x2400u]!=0x44u ||
         mask[0x2000u]!=1u || mask[0x2400u]!=1u || mask[0x2800u]!=0u) return 2;
     /* Horizontal mirroring maps both top pages to A and both bottom pages to B. */
     memset(ram,0,sizeof(ram)); memset(mask,0,sizeof(mask)); writes=0u;
