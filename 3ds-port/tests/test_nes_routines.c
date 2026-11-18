@@ -975,6 +975,7 @@ int main(void)
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
+    if (testSubD1C7BuildOamGrid() != 0) { fputs("FAIL: sub_D1C7 OAM grid\n", stderr); return 1; }
     if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: comparison/flag boundary audit\n",stderr); return 1; }
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\n", stderr); return 1; }
