@@ -257,11 +257,18 @@ static int rendererDrawPpuBackground(const GameState *state)
                                          &s_spritePixels);
 
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-    /* NES background is 256 pixels wide; center it in the 400-pixel 3DS display. */
+    /*
+     * Keep the original 4:3 television presentation on the New 3DS 5:3 LCD.
+     * The 256x240 NES raster is expanded horizontally to 320x240 (nearest
+     * neighbour, 5:4) and centered with 40-pixel pillarboxes. Never stretch
+     * the game to the full 400-pixel LCD width.
+     */
     for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
-        for (x = 0u; x < NES_PPU_WIDTH; ++x) {
-            const size_t src = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
-            const size_t dst = topFramebufferOffset(x + 72u, y);
+        unsigned int dstX;
+        for (dstX = 0u; dstX < 320u; ++dstX) {
+            const unsigned int srcX = (dstX * NES_PPU_WIDTH) / 320u;
+            const size_t src = ((size_t)y * NES_PPU_WIDTH + srcX) * 3u;
+            const size_t dst = topFramebufferOffset(dstX + 40u, y);
             framebuffer[dst] = s_ppuRgb[src + 2u];
             framebuffer[dst + 1u] = s_ppuRgb[src + 1u];
             framebuffer[dst + 2u] = s_ppuRgb[src];
@@ -357,15 +364,15 @@ static void rendererDrawChrAtlas(void)
                                   s_sourcePpuRgb, sizeof(s_sourcePpuRgb)) != NES_PPU_RENDER_OK) {
             memset(s_unknownTiles, 1, sizeof(s_unknownTiles));
         }
-        /* Repaint the side bands so a view switch leaves no stale pixels. */
+        /* Repaint the 4:3 viewport; the 40-pixel side bands stay black. */
         for (pixelY = 0u; pixelY < 240u; ++pixelY) {
-            for (bandX = 0u; bandX < 72u; ++bandX) {
+            for (bandX = 0u; bandX < 40u; ++bandX) {
                 const size_t bandOffset = topFramebufferOffset(bandX, (unsigned int)pixelY);
                 framebuffer[bandOffset] = 0u;
                 framebuffer[bandOffset + 1u] = 0u;
                 framebuffer[bandOffset + 2u] = 0u;
             }
-            for (bandX = 328u; bandX < 400u; ++bandX) {
+            for (bandX = 360u; bandX < 400u; ++bandX) {
                 const size_t bandOffset = topFramebufferOffset(bandX, (unsigned int)pixelY);
                 framebuffer[bandOffset] = 0u;
                 framebuffer[bandOffset + 1u] = 0u;
@@ -373,12 +380,13 @@ static void rendererDrawChrAtlas(void)
             }
         }
         for (pixelY = 0u; pixelY < 240u; ++pixelY) {
-            for (pixelX = 0u; pixelX < 256u; ++pixelX) {
-                const size_t tileIndex = (pixelY / 8u) * 32u + pixelX / 8u;
-                const size_t sourceOffset = (pixelY * 256u + pixelX) * 3u;
-                const size_t destOffset = topFramebufferOffset((unsigned int)pixelX + 72u, (unsigned int)pixelY);
+            for (pixelX = 0u; pixelX < 320u; ++pixelX) {
+                const unsigned int sourceX = ((unsigned int)pixelX * 256u) / 320u;
+                const size_t tileIndex = (pixelY / 8u) * 32u + sourceX / 8u;
+                const size_t sourceOffset = (pixelY * 256u + sourceX) * 3u;
+                const size_t destOffset = topFramebufferOffset((unsigned int)pixelX + 40u, (unsigned int)pixelY);
                 if (s_unknownTiles[tileIndex] != 0u) {
-                    const uint8_t shade = ((pixelX / 2u + pixelY / 2u) & 1u) != 0u ? 192u : 64u;
+                    const uint8_t shade = ((sourceX / 2u + pixelY / 2u) & 1u) != 0u ? 192u : 64u;
                     framebuffer[destOffset] = shade;
                     framebuffer[destOffset + 1u] = shade;
                     framebuffer[destOffset + 2u] = shade;
@@ -571,10 +579,13 @@ void rendererDraw(const GameState *state)
         static uint8_t s_lastRevision = 0u;
         static uint8_t s_lastMask = 0u;
         static uint8_t s_lastCtrl = 0u;
-        static uint8_t s_lastSprite[4];
+        static uint8_t s_lastScrollX = 0u;
+        static uint8_t s_lastScrollY = 0u;
+        static uint8_t s_lastOam[256];
         if (s_menuDrawn == 0 ||
             state->menu_ppu_mask != s_lastMask || state->menu_ppu_ctrl != s_lastCtrl ||
-            memcmp(s_lastSprite, state->menu_oam, sizeof(s_lastSprite)) != 0 || state->menu_asm_state != s_lastAsmState ||
+            state->menu_scroll_x != s_lastScrollX || state->menu_scroll_y != s_lastScrollY ||
+            memcmp(s_lastOam, state->menu_oam, sizeof(s_lastOam)) != 0 || state->menu_asm_state != s_lastAsmState ||
             state->menu_selection != s_lastSelection ||
             state->menu_ram0045 != s_lastRam0045 ||
             state->menu_ppu_background_ready != s_lastPpuReady ||
@@ -587,7 +598,9 @@ void rendererDraw(const GameState *state)
             s_lastRevision = state->menu_ppu_revision;
             s_lastMask = state->menu_ppu_mask;
             s_lastCtrl = state->menu_ppu_ctrl;
-            memcpy(s_lastSprite, state->menu_oam, sizeof(s_lastSprite));
+            s_lastScrollX = state->menu_scroll_x;
+            s_lastScrollY = state->menu_scroll_y;
+            memcpy(s_lastOam, state->menu_oam, sizeof(s_lastOam));
             if (state->menu_ppu_background_ready == 0u && rendererDrawBackdrop(state)) {
                 /* $2001 has rendering off (setup frames): the PPU shows only the backdrop. */
                 consoleSelect(&s_bottomConsole);
