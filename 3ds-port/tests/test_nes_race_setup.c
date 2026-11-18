@@ -65,6 +65,40 @@ int main(void)
     CHECK(r.zp[0xB8] == 0x0Eu && r.zp[0xB9] == 0u && r.zp[0x64] == 8u && r.zp[0x65] == 0u, 51);
     CHECK(r.zp[0x78] == 6u && r.zp[0x7A] == 0u, 52);  /* 0078+2 was 0 -> stays 0 */
 
-    puts("PASS: race setup list 2 commands 1,2,3(tail),4,5,6(head).");
+
+    /* sub_ECE4 table variants used by sub_D13F (X = 0, 4, 8). */
+    {
+        static const uint8_t table[3][4] = {
+            {0x22u, 0x64u, 0x62u, 0xC0u},
+            {0x22u, 0x74u, 0x63u, 0xE0u},
+            {0x21u, 0x83u, 0xFCu, 0xC0u}
+        };
+        unsigned int t, j;
+        for (t = 0u; t < 3u; ++t) {
+            memset(&r, 0xAA, sizeof(r));
+            CHECK(nesRaceSetupECE4(&r, t * 4u) == 1, 60);
+            CHECK(r.zp[0] == 0u && r.zp[1] == 4u, 61);
+            CHECK(r.zp[2] == table[t][3] && r.zp[3] == table[t][2] &&
+                  r.zp[4] == table[t][1] && r.zp[5] == table[t][0], 62);
+            CHECK(r.pg04[0] == table[t][0] && r.pg04[1] == table[t][3] &&
+                  r.pg04[2] == 0x20u, 63);
+            CHECK(r.pg04[0x23] == (uint8_t)(table[t][0] ^ 0x04u) &&
+                  r.pg04[0x24] == table[t][3] && r.pg04[0x25] == 0x20u, 64);
+            for (j = 0u; j < 32u; ++j) {
+                const uint8_t expected = (j & 1u) == 0u ? table[t][2] : table[t][1];
+                CHECK(r.pg04[0x03u + j] == expected, 65);
+                CHECK(r.pg04[0x26u + j] == expected, 66);
+            }
+            CHECK(r.pg04[0x46] == 0u && r.pg04[0x47] == 0xAAu, 67);
+            /* Absolute indexed addressing crosses into page $05 at X=$FF. */
+            CHECK(r.pg05[0x02] == table[t][1] && r.pg05[0x25] == table[t][1], 68);
+            CHECK(r.pg05[0x03] == 0xAAu && r.pg05[0x26] == 0xAAu, 69);
+        }
+        memset(&r, 0x5A, sizeof(r));
+        CHECK(nesRaceSetupECE4(&r, 1u) == 0, 70);
+        CHECK(r.zp[0] == 0x5Au && r.pg04[0] == 0x5Au, 71);
+    }
+
+    puts("PASS: race setup helpers and sub_ECE4 dynamic buffer generation.");
     return 0;
 }
