@@ -153,6 +153,22 @@ Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
 
 Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
 
+### Two-nametable renderer implementation checkpoint (commit `76abf59affc0734c`)
+
+Implemented and integrated:
+
+- Added `nesPpuRenderMirroredNametablesOpaque()` for the two physical 1 KiB nametables of the vertical-mirrored Excitebike cartridge.
+- Both pages are rendered with their own tile bytes and attribute tables; the output compositor selects page A/B from PPUCTRL base bits and horizontal scroll, and wraps vertical position according to the vertical-mirroring layout.
+- The live menu renderer now uses this compositor instead of always rendering page A.
+- Sprite composition receives the final composited background-opacity map, so behind-background sprite priority uses the correct page/scroll result.
+- Added host tests for base page A, base page B, horizontal scroll crossing from A to B, and the lower logical row under vertical mirroring.
+
+Exact commit `76abf59affc0734c757e0a38c6c3f46e5b11b358`:
+- `Verify NES routine translations`: success, run 44356838865.
+- `Build Nintendo 3DS homebrew`: success, run 44356838616.
+
+This completes the B3 source-backed two-page composition implementation and its automated validation. It does **not** complete B4: the separate `ram_0047` mid-frame split/raster path and its timed OAM updates are still absent. No physical New 3DS visual comparison was performed.
+
 ### Menu scroll/raster path audit
 
 - `sub_C318` performs the menu setup prelude: hides sprites, clears nametable/attribute memory, resets scroll through `sub_D1A9`, clears `ram_scroll_X`, `ram_0050_scroll_X`, `ram_scroll_Y`, and `ram_0051_scroll_Y`, then sets PPUCTRL to `$10`.
@@ -178,7 +194,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 ### B. PPU, OAM, and visual reconstruction
 - [x] B1 (selection trace) — Map the static `$01-$19`, palette `$12-$18`, dynamic `$00`, and zero-page `$1A` sources and verify NROM/PPUCTRL pattern-table selection. The renderer fidelity portion remains open under B3-B7.
 - [ ] B2. Verify the native PPU command parser against every stream reachable from menu setup lists; test terminators, lengths, PPU address bounds, palette mirroring, and unsupported writes.
-- [ ] B3. Address mirroring is implemented and CI-tested (commit `79a3f28136bc`); still render both physical nametables using the selected base nametable and scroll, instead of only page A.
+- [x] B3. Implemented mapper-0 vertical address mirroring plus two-page composition using PPUCTRL base nametable bits and `$2005` scroll; host regressions cover A/B selection and horizontal scroll across the page boundary. Hardware/reference comparison remains D2/D3.
 - [ ] B4. Source scroll/raster path traced (`sub_D0AB`, `sub_D14E`, `sub_D1B3`); implement the two-phase `$0047` NMI update and validate its scanline/OAM timing.
 - [ ] B5. Trace every menu OAM writer and all cursor/decoration sprites, sprite priority, flips, size, scanline limits, and visibility; render all supported source attributes.
 - [ ] B6. Reconstruct authentic title, selector, design, save/load, and transition artwork from actual CHR + PPU writes; remove diagnostic text/placeholder rendering from the normal menu path.
