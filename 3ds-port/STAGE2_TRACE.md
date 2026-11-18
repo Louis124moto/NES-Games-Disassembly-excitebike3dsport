@@ -302,6 +302,19 @@ Command 5 (`$C5C2-$C61E`) details:
 
 **Unresolved dependencies before list 5 can be ported:** full `sub_E1A3` OAM/object initialization, `sub_EC25` sprite write semantics, `loc_EC47` continuation, the state-9 object arrays and the PPU dynamic list upload. Do not replace these with a static placeholder bike or approximate object state.
 
+### List-5 object/OAM dependency trace (source audit)
+
+The final editor setup command is more than a few OAM constants:
+
+- `sub_E1A3` reads object fields `ram_0080,X` and `ram_008C,X`, calls `sub_E1F9` to derive an object-animation/table index, looks up `tbl_D892` and `tbl_D8A9`, then calls `sub_D1C7` to write OAM data. Depending on the returned `ram_000E_temp` mode it writes a row of descending tile IDs through the indirect OAM pointer or writes the special `$AE` marker at offset `$15`.
+- `sub_E1F9` begins by clearing `ram_000E_temp` and `ram_039F`, then branches on `ram_009C_obj,X`, `ram_00BC_obj,X`, `ram_0370_obj,X`, `ram_0036_timer,X`, `ram_0052_track_finished_flag`, and `ram_00AC_obj,X`. It has additional object-state and mode branches beyond the initial excerpt; it must be fully traced before porting `sub_E1A3`.
+- `sub_D1C7` is the shared indirect OAM writer. It derives an OAM destination from `ram_0003_t02`, `ram_0004_t01_data_oam_address`, and loop counts; it can write multiple 4-byte OAM records and special marker values. A direct fixed sprite copy is not equivalent.
+- `sub_EC25` writes OAM slot `$0230-$0233`: Y=A, tile=`$CA`, attributes=0, X=`tbl_E6F6[ram_00C2+2]`.
+- `loc_EC47` writes OAM slot `$0234-$0237`: Y=`$CF`, tile=`ram_05E0`, attributes=0, X=`$E4`.
+- `sub_EC3B` copies the 256-byte editor buffer `$05E0-$06DF` back to `$06E0-$07DF` using X wrap. This is the editor's commit/save-back path when leaving state 9.
+
+This narrows the work but does not close A5: `sub_E1F9` and `sub_D1C7` still require complete instruction-level traces, and the editor's dynamic PPU/scroll split is not yet implemented.
+
 ### State $09 classification: course-design/editor loop
 
 The design menu state `$08` has six choices. The state handler at `$C3BD-$C3E7` routes:
