@@ -62,7 +62,8 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [ ] A4 — Fully classify state $09 and trace its entry/setup/exit call graph; it currently runs a live object/scroll frame path and is not proven to be a menu.
 - [ ] A5 — Trace every reachable setup command's transitive calls and PPU/APU/RAM side effects, including timers and NMI ordering.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
-- [ ] B1/B2 — Verify every menu PPU stream (static, dynamic, zero-page and palette) against source parser semantics, including bounds/terminators/mirroring.
+- [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
+- [ ] B2 — Verify every reachable menu PPU stream against parser semantics, including bounds/terminators/palette mirroring and unsupported writes.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
 - [ ] B5/B6/B7 — Trace and render every menu OAM sprite and reconstruct authentic screens from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [ ] C1/C2/C3/C4/C5 — Complete source-faithful input, all design choices, shared transitions, save/load edge cases and return paths.
