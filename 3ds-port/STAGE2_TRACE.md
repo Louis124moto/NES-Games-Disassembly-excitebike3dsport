@@ -34,6 +34,89 @@ This document is based on the unmodified `Excitebike/bank_FF.asm`. The native me
 
 The state names above are address/table observations, not claims that every associated screen or transition is complete. The exact menu scope must include every user-visible menu and return path, while race handlers remain Stage 3.
 
+## Full state and setup-list inventory (source audit pass 1)
+
+The state dispatcher and setup-list selector are two distinct layers. The following is the exact mapping read from `tbl_C000` and `tbl_C01C_index` in the original ASM:
+
+| `ram_0041` | Handler at `tbl_C000` | Setup list (`tbl_C01C_index`) | Stage 2 classification |
+|---:|---|---:|---|
+| `$00` | `ofs_000_C346_00` | 0 | Title menu; in scope |
+| `$01` | `ofs_000_C395_01` | 1 | Course/track selector; in scope |
+| `$02` | `ofs_000_C99A_02` | 2 | Race runtime; Stage 3, out of Stage 2 |
+| `$03` | `ofs_000_CB2C_03` | 3 | Shared transition dispatcher; in scope only for menu transitions |
+| `$04` | `ofs_000_C465_04` | 4 | Shared timed transition; in scope |
+| `$05` | `ofs_000_C99A_05` | 2 | Race runtime; Stage 3 |
+| `$06` | `ofs_000_CB2C_06` | 3 | Same shared transition dispatcher as state 3 |
+| `$07` | `ofs_000_C465_07` | 4 | Same shared timed transition as state 4 |
+| `$08` | `ofs_000_C3BD_08` | 6 | Design/options menu; in scope |
+| `$09` | `ofs_000_C97C_09` | 5 | Calls game/race update routines; exact role/entry/exit still to be established |
+| `$0A` | `ofs_000_C99A_0A` | 2 | Race runtime; Stage 3 |
+| `$0B` | `ofs_000_CB2C_0B` | 3 | Same shared transition dispatcher as states 3/6 |
+| `$0C` | `ofs_000_C43D_0C` | 7 | Tape save menu/transfer; in scope (3DS file backend is a platform replacement) |
+| `$0D` | `ofs_000_C41C_0D` | 8 | Tape load menu/transfer; in scope (3DS file backend is a platform replacement) |
+
+### Setup-list contents from `tbl_C02A_lo`, `tbl_C033_hi`
+
+| List | Source table | Ordered commands |
+|---:|---|---|
+| 0 | `off_C03C_00` | `ofs_001_C2BD_00_01`, `ofs_001_C514_00_02` |
+| 1 | `off_C040_01` | `ofs_001_C55E_01_01`, `ofs_001_C3F3_01_02`, `ofs_001_C514_01_03` |
+| 2 | `off_C046_02` | `ofs_001_C551_02_01`, `ofs_001_C869_02_02`, `ofs_001_C820_02_03`, `ofs_001_C5A3_02_04`, `ofs_001_C566_02_05`, `ofs_001_C875_02_06` |
+| 3 | `off_C052_03` | `ofs_001_C55E_03_01`, `ofs_001_C56A_03_02`, `ofs_001_C455_03_03`, `ofs_001_C5A7_03_04`, `ofs_001_C485_03_05` |
+| 4 | `off_C05C_04` | `ofs_001_C55E_04_01`, `ofs_001_C571_04_02`, `ofs_001_C5AC_04_03`, `ofs_001_C514_04_04` |
+| 5 | `off_C064_05` | `ofs_001_C551_05_01`, `ofs_001_C869_05_02`, `ofs_001_C820_05_03`, `ofs_001_C5A3_05_04`, `ofs_001_C562_05_05`, `ofs_001_C5C2_05_06` |
+| 6 | `off_C070_06` | `ofs_001_C55E_06_01`, `ofs_001_C575_06_02`, `ofs_001_C514_06_03` |
+| 7 | `off_C07A_07` | `ofs_001_C869_07_01`, `ofs_001_C586_07_02`, `ofs_001_C518_07_03` |
+| 8 | `off_C076_08` | `ofs_001_C582_08_01`, `ofs_001_C518_08_02` |
+
+Lists 2 and 5 are assigned to the three race states. Lists 3, 4, 7 and 8 are not interchangeable with ordinary title/menu lists: their side effects and indirect transitions must be traced before calling them complete.
+
+### Proven transition behavior
+
+- Title state `$00`: `sub_C7DE` returns the selected entry in Y. The three entries branch to state `$01` (course selector) or state `$08` (design menu); the title's idle timer path enters state `$02` (race path). The current C model has a source-derived title/selector/design navigation path, but it does not yet implement every downstream transition.
+- Selector state `$01`: LEFT/RIGHT are remapped to the vertical selector input, and confirmation stores `ram_0042` into `ram_0043`, increments `ram_0041` to state `$02`, then resets the setup sequencer. This is a race-entry transition, not a further menu screen.
+- Design state `$08`: selection values 0/1 advance to state `$09`/related setup path; value 2 remains/returns through the state-3 transition path; value 3 enters save state `$0C`; value 4 enters load state `$0D`; value 5 clears `$0021-$00FF` and returns to title state `$00`. These branches are visible in `$C3C5-$C3E7`; each branch still needs end-to-end validation.
+- States `$03`, `$06`, `$0B` share the indirect dispatcher at `$CB2C`, selecting `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, or `ofs_CC6B_03` by `ram_0044`. They are a shared transition state machine, not three independent screens.
+- States `$04` and `$07` share `$C465): wait on `ram_0034_timer`, update a table tuple through `sub_C92C`, then increment state and normalize to `$02` when the old state is below `$08`; otherwise return to `$08`.
+- State `$09` calls `sub_CA1B`, `sub_EB17`, `sub_DA6A`, `sub_DBFE`, `sub_E70B`, `sub_F4FF`, `sub_F68D`, `sub_F755`, and `sub_C229`, then jumps to `loc_D19B`. It must not be treated as a simple menu state; its exact place in the user-facing flow needs further call-graph tracing.
+- Save/load states `$0C/$0D` use `ram_0048` as the main-thread transfer handshake. State `$0D` validates the four-byte `tbl_C180` header before reading the 256-byte data block; state `$0C` writes the 64-byte header/data block plus 256-byte payload. The file backend is a deliberate hardware-interface replacement, not an emulation of analog tape signals.
+
+## Ordered completion plan — work one item at a time
+
+The boxes below are the complete known Stage 2 work queue. A box is checked only when the corresponding source audit, implementation, and regression evidence exist. "Menu state flow" excludes race simulation itself, but must correctly hand off to the race state.
+
+### A. State graph and source trace
+- [x] A1. Inventory all 14 state handlers, setup-list selector values, and all nine setup-list command sequences.
+- [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
+- [ ] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes.
+- [ ] A4. Trace the complete state-$09 path and prove whether it is menu transition, pre-race, post-race, or gameplay support.
+- [ ] A5. Trace each reachable setup command's full transitive calls and RAM/PPU/APU side effects; include `$30-$3D` timers and one-command-per-NMI sequencing.
+- [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
+
+### B. PPU, OAM, and visual reconstruction
+- [ ] B1. Trace all menu PPU stream indices selected through `ram_0045`, including dynamic stream `$00`, zero-page stream `$1A`, and palette streams `$12-$19`; prove the CHR bank/pattern-table selection for each screen.
+- [ ] B2. Verify the native PPU command parser against every stream reachable from menu setup lists; test terminators, lengths, PPU address bounds, palette mirroring, and unsupported writes.
+- [ ] B3. Model the full two-nametable PPU address space and nametable mirroring selected by the source; current renderer reads a fixed 960-byte background plus one attribute table and does not yet prove correct base nametable selection.
+- [ ] B4. Integrate source scroll writes (`$2005/$2000`), split/scanline behavior, and NMI ordering; do not replace raster effects with a guessed static scroll.
+- [ ] B5. Trace every menu OAM writer and all cursor/decoration sprites, sprite priority, flips, size, scanline limits, and visibility; render all supported source attributes.
+- [ ] B6. Reconstruct authentic title, selector, design, save/load, and transition artwork from actual CHR + PPU writes; remove diagnostic text/placeholder rendering from the normal menu path.
+- [ ] B7. Verify menu palettes and palette transitions using the actual PPU palette RAM writes; account for palette mirroring and PPUMASK grayscale/emphasis if used.
+
+### C. Menu input and transitions
+- [ ] C1. Compare `sub_C7DE` byte-for-byte with native input: repeat guard, timer, Select/Start priority, Up/Down, and exact wrap rules.
+- [ ] C2. Complete title and selector navigation/confirmation and the transitions into all destination states.
+- [ ] C3. Complete all six design-menu choices, including the paths through states 9, 12 and 13 and return to title.
+- [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
+- [ ] C5. Complete save/load error, retry, header mismatch, missing file, corrupt file, and successful return behavior; clearly document differences from the original recorder hardware.
+
+### D. Validation and acceptance
+- [ ] D1. Add host regressions for every menu state, setup list, input edge case, transition, PPU/OAM write, and tape backend branch.
+- [ ] D2. Create deterministic NES reference captures for each menu screen and transition (ROM identity/hash, emulator/version, frame, PPU/OAM state, and screenshot).
+- [ ] D3. Compare native frame output and PPU/OAM state against those references; fix all visible/source-state mismatches.
+- [ ] D4. Run full host test suite and exact-commit devkitARM/New 3DS build; retain CI links and commit SHA.
+- [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
+- [ ] D6. Accept Stage 2 only after A–D pass. Keep Stage 3 blocked until then.
+
 ## PPU/NMI path
 
 - `vec_C23B_NMI` calls `sub_C32F`, conditionally enables `$2001` when `ram_0045 == 0`, performs OAM DMA from `$0200`, calls `sub_C27F`, handles scroll-related calls when `ram_0047 != 0`, decrements timers, reads controller registers, dispatches the state handler, and waits for vblank.
