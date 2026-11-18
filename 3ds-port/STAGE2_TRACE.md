@@ -186,7 +186,7 @@ This completes the B3 source-backed two-page composition implementation and its 
 - `vec_C23B_NMI` calls the split/raster path only when `ram_0047 != 0`: `sub_D0AB` updates per-object vertical band values, then `sub_D14E` waits for vblank, calls `sub_D1B3`, updates PPUCTRL/scroll, updates OAM for non-state-9, waits a source-timed delay, then writes the second nametable base and scroll values.
 - `sub_D1B3` writes `ram_for_2000 | ram_004E_base_nametable` to PPUCTRL, then writes `ram_0050_scroll_X` and `ram_0051_scroll_Y` to PPU scroll.
 - The second half of `sub_D14E` writes `ram_for_2000 | ram_004D_base_nametable`, then `ram_scroll_X` and `ram_scroll_Y`. This is a mid-frame split, not a single static scroll value.
-- The menu prelude explicitly zeroes both scroll pairs. `ram_0047` is raised in race setup (`ofs_001_C875_02_06`) and in gameplay object logic (`$EBAE)); it is cleared on menu-return paths (`$CA33`, `$CAA7`). The raster path is therefore primarily the race/return transition path, but it must be preserved for the Stage 2 shared transitions when the flag is still set.
+- The menu prelude explicitly zeroes both scroll pairs. `ram_0047` is raised in race setup (`ofs_001_C875_02_06`), **in the state-9 design-editor setup** (`ofs_001_C5C2_05_06`, `INC ram_0047` at `$C617`), and in gameplay object logic (`$EBAE`). It is cleared on menu/editor-return paths (`$CA33`, `$CAA7`, and the state-9 B-button exit via `sub_EB17`). The raster path is therefore required by the Stage 2 design-editor path, not just the race; B4 is a blocking Stage 2 task.
 
 B4 is **traced, not implemented**. The current menu state model does not yet reproduce the two-phase `ram_0047` raster/OAM update. Do not replace it with `menu_scroll_x/y` alone.
 
