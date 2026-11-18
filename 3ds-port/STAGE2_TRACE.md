@@ -193,7 +193,7 @@ Added `nesSubD1C7BuildOamGrid()`, a source-faithful isolated translation of the 
 - Writes the Y/X position grid in column-major order, advancing coordinates by eight pixels.
 - Preserves 8-bit OAM pointer wrap and the `ram_0002`, `ram_000A`, `ram_0000`, `ram_0008`, and `ram_0009` scratch effects.
 
-Host regression covers a 2x2 grid, marker tile behavior, column-major placement, and OAM address wrap. Exact commit `73d87350db7ca19196e23d5178d27a1f6c0bf3d8`: host verification run 44360512660 passed.
+Host regression covers a 2x2 grid, marker tile behavior, column-major placement, and OAM address wrap. Exact commit `73d87350db7ca19196e23d5178d27a1f6c0bf3d8`: host verification run 44360512660 passed; New 3DS build run 44360505911 passed.
 
 **Not yet integrated:** `nesSubE1A3PrepareObjectSprite()` still does not call this helper through the state-9 list-5 runtime path. B5 remains open until the full editor OAM call chain is wired and compared.
 
