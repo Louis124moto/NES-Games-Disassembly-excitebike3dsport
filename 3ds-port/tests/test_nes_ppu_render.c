@@ -179,6 +179,7 @@ static int testVerticalMirroredNametables(void)
     memset(chr, 1, 64u);
     memset(chr + 64u, 2, 64u);
     memset(nt, 0, sizeof(nt));
+    memset(nt + 928u, 1, 32u); /* physical A's last tile row differs from its first row */
     memset(nt + NES_PPU_NAMETABLE_PAGE_BYTES, 1, NES_PPU_NAMETABLE_BYTES);
     /* Both attribute tables select subpalette 0. */
     if (nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x10u, 0u, 0u,
@@ -196,6 +197,10 @@ static int testVerticalMirroredNametables(void)
     if (rc == 0 && nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x12u, 0u, 0u,
             rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 8;
     if (rc == 0 && !pixelIs(rgb, 0u, 0u, 0x16u)) rc = 9;
+    /* Vertical scroll at 239 exposes A's final tile row, then wraps to its first row. */
+    if (rc == 0 && nesPpuRenderMirroredNametablesOpaque(chr, 2u, nt, palette, 0x10u, 0u, 239u,
+            rgb, NES_PPU_RGB_BYTES, opaque, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT) != NES_PPU_RENDER_OK) rc = 11;
+    if (rc == 0 && (!pixelIs(rgb, 0u, 0u, 0x21u) || !pixelIs(rgb, 0u, 1u, 0x16u))) rc = 12;
     for (i = 0u; i < 64u; ++i) { if (chr[i] != 1u || chr[64u + i] != 2u) rc = 10; }
     free(rgb); free(opaque);
     if (rc == 0) puts("PASS: two-page vertical-mirrored nametable composition, base selection and scroll.");
