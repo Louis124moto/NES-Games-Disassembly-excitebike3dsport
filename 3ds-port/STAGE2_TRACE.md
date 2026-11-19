@@ -656,3 +656,14 @@ What this trace does not yet prove: the user-visible identity/meaning of every s
 - [ ] Define semantic transition events/sprite instances; do not port $D1C7 as an OAM builder.
 - [ ] Implement the phase-2 timing and branch decisions in native C, with host ASM-oracle differential coverage for every branch.
 - [ ] Add native renderer integration and fixed-frame visual comparisons before marking phase 2 complete.
+
+
+### Dynamic transition value routine — sub_DD6F
+
+The routine called at $CCA5 is sub_DD6F ($DD6F-$DD8C), not a pure lookup:
+
+- With X = 0, it adds ram_038C_obj[0] to the low byte ram_0380_obj[0], then propagates carry into ram_0384_obj[0]. This advances the source object's fixed-point position.
+- It then subtracts ram_037C_obj[0] from the current ram_0001_t04 value and adds ram_0384_obj[0], returning the resulting byte in A. The routine uses the processor carry state across its arithmetic; a native port must reproduce the source preconditions/carry semantics or, preferably, derive the equivalent fixed-point operation from the complete caller path.
+- loc_CC7D stores this return value in ram_0055, compares it with ram_03F1, and clamps/restarts ram_002F when the result crosses the configured limit.
+
+This confirms that phase 2 includes a moving native-object parameter, not just a static sprite-table selection. The current trace still lacks the complete initialization/meaning of the object fields and their visual identity. No translation is justified until those source preconditions are established.
