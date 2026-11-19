@@ -4,7 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define NATIVE_MENU_SCENE_COUNT 3u
+#define NATIVE_MENU_SCENE_COUNT 6u
+#define NATIVE_MENU_PALETTE_COUNT 7u
 #define NATIVE_MENU_SCENE_BYTES 4096u
 #define NATIVE_MENU_CHR_TILE_LIMIT 960u
 
@@ -17,8 +18,8 @@ typedef struct NativeMenuAssets {
     uint8_t *chr_pixels; /* EBPX decoded 8x8 pixel indices, 64 bytes per tile */
     size_t chr_tile_count;
     NativeMenuSceneAssets scenes[NATIVE_MENU_SCENE_COUNT];
-    uint8_t palette[32];
-    uint8_t palette_written[32];
+    uint8_t palettes[NATIVE_MENU_PALETTE_COUNT][32];
+    uint8_t palette_written[NATIVE_MENU_PALETTE_COUNT][32];
     uint8_t loaded;
     char error[128];
 } NativeMenuAssets;
