@@ -106,18 +106,24 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
 /* Player branch of sub_CD59 ($CD59-$CDEB), excluding its later steering/
  * animation side effects at loc_CDBD. The exact called speed/gate helpers
  * are independently differential-tested against their original ASM. */
-static uint8_t playerSpeedBelowCap(const BikeSpeedState *speed, uint8_t mode)
+static int playerSpeedCompareCap(const BikeSpeedState *speed, uint8_t mode)
 {
     static const uint8_t whole_cap[3] = { 0x03u, 0x03u, 0x01u };
     static const uint8_t fraction_cap[3] = { 0x20u, 0x40u, 0x7Fu };
 
     if (speed->whole < whole_cap[mode]) {
-        return 1u;
+        return -1;
     }
     if (speed->whole > whole_cap[mode]) {
-        return 0u;
+        return 1;
     }
-    return (uint8_t)(speed->fraction < fraction_cap[mode]);
+    if (speed->fraction < fraction_cap[mode]) {
+        return -1;
+    }
+    if (speed->fraction > fraction_cap[mode]) {
+        return 1;
+    }
+    return 0;
 }
 
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
@@ -147,8 +153,12 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
 
     /* X=0 special case in CD70: after finish, use Y=2 and its lower cap. */
     if (player->race_finished != 0u) {
-        if (playerSpeedBelowCap(&player->speed, 2u) != 0u) {
+        const int cap_order = playerSpeedCompareCap(&player->speed, 2u);
+        if (cap_order < 0) {
             bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase, 2u);
+        } else if (cap_order > 0) {
+            bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                        3u, zero_whole_threshold);
         }
         return;
     }
@@ -182,9 +192,16 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
 
     /* CD9A performs this cap check before calling CE29; do not clamp an
      * already-over-cap speed here, because the original caller simply skips. */
-    if (playerSpeedBelowCap(&player->speed, acceleration_mode) != 0u) {
-        bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase,
-                                    acceleration_mode);
+    {
+        const int cap_order = playerSpeedCompareCap(&player->speed, acceleration_mode);
+        if (cap_order < 0) {
+            bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase,
+                                        acceleration_mode);
+        } else if (cap_order > 0) {
+            bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                        (uint8_t)(acceleration_mode + 1u),
+                                        zero_whole_threshold);
+        }
     }
 }
 
