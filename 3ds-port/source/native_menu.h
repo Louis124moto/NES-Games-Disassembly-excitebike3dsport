@@ -1,7 +1,8 @@
 #ifndef EXCITEBIKE_NATIVE_MENU_H
 #define EXCITEBIKE_NATIVE_MENU_H
 
-#include <stdint.h>\n#include "game_state.h"
+#include <stdint.h>
+#include "game_state.h"
 
 /*
  * Native menu presentation hook.
