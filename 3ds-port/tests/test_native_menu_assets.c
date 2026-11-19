@@ -24,7 +24,7 @@ static int writeSnapshot(const char *path, uint8_t tile0, uint8_t tile1)
     snapshot[0] = tile0;
     snapshot[1] = tile1;
     snapshot[NATIVE_MENU_SCENE_BYTES] = 1u;
-    snapshot[NATIVE_MENU_SCENE_BYTES + 1u] = 1u;
+    snapshot[NATIVE_MENU_SCENE_BYTES + 1u] = tile1 != 0u ? 1u : 0u;
     snapshot[960u] = 0x05u;
     snapshot[NATIVE_MENU_SCENE_BYTES + 960u] = 1u;
     return writeBytes(path, snapshot, sizeof(snapshot));
