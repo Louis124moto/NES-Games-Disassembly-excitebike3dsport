@@ -34,6 +34,23 @@ void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
                                  uint8_t deceleration_mode,
                                  uint8_t zero_whole_threshold);
 
+/*
+ * Native state for the player-only source gate sub_CDEE. The fields map
+ * directly to ram_00C0_obj, ram_00A4_obj, ram_0070_obj, ram_obj_pos_Y_lo,
+ * ram_036C_obj, and ram_00FD. Return value is the 6502 Z flag after RTS:
+ * nonzero means the original caller may continue its acceleration path.
+ */
+typedef struct BikeTerrainGateState {
+    uint8_t object_class;
+    uint8_t surface;
+    uint8_t surface_state;
+    uint8_t vertical_position;
+    uint8_t posture_state;
+    uint8_t player_event_flag;
+} BikeTerrainGateState;
+
+uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state);
+
 /* Full per-frame bike integration is intentionally not exposed until all
  * input, heat, posture, collision and update-order dependencies are traced. */
 void bikePhysicsUpdate(BikeState *bike, const InputState *input);
