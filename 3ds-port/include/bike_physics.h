@@ -121,10 +121,15 @@ typedef struct BikeMovementState {
     uint8_t previous_x[4];           /* ram_0390_obj */
     uint8_t player_scroll_x;         /* ram_0012_scroll_X */
     uint8_t base_nametable;          /* ram_004D_base_nametable */
+    uint8_t secondary_scroll_fraction; /* ram_03BF */
+    uint8_t secondary_scroll_x;         /* ram_0050 */
+    uint8_t secondary_base_nametable;   /* ram_004E */
 } BikeMovementState;
 
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement);
 void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement);
 void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement);
+/* sub_DBFE: fractional parallax accumulator and secondary camera scroll. */
+void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement);
 
 #endif
