@@ -150,6 +150,40 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
     }
 }
 
+
+/* Source: sub_D310 ($D310-$D325). Timers $21-$2F tick every frame;
+ * timers $30-$3D tick only when the 11-frame divider underflows. */
+void nativeMenuTickTimers(NativeMenuState *menu)
+{
+    unsigned last;
+    unsigned i;
+
+    if (menu == 0) {
+        return;
+    }
+
+    /* Keep the two input timers in the shared source timer bank. */
+    menu->timer_values[15] = menu->input.start_timer; /* $0030 */
+    menu->timer_values[16] = menu->input.input_timer; /* $0031 */
+
+    menu->frame_timer = (uint8_t)(menu->frame_timer - 1u);
+    if ((menu->frame_timer & 0x80u) != 0u) {
+        menu->frame_timer = 0x0Au;
+        last = 28u;
+    } else {
+        last = 14u;
+    }
+
+    for (i = 0u; i <= last; ++i) {
+        if (menu->timer_values[i] != 0u) {
+            menu->timer_values[i] = (uint8_t)(menu->timer_values[i] - 1u);
+        }
+    }
+
+    menu->input.start_timer = menu->timer_values[15];
+    menu->input.input_timer = menu->timer_values[16];
+}
+
 void nativeMenuRenderStatus(const GameState *state)
 {
     (void)state;
