@@ -271,6 +271,26 @@ static GameState *designMenu(void)
     return s;
 }
 
+/* Without a supported PRG image the editor must hold safely, not fake a return. */
+static int testEditorFrameWithoutRom(void)
+{
+    GameState *s = newState();
+    uint8_t before[2048];
+    if (s == NULL) return 1;
+    s->menu_asm_state = 9u;
+    s->menu_ram0040 = 1u;
+    s->menu_ram0045 = 0x12u;
+    s->menu_ram0049 = 1u;
+    memset(s->menu_cpu_ram, 0x5Au, sizeof(s->menu_cpu_ram));
+    memcpy(before, s->menu_ppu_nametables, sizeof(before));
+    menusUpdate(s, K_B, K_B);
+    CHECK(s->menu_asm_state == 9u && s->menu_ram0040 == 1u, 156);
+    CHECK(s->menu_ram0045 == 0x12u && s->menu_repeat_guard == 1u, 157);
+    CHECK(memcmp(before, s->menu_ppu_nametables, sizeof(before)) == 0, 158);
+    free(s);
+    return 0;
+}
+
 static int testDesignMenu(void)
 {
     static const uint8_t cursorY[6] = {0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u};
@@ -472,6 +492,7 @@ int main(void)
     if ((rc = testState4DynamicWrite()) != 0) return rc;
     if ((rc = testState7Setup()) != 0) return rc;
     if ((rc = testEditorSetupPrelude()) != 0) return rc;
+    if ((rc = testEditorFrameWithoutRom()) != 0) return rc;
     if ((rc = testDesignMenu()) != 0) return rc;
     if ((rc = testDesignConfirm()) != 0) return rc;
     if ((rc = testTapeSave()) != 0) return rc;
