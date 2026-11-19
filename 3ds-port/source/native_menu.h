@@ -51,4 +51,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
 void nativeMenuTickTimers(NativeMenuState *menu);
 void nativeMenuTransitionPhase0(NativeMenuState *menu);
 
+/* Exact timer-expired branch of ofs_000_C465_04 / _07 (sub_C3AF). */
+void nativeMenuCompleteTimedTransition(NativeMenuState *menu);
+
 #endif
