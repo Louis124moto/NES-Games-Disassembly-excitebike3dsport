@@ -166,7 +166,7 @@ jobs:
           prg = Path("/tmp/prg.bin").read_bytes()
           assert len(prg) == 0x4000, f"expected NROM-128 PRG, got {len(prg)} bytes"
           header = bytearray(16)
-          header[:4] = b"NES\\x1a"
+          header[:4] = b"NES\x1a"
           header[4] = 1
           Path("rom.nes").write_bytes(header + prg)
           PY
