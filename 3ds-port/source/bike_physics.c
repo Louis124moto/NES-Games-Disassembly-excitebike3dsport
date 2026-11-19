@@ -549,6 +549,8 @@ void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object
         carry = (uint8_t)(mode >= 0x02u);
         /* DD38 initializes a new movement arc. */
         movement->object_status[object_index] = 0x02u;
+        /* DCFA loads zero and DD08 stores it in ram_0384 before DD38. */
+        movement->motion_whole[object_index] = 0u;
         movement->motion_fraction[object_index] = 0x0Fu;
         sum = (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
         movement->motion_fraction_start[object_index] = (uint8_t)sum;
