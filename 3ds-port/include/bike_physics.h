@@ -56,6 +56,7 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state);
  * later steering/timer side effects at loc_CDBD are a separate subsystem.
  */
 typedef struct BikePlayerSpeedContext {
+    uint8_t object_index; /* X in sub_CD59: player 0, opponents 1..3 */
     BikeSpeedState speed;
     BikeTerrainGateState terrain;
     uint8_t controller;
@@ -67,6 +68,11 @@ typedef struct BikePlayerSpeedContext {
     uint8_t object_status_00B0;
 } BikePlayerSpeedContext;
 
+typedef BikePlayerSpeedContext BikeObjectSpeedContext;
+
+/* Native translation of the speed-control portion of sub_CD59 for any bike slot. */
+void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object);
+/* Compatibility entry for the player slot (object_index is forced to zero). */
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player);
 
 /* Player temperature/overheat meter state from ram_03B5/$03B6,
