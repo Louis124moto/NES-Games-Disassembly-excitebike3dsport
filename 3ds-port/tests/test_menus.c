@@ -102,6 +102,10 @@ static int testTitleNavigation(void)
     menusNmiFrame(s, K_UP, 0u);
     menusNmiFrame(s, K_UP, 0u);
     CHECK(s->menu_selection == 1u, 35);
+    /* Title entry 1 confirms into the course selector and preserves the selected title mode. */
+    menusNmiFrame(s, 0u, 0u); /* release clears the source repeat guard */
+    menusNmiFrame(s, K_START, K_START);
+    CHECK(s->menu_asm_state == 1u && s->menu_ram03F2 == 1u, 37);
     /* cursor X/tile/attribute stay as written by sub_C409 */
     CHECK(s->menu_oam[1] == 0xFAu && s->menu_oam[2] == 0u && s->menu_oam[3] == 0x50u, 36);
     free(s);
@@ -137,6 +141,10 @@ static int testSelectionToTrackScreen(void)
     tap(s, K_RIGHT); tap(s, K_RIGHT);
     CHECK(s->menu_selection == 4u && s->menu_oam[3] == 0xA8u, 49);
     tap(s, K_RIGHT); CHECK(s->menu_selection == 0u && s->menu_oam[3] == 0x48u, 50); /* wraps to 0 */
+    /* Confirm on the selector hands off to race state 2 with the selected course index. */
+    menusNmiFrame(s, K_START, K_START);
+    CHECK(s->menu_asm_state == 2u && s->menu_ram0043 == 0u &&
+          s->menu_ram0040 == 0u && s->menu_ram0044 == 0u, 51);
     free(s);
     return 0;
 }

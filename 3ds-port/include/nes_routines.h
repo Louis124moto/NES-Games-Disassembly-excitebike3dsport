@@ -118,6 +118,23 @@ void nesSubE836UpdateObjectDifferences(uint8_t ram00B0[4], uint8_t ram00BC[4],
                                        uint8_t ram03F1);
 
 
+
+/* Source-faithful scratch state for sub_D1C7's rectangular OAM tile/attribute writer. */
+typedef struct NesSubD1C7OamGridState {
+    uint8_t ram0000_x;
+    uint8_t ram0001_y;
+    uint8_t ram0002_tile;
+    uint8_t ram0003_grid; /* high nibble = rows, low nibble = columns */
+    uint8_t ram0004_oamBase;
+    uint8_t ram0008_maxIndex;
+    uint8_t ram0009_y;
+    uint8_t ram000A_markerBits;
+    uint8_t ram000B_attribute;
+} NesSubD1C7OamGridState;
+
+/* Translate sub_D1C7; returns the 8-bit rows*columns tile/attribute record count. */
+uint8_t nesSubD1C7BuildOamGrid(uint8_t oam[256], NesSubD1C7OamGridState *state);
+
 typedef struct NesPreparedSpriteCommand {
     uint8_t scratch0, scratch1, scratch2, scratch3, scratch4, scratchB, transformY;
 } NesPreparedSpriteCommand;
@@ -325,7 +342,7 @@ void nesSubCFE3MaskFlags(uint8_t *ram005C);
 uint8_t nesSubC7DEMenuInput(uint8_t buttonPress, uint8_t count,
                             uint8_t *selection, uint8_t *repeatGuard,
                             uint8_t *timer30, uint8_t *timer31,
-                            uint8_t *selectionChanged);
+                            uint8_t *selectionChanged, uint8_t *ram00FF);
 void nesSubD310DecreaseMenuTimers(uint8_t *ram0020, uint8_t *ram0030, uint8_t *ram0031, uint8_t *ram0034);
 void nesSubC3AFIncrementState(uint8_t *ram0041);
 void nesSubC3B1ResetFrameFlags(uint8_t *ram0040, uint8_t *ram0044);

@@ -621,41 +621,41 @@ static int testSubCFE3MaskFlags(void)
 
 static int testSubC7DEMenuInput(void)
 {
-    uint8_t selection, guard, timer30, timer31, changed, result;
+    uint8_t selection, guard, timer30, timer31, changed, result, ram00FF;
     unsigned int i;
 
-    selection=4u; guard=0u; timer30=0u; timer31=0u; changed=0u;
-    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=0u || guard!=1u || timer31!=0x5Du || changed!=1u) {
+    selection=4u; guard=0u; timer30=0u; timer31=0u; changed=0u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=0u || guard!=1u || timer31!=0x5Du || changed!=1u || ram00FF!=1u) {
         fputs("sub_C7DE down/wrap mismatch\n",stderr); return 1;
     }
-    selection=2u; guard=1u; timer31=0u; changed=1u;
-    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=2u || guard!=1u || timer31!=0x5Du || changed!=0u) {
+    selection=2u; guard=1u; timer31=0u; changed=1u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x04u,5u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=2u || guard!=1u || timer31!=0x5Du || changed!=0u || ram00FF!=0u) {
         fputs("sub_C7DE repeat guard mismatch\n",stderr); return 2;
     }
-    guard=1u;
-    result=nesSubC7DEMenuInput(0x01u,5u,&selection,&guard,&timer30,&timer31,&changed);
+    guard=1u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x01u,5u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
     if(result!=0u || guard!=0u) { fputs("sub_C7DE idle reset mismatch\n",stderr); return 3; }
-    selection=1u; guard=0u; changed=0u;
-    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=0u || changed!=1u) { fputs("sub_C7DE up-to-zero mismatch\n",stderr); return 4; }
-    selection=3u; guard=0u; timer30=0u; changed=1u;
-    result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=4u || selection!=3u || timer30!=4u || changed!=0u) { fputs("sub_C7DE start mismatch\n",stderr); return 5; }
-    selection=2u; guard=0u; changed=0u;
-    result=nesSubC7DEMenuInput(0x24u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=3u || changed!=1u) { fputs("sub_C7DE Select priority mismatch\\n",stderr); return 7; }
-    selection=5u; guard=0u; changed=0u;
-    result=nesSubC7DEMenuInput(0x04u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=0u || changed!=1u) { fputs("sub_C7DE six-entry down wrap mismatch\\n",stderr); return 8; }
-    selection=0u; guard=0u; changed=0u;
-    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed);
-    if(result!=0u || selection!=5u || changed!=1u) { fputs("sub_C7DE zero up wrap mismatch\\n",stderr); return 9; }
+    selection=1u; guard=0u; changed=0u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=0u || changed!=1u || ram00FF!=1u) { fputs("sub_C7DE up-to-zero mismatch\n",stderr); return 4; }
+    selection=3u; guard=0u; timer30=0u; changed=1u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x10u,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=4u || selection!=3u || timer30!=4u || changed!=0u || ram00FF!=0u) { fputs("sub_C7DE start mismatch\n",stderr); return 5; }
+    selection=2u; guard=0u; changed=0u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x24u,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=3u || changed!=1u || ram00FF!=1u) { fputs("sub_C7DE Select priority mismatch\\n",stderr); return 7; }
+    selection=5u; guard=0u; changed=0u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x04u,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=0u || changed!=1u || ram00FF!=1u) { fputs("sub_C7DE six-entry down wrap mismatch\\n",stderr); return 8; }
+    selection=0u; guard=0u; changed=0u; ram00FF=0u;
+    result=nesSubC7DEMenuInput(0x08u,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
+    if(result!=0u || selection!=5u || changed!=1u || ram00FF!=1u) { fputs("sub_C7DE zero up wrap mismatch\\n",stderr); return 9; }
     for(i=0u;i<1000u;++i) {
         uint8_t press=(i&1u)?0x04u:0x08u;
         guard=0u;
-        (void)nesSubC7DEMenuInput(press,6u,&selection,&guard,&timer30,&timer31,&changed);
+        (void)nesSubC7DEMenuInput(press,6u,&selection,&guard,&timer30,&timer31,&changed,&ram00FF);
         if(selection>5u) { fputs("sub_C7DE range mismatch\n",stderr); return 6; }
     }
     return 0;
@@ -928,6 +928,36 @@ static int testLocCBA3SetTimerAndAdvance(void)
     return 0;
 }
 
+
+static int testSubD1C7BuildOamGrid(void)
+{
+    uint8_t oam[256];
+    NesSubD1C7OamGridState s;
+    memset(oam, 0xEE, sizeof(oam));
+    memset(&s, 0, sizeof(s));
+    s.ram0000_x=0x10u; s.ram0001_y=0x20u; s.ram0002_tile=0x30u;
+    s.ram0003_grid=0x22u; s.ram0004_oamBase=0x40u;
+    s.ram000A_markerBits=0x01u; s.ram000B_attribute=0x33u;
+    if(nesSubD1C7BuildOamGrid(oam,&s)!=4u || s.ram0008_maxIndex!=4u ||
+       s.ram0002_tile!=0x33u || s.ram000A_markerBits!=0u ||
+       s.ram0000_x!=0x20u || s.ram0009_y!=0x30u) return 1;
+    /* Column-major 2x2 layout, with marker $FC in the first even slot. */
+    if(oam[0x40u]!=0x20u || oam[0x41u]!=0xFCu || oam[0x42u]!=0x33u || oam[0x43u]!=0x10u) return 2;
+    if(oam[0x44u]!=0x28u || oam[0x45u]!=0x30u || oam[0x46u]!=0x33u || oam[0x47u]!=0x10u) return 3;
+    if(oam[0x48u]!=0x20u || oam[0x49u]!=0x31u || oam[0x4Au]!=0x33u || oam[0x4Bu]!=0x18u) return 4;
+    if(oam[0x4Cu]!=0x28u || oam[0x4Du]!=0x32u || oam[0x4Eu]!=0x33u || oam[0x4Fu]!=0x18u) return 5;
+
+    /* OAM page indexing wraps at $FF, just like the 6502 zero-page pointer low byte. */
+    memset(oam,0xEE,sizeof(oam)); memset(&s,0,sizeof(s));
+    s.ram0000_x=0xF8u; s.ram0001_y=0x40u; s.ram0002_tile=0x70u;
+    s.ram0003_grid=0x21u; s.ram0004_oamBase=0xFCu; s.ram000B_attribute=0x22u;
+    if(nesSubD1C7BuildOamGrid(oam,&s)!=2u) return 6;
+    if(oam[0xFCu]!=0x40u || oam[0xFDu]!=0x70u || oam[0xFEu]!=0x22u || oam[0xFFu]!=0xF8u) return 7;
+    if(oam[0x00u]!=0x48u || oam[0x01u]!=0x71u || oam[0x02u]!=0x22u || oam[0x03u]!=0xF8u) return 8;
+    puts("PASS: sub_D1C7 OAM tile/attribute grid, marker bits and byte wrap.");
+    return 0;
+}
+
 int main(void)
 {
     if (testLocCBA3SetTimerAndAdvance() != 0) { fputs("FAIL: loc_CBA3 timer/state advance\\n", stderr); return 1; }
@@ -945,6 +975,7 @@ int main(void)
     if (testSubCFE3MaskFlags() != 0) { fputs("FAIL: sub_CFE3\n", stderr); return 1; }
     if (testSubC3BDConfirmSelection() != 0) { fputs("FAIL: sub_C3BD menu confirm\n", stderr); return 1; }
     if (testSubC7DEMenuInput() != 0) { fputs("FAIL: sub_C7DE menu input\n", stderr); return 1; }
+    if (testSubD1C7BuildOamGrid() != 0) { fputs("FAIL: sub_D1C7 OAM grid\n", stderr); return 1; }
     if (testBatchAdditional20Boundaries() != 0) { fputs("FAIL: comparison/flag boundary audit\n",stderr); return 1; }
     if (testBatchAdditional20() != 0) { fputs("FAIL: additional 20 ASM routines\n", stderr); return 1; }
     if (testSubEC99Exact() != 0) { fputs("FAIL: sub_EC99\n", stderr); return 1; }

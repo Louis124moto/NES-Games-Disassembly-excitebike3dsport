@@ -10,6 +10,12 @@
 #define NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES 0x1000u
 
 typedef enum {
+    NES_PPU_MIRROR_NONE = 0,
+    NES_PPU_MIRROR_HORIZONTAL,
+    NES_PPU_MIRROR_VERTICAL
+} NesPpuNametableMirroring;
+
+typedef enum {
     NES_PPU_COMMAND_OK = 0,
     NES_PPU_COMMAND_INVALID_ARGUMENT,
     NES_PPU_COMMAND_TRUNCATED,
@@ -29,6 +35,10 @@ typedef enum {
 NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t streamSize,
                                               uint8_t *ppuRam, uint8_t *writtenMask,
                                               size_t ppuRamSize, size_t *writeCount);
+/* Apply writes through a cartridge's physical nametable mirroring before storing them. */
+NesPpuCommandResult nesPpuApplyCommandStreamMirrored(
+    const uint8_t *stream, size_t streamSize, uint8_t *ppuRam, uint8_t *writtenMask,
+    size_t ppuRamSize, size_t *writeCount, NesPpuNametableMirroring mirroring);
 
 /* Palette command streams are source-derived from bank_FF.asm addresses D3D6-D46F. */
 const uint8_t *nesExcitebikePaletteStream(size_t index, size_t *streamSize,

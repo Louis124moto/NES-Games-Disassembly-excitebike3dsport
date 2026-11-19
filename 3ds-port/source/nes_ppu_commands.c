@@ -215,9 +215,22 @@ static size_t mirrorPaletteAddress(size_t address)
     return 0x3F00u + index;
 }
 
-NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t streamSize,
-                                              uint8_t *ppuRam, uint8_t *writtenMask,
-                                              size_t ppuRamSize, size_t *writeCount)
+static size_t mirrorPpuAddress(size_t address, NesPpuNametableMirroring mirroring)
+{
+    if (address >= 0x3000u && address < 0x3F00u) address -= 0x1000u;
+    if (address >= 0x2000u && address < 0x3000u && mirroring != NES_PPU_MIRROR_NONE) {
+        const size_t offset = address - 0x2000u;
+        size_t table = offset / 0x400u;
+        if (mirroring == NES_PPU_MIRROR_VERTICAL) table &= 1u;
+        else table >>= 1u;
+        address = 0x2000u + table * 0x400u + (offset & 0x3FFu);
+    }
+    return mirrorPaletteAddress(address);
+}
+
+NesPpuCommandResult nesPpuApplyCommandStreamMirrored(
+    const uint8_t *stream, size_t streamSize, uint8_t *ppuRam, uint8_t *writtenMask,
+    size_t ppuRamSize, size_t *writeCount, NesPpuNametableMirroring mirroring)
 {
     size_t offset = 0u;
     size_t writes = 0u;
@@ -238,10 +251,7 @@ NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t strea
         address = ((size_t)stream[offset] << 8u) | stream[offset + 1u];
         control = stream[offset + 2u];
         offset += 3u;
-        if (control == 0u) {
-            *writeCount = writes;
-            return NES_PPU_COMMAND_OK;
-        }
+        if (control == 0u) return NES_PPU_COMMAND_INVALID_COUNT;
         count = (size_t)(control & 0x3Fu);
         stride = (control & 0x80u) != 0u ? 32u : 1u;
         repeat = (control & 0x40u) != 0u;
@@ -256,7 +266,7 @@ NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t strea
             size_t target;
             uint8_t value;
             if (address >= NES_PPU_ADDRESS_SPACE) return NES_PPU_COMMAND_ADDRESS_RANGE;
-            target = mirrorPaletteAddress(address);
+            target = mirrorPpuAddress(address, mirroring);
             if (target >= ppuRamSize) return NES_PPU_COMMAND_ADDRESS_RANGE;
             value = repeat ? repeatedValue : stream[offset + i];
             ppuRam[target] = value;
@@ -267,6 +277,14 @@ NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t strea
         if (!repeat) offset += count;
     }
     return NES_PPU_COMMAND_TRUNCATED; /* No explicit end token. */
+}
+
+NesPpuCommandResult nesPpuApplyCommandStream(const uint8_t *stream, size_t streamSize,
+                                              uint8_t *ppuRam, uint8_t *writtenMask,
+                                              size_t ppuRamSize, size_t *writeCount)
+{
+    return nesPpuApplyCommandStreamMirrored(stream, streamSize, ppuRam, writtenMask,
+                                            ppuRamSize, writeCount, NES_PPU_MIRROR_NONE);
 }
 
 const uint8_t *nesExcitebikePaletteStream(size_t index, size_t *streamSize,
@@ -334,12 +352,15 @@ NesPpuCommandResult nesExcitebikePpuSnapshot(size_t index,
     if (stream == NULL) return NES_PPU_COMMAND_INVALID_ARGUMENT;
     memset(s_snapshotRam, 0, sizeof(s_snapshotRam));
     memset(s_snapshotMask, 0, sizeof(s_snapshotMask));
-    result = nesPpuApplyCommandStream(stream, streamSize, s_snapshotRam,
-                                      s_snapshotMask, sizeof(s_snapshotRam), &writes);
+    result = nesPpuApplyCommandStreamMirrored(stream, streamSize, s_snapshotRam,
+                                              s_snapshotMask, sizeof(s_snapshotRam), &writes,
+                                              NES_PPU_MIRROR_VERTICAL);
     if (result != NES_PPU_COMMAND_OK) return result;
     for (i = 0u; i < NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES; ++i) {
-        nametable[i] = s_snapshotRam[0x2000u + i];
-        nametableMask[i] = s_snapshotMask[0x2000u + i];
+        const size_t logicalAddress = 0x2000u + i;
+        const size_t physicalAddress = mirrorPpuAddress(logicalAddress, NES_PPU_MIRROR_VERTICAL);
+        nametable[i] = s_snapshotRam[physicalAddress];
+        nametableMask[i] = s_snapshotMask[physicalAddress];
     }
     for (i = 0u; i < 32u; ++i) {
         const size_t mirroredAddress = mirrorPaletteAddress(0x3F00u + i);

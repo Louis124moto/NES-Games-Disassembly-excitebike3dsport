@@ -53,20 +53,34 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
-#### Stage 2 — Original NES menu (ACCEPTED BY OWNER DECISION 2026-11-18, without hardware test; see note below)
+#### Stage 2 — Original NES menu (REOPENED 2026-11-18; IN PROGRESS; blocks Stage 3)
 
-**Owner decision, 2026-11-18:** the owner asked to re-verify Stage 2 and move to Stage 3 "même sans test matériel". This acceptance rests on host tests and ASM audit only: no hardware or emulator run, no NES reference capture, no sound, no scroll/second nametable, tape format is a file substitute, and the race-flow states (2/3/4/5/6/7/9/0A/0B) are not ported. Re-verification on 2026-11-18 fixed the setup prelude trigger to the exact ASM rule (`ram_0044==0` at bra_C2ED; the extra pending flag was removed). Open items stay as debt.
+The previous owner-decision acceptance was premature. The current native menu is an input/state trace with partial PPU rendering, not a fully reconstructed original menu. The owner has now explicitly requested that Stage 2 be completed before any Stage 3 work continues. The source audit and current gaps are tracked in `3ds-port/STAGE2_TRACE.md`. No hardware/reference-capture acceptance is claimed.
 
-- [ ] Trace the menu startup sequence and each setup command/handler from the original ASM.
-- [ ] Connect verified CHR, PPU palette writes, nametable/attributes, OAM/sprites, banks, scroll, and timing into the native renderer.
-- [ ] Reproduce authentic title/menu appearance, colors, layout, cursor, transitions, and controller behavior.
-- [ ] Compare each menu state and transition against the original NES reference, including edge cases and reset/start behavior.
-- [ ] Run host tests, exact-commit 3DS build, and hardware checks; record evidence.
-- [ ] Accept Stage 2 only after the entire menu path in scope matches the source; do not proceed to Course 1 before acceptance.
+- [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
+- [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
+- [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
+- [ ] A5 — List 5's six commands and C5C2 state writes are inventoried; E1F9/E1A3 and page-copy helpers already exist with host vectors; finish D1C7 OAM emission, EC25/EC47 integration, C820 dynamic PPU upload and remaining list-3 dependencies.
+- [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
+- [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
+- [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
+- [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
+- [ ] B5 — `sub_D1C7` now has an isolated, host-tested OAM-grid helper; integrate it with `sub_E1A3` in list 5, then implement shared transition OAM (`$CCEF/$CD15`) and direct editor sprites (`sub_EC25`, `loc_EC47`).
+- [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
+- [x] C1 — `sub_C7DE` input and `$00FF` side effects match source and pass host vectors; exact commit `b2fa4fb21146` also passes the New 3DS build.
+- [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
+- [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; implement list-5/state-9 editor setup and B-button return. State-10 race runtime is Stage 3.
+- [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
+- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch.
+- [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
+- [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
+- [ ] D6 — Accept Stage 2 only after all menu routes are integrated and fidelity-checked. Stage 3 remains blocked.
 
-#### Stage 3 — First course / first race (STARTED 2026-11-18 — trace only, nothing playable; see 3ds-port/STAGE3_TRACE.md)
+#### Stage 3 — First course / first race (BLOCKED until Stage 2 acceptance; source-trace work already exists but must not advance)
 
-- [ ] Trace the original first-course entry and all dependencies before integrating gameplay.
+- [x] (Existing research only) Trace the state-2 entry and six-command setup-list order; see `3ds-port/STAGE3_TRACE.md`. Do not implement further Stage 3 work until Stage 2 passes.
+- [x] Trace `sub_ECE4` and `tbl_E6A1` for the three `sub_D13F` calls (X = `$00/$04/$08`); the dynamic PPU upload execution at `loc_C289/sub_D3C1` remains unported.
+- [ ] Integrate the `sub_ECE4` builder into a source-faithful `sub_D13F` model with the three ordered PPU uploads; do not mark command 3 complete before the PPU effects are represented.
 - [ ] Establish the player slot through source-confirmed initialization, RAM writers, input path, and update callers; never infer it from slot number.
 - [ ] Reproduce course/terrain data and rendering, opponent behavior, race timing, start/countdown, scoring, and state transitions as source-confirmed.
 - [ ] Translate and verify the actual player motorcycle path: acceleration, braking, speed/gear behavior where applicable, overheating/cooling, jumping, posture, landing, crashes, collisions, and recovery.
@@ -152,7 +166,7 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
 | Latest host routine test execution | **Passed** in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`), including the new CBA3 regression vector and the existing menu routine suite. |
 | Latest completed 3DS build | **Passed** in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`). Note: `nes_routines.c` remains excluded from the active runtime target, so this verifies the homebrew scaffold/build, not gameplay integration. |
-| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Strict sequential gates: Stage 1 extractor → Stage 2 original menu → Stage 3 first race → subsequent original game flow. Later stages stay blocked until current-stage acceptance. |
+| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Stage 1 and Stage 2 were accepted by owner decision with explicit verification debt; Stage 3 is active. No playable race or full-game fidelity is claimed. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
@@ -198,9 +212,11 @@ The completed/in-progress module lists below are historical implementation track
 - [ ] Complete all menu setup/dispatch states and transitive routine dependencies before claiming faithful menu navigation.
 - [ ] Run host regressions and a clean 3DSX build on this integration revision; runtime wiring is not yet build-verified in this commit.
 
-## Immediate priority — finish the complete menu, then Course 1 only
+## Historical planning snapshot — 2026-10-21 (superseded by the controlling 2026-11-18 stage decisions above)
 
-**Latest evidence:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
+This section records the earlier menu-first plan. Stage 1 and Stage 2 were subsequently accepted by owner decision as documented at the top of this file, and Stage 3 is now active. Use the Stage 3 checklist and `3ds-port/STAGE3_TRACE.md` for current work; the open menu/artwork items below remain verification debt, not a reason to invent race behavior or skip the current Stage 3 dependencies.
+
+**Latest evidence at the time of this historical snapshot:** C485's host test and 3DS build passed on revision `9286e5d4` ([host](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312428), [3DS](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576312415)); C621's copy regression and C43D's transition regression passed in later host runs; the combined host suite including CB2C passed on revision `4661d203` ([CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39576697188)). The latest 3DS build that includes CB2C is not yet confirmed.
 
 **Execution order is mandatory:** do not begin the course implementation until the menu has passed its end-to-end acceptance gate. Do not implement courses 2+ in parallel with Course 1.
 
@@ -875,3 +891,25 @@ Still open (Stage 2 is NOT complete):
 - [ ] Not compared with a real NES capture; not run on hardware or in an emulator in this step.
 - [ ] Expected list contents ($02, $18, $19, $1A) were hand-parsed from the ROM bytes by the same author as the code; an independent check against an emulator trace is still needed.
 - [ ] The Famicom keyboard/other-peripheral paths (if any) were not examined.
+
+## Hardware report — 2026-11-18 (New Nintendo 3DS, owner test)
+
+- [x] The owner confirms the runtime extractor displays CHR textures sharply and without geometric distortion. The atlas is grayscale by design; this confirms the grayscale inspection path, not the in-game palette assignment.
+- [x] The owner confirms the native menu starts and its selection responds to controls on physical hardware.
+- [ ] The owner reports that the original menu boxes/artwork are still not reproduced correctly. This remains a Stage 2 visual-fidelity issue; do not substitute invented rectangles or labels.
+- [x] Commit `2bc8d15`: render the 256x240 NES PPU image into a centered 320x240 4:3 viewport on the 400x240 New 3DS top screen (nearest-neighbour horizontal scale, 40-pixel side bars); track all 256 OAM bytes and both scroll registers in the change-driven redraw gate.
+- [x] Commit `8707ef5`: report a missing $1000 CHR pattern table or PPU nametable-render error on the bottom diagnostic screen rather than silently falling back to the textual menu trace.
+- [ ] Retest the 4:3 viewport and new PPU failure diagnostics on physical hardware. The 3DS build passed for `2bc8d15`; the verification workflow for `8707ef5` is pending at the time of this note.
+- [ ] Obtain a hardware capture of the title menu and compare it with the original NES image before claiming the menu boxes/artwork are fixed.
+
+
+## Stage 3 batch — sub_ECE4 dynamic PPU buffer builder — 2026-11-18
+
+- [x] Inspect `sub_ECE4` at CPU `$ECE4` / ROM `$002CF4` and `tbl_E6A1` at CPU `$E6A1` / ROM `$0026B1`.
+- [x] Translate the four-byte table copy and both dynamic command payload builders into `nesRaceSetupECE4`.
+- [x] Preserve the 6502 absolute-indexed page-crossing writes to `$0502` and `$0525` when X wraps to `$FF`.
+- [x] Add regression vectors for all three table offsets, payload bytes, headers, terminator, pointer, invalid offset, and untouched guard bytes.
+- [ ] Run the race setup host test and full host workflow on the resulting commit; record CI run and SHA.
+- [ ] Build the 3DS target on the same revision.
+- [ ] Integrate the three `sub_D13F` calls and the `loc_C289/sub_D3C1` PPU command execution in exact source order. Until then, `sub_ECE4` is an isolated buffer-builder translation, not a complete PPU upload.
+- [ ] Continue with the `C875` tail only after the command-3 PPU path has been modeled; then integrate state-2 list index 2 into the setup sequencer.
