@@ -113,11 +113,13 @@ The live `ram_0045` reader is the NMI path `vec_C23B_NMI → sub_C27F → sub_D3
 
 A first-pass source census now records the buffer initializers and append paths around `C5B5`, `C8ED`, `C935-C978`, `CB77`, `CC32-CC67`, `D11F-D2F7`, and the per-object command setup at `F5F8/F5FD/F602` and `F6E0/F6E5/F6EA`. This is not yet a frame-accurate replay: mapping each path to its caller/game state and proving which structures reach the `$00` table entry remain open. The source disassembly is unchanged.
 
-## Stage 2 (original menu) — first step, 2026-11-17
+## Stage 2 (original menu) — PRG-backed integration, 2026-11-19
 
-Press START on the extractor screen (once CHR is loaded) to enter the source-derived menu path. Each menu frame runs the translated sequencer and then a native model of the NMI upload (`menusNmiUpload`), which executes the real ROM palette/PPU lists on a nametable/palette model; the top screen draws the resulting background with the pattern table selected by PPUCTRL. Sprites/OAM, the dynamic buffer, scrolling and several menu states are not implemented yet, so this is not a faithful title screen yet. See `TODO.md` ("Stage 2 step 1") for the open items.
+Press START on the extractor screen (once CHR is loaded) to enter the source-derived menu path. When a supported mapper-0, 16 KiB PRG is available beside the 3DSX, menu setup commands and audited handlers execute through the static 6502 recompiler against persistent 2 KiB NES CPU RAM. The runtime now includes the five original list-3 commands ($C55E/$C56A/$C455/$C5A7/$C485), the shared $CB2C dispatcher for states 3/6/11, the $C465 transitions for states 4/7, all six list-5 editor setup commands, the $C97C editor frame, and the guarded EB17 B-return branch. The original $D310 timer routine is also used for the full timer bank. Without a supported PRG, untranslated commands remain held rather than being replaced with guessed effects.
 
-Update 2026-11-18: the menu path now covers the title menu, the track selector, the design menu and the track save/load states ($0C/$0D, stored in `sdmc:/3ds/excitebike3ds_tracks.bin` instead of the Famicom Data Recorder). Press START on the extractor screen to enter it; while a load waits for a missing file, B leaves the menu. The race engine, sound and scrolling are not implemented, so this is not yet a complete replica; see `TODO.md` ("Stage 2 step 2").
+Update 2026-11-19: ROM-backed host regressions cover list-3 setup and its first state-3 dispatcher phase, C465 transitions 4→5 and 7→2, list-5 setup, one C97C frame and the guarded B-return branch. The host workflow and New 3DS build passed on commit `a547c0f2`; see [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) and [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084).
+
+This is still not a complete replica. The normal menu artwork/layout, all editor interactions, save/load error cases, the preceding $D0AB NMI work, pixel-accurate sprite-0 collision, exact raster timing, sound and physical New 3DS comparison remain open. Stage 3 stays blocked until the Stage 2 acceptance gate in `TODO.md` and `STAGE2_TRACE.md` is satisfied.
 
 ### New Nintendo 3DS menu display
 
