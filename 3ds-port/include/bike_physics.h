@@ -130,6 +130,7 @@ typedef struct BikeMovementState {
     uint8_t object_status[4];            /* ram_00B0_obj */
     uint8_t vertical_reference[4];       /* ram_00BC_obj */
     uint8_t object_y[4];                 /* ram_obj_pos_Y_lo */
+    uint8_t y_low[4];                      /* ram_008C */
     uint8_t rider_state[4];              /* ram_0364_obj */
     uint8_t collision_state[4];           /* ram_0098_obj */
     uint8_t movement_mode[4];              /* ram_0388_obj */
