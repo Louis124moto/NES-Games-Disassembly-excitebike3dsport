@@ -4,6 +4,7 @@
  * temporary iNES header and writes ./rom.nes beside this test executable.
  */
 #include <stdio.h>
+#include <3ds.h>
 #include "game_state.h"
 #include "menus.h"
 #include "nes_menu_cpu.h"
@@ -39,7 +40,6 @@ int main(void)
 {
     GameState s;
     unsigned int frame;
-    uint8_t revision;
 
     gameStateReset(&s);
     if (!nesMenuCpuInit("./test_menu_cpu_rom")) {
@@ -64,12 +64,11 @@ int main(void)
         return fail("C5C2 course page was not copied into GameState", frame, &s);
 
     /* One original C97C frame must return through the emulated sprite-hit wait. */
-    revision = s.menu_ppu_revision;
-    menusNmiFrame(&s, 0u, 0u);
+    menusNmiFrame(&s, KEY_LEFT, KEY_LEFT);
     if (s.menu_asm_state != 9u)
-        return fail("idle editor frame unexpectedly changed state", frame + 1u, &s);
-    if (s.menu_ppu_revision == revision)
-        return fail("C97C frame did not complete or publish its PPU update", frame + 1u, &s);
+        return fail("editor frame unexpectedly changed state", frame + 1u, &s);
+    if (s.menu_cpu_ram[0x005Cu] != 0x02u)
+        return fail("C97C did not copy held LEFT into ram_005C", frame + 1u, &s);
 
     puts("PASS: original ROM list-5 setup and one recompiled state-09 editor frame.");
     return 0;
