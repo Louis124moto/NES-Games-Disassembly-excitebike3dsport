@@ -60,7 +60,9 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
-- [ ] A5 — All six state-9 list-5 commands ($C551/$C869/$C820/$C5A3/$C562/$C5C2) now have a PRG-backed recompiler path. $C820 captures the three D13F/ECE4/D3C1 PPU uploads; $C5C2 executes E1A3/D1C7 and EC25/EC47 against persistent CPU RAM/OAM. Full editor frame loop $C97C, PPU-status/raster timing, EB17 return, PRG-backed adapter tests and hardware verification remain open.
+- [x] A5 — All six state-9 list-5 commands ($C551/$C869/$C820/$C5A3/$C562/$C5C2) have a PRG-backed recompiler path. $C820 captures the three D13F/ECE4/D3C1 PPU uploads; $C5C2 executes E1A3/D1C7 and EC25/EC47 against persistent CPU RAM/OAM.
+- [x] A6 — The state-9 per-frame entry $C97C is now dispatched through the recompiler with persistent CPU RAM, controller input, OAM, course pages, and PPU register/nametable/palette writeback. The original EB17 B-button branch is included.
+- [ ] A7 — PPUSTATUS bit $40 is acknowledged once per host call to let sub_D19B progress. This is not a real sprite-0/raster simulation. ROM-backed frame vectors, exact PPU timing, hardware B-return, graphics comparison, and sound remain open.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
@@ -69,7 +71,8 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [x] C1 — Active title/selector/design-menu input now prefers the generated 6502 `sub_C7DE` via `nesMenuCpuInput()` when a supported mapper-0 16 KiB `rom.nes` is beside the 3DSX; the source-C helper remains a fallback. The routine is included in the existing differential region list. Adapter commits `98e4eec`, `59341af`, `64f3fa8`, `ca5b086`; fresh CI and physical New 3DS validation are pending.
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
-- [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; all six list-5 setup commands now have a recompiled path. Finish the state-$09 per-frame editor handler and B-button return via $EB17. State-10 race runtime is Stage 3.
+- [x] C3 — Six-choice mapping, save/load and title-return branches are host-tested; all six list-5 setup commands and the state-$09 per-frame handler now have a recompiled path. The editor's B-button return uses the original $EB17 logic.
+- [ ] C3 validation — PPUSTATUS/raster behavior is only approximated at frame granularity; ROM-backed editor vectors, hardware validation and authentic artwork/sound remain open. State-10 race runtime is Stage 3.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
 - [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch. Added `testEditorSetupPrelude` for the no-ROM fallback and intentional hold at `$C820`; execution is pending. Add a PRG-backed test for `$C820` PPU writes and `$C5C2` OAM output.
 - [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
