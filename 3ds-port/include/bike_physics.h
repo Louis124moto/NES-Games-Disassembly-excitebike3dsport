@@ -160,5 +160,7 @@ void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement);
 /* sub_DC1A/sub_DCF2: source-derived vertical recovery and per-bike movement. */
 void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t object_index);
 void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index);
+/* Complete source-order movement/camera pass from sub_DA26 (timer path). */
+void bikePhysicsUpdateRaceMovementPass(BikeMovementState *movement, uint8_t race_started);
 
 #endif
