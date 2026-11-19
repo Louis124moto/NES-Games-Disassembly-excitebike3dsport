@@ -63,8 +63,8 @@ The original NES disassembly is the behavioral reference. Its source files must 
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
 | Stage 2 — native menus/front-end | NOT YET IMPLEMENTED as the required native architecture. Existing menu/PPU/recompiler work is historical reference material only. Stage 3 blocked. |
-| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. The player speed-control branch (sub_CD59), acceleration/deceleration, terrain gate and temperature/overheat state (sub_E359) are translated and validated against 1,224,704 ASM reference vectors; full physics and playable race are not implemented. |
-| Latest code batch | Emulator/recompiler game runtime deleted. Native player speed-control and temperature state added; 1,224,704 ASM differential vectors and the New 3DS build passed on commit dd9c3bd4. |
+| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Player speed control (sub_CD59), acceleration/deceleration, terrain gate, temperature/overheat (sub_E359) and movement integration (sub_DA58/DA6A/DA7A) are translated and validated against 1,798,992 ASM reference vectors; full physics and playable race are not implemented. |
+| Latest code batch | Emulator/recompiler game runtime deleted. Native player speed-control, temperature and movement core added; 1,798,992 ASM differential vectors and the New 3DS build passed on commit 81380f81. |
 | Latest host test / 3DS build | 3DS build passed after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22 ([CI run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892)). Native physics differential CI is pending. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
