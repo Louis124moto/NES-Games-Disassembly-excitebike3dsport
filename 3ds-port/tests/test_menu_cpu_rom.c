@@ -17,6 +17,24 @@ static int fail(const char *what, unsigned int frame, const GameState *s)
     return 1;
 }
 
+static int testC465StateAdvance(uint8_t initialState, uint8_t expectedState)
+{
+    GameState s;
+    gameStateReset(&s);
+    s.menu_asm_state = initialState;
+    s.menu_ram0040 = 1u;
+    s.menu_timer34 = 0u;
+    menusUpdate(&s, 0u, 0u);
+    if (s.menu_asm_state != expectedState || s.menu_ram0040 != 0u ||
+        s.menu_ram0044 != 0u) {
+        fprintf(stderr, "ROM menu test: C465 state %u -> %u (expected %u)\n",
+                (unsigned int)initialState, (unsigned int)s.menu_asm_state,
+                (unsigned int)expectedState);
+        return 0;
+    }
+    return 1;
+}
+
 int main(void)
 {
     GameState s;
@@ -28,6 +46,8 @@ int main(void)
         fputs("ROM menu test: failed to load supported rom.nes\n", stderr);
         return 1;
     }
+    if (!testC465StateAdvance(4u, 5u) || !testC465StateAdvance(7u, 2u))
+        return 1;
 
     /* Enter state 9 directly, then execute its real six-command setup list. */
     s.menu_asm_state = 9u;
