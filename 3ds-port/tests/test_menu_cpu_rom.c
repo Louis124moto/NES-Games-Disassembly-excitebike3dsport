@@ -56,11 +56,11 @@ int main(void)
 
     if (s.menu_ram0040 == 0u)
         return fail("list-5 setup did not reach the editor", frame, &s);
-    if (s.menu_cpu_ram[0x0049u] != 1u)
-        return fail("C5C2 did not initialize the editor input guard", frame, &s);
+    if (s.menu_cpu_ram[0x0049u] != 0u)
+        return fail("C5C2 did not clear the editor input guard", frame, &s);
     if (s.menu_cpu_ram[0x00B7u] != 1u || s.menu_cpu_ram[0x00BEu] != 0u)
         return fail("C5C2 object state differs from the source setup", frame, &s);
-    if (s.menu_ram05E0[0] != 2u)
+    if (s.menu_ram05E0[0] != 1u)
         return fail("C5C2 course page was not copied into GameState", frame, &s);
 
     /* One original C97C frame must return through the emulated sprite-hit wait. */
