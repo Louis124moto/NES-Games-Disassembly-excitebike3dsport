@@ -33,10 +33,11 @@ uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
         }
         menu->selection_dirty = 1u;
     } else if ((pressed & 0x04u) != 0u) {
-        /* Three LSRs in the source expose original bit 2 (NES Down). */
+        /* Three LSRs expose original bit 2 (NES Down); overflow falls through
+         * from LDY #1 into DEY, so the wrapped value is zero. */
         selection = (uint8_t)(selection + 1u);
         if (selection >= entry_count) {
-            selection = 1u;
+            selection = 0u;
         }
         menu->selection_dirty = 1u;
     } else if ((pressed & 0x08u) != 0u) {
