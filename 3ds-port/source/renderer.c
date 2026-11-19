@@ -601,6 +601,10 @@ void rendererGetSprite0Hit(uint8_t *found, uint32_t *cycleFromPrerender)
 void rendererDraw(const GameState *state)
 {
     char logText[768]; /* default view text is ~510 bytes with worst-case arguments */
+    if (!s_menuActive || state == NULL || state->menu_ppu_background_ready == 0u) {
+        s_sprite0HitFound = 0u;
+        s_sprite0HitCycle = UINT32_MAX;
+    }
     if (s_menuActive && state != NULL) {
         /*
          * Menu mode: write both screens only when the menu-state inputs
