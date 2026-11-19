@@ -54,7 +54,8 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state);
 /*
  * Source-derived inputs for the player speed-control branch in sub_CD59.
  * These are gameplay fields, not a 6502 RAM image. Terrain state is updated
- * in place by the native sub_CDEE translation when throttle is applied.
+ * in place by the native sub_CDEE translation when throttle is applied. The
+ * later steering/timer side effects at loc_CDBD are a separate subsystem.
  */
 typedef struct BikePlayerSpeedContext {
     BikeSpeedState speed;
