@@ -135,6 +135,7 @@ static int testRasterSplitD0AB(void)
     uint8_t nametables[2048], initialNametables[2048];
     uint8_t palette[32], initialPalette[32];
     uint8_t ctrl = 0u, mask = 0u, scrollX = 0u, scrollY = 0u;
+    uint32_t noHitElapsed = 0u;
     unsigned int i;
 
     memset(cpuRam, 0, sizeof(cpuRam));
@@ -164,6 +165,7 @@ static int testRasterSplitD0AB(void)
         memset(&split, 0, sizeof(split));
         ok = nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
                                    &scrollX, &scrollY, 0u, &split);
+        noHitElapsed = split.elapsedCycles;
         if (!ok || split.elapsedCycles == 0u || split.ctrlWrites != 2u ||
             split.scrollPairs != 2u ||
             split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
@@ -214,7 +216,7 @@ static int testRasterSplitD0AB(void)
         NesMenuRasterSplit afterPreviousHit;
         if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
                                    &scrollX, &scrollY, 1u, &afterPreviousHit) ||
-            afterPreviousHit.elapsedCycles <= split.elapsedCycles + 2000u ||
+            afterPreviousHit.elapsedCycles <= noHitElapsed + 2000u ||
             afterPreviousHit.splitScanline < 55u ||
             afterPreviousHit.splitScanline > 65u ||
             afterPreviousHit.splitDot > 340u) {
