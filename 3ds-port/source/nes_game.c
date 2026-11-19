@@ -42,6 +42,7 @@ NesGameStatus nesGameInit(const char *executablePath)
 int nesGameAvailable(void) { return s_ready; }
 const char *nesGameStatusText(void) { return s_text; }
 const uint8_t *nesGameFramebuffer(void) { return nesSystemFramebuffer(&s_sys); }
+const int16_t *nesGameAudio(unsigned *count) { if (count) *count = s_sys.audioCount; return s_sys.audio; }
 uint32_t nesGameFrames(void) { return (uint32_t)s_sys.frames; }
 
 void nesGameBoot(void)

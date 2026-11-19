@@ -8,6 +8,7 @@
 #include "renderer.h"
 #include "nes_menu_cpu.h"
 #include "nes_game.h"
+#include "nes_audio_out.h"
 
 /*
  * Runtime routing:
@@ -43,6 +44,7 @@ void gameInit(const char *executablePath)
     assetExtractorInit(executablePath);
     (void)nesMenuCpuInit(executablePath); /* Source-recompiled sub_C7DE when rom.nes is present. */
     (void)nesGameInit(executablePath);    /* Faithful path: needs rom.nes with the disassembled PRG. */
+    nesAudioOutInit();
 }
 
 void gameUpdate(void)
@@ -56,7 +58,11 @@ void gameUpdate(void)
         } else {
             s_leaveHold = 0u;
         }
-        if (s_nesGameActive && !nesGameFrame(s_input.held)) {
+        if (s_nesGameActive && nesGameFrame(s_input.held)) {
+            unsigned count = 0u;
+            const int16_t *audio = nesGameAudio(&count);
+            nesAudioOutPush(audio, count);
+        } else if (s_nesGameActive) {
             s_nesGameActive = 0;
             rendererPrintBottom("Recompiled program reached an unknown address.\nFaithful game stopped.\n");
         }
@@ -75,7 +81,7 @@ void gameUpdate(void)
             nesGameBoot();
             s_nesGameActive = 1;
             s_leaveHold = 0u;
-            rendererPrintBottom("Excitebike (original program)\nD-pad/A/B/SELECT/START = NES pad\nHold L+R 1 s: leave (port only)\nNo audio / tape yet\n");
+            rendererPrintBottom("Excitebike (original program)\nD-pad/A/B/SELECT/START = NES pad\nHold L+R 1 s: leave (port only)\nAudio needs dspfirm.cdc; no tape yet\n");
             return;
         }
         if ((s_input.pressed & KEY_START) && assetExtractorGetTotalTiles() > 0u) {
@@ -119,5 +125,6 @@ void gameRender(void)
 
 void gameExit(void)
 {
+    nesAudioOutExit();
     rendererExit();
 }

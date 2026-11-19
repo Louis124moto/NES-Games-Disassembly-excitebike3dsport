@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "nes_machine.h"
+#include "nes_apu.h"
 
 #define NES_SYS_WIDTH 256u
 #define NES_SYS_HEIGHT 240u
@@ -44,6 +45,10 @@ typedef struct NesSystem {
     unsigned long frames;
     uint8_t rgbPalette[64][3];
     uint8_t fb[NES_SYS_WIDTH * NES_SYS_HEIGHT * 3u];
+    NesApu apu;
+    unsigned long audioStart;     /* CPU cycle at which the current audio chunk started */
+    int16_t audio[1024];          /* 32 kHz mono samples of the last completed frame */
+    unsigned audioCount;
     int lastError;                /* NesSystemResult of the last frame */
 } NesSystem;
 

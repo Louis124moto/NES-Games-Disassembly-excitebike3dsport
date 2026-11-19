@@ -177,6 +177,8 @@ static void ioWrite(NesMachine *m, uint16_t a, uint8_t d)
         catchUp(s, currentLine(s));
         for (i = 0; i < 256u; ++i) s->oam[(uint8_t)(s->oamAddr + i)] = m->ram[(((unsigned)d << 8) + i) & 0x7FFu];
         m->cyc += 513u;
+    } else if ((a >= 0x4000u && a <= 0x4013u) || a == 0x4015u || a == 0x4017u) {
+        nesApuWrite(&s->apu, a, d, m->cyc - s->audioStart);
     } else if (a == 0x4016u) {
         s->strobe = (uint8_t)(d & 1u);
         if (s->strobe) s->padShift = s->pad;
@@ -210,6 +212,7 @@ static uint8_t ioRead(NesMachine *m, uint16_t a)
         default: return 0u;
         }
     }
+    if (a == 0x4015u) return nesApuReadStatus(&s->apu);
     if (a == 0x4016u) {
         const uint8_t bit = (uint8_t)(s->padShift & 1u);
         if (!s->strobe) s->padShift = (uint8_t)((s->padShift >> 1) | 0x80u);
@@ -248,6 +251,7 @@ NesSystemResult nesSystemInit(NesSystem *s, const uint8_t *rom, size_t romSize)
     s->mainPc = (uint16_t)(s->prg[0x3FFCu] | (s->prg[0x3FFDu] << 8));
     s->s0Line = -1;
     s->padShift = 0u;
+    nesApuReset(&s->apu);
     return NES_SYS_OK;
 }
 
@@ -289,6 +293,11 @@ NesSystemResult nesSystemRunFrame(NesSystem *s)
         if (s->m.cyc >= ev) {
             if (!s->vblankDone) {
                 catchUp(s, 240u);                 /* the visible image is complete: this is the frame to present */
+                {
+                    const unsigned long end = s->frameStart + NES_SYS_VBLANK_CYCLE;
+                    s->audioCount = nesApuRunFrame(&s->apu, end - s->audioStart, s->audio, 1024u);
+                    s->audioStart = end;
+                }
                 s->status |= 0x80u;
                 s->vblankDone = 1;
                 ++s->frames;

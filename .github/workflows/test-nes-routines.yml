@@ -44,6 +44,9 @@ on:
       - "3ds-port/include/nes_system.h"
       - "3ds-port/include/nes_prg_crc.h"
       - "3ds-port/source/nes_game.c"
+      - "3ds-port/source/nes_apu.c"
+      - "3ds-port/include/nes_apu.h"
+      - "3ds-port/source/nes_audio_out.c"
       - "3ds-port/include/nes_game.h"
       - "3ds-port/include/nes_machine.h"
       - "3ds-port/tools/**"
@@ -164,11 +167,16 @@ jobs:
           python3 tools/gen_prg_crc.py ../Excitebike/bank_FF.asm
           diff -q /tmp/nes_prg_crc.h include/nes_prg_crc.h
 
+      - name: Test APU model
+        run: |
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_apu.c 3ds-port/tests/test_nes_apu.c -o /tmp/test_nes_apu -lm
+          /tmp/test_nes_apu
+
       - name: Test NES system layer running the recompiled original program
         run: |
           cd 3ds-port
           cat ../Excitebike/header.bin /tmp/prg.bin ../Excitebike/CHR_ROM.chr > /tmp/full_rom.nes
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/nes_system.c source/nes_gen_code.c source/nes_ppu_render.c tests/test_nes_system.c -o /tmp/test_nes_system
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/nes_system.c source/nes_apu.c source/nes_gen_code.c source/nes_ppu_render.c tests/test_nes_system.c -o /tmp/test_nes_system -lm
           /tmp/test_nes_system /tmp/full_rom.nes
 
       - name: Compile menu frame-model test

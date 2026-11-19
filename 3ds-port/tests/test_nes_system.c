@@ -63,7 +63,15 @@ int main(int argc, char **argv)
     runFrames(&a, 300, 305, 0x08u); runFrames(&a, 305, 450, 0);
     CHECK(a.m.ram[0x41] == 0x02u, 13);
     /* in the race the on-screen timer (ram $0F... runs) - hold A and check the original code advances time and state */
-    runFrames(&a, 450, 1100, 0x01u);
+    {
+        int pk = 0; unsigned fr, k;
+        for (fr = 450; fr < 1100; ++fr) {
+            runFrames(&a, fr, fr + 1, 0x01u);
+            CHECK(a.audioCount >= 525u && a.audioCount <= 540u, 18);   /* 32 kHz samples per frame */
+            for (k = 0; k < a.audioCount; ++k) { int v = a.audio[k] < 0 ? -a.audio[k] : a.audio[k]; if (v > pk) pk = v; }
+        }
+        CHECK(pk > 300, 19);                         /* the original sound engine produced audible output in the race */
+    }
     CHECK(a.m.ram[0x41] == 0x02u, 14);
 
     /* determinism: identical inputs give identical pictures and RAM */

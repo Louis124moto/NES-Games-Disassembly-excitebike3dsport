@@ -22,5 +22,7 @@ void nesGameBoot(void);
 int nesGameFrame(uint32_t held);
 const uint8_t *nesGameFramebuffer(void);   /* 256x240 RGB, row-major */
 const char *nesGameStatusText(void);
+/* 32 kHz mono PCM16 samples produced by the last nesGameFrame() (original sound engine through the APU model). */
+const int16_t *nesGameAudio(unsigned *count);
 uint32_t nesGameFrames(void);
 #endif
