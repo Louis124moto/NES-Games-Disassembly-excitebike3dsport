@@ -5,11 +5,13 @@ The former 6502 recompiler / NES-system runtime is not the target and has been d
 - Menu selection: `nativeMenuUpdateSelection` translates `sub_C7DE`; 393,216 vectors pass.
 - Title/selector/design state handlers: `nativeMenuUpdate` covers source states 0, 1 and 8.
 - Shared menu transition phase 0: `nativeMenuTransitionPhase0` translates `CB3B` for states 3/6/11; 51,840 vectors pass.
+- Shared menu transition phase 3: `nativeMenuTransitionPhase3` translates `CC6B`, including the original A-register-zero write when `$004B=0`; differential tests cover all state values and relevant flag/setup/phase combinations.
+- Platform input adapter: `inputMapNesButtons` maps libctru A/B/Select/Start/D-pad bits into the original NES controller byte; all 256 combinations pass.
 - Timer-expired timed transition: `nativeMenuCompleteTimedTransition` translates the `C477-C484` branch used by `C465`.
 - Timer bank: `nativeMenuTickTimers` translates `sub_D310` and is compared to ASM.
 - Physics and movement slices are listed in `STAGE3_TRACE.md` and `TODO.md`; they do not yet constitute a complete playable physics loop.
 
-The latest exact code commit, `7972ed9fad04c3963fb41a031a44537ffeae3853`, passed host differential CI [44584137040](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137040) and the New 3DS build [44584137025](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137025).
+The latest exact code commit, `f214e5bbc96473896ca3abbbbf9e8cb6c8cc05f8`, passed host differential CI [44585477913](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585477913) and the New 3DS build [44585478080](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585478080).
 
 **Important:** these are isolated source-derived native functions, not a complete menu, renderer, editor, or game runtime. The remaining sections below are historical source-trace evidence. Any mention of PRG-backed recompiler execution describes the retired experiment and must not be reintroduced into the product runtime.
 
