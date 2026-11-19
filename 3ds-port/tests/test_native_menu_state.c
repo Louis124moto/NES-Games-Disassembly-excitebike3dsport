@@ -91,6 +91,60 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
     return 0;
 }
 
+static int test_native_transition_phase1(void)
+{
+    NativeMenuState menu;
+    static const uint8_t payload[7] = { 0x11u, 0x22u, 0x33u, 0x44u, 0x55u, 0x66u, 0x77u };
+    unsigned i;
+
+    memset(&menu, 0, sizeof(menu));
+    menu.transition_phase = 1u;
+    menu.transition_flag_004B = 1u;
+    menu.timer_values[18] = 2u;
+    memcpy(menu.transition_payload, payload, sizeof(payload));
+    nativeMenuTransitionPhase1(&menu);
+    if (menu.transition_phase != 1u || menu.transition_patch_valid != 0u ||
+        menu.timer_values[18] != 2u) {
+        puts("FAIL: CB77 must wait while the source transition timer is nonzero");
+        return 1;
+    }
+
+    menu.timer_values[18] = 0u;
+    nativeMenuTransitionPhase1(&menu);
+    if (menu.transition_phase != 2u || menu.transition_patch_valid == 0u ||
+        menu.transition_duration != 0x20u || menu.timer_values[18] != 0x23u ||
+        menu.transition_patch_layer != 1u || menu.transition_patch_x != 15u ||
+        menu.transition_patch_y != 6u) {
+        puts("FAIL: CB77 native semantic patch metadata/timing mismatch");
+        return 1;
+    }
+    for (i = 0u; i < sizeof(payload); ++i) {
+        if (menu.transition_patch[i] != payload[i]) {
+            puts("FAIL: CB77 native semantic patch payload mismatch");
+            return 1;
+        }
+    }
+
+    memset(&menu, 0, sizeof(menu));
+    menu.transition_phase = 1u;
+    menu.timer_values[18] = 0u;
+    nativeMenuTransitionPhase1(&menu);
+    if (menu.transition_duration != 0x31u || menu.timer_values[18] != 0x34u) {
+        puts("FAIL: CB77 alternate duration for transition flag zero mismatch");
+        return 1;
+    }
+
+    menu.transition_phase = 0u;
+    menu.timer_values[18] = 0u;
+    nativeMenuTransitionPhase1(&menu);
+    if (menu.transition_phase != 0u) {
+        puts("FAIL: CB77 handler must ignore non-phase-1 states");
+        return 1;
+    }
+    puts("PASS: native CB77 phase-1 semantic patch timing and payload unit tests.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 reference;
@@ -103,6 +157,8 @@ int main(int argc, char **argv)
         puts("usage: test_native_menu_state <original-16KiB-prg>");
         return 2;
     }
+    if (test_native_transition_phase1() != 0) return 1;
+
     {
         FILE *f = fopen(argv[1], "rb");
         size_t n;
