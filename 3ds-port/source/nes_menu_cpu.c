@@ -117,6 +117,7 @@ typedef struct {
     uint8_t captureRasterSplit, timingOnly, ctrlWriteCount, scrollPairCount;
     uint8_t topCtrl, topScrollX, topScrollY;
     uint8_t bottomCtrl, bottomScrollX, bottomScrollY;
+    unsigned long splitWriteCycle;
 } NesMenuPpuBus;
 
 #define NES_NMI_TO_PRERENDER_CPU_CYCLES 2273UL
@@ -165,7 +166,10 @@ static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
             *bus->scrollY = value;
             if (bus->captureRasterSplit) {
                 if (bus->scrollPairCount == 0u) bus->topScrollY = value;
-                else bus->bottomScrollY = value;
+                else {
+                    bus->bottomScrollY = value;
+                    if (bus->scrollPairCount == 1u) bus->splitWriteCycle = machine->cyc;
+                }
                 if (bus->scrollPairCount < 2u) ++bus->scrollPairCount;
             }
         }
@@ -314,10 +318,12 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     split->bottomScrollY = bus.bottomScrollY;
     split->ctrlWrites = bus.ctrlWriteCount;
     split->scrollPairs = bus.scrollPairCount;
+    split->splitWriteCycle = bus.splitWriteCycle > UINT32_MAX
+        ? UINT32_MAX : (uint32_t)bus.splitWriteCycle;
     split->elapsedCycles = machine.cyc > UINT32_MAX ? UINT32_MAX : (uint32_t)machine.cyc;
     {
-        const uint32_t phase = split->elapsedCycles > NES_NMI_TO_PRERENDER_CPU_CYCLES
-            ? split->elapsedCycles - NES_NMI_TO_PRERENDER_CPU_CYCLES : 0u;
+        const uint32_t phase = split->splitWriteCycle > NES_NMI_TO_PRERENDER_CPU_CYCLES
+            ? split->splitWriteCycle - NES_NMI_TO_PRERENDER_CPU_CYCLES : 0u;
         const uint64_t dots = (uint64_t)phase * 3u;
         uint64_t scanline = dots / 341u;
         if (scanline > 239u) scanline = 239u;
