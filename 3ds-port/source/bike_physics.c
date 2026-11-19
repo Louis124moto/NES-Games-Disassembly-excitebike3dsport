@@ -102,6 +102,92 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
     return 1u;
 }
 
+
+/* Player branch of sub_CD59 ($CD59-$CDEB), excluding its later steering/
+ * animation side effects at loc_CDBD. The exact called speed/gate helpers
+ * are independently differential-tested against their original ASM. */
+static uint8_t playerSpeedBelowCap(const BikeSpeedState *speed, uint8_t mode)
+{
+    static const uint8_t whole_cap[3] = { 0x03u, 0x03u, 0x01u };
+    static const uint8_t fraction_cap[3] = { 0x20u, 0x40u, 0x7Fu };
+
+    if (speed->whole < whole_cap[mode]) {
+        return 1u;
+    }
+    if (speed->whole > whole_cap[mode]) {
+        return 0u;
+    }
+    return (uint8_t)(speed->fraction < fraction_cap[mode]);
+}
+
+void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
+{
+    uint8_t deceleration_mode;
+    uint8_t acceleration_mode;
+    uint8_t zero_whole_threshold;
+    uint8_t gate_z;
+
+    if (player == 0 || player->frame_phase > 3u ||
+        player->object_status_00B0 > 3u) {
+        return;
+    }
+
+    zero_whole_threshold =
+        (player->object_status_00B0 & 0x02u) != 0u ? 0xB0u : 0x01u;
+
+    /* Early CDBA path: locked/colliding or non-running object state. */
+    if (player->object_lock_0374 != 0u ||
+        player->collision_lock_0098 != 0u ||
+        (player->movement_state_009C != 0u &&
+         player->movement_state_009C != 5u)) {
+        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                    0u, zero_whole_threshold);
+        return;
+    }
+
+    /* X=0 special case in CD70: after finish, use Y=2 and its lower cap. */
+    if (player->race_finished != 0u) {
+        if (playerSpeedBelowCap(&player->speed, 2u) != 0u) {
+            bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase, 2u);
+        }
+        return;
+    }
+
+    /* B0 != 0 selects the slow/recovery deceleration table path. */
+    if (player->object_status_00B0 != 0u) {
+        const uint8_t direction = (uint8_t)(player->controller & 0x03u);
+        deceleration_mode = direction == 0u ? 4u : (uint8_t)(direction + 1u);
+        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                    deceleration_mode, zero_whole_threshold);
+        return;
+    }
+
+    /* Without either upper controller bit, the player coasts via Y=0. */
+    if ((player->controller & 0xC0u) == 0u) {
+        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                    0u, zero_whole_threshold);
+        return;
+    }
+
+    /* ASL of the masked $C0 bits: bit 7 wins (Y=0), bit 6 alone gives Y=1. */
+    acceleration_mode = (player->controller & 0x80u) != 0u ? 0u : 1u;
+    gate_z = bikePhysicsTerrainGate(&player->terrain);
+
+    /* sub_CD8F: a non-zero gate result blocks throttle only while whole speed != 0. */
+    if (gate_z == 0u && player->speed.whole != 0u) {
+        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+                                    0u, zero_whole_threshold);
+        return;
+    }
+
+    /* CD9A performs this cap check before calling CE29; do not clamp an
+     * already-over-cap speed here, because the original caller simply skips. */
+    if (playerSpeedBelowCap(&player->speed, acceleration_mode) != 0u) {
+        bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase,
+                                    acceleration_mode);
+    }
+}
+
 void bikePhysicsUpdate(BikeState *bike, const InputState *input)
 {
     (void)bike;
