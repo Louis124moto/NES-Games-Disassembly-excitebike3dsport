@@ -60,6 +60,7 @@ void gameStateReset(GameState *state)
     state->menu_ppu_cycle_phase = 0u;
     state->menu_ppu_split_valid = 0u;
     state->menu_ppu_split_scanline = 0u;
+    state->menu_ppu_split_dot = 0u;
     state->menu_ppu_top_ctrl = 0u;
     state->menu_ppu_top_scroll_x = 0u;
     state->menu_ppu_top_scroll_y = 0u;
