@@ -22,7 +22,7 @@ typedef struct NativeMenuSelectionState {
 
 /* Exact native translation of sub_C7DE. pressed uses NES controller bit
  * positions; the 3DS-to-NES input mapping is a separate platform adapter. */
-void nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
+uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
                                uint8_t pressed,
                                uint8_t entry_count);
 
