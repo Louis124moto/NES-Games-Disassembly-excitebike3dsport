@@ -127,7 +127,8 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
 
     if (!loadChrPack(assets, executablePath)) goto fail;
 
-    /* Source setup order: title $02; selector $06 then $03; design $06 then $0F. */
+    /* These are source PPU command snapshots, not screenshots. Preserve
+     * source setup order and leave unsupported/dynamic content unpainted. */
     if (!mergeSnapshot(&assets->scenes[0], "ppu_snapshot_02.bin", executablePath,
                        assets->error, sizeof(assets->error)) ||
         !mergeSnapshot(&assets->scenes[1], "ppu_snapshot_06.bin", executablePath,
@@ -137,14 +138,35 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
         !mergeSnapshot(&assets->scenes[2], "ppu_snapshot_06.bin", executablePath,
                        assets->error, sizeof(assets->error)) ||
         !mergeSnapshot(&assets->scenes[2], "ppu_snapshot_15.bin", executablePath,
+                       assets->error, sizeof(assets->error)) ||
+        !mergeSnapshot(&assets->scenes[3], "ppu_snapshot_05.bin", executablePath,
+                       assets->error, sizeof(assets->error)) ||
+        !mergeSnapshot(&assets->scenes[4], "ppu_snapshot_16.bin", executablePath,
+                       assets->error, sizeof(assets->error)) ||
+        !mergeSnapshot(&assets->scenes[5], "ppu_snapshot_17.bin", executablePath,
                        assets->error, sizeof(assets->error))) goto fail;
 
-    if (!makeAssetPath(path, sizeof(path), executablePath, "ppu_palette_18.bin") ||
-        !readExactFile(path, assets->palette, sizeof(assets->palette)) ||
-        !makeAssetPath(path, sizeof(path), executablePath, "ppu_palette_18_mask.bin") ||
-        !readExactFile(path, assets->palette_written, sizeof(assets->palette_written))) {
-        (void)snprintf(assets->error, sizeof(assets->error), "Missing or invalid palette preset 18");
-        goto fail;
+    /* The editor setup selects palette 12 + course. Other menu screens use
+     * source palette preset 18, as in the existing front-end renderer. */
+    {
+        unsigned paletteIndex;
+        for (paletteIndex = 0u; paletteIndex < NATIVE_MENU_PALETTE_COUNT; ++paletteIndex) {
+            char filename[48];
+            (void)snprintf(filename, sizeof(filename), "ppu_palette_%u.bin", paletteIndex + 12u);
+            if (!makeAssetPath(path, sizeof(path), executablePath, filename) ||
+                !readExactFile(path, assets->palettes[paletteIndex], 32u)) {
+                (void)snprintf(assets->error, sizeof(assets->error),
+                               "Missing or invalid palette preset %u", paletteIndex + 12u);
+                goto fail;
+            }
+            (void)snprintf(filename, sizeof(filename), "ppu_palette_%u_mask.bin", paletteIndex + 12u);
+            if (!makeAssetPath(path, sizeof(path), executablePath, filename) ||
+                !readExactFile(path, assets->palette_written[paletteIndex], 32u)) {
+                (void)snprintf(assets->error, sizeof(assets->error),
+                               "Missing or invalid palette mask %u", paletteIndex + 12u);
+                goto fail;
+            }
+        }
     }
 
     assets->loaded = 1u;
