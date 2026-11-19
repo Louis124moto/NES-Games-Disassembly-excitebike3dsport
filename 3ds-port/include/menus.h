@@ -26,13 +26,14 @@ void menusNmiFrame(GameState *state, unsigned int heldKeys, unsigned int pressed
  * storage back end with the same two logical blocks and the same completion
  * handshake (ram_0048 = $FF):
  *   block 0 = RAM $0060-$009F (64 bytes), block 1 = RAM $05E0-$06DF (256 bytes).
- * save    : store both blocks; returns nonzero on success (the original cannot
- *           detect a missing recorder either, so a failure is ignored).
+ * save    : store both blocks; returns nonzero on success. The 3DS port
+ *           reports a storage failure through source PPU list $19 and returns
+ *           to the design menu instead of falsely completing the save.
  * readBlock: 1 = block delivered, 0 = no data yet (the original waits forever
  *           for tape signal), -1 = framing/checksum error (the original shows
  *           con_0045_19 and restarts the read).
- * With no back end set, save completes silently and load waits like a real
- * console without a recorder.
+ * With no back end set, save is reported as a storage error and load waits
+ * like a real console without a recorder.
  */
 typedef struct MenusTapeIo {
     int (*save)(void *ctx, const uint8_t *block0, const uint8_t *block1);
