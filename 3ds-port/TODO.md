@@ -129,7 +129,8 @@ Goal: reproduce the original title, selector, design/options menu, course editor
   - [x] Add an isolated native phase-1 timing/payload translation and 64 deterministic ASM-oracle differential vectors (not integrated; payload meaning still needs caller/state classification).
   - [ ] Resolve the seven-byte payload's contextual meaning before native rendering integration.
   - [x] Expand the source trace for phase-2 timer/input branches, the three table-driven sprite records, and the shared sprite-layout routine; see the 2026-11-19 refinement in STAGE2_TRACE.md. This is trace-only, not native implementation.
-  - [ ] Trace the remaining dynamic inputs and identify the source graphics/visible meaning of phase-2 sprite groups.
+  - [x] Trace sub_DD6F's fixed-point object update and return-value path used by phase 2; see STAGE2_TRACE.md.
+  - [ ] Trace the initialization and semantic meaning of the object fields consumed by sub_DD6F, and identify the source graphics/visible meaning of phase-2 sprite groups.
   - [ ] Translate phase-2 timing and branch decisions to semantic native state, with differential tests for every branch.
   - [ ] Implement the corresponding native transition sprite events and integrate them into the renderer.
 - [ ] Implement native title, selector, design/options and editor entry/return screens from verified assets.
