@@ -39,10 +39,9 @@ void nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
         menu->selection_dirty = 1u;
     } else if ((pressed & 0x08u) != 0u) {
         /* The fourth LSR exposes original bit 3 (NES Up). */
-        if (selection == 0u) {
+        selection = (uint8_t)(selection - 1u);
+        if ((selection & 0x80u) != 0u) {
             selection = (uint8_t)(entry_count - 1u);
-        } else {
-            selection = (uint8_t)(selection - 1u);
         }
         menu->selection_dirty = 1u;
     } else {
