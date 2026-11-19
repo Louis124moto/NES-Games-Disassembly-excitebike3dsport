@@ -91,11 +91,9 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
     if (high_path != 0u) {
         if (state->posture_state != 0x01u) {
             state->posture_state = 0x02u;
-            state->player_event_flag = 0x04u;
-            return 0u;
         }
         state->player_event_flag = 0x04u;
-        return 1u;
+        return 0u;
     }
 
     if (state->posture_state != 0x01u) {
