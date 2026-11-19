@@ -887,10 +887,11 @@ Deliberate deviations from the original (not exact, stated plainly):
 - With no saved file, load waits forever like a console without a recorder; the port adds B to leave the menu path (not in the original).
 
 Still open (Stage 2 is NOT complete):
-- [x] State handlers 4/7 (ofs_000_C465) now execute through the static 6502 recompiler with persistent CPU RAM. This preserves the source sub_C92C -> sub_C935 -> sub_CAFA dynamic PPU-buffer path; the host workflow now links the recompiler into the menu test binary. A dedicated ROM-backed C465 frame-vector test and emulator/hardware comparison are still pending.
+- [x] State handlers 4/7 (ofs_000_C465) execute through the static 6502 recompiler with persistent CPU RAM, preserving sub_C92C -> sub_C935 -> sub_CAFA.
+- [x] State 9 now executes ofs_000_C97C_09 per frame through the recompiler, including the original sub_EB17 input/object logic and B-button state-8 return; held/pressed controller bytes, OAM, editor pages, dynamic PPU buffer and scroll/PPU writes are synchronized.
 - [ ] Setup lists 2/3 (race/results) remain unported; states 2/3/5/6/9/$0A/$0B that enter the race engine remain Stage 3 work.
 - [ ] Sound: ram_00FB / $4015 / $4011 requests are recorded in state but nothing is played.
-- [ ] Scroll registers and the second nametable are not rendered; only nametable 0 is drawn.
+- [x] The native renderer composites both 1 KiB nametable pages with the tracked horizontal/vertical scroll registers and PPUCTRL nametable selection; the editor frame now writes those registers back. This covers the supported mirrored NROM layout, not a cycle-accurate raster split.
 - [ ] Timing is per 3DS frame (60 Hz); the NES NMI is 60.0988 Hz and there is no mid-frame PPU behaviour.
 - [ ] Not compared with a real NES capture; not run on hardware or in an emulator in this step.
 - [ ] Expected list contents ($02, $18, $19, $1A) were hand-parsed from the ROM bytes by the same author as the code; an independent check against an emulator trace is still needed.
