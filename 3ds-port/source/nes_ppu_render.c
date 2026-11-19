@@ -151,6 +151,7 @@ int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
                         uint8_t *rgb, size_t rgbCapacity, size_t *drawn)
 {
     size_t i, line, written = 0u;
+    const unsigned int spriteHeight = (ppuCtrl & 0x20u) != 0u ? 16u : 8u;
     const size_t tileBase = (ppuCtrl & 0x08u) != 0u ? 256u : 0u;
     uint8_t occupied[NES_PPU_WIDTH];
 
@@ -164,13 +165,21 @@ int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
     }
     if ((ppuMask & 0x10u) == 0u) return NES_PPU_RENDER_OK; /* sprites disabled */
 
-    /* Pre-scan: refuse (draw nothing) when an on-screen sprite needs an unmodelled feature. */
+    /* Validate every visible sprite before drawing so unsupported input never leaves a partial frame. */
     for (i = 0u; i < 64u; ++i) {
         const unsigned int top = (unsigned int)oam[i * 4u] + 1u;
+        const uint8_t tileNumber = oam[i * 4u + 1u];
+        size_t tile;
         if (top >= NES_PPU_HEIGHT) continue; /* Y >= $EF: never visible */
-        if ((ppuCtrl & 0x20u) != 0u) return NES_PPU_RENDER_UNSUPPORTED;
         if ((oam[i * 4u + 2u] & 0x20u) != 0u && bgOpaque == NULL) return NES_PPU_RENDER_UNSUPPORTED;
-        if (tileBase + oam[i * 4u + 1u] >= tileCount) return NES_PPU_RENDER_MISSING_TILE;
+        if (spriteHeight == 16u) {
+            /* In 8x16 mode tile bit 0 selects the pattern table; the pair starts on an even tile. */
+            tile = (tileNumber & 1u) != 0u ? 256u : 0u;
+            tile += (size_t)(tileNumber & 0xFEu);
+            if (tile + 1u >= tileCount) return NES_PPU_RENDER_MISSING_TILE;
+        } else if (tileBase + tileNumber >= tileCount) {
+            return NES_PPU_RENDER_MISSING_TILE;
+        }
     }
 
     for (line = 0u; line < NES_PPU_HEIGHT; ++line) {
@@ -181,11 +190,18 @@ int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
             const uint8_t attr = oam[i * 4u + 2u];
             unsigned int row, col;
             size_t tile;
-            if (top >= NES_PPU_HEIGHT || line < top || line >= top + 8u) continue;
+            if (top >= NES_PPU_HEIGHT || line < top || line >= top + spriteHeight) continue;
             if (++onLine > 8u) break; /* sprite overflow: later sprites are not drawn */
             row = (unsigned int)(line - top);
-            if ((attr & 0x80u) != 0u) row = 7u - row;
-            tile = tileBase + oam[i * 4u + 1u];
+            if ((attr & 0x80u) != 0u) row = spriteHeight - 1u - row;
+            if (spriteHeight == 16u) {
+                const uint8_t tileNumber = oam[i * 4u + 1u];
+                tile = ((tileNumber & 1u) != 0u ? 256u : 0u) +
+                       (size_t)(tileNumber & 0xFEu) + (size_t)(row >> 3u);
+                row &= 7u;
+            } else {
+                tile = tileBase + oam[i * 4u + 1u];
+            }
             for (col = 0u; col < 8u; ++col) {
                 const unsigned int sx = (unsigned int)oam[i * 4u + 3u] + col;
                 const unsigned int srcCol = (attr & 0x40u) != 0u ? 7u - col : col;
