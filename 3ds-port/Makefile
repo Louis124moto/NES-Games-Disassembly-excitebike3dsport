@@ -31,7 +31,13 @@ export DEPSDIR := $(CURDIR)/$(BUILD)
 
 # Link the current source-derived menu state machine and its verified helper routines.
 # Gameplay/physics modules remain excluded until their dependencies are translated and validated.
-EXCLUDED_RUNTIME_C := bike_physics.c collision.c track.c audio.c
+# Native-only runtime: legacy 6502/PPU/APU execution modules are excluded.
+# nes_* extraction and source-data helpers remain available where required by
+# the asset inspector; they are not a game execution engine.
+EXCLUDED_RUNTIME_C := bike_physics.c collision.c track.c audio.c \
+                      menus.c nes_gen_code.c nes_call.c nes_machine.c \
+                      nes_menu_cpu.c nes_game.c nes_system.c \
+                      nes_apu.c nes_audio_out.c
 CFILES := $(filter-out $(EXCLUDED_RUNTIME_C),$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
