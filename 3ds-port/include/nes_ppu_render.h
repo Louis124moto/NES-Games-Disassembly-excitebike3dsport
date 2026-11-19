@@ -81,6 +81,12 @@ int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
                         uint8_t ppuCtrl, uint8_t ppuMask,
                         const uint8_t *bgOpaque,
                         uint8_t *rgb, size_t rgbCapacity, size_t *drawn);
+/* Return the first source-correct sprite-0/background opaque overlap as CPU cycles
+ * from the start of the pre-render scanline. Returns 0 when no hit can occur. */
+int nesPpuFindSprite0HitCycle(const uint8_t *chrPixels, size_t tileCount,
+                              const uint8_t *oam, uint8_t ppuCtrl,
+                              uint8_t ppuMask, const uint8_t *bgOpaque,
+                              unsigned long *cpuCycleFromPrerender);
 
 int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
                                 const uint8_t *nametable, const uint8_t *attributes,
