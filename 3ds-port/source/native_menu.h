@@ -36,6 +36,10 @@ typedef struct NativeMenuState {
     uint8_t title_flag_03F0;
     uint8_t title_flag_03F3;
     uint8_t title_flag_03F7;
+    uint8_t transition_gate_0053;
+    uint8_t transition_flag_0046;
+    uint8_t transition_flag_004B;
+    uint8_t transition_counter_03F8;
     uint8_t frame_timer;       /* ram_0020 */
     uint8_t timer_values[29]; /* ram_0021-$003D */
 } NativeMenuState;
@@ -45,5 +49,6 @@ typedef struct NativeMenuState {
 void nativeMenuInit(NativeMenuState *menu);
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
 void nativeMenuTickTimers(NativeMenuState *menu);
+void nativeMenuTransitionPhase0(NativeMenuState *menu);
 
 #endif
