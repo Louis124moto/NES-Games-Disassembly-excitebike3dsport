@@ -19,6 +19,82 @@ static uint8_t menusSetupListIndex(uint8_t asmState)
     return asmState < 14u ? tblC01C[asmState] : 0xFFu;
 }
 
+/* GameState is a menu-facing projection; the 2 KiB RAM image remains canonical
+ * for source-recompiled routines. Copy only explicitly modelled regions. */
+static void menusCopyStateToCpuRam(GameState *state)
+{
+    uint8_t *ram = state->menu_cpu_ram;
+    ram[0x0020u] = state->menu_timer20;
+    ram[0x0030u] = state->menu_timer30;
+    ram[0x0031u] = state->menu_timer31;
+    ram[0x0033u] = state->menu_timer33;
+    ram[0x0034u] = state->menu_timer34;
+    ram[0x0040u] = state->menu_ram0040;
+    ram[0x0041u] = state->menu_asm_state;
+    ram[0x0042u] = state->menu_selection;
+    ram[0x0043u] = state->menu_ram0043;
+    ram[0x0044u] = state->menu_ram0044;
+    ram[0x0045u] = state->menu_ram0045;
+    ram[0x0046u] = state->menu_ram0046;
+    ram[0x0048u] = state->menu_ram0048;
+    ram[0x0049u] = state->menu_repeat_guard;
+    ram[0x004Au] = state->menu_ram004A;
+    ram[0x004Bu] = state->menu_ram004B;
+    ram[0x00FBu] = state->menu_ram00FB;
+    ram[0x00FFu] = state->menu_ram00FF;
+    ram[0x03F0u] = state->menu_ram03F0;
+    ram[0x03F2u] = state->menu_ram03F2;
+    ram[0x03F3u] = state->menu_ram03F3;
+    ram[0x03F7u] = state->menu_ram03F7;
+    ram[0x03F8u] = state->menu_ram03F8;
+    memcpy(&ram[0x004Du], state->menu_ram004D_EF, sizeof(state->menu_ram004D_EF));
+    memcpy(&ram[0x0060u], state->menu_ram0060, sizeof(state->menu_ram0060));
+    memcpy(&ram[0x00A0u], state->menu_ramA0, sizeof(state->menu_ramA0));
+    memcpy(&ram[0x0200u], state->menu_oam, sizeof(state->menu_oam));
+    memcpy(&ram[0x0300u], state->menu_ram0300, sizeof(state->menu_ram0300));
+    memcpy(&ram[0x05A0u], state->menu_ram05A0, sizeof(state->menu_ram05A0));
+    memcpy(&ram[0x05C3u], state->menu_ram05C3, sizeof(state->menu_ram05C3));
+    memcpy(&ram[0x05E0u], state->menu_ram05E0, sizeof(state->menu_ram05E0));
+    memcpy(&ram[0x06E0u], state->menu_ram06E0, sizeof(state->menu_ram06E0));
+}
+
+static void menusCopyCpuRamToState(GameState *state)
+{
+    const uint8_t *ram = state->menu_cpu_ram;
+    state->menu_timer20 = ram[0x0020u];
+    state->menu_timer30 = ram[0x0030u];
+    state->menu_timer31 = ram[0x0031u];
+    state->menu_timer33 = ram[0x0033u];
+    state->menu_timer34 = ram[0x0034u];
+    state->menu_ram0040 = ram[0x0040u];
+    state->menu_asm_state = ram[0x0041u];
+    state->menu_selection = ram[0x0042u];
+    state->menu_ram0043 = ram[0x0043u];
+    state->menu_ram0044 = ram[0x0044u];
+    state->menu_ram0045 = ram[0x0045u];
+    state->menu_ram0046 = ram[0x0046u];
+    state->menu_ram0048 = ram[0x0048u];
+    state->menu_repeat_guard = ram[0x0049u];
+    state->menu_ram004A = ram[0x004Au];
+    state->menu_ram004B = ram[0x004Bu];
+    state->menu_ram00FB = ram[0x00FBu];
+    state->menu_ram00FF = ram[0x00FFu];
+    state->menu_ram03F0 = ram[0x03F0u];
+    state->menu_ram03F2 = ram[0x03F2u];
+    state->menu_ram03F3 = ram[0x03F3u];
+    state->menu_ram03F7 = ram[0x03F7u];
+    state->menu_ram03F8 = ram[0x03F8u];
+    memcpy(state->menu_ram004D_EF, &ram[0x004Du], sizeof(state->menu_ram004D_EF));
+    memcpy(state->menu_ram0060, &ram[0x0060u], sizeof(state->menu_ram0060));
+    memcpy(state->menu_ramA0, &ram[0x00A0u], sizeof(state->menu_ramA0));
+    memcpy(state->menu_oam, &ram[0x0200u], sizeof(state->menu_oam));
+    memcpy(state->menu_ram0300, &ram[0x0300u], sizeof(state->menu_ram0300));
+    memcpy(state->menu_ram05A0, &ram[0x05A0u], sizeof(state->menu_ram05A0));
+    memcpy(state->menu_ram05C3, &ram[0x05C3u], sizeof(state->menu_ram05C3));
+    memcpy(state->menu_ram05E0, &ram[0x05E0u], sizeof(state->menu_ram05E0));
+    memcpy(state->menu_ram06E0, &ram[0x06E0u], sizeof(state->menu_ram06E0));
+}
+
 static int menusRunSetupSequence(GameState *state)
 {
     uint8_t commandIndex;
