@@ -91,6 +91,41 @@ int nesPpuFindSprite0HitCycle(const uint8_t *chrPixels, size_t tileCount,
     return 0;
 }
 
+int nesPpuCompositeRasterSplit(const uint8_t *topRgb, const uint8_t *topOpaque,
+                               const uint8_t *bottomRgb, const uint8_t *bottomOpaque,
+                               uint8_t splitScanline, uint16_t splitDot,
+                               uint8_t *outRgb, size_t rgbCapacity,
+                               uint8_t *outOpaque, size_t opaqueCapacity)
+{
+    const size_t pixels = (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT;
+    unsigned int y;
+    unsigned int splitX;
+    if (topRgb == NULL || topOpaque == NULL || bottomRgb == NULL ||
+        bottomOpaque == NULL || outRgb == NULL || outOpaque == NULL ||
+        rgbCapacity < NES_PPU_RGB_BYTES || opaqueCapacity < pixels)
+        return 0;
+
+    memcpy(outRgb, topRgb, NES_PPU_RGB_BYTES);
+    memcpy(outOpaque, topOpaque, pixels);
+    if (splitScanline >= NES_PPU_HEIGHT) return 1;
+    splitX = splitDot > 0u ? (unsigned int)splitDot - 1u : 0u;
+    if (splitX > NES_PPU_WIDTH) splitX = NES_PPU_WIDTH;
+
+    for (y = (unsigned int)splitScanline + 1u; y < NES_PPU_HEIGHT; ++y) {
+        const size_t offset = (size_t)y * NES_PPU_WIDTH;
+        memcpy(&outRgb[offset * 3u], &bottomRgb[offset * 3u], NES_PPU_WIDTH * 3u);
+        memcpy(&outOpaque[offset], &bottomOpaque[offset], NES_PPU_WIDTH);
+    }
+    {
+        const size_t offset = (size_t)splitScanline * NES_PPU_WIDTH;
+        const size_t bottomOffset = offset + splitX;
+        const size_t count = NES_PPU_WIDTH - splitX;
+        memcpy(&outRgb[bottomOffset * 3u], &bottomRgb[bottomOffset * 3u], count * 3u);
+        memcpy(&outOpaque[bottomOffset], &bottomOpaque[bottomOffset], count);
+    }
+    return 1;
+}
+
 int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
                                 const uint8_t *nametable, const uint8_t *attributes,
                                 const uint8_t *palette, uint8_t *rgb,
