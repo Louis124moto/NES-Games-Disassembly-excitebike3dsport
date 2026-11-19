@@ -1,5 +1,7 @@
 #ifndef HOST_STUB_3DS_H
 #define HOST_STUB_3DS_H
+#include <stdint.h>
+typedef uint32_t u32;
 /*
  * Host-only stand-in for <3ds.h>: just the libctru key bits that menus.c uses, so
  * the menu state machine can be compiled and tested with plain gcc. Values are
@@ -14,4 +16,7 @@
 #define KEY_LEFT (1u << 5)
 #define KEY_UP (1u << 6)
 #define KEY_DOWN (1u << 7)
+void hidScanInput(void);
+u32 hidKeysHeld(void);
+u32 hidKeysDown(void);
 #endif
