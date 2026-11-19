@@ -131,9 +131,9 @@ static int testSharedTransitionDispatcherPhases(void)
 
 static int testRasterSplitD0AB(void)
 {
-    uint8_t cpuRam[0x800];
-    uint8_t nametables[2048];
-    uint8_t palette[32];
+    uint8_t cpuRam[0x800], initialCpuRam[0x800];
+    uint8_t nametables[2048], initialNametables[2048];
+    uint8_t palette[32], initialPalette[32];
     uint8_t ctrl = 0u, mask = 0u, scrollX = 0u, scrollY = 0u;
     unsigned int i;
 
@@ -154,6 +154,9 @@ static int testRasterSplitD0AB(void)
     cpuRam[0x00BAu] = 0x20u;
     cpuRam[0x00BBu] = 0x30u;
     for (i = 0u; i < 256u; ++i) cpuRam[0x0200u + i] = (uint8_t)(i ^ 0x5Au);
+    memcpy(initialCpuRam, cpuRam, sizeof(cpuRam));
+    memcpy(initialNametables, nametables, sizeof(nametables));
+    memcpy(initialPalette, palette, sizeof(palette));
 
     {
         NesMenuRasterSplit split;
@@ -198,6 +201,26 @@ static int testRasterSplitD0AB(void)
     for (i = 0u; i < 256u; ++i) {
         if (cpuRam[0x0200u + i] != (uint8_t)(i ^ 0x5Au)) {
             fputs("ROM menu test: editor D14E unexpectedly hid OAM\n", stderr);
+            return 0;
+        }
+    }
+
+    /* A hit in the previous frame makes D14E wait until pre-render before its split delay. */
+    memcpy(cpuRam, initialCpuRam, sizeof(cpuRam));
+    memcpy(nametables, initialNametables, sizeof(nametables));
+    memcpy(palette, initialPalette, sizeof(palette));
+    ctrl = mask = scrollX = scrollY = 0u;
+    {
+        NesMenuRasterSplit afterPreviousHit;
+        if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
+                                   &scrollX, &scrollY, 1u, &afterPreviousHit) ||
+            afterPreviousHit.splitScanline < 55u ||
+            afterPreviousHit.splitScanline > 65u ||
+            afterPreviousHit.splitDot < 250u ||
+            afterPreviousHit.splitDot > 340u) {
+            fprintf(stderr, "ROM menu test: previous-hit pre-render wait mismatch line=%u dot=%u elapsed=%u\\n",
+                    afterPreviousHit.splitScanline, afterPreviousHit.splitDot,
+                    afterPreviousHit.elapsedCycles);
             return 0;
         }
     }
