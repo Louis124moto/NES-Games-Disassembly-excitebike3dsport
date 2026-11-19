@@ -33,9 +33,12 @@ on:
       - "3ds-port/include/asset_export.h"
       - "3ds-port/include/third_party/stb_image_write.h"
       - "3ds-port/tests/test_nes_chr_decode.c"
-      - "3ds-port/source/nes_race_setup.c"
-      - "3ds-port/include/nes_race_setup.h"
-      - "3ds-port/tests/test_nes_race_setup.c"
+      - "3ds-port/source/nes_gen_code.c"
+      - "3ds-port/source/nes_call.c"
+      - "3ds-port/include/nes_machine.h"
+      - "3ds-port/tools/**"
+      - "3ds-port/tests/oracle/**"
+      - "3ds-port/tests/test_gen_code.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
@@ -117,11 +120,24 @@ jobs:
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
       - name: Test native CHR exports
         run: ./test_asset_export
-      - name: Compile race setup test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_race_setup.c 3ds-port/tests/test_nes_race_setup.c -o test_nes_race_setup
+      - name: Validate reference 6502 core against py65
+        run: |
+          pip install py65
+          gcc -shared -fPIC -O1 -o libcpu.so 3ds-port/tests/oracle/cpu6502.c
+          python3 3ds-port/tests/oracle/validate_cpu6502.py ./libcpu.so 3000
 
-      - name: Run race setup test
-        run: ./test_nes_race_setup
+      - name: Regenerate recompiled code and check it is up to date
+        run: |
+          cd 3ds-port
+          python3 tools/asm2c.py ../Excitebike/bank_FF.asm /tmp/nes_gen_code.c
+          diff -q /tmp/nes_gen_code.c source/nes_gen_code.c
+
+      - name: Differential test of the recompiled game code against the original
+        run: |
+          cd 3ds-port
+          python3 tools/asm_to_prg.py ../Excitebike/bank_FF.asm /tmp/prg.bin
+          gcc -std=c11 -O1 -Wall -Wextra -Werror -Iinclude -Itests/oracle tests/oracle/*.c source/nes_gen_code.c source/nes_call.c tests/test_gen_code.c -o /tmp/test_gen_code
+          /tmp/test_gen_code /tmp/prg.bin 100
 
       - name: Compile menu frame-model test
         # menus.c only needs libctru's KEY_* bits; tests/host_stub/3ds.h supplies them on the host.

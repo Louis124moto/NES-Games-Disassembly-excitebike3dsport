@@ -12,6 +12,7 @@ typedef struct {
     NesMachine m;
     uint8_t prg[0x4000];
     OracleIoLog cpuLog, mLog;
+    uint8_t ioPort[0x4020];                /* io register backing seen by the port side (snapshot taken at sync) */
     uint32_t rng;
 } Oracle;
 
@@ -30,14 +31,10 @@ int oracleRunCpu(Oracle *o, uint16_t addr);
  * else prints the first difference and returns 1. */
 int oracleCompare(Oracle *o, unsigned cmpRegs, const char *what);
 void oracleIgnore(Oracle *o, uint16_t lo, uint16_t hi);   /* add an ignored RAM range */
-/* Run the ORIGINAL code at `addr` against a NesMachine (RAM, A/X/Y, flags, io hooks forwarded). Used by the
- * weak fallbacks so a routine can be tested while its callees are still unported. */
-void oracleCallOriginal(NesMachine *m, uint16_t addr);
-
 /* Differential loop: `iters` random states; `prep` (may be NULL) edits the CPU-side state (cpu.ram/regs) to realistic
  * values BEFORE the sync to the port. Both sides then run; RAM (minus ignores), registers selected by cmpRegs
  * (bit0 A, 1 X, 2 Y, 3 C, 4 Z, 5 N) and io-write logs must match. Returns 0 if all iterations match.
  * Iterations whose original run hits the step limit are skipped (counted in *skipped if non-NULL). */
-int oracleDiffRoutine(Oracle *o, uint16_t addr, void (*port)(NesMachine *), const char *name, unsigned iters,
+int oracleDiffRoutine(Oracle *o, uint16_t addr, int (*port)(NesMachine *, uint16_t), const char *name, unsigned iters,
                       void (*prep)(Oracle *), unsigned cmpRegs, unsigned *skipped);
 #endif

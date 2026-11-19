@@ -20,6 +20,10 @@ struct NesMachine {
     const uint8_t *prg;                 /* 16 KiB image, CPU address $C000 */
     void (*io_write)(NesMachine *, uint16_t addr, uint8_t value);   /* may be NULL */
     uint8_t (*io_read)(NesMachine *, uint16_t addr);                /* may be NULL (reads 0) */
+    uint8_t sp;                         /* 6502 stack pointer (stack lives in ram[$100-$1FF]) */
+    uint8_t pother;                     /* I ($04) and D ($08) status bits, kept only for PHP/PLP */
+    uint16_t pc;                        /* resume/error address reported by nesRunCode */
+    unsigned long cyc;                  /* CPU cycles executed (approximate: base cycles + taken branches) */
     void *user;
 };
 
@@ -31,6 +35,28 @@ static inline uint8_t nesIoRead(NesMachine *m, uint16_t a) { return m->io_read ?
 /* Set N and Z from a value (what LDA/STA-free ALU ops do). */
 static inline void nesSetNZ(NesMachine *m, uint8_t v) { m->z = (uint8_t)(v == 0u); m->n = (uint8_t)(v >> 7); }
 
+
+/* Memory access as the 6502 sees it. */
+static inline uint8_t nesRd(NesMachine *m, uint16_t a)
+{
+    if (a < 0x2000u) return m->ram[a & 0x7FFu];
+    if (a >= 0x8000u) return m->prg[a & 0x3FFFu];
+    if (a < 0x4020u) return nesIoRead(m, a);
+    return 0u;
+}
+static inline void nesWr(NesMachine *m, uint16_t a, uint8_t v)
+{
+    if (a < 0x2000u) m->ram[a & 0x7FFu] = v;
+    else if (a >= 0x2000u && a < 0x4020u) nesIoWrite(m, a, v);
+}
+static inline uint16_t nesPtrX(NesMachine *m, uint8_t z) { const uint8_t p = (uint8_t)(z + m->x); return (uint16_t)(m->ram[p] | (m->ram[(uint8_t)(p + 1u)] << 8)); }
+static inline uint16_t nesPtrY(NesMachine *m, uint8_t z) { return (uint16_t)((m->ram[z] | (m->ram[(uint8_t)(z + 1u)] << 8)) + m->y); }
+static inline void nesPush(NesMachine *m, uint8_t v) { m->ram[0x100u + m->sp] = v; m->sp = (uint8_t)(m->sp - 1u); }
+static inline uint8_t nesPull(NesMachine *m) { m->sp = (uint8_t)(m->sp + 1u); return m->ram[0x100u + m->sp]; }
+static inline uint8_t nesGetP(const NesMachine *m, unsigned brk) { return (uint8_t)(m->c | (m->z << 1) | m->pother | (brk ? 0x10u : 0u) | 0x20u | (m->v << 6) | (m->n << 7)); }
+static inline void nesSetP(NesMachine *m, uint8_t p) { m->c = (uint8_t)(p & 1u); m->z = (uint8_t)((p >> 1) & 1u); m->pother = (uint8_t)(p & 0x0Cu); m->v = (uint8_t)((p >> 6) & 1u); m->n = (uint8_t)(p >> 7); }
+/* JMP (ptr) with the 6502 page-wrap bug. */
+static inline uint16_t nesReadVec(NesMachine *m, uint16_t p) { return (uint16_t)(nesRd(m, p) | (nesRd(m, (uint16_t)((p & 0xFF00u) | ((p + 1u) & 0xFFu))) << 8)); }
 
 /* 6502 ALU helpers with exact flag behaviour (no decimal mode on the NES 2A03). */
 static inline void nesAdc(NesMachine *m, uint8_t v)

@@ -9,15 +9,16 @@ static void cpuWriteHook(Cpu6502 *c, uint16_t a, uint8_t v)
 {
     Oracle *o = (Oracle *)c->user;
     c->io[a] = v;
-    if (o->cpuLog.n < 4096u) { o->cpuLog.addr[o->cpuLog.n] = a; o->cpuLog.val[o->cpuLog.n++] = v; }
+    if (a < 0x4020u && o->cpuLog.n < 4096u) { o->cpuLog.addr[o->cpuLog.n] = a; o->cpuLog.val[o->cpuLog.n++] = v; }
 }
 static uint8_t cpuReadHook(Cpu6502 *c, uint16_t a) { return c->io[a]; }
 static void mWrite(NesMachine *m, uint16_t a, uint8_t v)
 {
     Oracle *o = (Oracle *)m->user;
+    if (a < 0x4020u) o->ioPort[a] = v;
     if (o->mLog.n < 4096u) { o->mLog.addr[o->mLog.n] = a; o->mLog.val[o->mLog.n++] = v; }
 }
-static uint8_t mRead(NesMachine *m, uint16_t a) { Oracle *o = (Oracle *)m->user; return o->cpu.io[a]; }
+static uint8_t mRead(NesMachine *m, uint16_t a) { Oracle *o = (Oracle *)m->user; return a < 0x4020u ? o->ioPort[a] : 0u; }
 
 int oracleInit(Oracle *o, const char *prgPath)
 {
@@ -55,6 +56,9 @@ void oracleSync(Oracle *o)
     o->m.a = o->cpu.a; o->m.x = o->cpu.x; o->m.y = o->cpu.y;
     o->m.c = (uint8_t)(o->cpu.p & 1u); o->m.z = (uint8_t)((o->cpu.p >> 1) & 1u);
     o->m.n = (uint8_t)(o->cpu.p >> 7); o->m.v = (uint8_t)((o->cpu.p >> 6) & 1u);
+    o->m.sp = o->cpu.sp; o->m.pother = (uint8_t)(o->cpu.p & 0x0Cu);
+    memcpy(o->ioPort, o->cpu.io + 0x2000, 0); /* placeholder */
+    { unsigned k; for (k = 0x2000u; k < 0x4020u; ++k) o->ioPort[k] = o->cpu.io[k]; }
 }
 int oracleRunCpu(Oracle *o, uint16_t addr) { return cpu6502_call(&o->cpu, addr, 2000000ul); }
 void oracleIgnore(Oracle *o, uint16_t lo, uint16_t hi) { (void)o; if (g_nign < 16u) { g_ign[g_nign].lo = lo; g_ign[g_nign].hi = hi; ++g_nign; } }
@@ -77,6 +81,7 @@ int oracleCompare(Oracle *o, unsigned cmpRegs, const char *what)
         if ((cmpRegs & 4u) && o->cpu.y != o->m.y) { printf("DIFF %s: Y original=%02X port=%02X\n", what, o->cpu.y, o->m.y); return 1; }
         if ((cmpRegs & 8u) && cc != o->m.c) { printf("DIFF %s: C original=%u port=%u\n", what, cc, o->m.c); return 1; }
         if ((cmpRegs & 16u) && cz != o->m.z) { printf("DIFF %s: Z original=%u port=%u\n", what, cz, o->m.z); return 1; }
+        if ((cmpRegs & 64u) && ((o->cpu.p >> 6) & 1u) != o->m.v) { printf("DIFF %s: V original=%u port=%u\n", what, (o->cpu.p >> 6) & 1u, o->m.v); return 1; }
         if ((cmpRegs & 32u) && cn != o->m.n) { printf("DIFF %s: N original=%u port=%u\n", what, cn, o->m.n); return 1; }
     }
     if (o->cpuLog.n != o->mLog.n) { printf("DIFF %s: io write count original=%u port=%u\n", what, o->cpuLog.n, o->mLog.n); return 1; }
@@ -88,43 +93,26 @@ int oracleCompare(Oracle *o, unsigned cmpRegs, const char *what)
     return 0;
 }
 
-static Cpu6502 g_tramp;
-static NesMachine *g_trampM;
-static void trampWrite(Cpu6502 *c, uint16_t a, uint8_t v) { (void)c; if (g_trampM->io_write) g_trampM->io_write(g_trampM, a, v); }
-static uint8_t trampRead(Cpu6502 *c, uint16_t a) { (void)c; return g_trampM->io_read ? g_trampM->io_read(g_trampM, a) : 0u; }
-void oracleCallOriginal(NesMachine *m, uint16_t addr)
-{
-    Cpu6502 *c = &g_tramp;
-    NesMachine *prev = g_trampM;
-    uint8_t saveStack[256];
-    cpu6502_reset_state(c);
-    memcpy(c->ram, m->ram, 0x800);
-    memcpy(saveStack, m->ram + 0x100, 0x100);
-    memcpy(c->prg, m->prg, 0x4000);
-    c->read_hook = trampRead; c->write_hook = trampWrite;
-    g_trampM = m;
-    c->a = m->a; c->x = m->x; c->y = m->y;
-    c->p = (uint8_t)(0x24u | m->c | (m->z << 1) | (m->v << 6) | (m->n << 7));
-    cpu6502_call(c, addr, 2000000ul);
-    memcpy(m->ram, c->ram, 0x800);
-    memcpy(m->ram + 0x100, saveStack, 0x100);   /* the 6502 stack page is scratch; keep the caller's */
-    m->a = c->a; m->x = c->x; m->y = c->y;
-    m->c = (uint8_t)(c->p & 1u); m->z = (uint8_t)((c->p >> 1) & 1u); m->v = (uint8_t)((c->p >> 6) & 1u); m->n = (uint8_t)(c->p >> 7);
-    g_trampM = prev;
-}
 
-int oracleDiffRoutine(Oracle *o, uint16_t addr, void (*port)(NesMachine *), const char *name, unsigned iters,
+extern int nesIsInstructionStart(uint16_t addr);
+static int oracleIsCode(uint16_t a) { return nesIsInstructionStart(a); }
+
+int oracleDiffRoutine(Oracle *o, uint16_t addr, int (*port)(NesMachine *, uint16_t), const char *name, unsigned iters,
                       void (*prep)(Oracle *), unsigned cmpRegs, unsigned *skipped)
 {
     unsigned i, sk = 0;
     for (i = 0; i < iters; ++i) {
         char what[96];
+        int pr;
         oracleRandomize(o);
         if (prep) prep(o);
         oracleSync(o);
         if (oracleRunCpu(o, addr) != 0) { ++sk; continue; }
-        port(&o->m);
+        pr = port(&o->m, addr);
         snprintf(what, sizeof(what), "%s iter %u", name, i);
+        if (pr == 2 && !oracleIsCode(o->m.pc)) { ++sk; continue; }   /* random jump into data / mid-instruction: unreachable in the real game */
+        if (pr != 0) { printf("DIFF %s: port returned %d (pc=%04X) but the original finished\n", what, pr, o->m.pc); return 1; }
+        if (o->m.sp != o->cpu.sp) { printf("DIFF %s: sp original=%02X port=%02X\n", what, o->cpu.sp, o->m.sp); return 1; }
         if (oracleCompare(o, cmpRegs, what)) return 1;
     }
     if (skipped) *skipped = sk;
