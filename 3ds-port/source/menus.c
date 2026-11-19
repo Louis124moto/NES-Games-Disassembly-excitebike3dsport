@@ -670,6 +670,21 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         }
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
+    } else if (state->menu_asm_state == 3u || state->menu_asm_state == 6u ||
+               state->menu_asm_state == 11u) {
+        /*
+         * The original state-3/6/0B handlers share the CB2C pointer-table
+         * dispatcher. Execute the selected ROM routine against persistent
+         * CPU RAM so its timer, PPU-buffer, OAM, and state side effects stay
+         * source-derived rather than approximated in a second C state machine.
+         */
+        menusCopyStateToCpuRam(state);
+        state->menu_cpu_ram[0x0014u] = nesHeldButtons;
+        state->menu_cpu_ram[0x0015u] = nesButtons;
+        if (nesMenuCpuRunRamRoutine(0xCB2Cu, state->menu_cpu_ram))
+            menusCopyCpuRamToState(state);
+        state->menu_action_x = 0u;
+        state->menu_selection_changed = 0u;
     } else if (state->menu_asm_state == 4u || state->menu_asm_state == 7u) {
         /*
          * ofs_000_C465_04 / ofs_000_C465_07. This handler is not a race-frame
@@ -767,7 +782,7 @@ void menusRender(const GameState *state)
                (unsigned int)state->menu_ram0044);
         {
             const uint8_t list = menusSetupListIndex(state->menu_asm_state);
-            if (list == 2u || list == 3u || list == 5u || list == 0xFFu) {
+            if (list == 2u || list == 5u || list == 0xFFu) {
                 printf("Setup command list %u (state %u) belongs to the race flow: not ported.\n",
                        (unsigned int)list, (unsigned int)state->menu_asm_state);
             }
