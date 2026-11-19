@@ -276,7 +276,11 @@ int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800])
     int result;
     if (!s_ready || cpuRam == NULL) return 0;
     if (routineAddress != 0xC5A3u && routineAddress != 0xC562u &&
-        routineAddress != 0xC5C2u && routineAddress != 0xC465u) return 0;
+        routineAddress != 0xC5C2u && routineAddress != 0xC465u &&
+        routineAddress != 0xC55Eu && routineAddress != 0xC56Au &&
+        routineAddress != 0xC455u && routineAddress != 0xC5A7u &&
+        routineAddress != 0xC485u && routineAddress != 0xCB2Cu &&
+        routineAddress != 0xD310u) return 0;
     memset(&machine, 0, sizeof(machine));
     memcpy(machine.ram, cpuRam, sizeof(machine.ram));
     machine.prg = s_prg;
