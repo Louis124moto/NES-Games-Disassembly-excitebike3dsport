@@ -232,7 +232,7 @@ This completes the B3 source-backed two-page composition implementation and its 
 - The second half of `sub_D14E` writes `ram_for_2000 | ram_004D_base_nametable`, then `ram_scroll_X` and `ram_scroll_Y`. This is a mid-frame split, not a single static scroll value.
 - The menu prelude explicitly zeroes both scroll pairs. `ram_0047` is raised in race setup (`ofs_001_C875_02_06`), **in the state-9 design-editor setup** (`ofs_001_C5C2_05_06`, `INC ram_0047` at `$C617`), and in gameplay object logic (`$EBAE`). It is cleared on menu/editor-return paths (`$CA33`, `$CAA7`, and the state-9 B-button exit via `sub_EB17`). The raster path is therefore required by the Stage 2 design-editor path, not just the race; B4 is a blocking Stage 2 task.
 
-B4 is **partially integrated**. When `ram_0047` is set, the host adapter executes the original PRG routine `sub_D14E`, including its source delay loop, PPUCTRL and two-phase scroll writes. The host bus still models sprite-0 hit at a frame/cycle boundary; it does not derive the hit from rendered pixels, and the preceding `sub_D0AB` NMI work is not yet integrated. Exact scanline/OAM timing and physical New 3DS comparison remain open. Do not replace this path with `menu_scroll_x/y` alone.
+B4 is **partially integrated and ROM-regression-tested**. When `ram_0047` is set, the adapter executes original `sub_D0AB` followed by `sub_D14E` against persistent CPU RAM. The new ROM-backed vector seeds four object Y values and verifies the exact `$0360-$0363` vertical-band outputs, `$004C` frame phase, both PPUCTRL/scroll halves (final values from the second split), the `sub_D11F` dynamic buffer header, and the state-9 rule that skips blanket OAM hiding. Host CI and the exact-commit New 3DS build passed on `7a400486fba8a39f1ce108e47754400bbc49aaac`: [host workflow](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44512085866) · [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44512085780). The PPUSTATUS callback is still a frame-boundary approximation: it does not derive sprite-0 hit from rendered pixels or exact scanline/dot timing. Physical New 3DS and reference-frame comparison remain open. Do not replace this path with `menu_scroll_x/y` alone.
 
 ## Ordered completion plan — work one item at a time
 
@@ -272,15 +272,15 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 
 ### Setup list 3: source-level command trace (`$C052-$C05A`)
 
-This list is selected for states `$03/$06/$0B` and is currently **not executed by the native setup sequencer**. The source commands are:
+This list is selected for states `$03/$06/$0B` and is now executed through the PRG-backed native setup sequencer when a supported `rom.nes` is loaded. The source commands are:
 
 | Index | Routine | Exact observed effects | Native status |
 |---:|---|---|---|
-| 0 | `ofs_001_C55E_03_01` | Writes `ram_0045=$06`; the NMI later uploads PPU stream 6 and clears the request. | Not wired into list 3 |
-| 1 | `ofs_001_C56A_03_02` | Writes `ram_0033_timer=$04`, then `ram_0045=$04`. | Not wired into list 3 |
-| 2 | `ofs_001_C455_03_03` | Starts with stream `$08`. If `ram_0041 < 8`, it only posts a stream when `ram_0046 != 0`, in which case it uses `$07`; if `ram_0041 >= 8`, it posts `$08`. | Not wired into list 3 |
-| 3 | `ofs_001_C5A7_03_04` | Loads A=0 and jumps to `loc_C92C`; its tuple/index writes are handled by `sub_C92C` and downstream table lookups. | Helper translation exists, sequencer integration absent |
-| 4 | `ofs_001_C485_03_05` | Calls `sub_C53A` to fetch the current 3-byte tuple from `$0580+`; compares it with the tuple at `$0068-$006A`; may copy the latter into `$0580+`; otherwise compares against the ROM tuple via `sub_C522`. It then computes `ram_0053` using 8-bit arithmetic based on `ram_03F8` and the tuple difference, with overflow path `$FF`, and stores the result. | Helper translation exists in `nesSubC485UpdateMenuSelection`; sequencer integration absent |
+| 0 | `ofs_001_C55E_03_01` | Writes `ram_0045=$06`; the NMI later uploads PPU stream 6 and clears the request. | PRG-backed list-3 command 0 |
+| 1 | `ofs_001_C56A_03_02` | Writes `ram_0033_timer=$04`, then `ram_0045=$04`. | PRG-backed list-3 command 1 |
+| 2 | `ofs_001_C455_03_03` | Starts with stream `$08`. If `ram_0041 < 8`, it only posts a stream when `ram_0046 != 0`, in which case it uses `$07`; if `ram_0041 >= 8`, it posts `$08`. | PRG-backed list-3 command 2 |
+| 3 | `ofs_001_C5A7_03_04` | Loads A=0 and jumps to `loc_C92C`; its tuple/index writes are handled by `sub_C92C` and downstream table lookups. | PRG-backed list-3 command 3 |
+| 4 | `ofs_001_C485_03_05` | Calls `sub_C53A` to fetch the current 3-byte tuple from `$0580+`; compares it with the tuple at `$0068-$006A`; may copy the latter into `$0580+`; otherwise compares against the ROM tuple via `sub_C522`. It then computes `ram_0053` using 8-bit arithmetic based on `ram_03F8` and the tuple difference, with overflow path `$FF`, and stores the result. | PRG-backed list-3 command 4 |
 
 Transitive dependencies for command 4:
 
@@ -290,7 +290,7 @@ Transitive dependencies for command 4:
 - The comparison and distance calculation in `$C485-$C512` uses unsigned 8-bit carry/borrow and wrap behavior; it must not be simplified to ordinary signed arithmetic.
 - Existing host helper tests cover `nesSubC485UpdateMenuSelection`, `nesSubC522SelectOptionTuple`, `nesSubC53AReadMenuTuple`, and `nesSubCB06/CB13` behavior, but they do not prove that the runtime setup sequencer invokes these routines in order.
 
-**Next implementation dependency:** add the missing state bytes and a complete RAM view needed by the C5A7/C485 routines, then wire all five list-3 commands into the sequencer. Do not mark the list complete just because the individual arithmetic helper already has unit vectors.
+**Remaining validation:** the ROM-backed test currently proves list-3 setup and the first state-3 dispatcher phase. Add vectors for state 6 and 11, all four CB2C phases, timer branches, and the downstream OAM/PPU writes before calling the transition animation fidelity-verified.
 
 ### State $09: active-frame path, not yet classified as a menu
 
@@ -448,7 +448,7 @@ Additional effects in the transition's timed phase:
 
 - `vec_C23B_NMI` calls `sub_C32F`, conditionally enables `$2001` when `ram_0045 == 0`, performs OAM DMA from `$0200`, calls `sub_C27F`, handles scroll-related calls when `ram_0047 != 0`, decrements timers, reads controller registers, dispatches the state handler, and waits for vblank.
 - `sub_C27F` resolves `ram_0045` through `tbl_C0F6_lo` / `tbl_C111_hi`, calls `sub_D3C1`, clears `$0300/$0301`, and clears `ram_0045`.
-- The current native renderer has a source-derived static PPU command interpreter and a CHR/nametable/palette compositor. It is not yet a full live PPU model. Dynamic lists, all OAM update paths, scroll split/timing, and every menu-specific stream selection still require audit.
+- The current native renderer has a source-derived static/dynamic PPU command interpreter and a CHR/nametable/palette/sprite compositor. The Stage-2 editor raster adapter now executes `sub_D0AB` then `sub_D14E` when `ram_0047` is set. It is not a full live PPU model: PPUSTATUS sprite-0 hit is still approximated, exact raster/dot timing is absent, and not every menu-specific stream selection has been compared against a reference capture.
 - The title setup list 0 points to `ofs_001_C2BD_00_01` and `ofs_001_C514_00_02`. The title handler uses `sub_C7DE` and `tbl_C080_spr_Y`.
 - State 1 uses `ofs_001_C55E_01_01`, `ofs_001_C3F3_01_02`, and `ofs_001_C514_01_03`; its cursor X positions come from `tbl_C083_spr_X`.
 - State 8 uses setup list 6 (`ofs_001_C55E_06_01`, `ofs_001_C575_06_02`, `ofs_001_C514_06_03`) and cursor Y positions from `tbl_C08B_spr_Y`.
@@ -544,3 +544,11 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] The ROM-backed integration workflow passes list-3 setup and the first state-3 dispatcher phase, alongside the C465, list-5, C97C, and guarded B-return vectors.
 - [x] The exact-commit New 3DS build and host workflow pass on $a547c0f2a341fc2bb17d23570aaca798aa452f39.
 - [ ] Add ROM-backed vectors for state 6 and 11, all remaining CB2C phases, and timer/input edge cases. Pixel-accurate PPU behavior and physical New 3DS validation remain acceptance blockers.
+
+
+### 2026-11-19 — ROM-backed D0AB/D14E integration regression
+
+- [x] The raster adapter now executes the original `sub_D0AB` vertical-band preparation before `sub_D14E`, matching `vec_C23B_NMI` call order.
+- [x] Added a PRG-backed vector for object Y inputs `$10/$18/$20/$30`; it verifies `$0360-$0363 = 4/3/2/0`, `$004C = $003F & 3`, the two scroll/nametable phases, the `sub_D11F` dynamic-buffer header, and that state 9 does not hide editor OAM.
+- [x] Host tests and New 3DS build passed on `7a400486fba8a39f1ce108e47754400bbc49aaac`.
+- [ ] Replace the frame-boundary PPUSTATUS callback with pixel/scanline-derived sprite-0 hit timing and compare the raster output against an original-NES capture. The current vector validates the source routine's RAM/register effects, not PPU dot timing.
