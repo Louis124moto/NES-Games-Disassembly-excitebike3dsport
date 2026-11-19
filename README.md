@@ -41,9 +41,9 @@ A native Nintendo 3DS homebrew port aiming to reproduce the original NES **Excit
 
 The original NES disassembly is the behavioral reference. Its source files must remain unchanged. The port translates verified logic and data into native C for the 3DS ARM11/libctru environment; NES 6502 assembly and NES hardware registers cannot simply be linked into a native 3DS executable.
 
-> **Current status (2026-11-19): the faithful native port is not complete.** Stage 1's extractor was owner-accepted, with verification debt. The previous menu/PPU/recompiler work is an experimental emulator-oriented implementation and is not accepted as the native game. Stage 2 must now be completed as native C/C++ menus and front-end code; Stage 3 remains blocked until then. Existing ASM traces, asset extraction, and host-side differential tests may be reused, but the generated 6502 runtime and NES hardware emulation are being removed from the final executable. No playable native race or full-game fidelity is claimed.
+> **Current status (2026-11-19): the faithful native port is not complete.** Stage 1's extractor was owner-accepted, with verification debt. The previous menu/PPU/recompiler work is an experimental emulator-oriented implementation and is not accepted as the native game. Stage 2 must now be completed as native C/C++ menus and front-end code; Stage 3 remains blocked until then. Existing ASM traces and verified asset extraction may be reused. The generated 6502 recompiler, NES CPU/system/APU runtime, ROM boot path, and old emulator menu have now been deleted from the active source tree. A host-only 6502 reference CPU remains for differential tests. The asset inspector's static PPU preview helpers still need to be separated from the final game renderer. No playable native race or full-game fidelity is claimed.
 
-> **Runtime cutover (2026-11-19):** the live 3DS loop no longer starts the NES 6502/system/APU runtime, and those runtime objects are excluded from the 3DS link. The old emulator/recompiler sources remain in the repository for offline reference/test cleanup; they are not the game. At this intermediate commit the app is an asset inspector, not a playable native Excitebike port. Native menus and gameplay have not yet been implemented. See the runtime cutover checklist in `3ds-port/TODO.md`.
+> **Runtime cutover (2026-11-19):** the live 3DS loop no longer starts the NES 6502/system/APU runtime, and those runtime objects are excluded from the 3DS link. The old emulator/recompiler game sources have been deleted; only the host-side 6502 reference CPU remains for ASM differential tests. At this intermediate commit the app is an asset inspector, not a playable native Excitebike port. Native menus and gameplay have not yet been implemented. See the runtime cutover checklist in `3ds-port/TODO.md`.
 
 ## Project goals
 
@@ -63,9 +63,9 @@ The original NES disassembly is the behavioral reference. Its source files must 
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
 | Stage 2 — native menus/front-end | NOT YET IMPLEMENTED as the required native architecture. Existing menu/PPU/recompiler work is historical reference material only. Stage 3 blocked. |
-| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
-| Latest code batch | Historical emulator/recompiler experiment only; it is not the final runtime architecture. Native C/C++ menu and gameplay reimplementation is the active direction. |
-| Latest host test / 3DS build | Historical emulator-oriented runtime validation only; it does not validate the newly approved native-port architecture. A fresh native-runtime baseline is required. |
+| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. One isolated native speed-acceleration helper (sub_CE29) has been translated; full physics and playable race are not implemented. |
+| Latest code batch | Emulator/recompiler game runtime deleted. Native sub_CE29 player acceleration helper added with an exhaustive ASM differential test; CI result pending. |
+| Latest host test / 3DS build | 3DS build passed after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22 ([CI run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892)). Native physics differential CI is pending. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
 A function definition, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
