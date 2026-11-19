@@ -265,6 +265,52 @@ static int testVerticalMirroredNametables(void)
     return rc;
 }
 
+static int testRasterSplitComposite(void)
+{
+    const size_t pixels = (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT;
+    uint8_t *topRgb = (uint8_t *)malloc(NES_PPU_RGB_BYTES);
+    uint8_t *bottomRgb = (uint8_t *)malloc(NES_PPU_RGB_BYTES);
+    uint8_t *outRgb = (uint8_t *)malloc(NES_PPU_RGB_BYTES);
+    uint8_t *topOpaque = (uint8_t *)malloc(pixels);
+    uint8_t *bottomOpaque = (uint8_t *)malloc(pixels);
+    uint8_t *outOpaque = (uint8_t *)malloc(pixels);
+    int rc = 0;
+    if (topRgb == NULL || bottomRgb == NULL || outRgb == NULL ||
+        topOpaque == NULL || bottomOpaque == NULL || outOpaque == NULL) {
+        rc = 1;
+        goto done;
+    }
+    memset(topRgb, 0x11, NES_PPU_RGB_BYTES);
+    memset(bottomRgb, 0x22, NES_PPU_RGB_BYTES);
+    memset(topOpaque, 0x33, pixels);
+    memset(bottomOpaque, 0x44, pixels);
+    if (!nesPpuCompositeRasterSplit(topRgb, topOpaque, bottomRgb, bottomOpaque,
+                                   2u, 5u, outRgb, NES_PPU_RGB_BYTES,
+                                   outOpaque, pixels)) { rc = 2; goto done; }
+    /* dot 5 changes at visible pixel 4: rows above are top, rows below bottom. */
+    if (outRgb[0] != 0x11u || outOpaque[0] != 0x33u ||
+        outRgb[(2u * NES_PPU_WIDTH + 3u) * 3u] != 0x11u ||
+        outOpaque[2u * NES_PPU_WIDTH + 3u] != 0x33u ||
+        outRgb[(2u * NES_PPU_WIDTH + 4u) * 3u] != 0x22u ||
+        outOpaque[2u * NES_PPU_WIDTH + 4u] != 0x44u ||
+        outRgb[(3u * NES_PPU_WIDTH) * 3u] != 0x22u ||
+        outOpaque[3u * NES_PPU_WIDTH] != 0x44u) { rc = 3; goto done; }
+    /* A split after the visible frame leaves every pixel on the top phase. */
+    if (!nesPpuCompositeRasterSplit(topRgb, topOpaque, bottomRgb, bottomOpaque,
+                                   240u, 0u, outRgb, NES_PPU_RGB_BYTES,
+                                   outOpaque, pixels) ||
+        outRgb[(239u * NES_PPU_WIDTH + 255u) * 3u] != 0x11u ||
+        outOpaque[239u * NES_PPU_WIDTH + 255u] != 0x33u) { rc = 4; goto done; }
+    if (nesPpuCompositeRasterSplit(topRgb, topOpaque, bottomRgb, bottomOpaque,
+                                   2u, 5u, outRgb, NES_PPU_RGB_BYTES - 1u,
+                                   outOpaque, pixels)) { rc = 5; goto done; }
+done:
+    free(topRgb); free(bottomRgb); free(outRgb);
+    free(topOpaque); free(bottomOpaque); free(outOpaque);
+    if (rc == 0) puts("PASS: D14E split compositor preserves top/bottom pixels and exact split dot.");
+    return rc;
+}
+
 int main(void)
 {
     uint8_t *pixels = (uint8_t *)calloc(NES_PPU_MAX_TILES * 64u, 1u);
@@ -279,9 +325,11 @@ int main(void)
     const int colorResult = testColorLookup();
     const int atlasResult = testAtlasPaletteModes();
     const int mirrorResult = testVerticalMirroredNametables();
+    const int splitResult = testRasterSplitComposite();
     if (colorResult != 0) { fprintf(stderr, "NES color lookup failed: %d\\n", colorResult); return 1; }
     if (atlasResult != 0) { fprintf(stderr, "Atlas palette modes failed: %d\\n", atlasResult); free(pixels); free(rgb); return 1; }
     if (mirrorResult != 0) { fprintf(stderr, "Mirrored nametable renderer failed: %d\\n", mirrorResult); free(pixels); free(rgb); return 1; }
+    if (splitResult != 0) { fprintf(stderr, "Raster split compositor failed: %d\\n", splitResult); free(pixels); free(rgb); return 1; }
     if (pixels == NULL || rgb == NULL) { free(pixels); free(rgb); return 1; }
     memset(nametable, 0, sizeof(nametable));
     memset(attributes, 0, sizeof(attributes));
