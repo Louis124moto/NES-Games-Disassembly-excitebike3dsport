@@ -14,6 +14,7 @@ typedef struct {
     uint8_t splitScanline;
     uint16_t splitDot;
     uint8_t ctrlWrites, scrollPairs;
+    uint32_t splitWriteCycle;
     uint32_t elapsedCycles;
 } NesMenuRasterSplit;
 
