@@ -233,6 +233,39 @@ void nativeMenuCompleteTimedTransition(NativeMenuState *menu)
 }
 
 
+/* Source: ofs_CB77_01 ($CB77-$CBA3), phase 1 of sub_CB2C.
+ * The seven source bytes are represented as semantic tile data. The original
+ * writes them to a dynamic PPU command stream at $24CF; the native port emits
+ * a scene patch at physical nametable B, tile coordinate (15,6), instead.
+ * The payload must have been populated by the translated scene/setup producer.
+ */
+void nativeMenuTransitionPhase1(NativeMenuState *menu)
+{
+    unsigned i;
+
+    if (menu == 0 || menu->transition_phase != 1u) {
+        return;
+    }
+
+    /* The original handler waits for ram_0033_timer to reach zero. */
+    if (menu->timer_values[18] != 0u) {
+        return;
+    }
+
+    for (i = 0u; i < 7u; ++i) {
+        menu->transition_patch[i] = menu->transition_payload[i];
+    }
+    menu->transition_patch_layer = 1u;
+    menu->transition_patch_x = 15u;
+    menu->transition_patch_y = 6u;
+    menu->transition_patch_valid = 1u;
+
+    /* Source chooses $20 when ram_004B != 0, otherwise $31. */
+    menu->transition_duration = menu->transition_flag_004B != 0u ? 0x20u : 0x31u;
+    menu->timer_values[18] = (uint8_t)(menu->transition_duration + 3u);
+    menu->transition_phase = 2u;
+}
+
 /* Source: ofs_CC6B_03 ($CC6B-$CC7C), phase 3 of sub_CB2C. */
 void nativeMenuTransitionPhase3(NativeMenuState *menu)
 {
