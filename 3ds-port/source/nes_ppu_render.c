@@ -36,6 +36,61 @@ uint8_t nesAtlasGrayShade(unsigned int pixel)
     return pixel > 3u ? 0u : (uint8_t)(pixel * 85u);
 }
 
+int nesPpuFindSprite0HitCycle(const uint8_t *chrPixels, size_t tileCount,
+                              const uint8_t *oam, uint8_t ppuCtrl,
+                              uint8_t ppuMask, const uint8_t *bgOpaque,
+                              unsigned long *cpuCycleFromPrerender)
+{
+    const unsigned int height = (ppuCtrl & 0x20u) != 0u ? 16u : 8u;
+    const uint8_t tileNumber = oam != NULL ? oam[1] : 0u;
+    const unsigned int top = oam != NULL ? (unsigned int)oam[0] + 1u : NES_PPU_HEIGHT;
+    const unsigned int left = oam != NULL ? oam[3] : NES_PPU_WIDTH;
+    size_t firstTile;
+    unsigned int row, col;
+
+    if (cpuCycleFromPrerender != NULL) *cpuCycleFromPrerender = ~0UL;
+    if (chrPixels == NULL || oam == NULL || bgOpaque == NULL || tileCount == 0u)
+        return 0;
+    /* Both rendering layers must be enabled for sprite-0 hit. */
+    if ((ppuMask & 0x18u) != 0x18u || top >= NES_PPU_HEIGHT || left >= NES_PPU_WIDTH)
+        return 0;
+
+    if (height == 16u) {
+        firstTile = ((tileNumber & 1u) != 0u ? 256u : 0u) +
+                    (size_t)(tileNumber & 0xFEu);
+        if (firstTile + 1u >= tileCount) return 0;
+    } else {
+        firstTile = ((ppuCtrl & 0x08u) != 0u ? 256u : 0u) + tileNumber;
+        if (firstTile >= tileCount) return 0;
+    }
+
+    for (row = 0u; row < height && top + row < NES_PPU_HEIGHT; ++row) {
+        unsigned int sourceRow = (oam[2] & 0x80u) != 0u ? height - 1u - row : row;
+        size_t tile = firstTile;
+        if (height == 16u) {
+            tile += sourceRow >> 3u;
+            sourceRow &= 7u;
+        }
+        for (col = 0u; col < 8u && left + col < 255u; ++col) {
+            const unsigned int screenX = left + col;
+            const unsigned int screenY = top + row;
+            const unsigned int sourceCol = (oam[2] & 0x40u) != 0u ? 7u - col : col;
+            const uint8_t pixel = chrPixels[tile * 64u + (size_t)sourceRow * 8u + sourceCol];
+            if (screenX < 8u && (ppuMask & 0x06u) != 0x06u) continue;
+            if (pixel == 0u || pixel > 3u ||
+                bgOpaque[(size_t)screenY * NES_PPU_WIDTH + screenX] == 0u)
+                continue;
+            if (cpuCycleFromPrerender != NULL) {
+                const unsigned long ppuDots = 341UL +
+                    (unsigned long)screenY * 341UL + (unsigned long)screenX + 1UL;
+                *cpuCycleFromPrerender = ppuDots / 3UL;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
                                 const uint8_t *nametable, const uint8_t *attributes,
                                 const uint8_t *palette, uint8_t *rgb,
