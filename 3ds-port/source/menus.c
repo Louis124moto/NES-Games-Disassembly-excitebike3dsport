@@ -72,8 +72,8 @@ static int menusRunSetupSequence(GameState *state)
     } else if (listIndex == 7u) {
         if (state->menu_ram0044 > 3u) return 1;
     } else if (listIndex == 5u) {
-        /* Execute the two safe list-5 commands, then stop before dynamic PPU setup. */
-        if (state->menu_ram0044 > 2u) return 1;
+        /* Commands $C551, $C869 and $C820 are source-recompiled. */
+        if (state->menu_ram0044 > 3u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
     }
@@ -179,6 +179,11 @@ static int menusRunSetupSequence(GameState *state)
         }
     } else if (listIndex == 5u) {
         if (commandIndex == 0u) { /* ofs_001_C551_05_01 */
+            state->menu_cpu_ram[0x0041u] = state->menu_asm_state;
+            state->menu_cpu_ram[0x0043u] = state->menu_ram0043;
+            state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+            memcpy(&state->menu_cpu_ram[0x004Du], state->menu_ram004D_EF,
+                   sizeof(state->menu_ram004D_EF));
             if (!nesMenuCpuSetupCommand(0xC551u, state->menu_asm_state,
                                         state->menu_ram0043, &state->menu_ram0045,
                                         state->menu_ram004D_EF)) {
@@ -186,6 +191,9 @@ static int menusRunSetupSequence(GameState *state)
                 state->menu_ram0045 = (state->menu_asm_state < 8u)
                     ? (uint8_t)(0x12u + state->menu_ram0043) : 0x12u;
             }
+            state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+            memcpy(&state->menu_cpu_ram[0x004Du], state->menu_ram004D_EF,
+                   sizeof(state->menu_ram004D_EF));
             return 1;
         }
         if (commandIndex == 1u) { /* ofs_001_C869_05_02 */
@@ -194,6 +202,29 @@ static int menusRunSetupSequence(GameState *state)
                                         state->menu_ram004D_EF)) {
                 memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
             }
+            state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+            memcpy(&state->menu_cpu_ram[0x004Du], state->menu_ram004D_EF,
+                   sizeof(state->menu_ram004D_EF));
+            return 1;
+        }
+        if (commandIndex == 2u) { /* ofs_001_C820_05_03 */
+            state->menu_cpu_ram[0x0041u] = state->menu_asm_state;
+            state->menu_cpu_ram[0x0043u] = state->menu_ram0043;
+            state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+            if (!nesMenuCpuEditorInit(state->menu_cpu_ram,
+                                      state->menu_ppu_nametables,
+                                      state->menu_ppu_palette,
+                                      &state->menu_ppu_ctrl,
+                                      &state->menu_ppu_mask,
+                                      &state->menu_scroll_x,
+                                      &state->menu_scroll_y))
+                return 1;
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            state->menu_ram004B = state->menu_cpu_ram[0x004Bu];
+            memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u],
+                   sizeof(state->menu_oam));
+            state->menu_ppu_palette_loaded = 1u;
+            state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
             return 1;
         }
     } else if (listIndex == 7u) {
