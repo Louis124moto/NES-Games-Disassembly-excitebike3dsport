@@ -37,7 +37,7 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
         makefile = (PORT / "Makefile").read_text(encoding="utf-8")
         source = (PORT / "source/native_menu.c").read_text(encoding="utf-8")
         renderer = (PORT / "source/renderer.c").read_text(encoding="utf-8")
-        self.assertNotIn("native_menu.c", set(re.findall(r"[A-Za-z0-9_]+\\.c", re.search(r"EXCLUDED_RUNTIME_C\\s*:=([\\s\\S]*?)\\nCFILES\\s*:=", makefile).group(1))))
+        self.assertNotIn("native_menu.c", excluded)
         self.assertIn("nativeMenuRenderStatus", source)
         self.assertIn("nativeMenuRenderStatus(state)", renderer)
 
