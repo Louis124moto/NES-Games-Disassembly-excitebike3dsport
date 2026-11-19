@@ -516,5 +516,13 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] Passed NES-order held and pressed controller bytes to `$0014/$0015`; retained the original `sub_EB17` object/input logic, including its guarded B-button return to state `$08`.
 - [x] Synchronized editor OAM, `$0300-$031F` dynamic PPU buffer, course/object working pages `$05A0/$05C3/$05E0/$06E0`, scroll, PPUCTRL/PPUMASK, nametable and palette writes back into GameState.
 - [x] Added a regression test proving that, without a supported `rom.nes`, state 9 holds instead of inventing a return or modifying the PPU model.
-- [ ] `sub_D19B` waits for PPUSTATUS bit `$40` (sprite-0 hit). The current host adapter raises bit $40 after the traced 6431-CPU-cycle delay so the original D14E/D19B wait sequence can advance. This is a cycle-threshold approximation, not a PPU pipeline or raster simulation; exact editor visuals and timing are not yet claimed.
+- [ ] `sub_D19B` waits for PPUSTATUS bit `$40` (sprite-0 hit). vec_C23B_NMI now runs the original D14E routine before the C97C editor handler whenever ram_0047 is set. D14E executes its 6431-cycle delay and scroll/PPU writes; the following C97C call sees sprite-hit bit $40. Pixel-level sprite collision remains approximated, not a full PPU pipeline; exact editor visuals and timing are not yet claimed.
 - [ ] Add ROM-backed vectors for entry/setup/frame/B-return, validate PPU writes against a NES emulator trace, and test on physical New 3DS.
+
+
+### 2026-11-19 — NMI raster split ordering
+
+- [x] Added `nesMenuCpuRasterSplit` for the original `sub_D14E` routine.
+- [x] `menusNmiUpload` now runs D14E after the NMI PPU stream upload when persistent `ram_0047` is nonzero, matching the source order before the state handler.
+- [x] D14E's source delay loop, dynamic `$0300` command construction, PPUCTRL and scroll writes are executed by the static recompiler and synchronized back to GameState. The next state-09 C97C call sees sprite-hit bit `$40` set.
+- [ ] The host bus models the sprite-hit flag at frame boundaries; it does not render pixels to determine the real sprite-0 collision. Emulator trace and physical New 3DS timing comparison remain mandatory.
