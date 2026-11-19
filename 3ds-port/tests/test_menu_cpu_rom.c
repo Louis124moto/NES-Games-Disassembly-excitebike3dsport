@@ -37,6 +37,38 @@ static int testC465StateAdvance(uint8_t initialState, uint8_t expectedState)
     return 1;
 }
 
+static int testSharedTransitionList3(void)
+{
+    GameState s;
+    unsigned int frame;
+
+    gameStateReset(&s);
+    memset(s.menu_cpu_ram, 0, sizeof(s.menu_cpu_ram));
+    s.menu_asm_state = 3u;
+    s.menu_ram03F8 = 4u; /* source title/setup precondition */
+    for (frame = 0u; frame < 10u && s.menu_ram0040 == 0u; ++frame)
+        menusNmiFrame(&s, 0u, 0u);
+
+    if (s.menu_ram0040 == 0u || s.menu_ram0045 != 0x18u ||
+        s.menu_repeat_guard != 1u || s.menu_ram0044 != 0u) {
+        fprintf(stderr, "ROM menu test: list-3 PRG setup stopped at frame %u (setup=%u ram40=%u ram45=%02X)\n",
+                frame, (unsigned int)s.menu_ram0044,
+                (unsigned int)s.menu_ram0040, (unsigned int)s.menu_ram0045);
+        return 0;
+    }
+
+    /* The next NMI dispatches state 3 through the original CB2C pointer table. */
+    menusNmiFrame(&s, 0u, 0u);
+    if (s.menu_ram0044 != 1u || s.menu_ram0046 != 1u ||
+        s.menu_ram004B != 1u || s.menu_timer33 != 4u) {
+        fprintf(stderr, "ROM menu test: CB2C state-3 phase 0 mismatch (phase=%u timer33=%u flag46=%u flag4B=%u)\n",
+                (unsigned int)s.menu_ram0044, (unsigned int)s.menu_timer33,
+                (unsigned int)s.menu_ram0046, (unsigned int)s.menu_ram004B);
+        return 0;
+    }
+    return 1;
+}
+
 int main(void)
 {
     GameState s;
@@ -48,6 +80,8 @@ int main(void)
         return 1;
     }
     if (!testC465StateAdvance(4u, 5u) || !testC465StateAdvance(7u, 2u))
+        return 1;
+    if (!testSharedTransitionList3())
         return 1;
 
     /* Enter state 9 directly, then execute its real six-command setup list. */
