@@ -284,6 +284,7 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
         uint64_t scanline = dots / 341u;
         if (scanline > 239u) scanline = 239u;
         split->splitScanline = (uint8_t)scanline;
+        split->splitDot = (uint16_t)(dots % 341u);
     }
     return 1;
 }
