@@ -25,18 +25,21 @@ This is a narrow native implementation, not a complete physics port.
 - The player's fixed-point speed is stored as low/fraction byte `ram_0090_obj` and whole byte `ram_0094_obj` (X=0 means `$0090/$0094`). `sub_DA58` later transfers the whole speed byte into the per-frame movement accumulator and folds the fraction into `ram_0394_obj`.
 - `sub_CD59` selects the acceleration-table index from the two upper controller bits: bit 7 takes the no-increment path after ASL (Y=0); bit 6 alone increments the saved index (Y=1). If both are held, bit 7 wins. This records the exact bit-path; the control labels are not inferred from game feel.
 - `sub_CE29` first compares X with `ram_004C`; on the matching phase it adds `tbl_C0BC[Y]` to the fractional byte, increments the whole byte on carry, and for X=0 clamps against `tbl_C0CE[Y]` and `tbl_C0D1[Y]`.
+- `sub_CE58` gates the deceleration path on the same phase match, then falls through to `sub_CE5C`. For player X=0, if the whole speed byte is zero it computes `Y = ram_00B0_obj >> 1` and compares the fraction with `tbl_C0CC[Y]`. It then subtracts `tbl_C0C1[Y_decel]`; a borrow decrements the whole byte, or clamps the fraction to zero when the whole byte is already zero.
 - Source table values used by the player path: increments `$18/$3F` (`$C0BC/$C0BD`), fractional caps `$20/$40` (`$C0CE/$C0CF`), whole caps `$03/$03` (`$C0D1/$C0D2`).
 
 ### Native implementation
 
-- `source/bike_physics.c::bikePhysicsAcceleratePlayer` translates only `sub_CE29` for X=0, preserving byte wraparound and the original phase gate.
-- `tests/test_bike_speed.c` executes the original `$CE29` routine directly on the host-only 6502 reference CPU and compares the two speed bytes with the native C result. It covers all 2 modes × 4 phases × 256 whole-byte values × 256 fractional-byte values = **524,288 vectors**.
+- `source/bike_physics.c::bikePhysicsAcceleratePlayer` translates `sub_CE29` for X=0, preserving byte wraparound and the original phase gate.
+- `source/bike_physics.c::bikePhysicsDeceleratePlayer` translates the `sub_CE58/sub_CE5C` player path. The caller supplies the resolved low-whole threshold from `tbl_C0CC`; mapping the player's `ram_00B0_obj` state to that threshold remains a separate trace task.
+- `tests/test_bike_speed.c` executes the original `$CE29` and `$CE58` routines directly on the host-only 6502 reference CPU and compares the speed bytes with native C. It checks all 2 acceleration modes × 4 phases × 256 whole × 256 fractional states, plus 2 deceleration thresholds × 7 table modes × 4 phases × 256 whole values × 10 boundary fractions: **667,648 vectors total**.
 - The test consumes a PRG rebuilt from the unmodified `Excitebike/bank_FF.asm`. No generated recompiler, NES system, PPU, or APU is used by this differential test.
+- Exact-commit validation passed on `1007cc9c218be98e26b282b939add71593cd9c49`: [host differential/test workflow 44573570008](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44573570008) and [New 3DS build 44573569971](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44573569971).
 - `bikePhysicsUpdate` remains deliberately empty. This one helper does not implement throttle selection conditions, braking/coasting, temperature, jumps, posture, collisions, AI, or per-frame integration.
 
 ### Still required before this is accepted as player physics
 
-Trace and port the complete caller/update path around `sub_CD59`, including `sub_CE5C` deceleration, `sub_CDEE` terrain gating, `ram_004C` phase generation, player initialization, speed movement, heat accumulation/cooling, posture/jump/landing/crash state, and all relevant timers. Add state-vector tests for each branch and compare after each original game frame. The current exhaustive test proves only the isolated `sub_CE29` helper.
+Trace and port the complete caller/update path around `sub_CD59`, including `sub_CE5C` deceleration, `sub_CDEE` terrain gating, `ram_004C` phase generation, player initialization, speed movement, heat accumulation/cooling, posture/jump/landing/crash state, and all relevant timers. Add state-vector tests for each branch and compare after each original game frame. The current exhaustive tests prove only the isolated `sub_CE29` and low-level `sub_CE58/sub_CE5C` helpers; they do not prove the complete player update path.
 
 ## Not yet traced (required before any gameplay is accepted)
 Complete player-slot initialization (commands 6/`sub_E1A3`/`sub_EC25`/`loc_EC47`, all RAM writers), the full `ram_005C` input-to-speed path beyond `sub_CE29`, every subroutine in the frame handler above, PPU lists $01/$12–$17 contents, `sub_D14E` raster-split wait (sprite-0 hit), track data decoding, opponents, timers, scoring, crashes/collisions.
