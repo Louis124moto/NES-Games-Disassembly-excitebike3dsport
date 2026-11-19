@@ -67,7 +67,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
 - [ ] B5 — `sub_D1C7` now has an isolated, host-tested OAM-grid helper; integrate it with `sub_E1A3` in list 5, then implement shared transition OAM (`$CCEF/$CD15`) and direct editor sprites (`sub_EC25`, `loc_EC47`).
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
-- [x] C1 — `sub_C7DE` input and `$00FF` side effects match source and pass host vectors; exact commit `b2fa4fb21146` also passes the New 3DS build.
+- [x] C1 — Active title/selector/design-menu input now prefers the generated 6502 `sub_C7DE` via `nesMenuCpuInput()` when a supported mapper-0 16 KiB `rom.nes` is beside the 3DSX; the source-C helper remains a fallback. The routine is included in the existing differential region list. Adapter commits `98e4eec`, `59341af`, `64f3fa8`, `ca5b086`; fresh CI and physical New 3DS validation are pending.
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
 - [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; implement list-5/state-9 editor setup and B-button return. State-10 race runtime is Stage 3.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
@@ -913,3 +913,13 @@ Still open (Stage 2 is NOT complete):
 - [ ] Build the 3DS target on the same revision.
 - [ ] Integrate the three `sub_D13F` calls and the `loc_C289/sub_D3C1` PPU command execution in exact source order. Until then, `sub_ECE4` is an isolated buffer-builder translation, not a complete PPU upload.
 - [ ] Continue with the `C875` tail only after the command-3 PPU path has been modeled; then integrate state-2 list index 2 into the setup sequencer.
+
+
+### 2026-11-19 — static recompiler wired into menu input
+
+- [x] Added `nes_menu_cpu.c/.h`: reads the original NROM-128 PRG from `rom.nes` beside the 3DSX (trainer-aware) and calls generated `nesRunCode` through `nesCall`.
+- [x] Replaced the active title, course-selector, and six-choice design-menu input call sites with the recompiled `$C7DE` routine when the canonical PRG is available; retain the source-derived C helper only as a raw-CHR/no-ROM fallback.
+- [x] Kept the generated `nes_gen_code.c` in the normal Makefile wildcard build.
+- [ ] Confirm a fresh host differential run and New 3DS build for the adapter commits; no new status result is currently available.
+- [ ] Validate PRG loading and input behavior on physical New 3DS with the exact `rom.nes` shipped beside the 3DSX.
+- [ ] Continue the actual menu completion work: setup list 3, setup list 5/editor entry and return, C820 dynamic PPU upload, full transition/editor OAM, raster split, and authentic title/selector/design/tape artwork.
