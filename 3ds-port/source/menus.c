@@ -895,6 +895,7 @@ void menusNmiUpload(GameState *state)
             rasterSplit.elapsedCycles > 2273u ? rasterSplit.elapsedCycles - 2273u : 0u;
         state->menu_ppu_split_valid = 1u;
         state->menu_ppu_split_scanline = rasterSplit.splitScanline;
+        state->menu_ppu_split_dot = rasterSplit.splitDot;
         state->menu_ppu_top_ctrl = rasterSplit.topCtrl;
         state->menu_ppu_top_scroll_x = rasterSplit.topScrollX;
         state->menu_ppu_top_scroll_y = rasterSplit.topScrollY;
