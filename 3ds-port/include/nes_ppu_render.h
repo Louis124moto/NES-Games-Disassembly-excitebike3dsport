@@ -24,7 +24,7 @@ typedef enum {
     NES_PPU_RENDER_INVALID_PALETTE,
     NES_PPU_RENDER_MISSING_TILE,
     NES_PPU_RENDER_INVALID_PIXEL,
-    NES_PPU_RENDER_UNSUPPORTED /* 8x16 sprites or behind-background priority: not modelled, nothing drawn */
+    NES_PPU_RENDER_UNSUPPORTED /* behind-background priority requires bgOpaque */
 } NesPpuRenderResult;
 
 /*
@@ -59,20 +59,22 @@ uint8_t nesAtlasGrayShade(unsigned int pixel);
 
 /*
  * Composite the 64 OAM sprites over an image produced by nesPpuRenderNametable.
- *   chrPixels/tileCount: the FULL decoded CHR (sprite pattern table = PPUCTRL bit 3:
- *                        tiles 0..255, or 256..511)
+ *   chrPixels/tileCount: the FULL decoded CHR.
+ *                        8x8 sprites use PPUCTRL bit 3 (tiles 0..255 or 256..511).
+ *                        8x16 sprites use tile bit 0 for the pattern table and the
+ *                        even tile pair beginning at tile & $FE (PPUCTRL bit 3 ignored).
  *   oam                : 256 bytes, Y/tile/attribute/X per sprite
  *   palette            : the 32 palette RAM bytes (sprite palettes at 16..31, sprite
  *                        subpalette = attribute & 3, colour 0 transparent)
  * PPU rules applied: sprite Y is drawn one line lower (Y+1); sprites with Y >= $EF
  * are off-screen; lower OAM index wins; at most 8 sprites per scanline (the 9th and
  * later are dropped); PPUMASK bit 4 enables sprites and bit 2 shows them in the
- * leftmost 8 pixels; horizontal/vertical flip. Attribute bit 5 (behind the
- * background) needs bgOpaque, a 256x240 map that is nonzero where the background
- * pixel is not colour 0 (see nesPpuRenderNametableOpaque); with bgOpaque == NULL
- * such a sprite makes the function return NES_PPU_RENDER_UNSUPPORTED. 8x16 sprites
- * (PPUCTRL bit 5) are NOT modelled: the function then returns UNSUPPORTED. In both
- * UNSUPPORTED cases nothing is drawn. *drawn (optional) receives the number of sprite pixels written.
+ * leftmost 8 pixels; horizontal/vertical flip; 8x8 and 8x16 sprite heights. Attribute
+ * bit 5 (behind the background) needs bgOpaque, a 256x240 map that is nonzero where
+ * the background pixel is not colour 0 (see nesPpuRenderNametableOpaque); with
+ * bgOpaque == NULL such a sprite makes the function return UNSUPPORTED. No pixels
+ * are drawn on invalid or unsupported input. *drawn (optional) receives the number
+ * of sprite pixels written.
  */
 int nesPpuRenderSprites(const uint8_t *chrPixels, size_t tileCount,
                         const uint8_t *oam, const uint8_t *palette,
