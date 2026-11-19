@@ -62,7 +62,7 @@ static int menusRunSetupSequence(GameState *state)
     if (listIndex == 0u) {
         if (state->menu_ram0044 > 2u) return 1;
     } else if (listIndex == 1u) {
-        if (state->menu_ram0044 > 3u) return 1;
+        if (state->menu_ram0044 > 6u) return 1;
     } else if (listIndex == 8u) {
         if (state->menu_ram0044 > 2u) return 1;
     } else if (listIndex == 4u) {
@@ -208,6 +208,7 @@ static int menusRunSetupSequence(GameState *state)
             return 1;
         }
         if (commandIndex == 2u) { /* ofs_001_C820_05_03 */
+            uint8_t paletteWritten = 0u;
             state->menu_cpu_ram[0x0041u] = state->menu_asm_state;
             state->menu_cpu_ram[0x0043u] = state->menu_ram0043;
             state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
@@ -217,14 +218,40 @@ static int menusRunSetupSequence(GameState *state)
                                       &state->menu_ppu_ctrl,
                                       &state->menu_ppu_mask,
                                       &state->menu_scroll_x,
-                                      &state->menu_scroll_y))
-                return 1;
+                                      &state->menu_scroll_y,
+                                      &paletteWritten))
+                { state->menu_ram0044 = (uint8_t)(state->menu_ram0044 - 1u); return 1; }
             state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
             state->menu_ram004B = state->menu_cpu_ram[0x004Bu];
             memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u],
                    sizeof(state->menu_oam));
-            state->menu_ppu_palette_loaded = 1u;
+            if (paletteWritten != 0u) state->menu_ppu_palette_loaded = 1u;
             state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
+            return 1;
+        }
+        if (commandIndex == 3u) { /* ofs_001_C5A3_05_04 */
+            if (!nesMenuCpuRunRamRoutine(0xC5A3u, state->menu_cpu_ram))
+                state->menu_cpu_ram[0x0045u] = 0x17u;
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            return 1;
+        }
+        if (commandIndex == 4u) { /* ofs_001_C562_05_05 */
+            if (!nesMenuCpuRunRamRoutine(0xC562u, state->menu_cpu_ram))
+                state->menu_cpu_ram[0x0045u] = 0x05u;
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            return 1;
+        }
+        if (commandIndex == 5u) { /* ofs_001_C5C2_05_06: enters editor loop */
+            if (!nesMenuCpuRunRamRoutine(0xC5C2u, state->menu_cpu_ram)) {
+                state->menu_ram0044 = (uint8_t)(state->menu_ram0044 - 1u);
+                return 1;
+            }
+            state->menu_ram0040 = state->menu_cpu_ram[0x0040u];
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            state->menu_repeat_guard = state->menu_cpu_ram[0x0049u];
+            state->menu_ram0047 = state->menu_cpu_ram[0x0047u];
+            memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u],
+                   sizeof(state->menu_oam));
             return 1;
         }
     } else if (listIndex == 7u) {
