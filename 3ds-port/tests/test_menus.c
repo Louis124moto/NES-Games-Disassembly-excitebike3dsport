@@ -14,6 +14,7 @@
 #include "menu_tape_file.h"
 
 /* libctru key bits (see tests/host_stub/3ds.h) */
+#define K_B (1u << 1)
 #define K_START (1u << 3)
 #define K_RIGHT (1u << 4)
 #define K_UP (1u << 6)
