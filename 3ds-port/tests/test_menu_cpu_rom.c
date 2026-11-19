@@ -51,11 +51,15 @@ static int testSharedTransitionDispatcherPhases(void)
         ram[0x03F2u] = 2u;
         ram[0x0053u] = 0u;
         ram[0x0042u] = 0xA5u;
-        if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
-            ram[0x0044u] != 1u || ram[0x0046u] != 1u ||
-            ram[0x004Bu] != 1u || ram[0x0033u] != 4u) {
-            fprintf(stderr, "ROM menu test: CB2C phase 0 failed for state %u\n",
-                    (unsigned int)states[i]);
+        {
+            const int ok = nesMenuCpuRunRamRoutine(0xCB2Cu, ram);
+            if (!ok || ram[0x0044u] != 1u || ram[0x0046u] != 1u ||
+                ram[0x004Bu] != 1u || ram[0x0033u] != 4u) {
+                fprintf(stderr, "ROM menu test: CB2C phase 0 state %u run=%d phase=%u flag46=%u flag4B=%u timer33=%u selection=%02X\n",
+                        (unsigned int)states[i], ok,
+                        (unsigned int)ram[0x0044u], (unsigned int)ram[0x0046u],
+                        (unsigned int)ram[0x004Bu], (unsigned int)ram[0x0033u],
+                        (unsigned int)ram[0x0042u]);
             return 0;
         }
         if ((states[i] < 8u && ram[0x0042u] != 2u) ||
