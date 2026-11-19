@@ -377,11 +377,23 @@ static int testDesignConfirm(void)
     if (confirmFrom(4u, &s)) return 1;
     CHECK(s->menu_asm_state == 13u && s->menu_selection == 0u, 104);
     free(s);
-    /* entry 5 = loc_CA85: clear $0021-$00FF, state back to 0, ram_0042 restored to 2 */
-    if (confirmFrom(5u, &s)) return 1;
+    /* entry 5 = loc_CA85: clear CPU RAM $0021-$00FF, then restore $0042 and increment $0049. */
+    s = designMenu();
+    if (s == NULL) return 1;
+    s->menu_selection = 5u;
+    s->menu_ram00FF = 0x77u;
+    memset(&s->menu_cpu_ram[0x0021u], 0xA5, 0x00DFu);
+    s->menu_cpu_ram[0x0020u] = 0x5Au;   /* outside the source clear range */
+    s->menu_cpu_ram[0x0100u] = 0x66u;   /* outside the source clear range */
+    menusNmiFrame(s, K_START, K_START);
     CHECK(s->menu_asm_state == 0u && s->menu_selection == 2u && s->menu_ram0045 == 0u, 105);
     CHECK(s->menu_ram0040 == 0u && s->menu_ram0044 == 0u && s->menu_repeat_guard == 1u, 106);
-    CHECK(s->menu_timer31 == 0u && s->menu_ram00FB == 0u, 107);
+    CHECK(s->menu_timer31 == 0u && s->menu_ram00FB == 0u && s->menu_ram00FF == 0u, 107);
+    CHECK(s->menu_cpu_ram[0x0020u] == 0x5Au && s->menu_cpu_ram[0x0100u] == 0x66u, 108);
+    for (i = 0x0021u; i <= 0x00FFu; ++i) {
+        const uint8_t expected = (i == 0x0042u) ? 2u : (i == 0x0049u ? 1u : 0u);
+        CHECK(s->menu_cpu_ram[i] == expected, 109);
+    }
     free(s);
     return 0;
 }
