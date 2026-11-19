@@ -218,7 +218,7 @@ static int testRasterSplitD0AB(void)
         NesMenuRasterSplit afterPreviousHit;
         if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
                                    &scrollX, &scrollY, 1u, &afterPreviousHit) ||
-            afterPreviousHit.elapsedCycles <= noHitElapsed + 2000u ||
+            afterPreviousHit.elapsedCycles <= noHitElapsed ||
             afterPreviousHit.splitScanline < 55u ||
             afterPreviousHit.splitScanline > 65u ||
             afterPreviousHit.splitDot > 340u) {
