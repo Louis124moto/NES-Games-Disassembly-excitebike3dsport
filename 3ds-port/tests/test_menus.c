@@ -526,6 +526,38 @@ static int testTapeLoad(void)
     return 0;
 }
 
+static int testTapeFileMenuRoundTrip(void)
+{
+    uint8_t payload[256];
+    GameState *s = NULL;
+    unsigned int i;
+    const char *path = "test_menus_tape_roundtrip.bin";
+    for (i = 0u; i < sizeof(payload); ++i) payload[i] = (uint8_t)(i * 13u + 7u);
+    menuTapeFileSetPath(path);
+    remove(path);
+    menusSetTapeIo(menuTapeFileIo());
+
+    if (confirmFrom(3u, &s)) return 1;
+    memcpy(s->menu_ram06E0, payload, sizeof(payload));
+    frames(s, 200u, 0u);
+    CHECK(s->menu_asm_state == 8u && s->menu_ram0048 == 0xFFu, 161);
+    free(s);
+    s = NULL;
+
+    if (confirmFrom(4u, &s)) return 1;
+    memset(s->menu_ram06E0, 0xA5, sizeof(s->menu_ram06E0));
+    frames(s, 200u, 0u);
+    CHECK(s->menu_asm_state == 8u && s->menu_ram0048 == 0xFFu, 162);
+    CHECK(memcmp(s->menu_ram06E0, payload, sizeof(payload)) == 0, 163);
+    CHECK(s->menu_nmi_enabled == 1u, 164);
+
+    free(s);
+    menusSetTapeIo(NULL);
+    remove(path);
+    menuTapeFileSetPath(NULL);
+    return 0;
+}
+
 static int testTapeFileBackend(void)
 {
     uint8_t b0[64], b1[256], r0[64], r1[256];
@@ -589,6 +621,7 @@ int main(void)
     if ((rc = testTapeSave()) != 0) return rc;
     if ((rc = testTapeSaveFailure()) != 0) return rc;
     if ((rc = testTapeLoad()) != 0) return rc;
+    if ((rc = testTapeFileMenuRoundTrip()) != 0) return rc;
     if ((rc = testTapeFileBackend()) != 0) return rc;
     puts("PASS: menu frame model (NMI order, setup sequencer, cursor OAM, navigation, dynamic buffer).");
     return 0;
