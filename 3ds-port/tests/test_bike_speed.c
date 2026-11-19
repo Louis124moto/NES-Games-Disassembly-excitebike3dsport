@@ -127,6 +127,67 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("PASS: %lu native player speed/deceleration vectors match original ASM.\n", vectors);
+    /* Differentially exercise player terrain gate sub_CDEE. */
+    {
+        static const uint8_t object_classes[] = { 0x00u, 0xE4u };
+        static const uint8_t surfaces[] = { 0x00u, 0x03u };
+        unsigned object_class, surface, surface_state, vertical, posture;
+        for (object_class = 0; object_class < 2u; ++object_class) {
+            for (surface = 0; surface < 2u; ++surface) {
+                for (surface_state = 0; surface_state < 5u; ++surface_state) {
+                    for (vertical = 0; vertical < 256u; ++vertical) {
+                        for (posture = 0; posture < 4u; ++posture) {
+                            BikeTerrainGateState native_state;
+                            uint8_t native_z;
+                            int rc;
+                            native_state.object_class = object_classes[object_class];
+                            native_state.surface = surfaces[surface];
+                            native_state.surface_state = (uint8_t)surface_state;
+                            native_state.vertical_position = (uint8_t)vertical;
+                            native_state.posture_state = (uint8_t)posture;
+                            native_state.player_event_flag = 0xA5u;
+
+                            memset(reference.ram, 0, sizeof(reference.ram));
+                            reference.ram[0x00C0u] = native_state.object_class;
+                            reference.ram[0x00A4u] = native_state.surface;
+                            reference.ram[0x0070u] = native_state.surface_state;
+                            reference.ram[0x00B8u] = native_state.vertical_position;
+                            reference.ram[0x036Cu] = native_state.posture_state;
+                            reference.ram[0x00FDu] = 0xA5u;
+                            reference.a = 0u;
+                            reference.x = 0u;
+                            reference.y = 0u;
+                            reference.sp = 0xFDu;
+                            reference.p = 0x24u;
+                            reference.cycles = 0u;
+                            reference.bad_opcode = -1;
+                            rc = cpu6502_call(&reference, 0xCDEEu, 64u);
+                            if (rc != 0) {
+                                printf("FAIL: original sub_CDEE returned %d at class=%02X surface=%02X state=%u y=%u posture=%u\n",
+                                       rc, native_state.object_class, native_state.surface,
+                                       surface_state, vertical, posture);
+                                return 1;
+                            }
+                            native_z = bikePhysicsTerrainGate(&native_state);
+                            if (native_z != (uint8_t)((reference.p & 0x02u) != 0u) ||
+                                native_state.posture_state != reference.ram[0x036Cu] ||
+                                native_state.player_event_flag != reference.ram[0x00FDu]) {
+                                printf("FAIL: terrain class=%02X surface=%02X state=%u y=%u posture=%u native(z=%u,p=%u,fd=%02X) asm(z=%u,p=%u,fd=%02X)\n",
+                                       native_state.object_class, native_state.surface,
+                                       surface_state, vertical, posture,
+                                       native_z, native_state.posture_state, native_state.player_event_flag,
+                                       (unsigned)((reference.p & 0x02u) != 0u),
+                                       reference.ram[0x036Cu], reference.ram[0x00FDu]);
+                                return 1;
+                            }
+                            ++vectors;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    printf("PASS: %lu native player speed and terrain-gate vectors match original ASM.\n", vectors);
     return 0;
 }
