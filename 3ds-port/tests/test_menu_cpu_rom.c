@@ -163,7 +163,8 @@ static int testRasterSplitD0AB(void)
             split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
             split.topScrollY != 0x30u || split.bottomCtrl != 0x12u ||
             split.bottomScrollX != 0x40u || split.bottomScrollY != 0x50u ||
-            split.splitScanline < 30u || split.splitScanline > 40u) {
+            split.splitScanline < 30u || split.splitScanline > 40u ||
+            split.splitDot < 150u || split.splitDot > 250u) {
             fputs("ROM menu test: D0AB/D14E raster phase capture failed\n", stderr);
             return 0;
         }
