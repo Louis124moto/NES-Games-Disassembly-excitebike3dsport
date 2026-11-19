@@ -19,16 +19,16 @@ The CI build should produce `build/excitebike3ds.3dsx` and `build/excitebike3ds.
 
 The final application is a **native Excitebike implementation in C/C++ for Nintendo 3DS**. It must not load or execute `rom.nes`, run generated 6502 code, or use a software NES CPU/PPU/APU. The original ASM is studied and translated into native game logic; verified original graphics, course data and sound assets may be imported into native formats.
 
-The previous SELECT-to-run-ROM / software-NES-system path is retired as the product direction. Emulator/recompiler code is historical or temporary reference work only and must be removed from the final runtime/build. An independent 6502 oracle or NES emulator may remain in host-only differential tests. See the controlling specification in [TODO.md](TODO.md) and the rules in [PORTING_RULES.md](PORTING_RULES.md).
+The previous SELECT-to-run-ROM / software-NES-system path is retired as the product direction. The old generated 6502 recompiler, NES CPU/system/APU game runtime, PRG menu bridge, and emulator menu have been deleted from the active source tree. Only a host-side 6502 reference CPU remains for differential tests. See the controlling specification in [TODO.md](TODO.md) and the rules in [PORTING_RULES.md](PORTING_RULES.md).
 
 The released game must launch and play without `rom.nes` or `dspfirm.cdc`. Native menus, gameplay, rendering, audio, input and save/load are implemented as independent modules and validated against reproducible original-NES reference scenarios.
 
 
 ## Architecture status
 
-The current executable is an **asset inspector only** while the faithful native game is rebuilt. The live application does not execute `rom.nes`; it may read a ROM/CHR file as source material for asset inspection and extraction. The old 6502/system/APU gameplay path and PRG-backed menu recompiler are excluded from the 3DS link. Their source files remain temporarily for offline reference/test cleanup.
+The current executable is an **asset inspector only** while the faithful native game is rebuilt. The live application does not execute `rom.nes`; it may read a ROM/CHR file as source material for asset inspection and extraction. The old 6502/system/APU gameplay path and PRG-backed menu recompiler have been deleted from the active source tree. The host-only 6502 reference CPU is under tests/oracle/ and is not part of the 3DS build. The extractor still uses static PPU preview helpers; these must be separated from the final game renderer.
 
-The native menu, race loop, bike physics, opponents, course rendering, scoring, audio and save/load are not yet implemented as the final native game. Do not treat the old PPU/menu prototype as the new implementation. The first playable native slice will be accepted only after its deterministic host tests match the original ASM reference and the same commit builds for 3DS. See [TODO.md](TODO.md) for the exact gates.
+The native menu, race loop, complete bike physics, opponents, course rendering, scoring, audio and save/load are not yet implemented as the final native game. The first isolated native speed step (sub_CE29) is in source/bike_physics.c and has an exhaustive 6502-oracle test pending CI. Do not treat the old PPU/menu prototype as the new implementation. The first playable native slice will be accepted only after its deterministic host tests match the original ASM reference and the same commit builds for 3DS. See [TODO.md](TODO.md) for the exact gates.
 
 ## Fidelity approach
 
