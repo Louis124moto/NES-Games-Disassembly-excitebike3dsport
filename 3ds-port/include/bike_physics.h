@@ -51,6 +51,25 @@ typedef struct BikeTerrainGateState {
 
 uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state);
 
+/*
+ * Source-derived inputs for the player speed-control branch in sub_CD59.
+ * These are gameplay fields, not a 6502 RAM image. Terrain state is updated
+ * in place by the native sub_CDEE translation when throttle is applied.
+ */
+typedef struct BikePlayerSpeedContext {
+    BikeSpeedState speed;
+    BikeTerrainGateState terrain;
+    uint8_t controller;
+    uint8_t frame_phase;
+    uint8_t race_finished;
+    uint8_t object_lock_0374;
+    uint8_t collision_lock_0098;
+    uint8_t movement_state_009C;
+    uint8_t object_status_00B0;
+} BikePlayerSpeedContext;
+
+void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player);
+
 /* Full per-frame bike integration is intentionally not exposed until all
  * input, heat, posture, collision and update-order dependencies are traced. */
 void bikePhysicsUpdate(BikeState *bike, const InputState *input);
