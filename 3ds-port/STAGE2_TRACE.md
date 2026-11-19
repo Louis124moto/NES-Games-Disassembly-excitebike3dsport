@@ -608,3 +608,29 @@ This is not yet a complete semantic trace. The native port must identify the pla
 - [ ] Define semantic native transition fields and renderer events from the visible result.
 - [ ] Add frame-by-frame differential tests for phase timing, input branches, state/flag changes and visible transition events.
 - [ ] Integrate phases 1/2 into the native menu state machine only after the semantic effect is understood.
+
+### Follow-up source audit — seven-byte phase-1 payload
+
+A repository-wide read of `bank_FF.asm` found the following confirmed references to `ram_03D9-$03DF`:
+
+- `sub_D0F4` copies all seven bytes from `$03D9-$03DF` to `$03D1-$03D7`, then prepares a separate transfer descriptor at `$03D0` for source address `$2356`; its caller `sub_D14E` invokes it during the PPU/OAM setup path when source state is not 9.
+- `bra_DF48_loop` restores the seven bytes from `$03D1-$03D7` to `$03D9-$03DF`.
+- `ofs_002_EA8F_08` copies the seven values from `$03D9-$03DF` into seven sprite Y slots in OAM page `$02C0-$02DF` when its track-finished/timer conditions are met.
+- The phase-1 handler `$CB77` copies the seven values to the dynamic update stream, whose table entry 4 targets source PPU address `$24CF`.
+
+This proves that the bytes are reused as visual/layout data in more than one source path; it does **not** yet prove that they are always seven ordinary tile IDs. Their meaning is contextual and must be resolved from the state-9/menu caller and the source data setup before the native renderer treats them as a tile row. Therefore the initial native phase-1 patch implementation is a provisional translation of the known destination/timing only; it is **not integrated** and must not be used to render the menu until the payload classification gate below passes.
+
+### Native phase-1 code checkpoint — 2026-11-19
+
+- Added `transition_duration`, a seven-byte semantic payload/patch, and native destination metadata to `NativeMenuState`.
+- Added `nativeMenuTransitionPhase1`: it waits for timer slot `$0033` to reach zero, records the seven-byte payload as a native scene patch at layer 1 / tile coordinate (15,6), selects duration `$20` or `$31` from `ram_004B`, loads duration + 3, and advances phase 1 to phase 2.
+- Added unit coverage for the timer wait, payload copy, destination metadata, both durations, and ignoring non-phase-1 calls in `test_native_menu_state.c`.
+
+**Important limitation:** the phase-1 destination is derived from source address `$24CF` under the documented vertical mirroring map, but the seven-byte payload's visual interpretation remains open. The test added here is a native unit test, not yet a differential test against the ASM oracle. The function is not called by the app loop and does not make the menu integrated or visually complete.
+
+### Updated next gate
+
+- [ ] Trace which state/callers populate `$03D1-$03D7` and `$03D9-$03DF`, including the state-9 branch around `sub_D14E`, and classify the seven bytes for each use.
+- [ ] Validate whether `$24CF` receives a tile-row update, sprite/layout data, or a mixed command payload in every phase-1 caller.
+- [ ] Extend the host ASM oracle test to compare all phase-1 state/timer side effects, then test the semantic scene patch separately against captured original frames.
+- [ ] Do not integrate phase 1 into the visible native renderer until the payload classification and frame comparison are complete.
