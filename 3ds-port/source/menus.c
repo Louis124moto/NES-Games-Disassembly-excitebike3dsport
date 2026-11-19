@@ -857,7 +857,7 @@ void menusNmiUpload(GameState *state)
     int wroteMask = 0;
     int isPalette = 0;
     NesNmiUploadResult result;
-    uint32_t rasterCycles = 0u;
+    NesMenuRasterSplit rasterSplit;
 
     if (state == 0) return;
     /* vec_C23B_NMI: $2001 is only (re)written when ram_0045 is zero. */
@@ -883,14 +883,21 @@ void menusNmiUpload(GameState *state)
         if (isPalette) state->menu_ppu_palette_loaded = 1u;
         state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
     }
-    /* vec_C23B_NMI: after OAM DMA and sub_C27F, ram_0047 enables D14E. */
+    /* vec_C23B_NMI: after OAM DMA and sub_C27F, ram_0047 enables D0AB/D14E. */
+    state->menu_ppu_split_valid = 0u;
     if (state->menu_cpu_ram[0x0047u] != 0u &&
         nesMenuCpuRasterSplit(state->menu_cpu_ram, state->menu_ppu_nametables,
                               state->menu_ppu_palette, &state->menu_ppu_ctrl,
                               &state->menu_ppu_mask, &state->menu_scroll_x,
                               &state->menu_scroll_y, state->menu_sprite0_hit_last_frame,
-                              &rasterCycles)) {
-        state->menu_ppu_cycle_phase = rasterCycles > 2273u ? rasterCycles - 2273u : 0u;
+                              &rasterSplit)) {
+        state->menu_ppu_cycle_phase =
+            rasterSplit.elapsedCycles > 2273u ? rasterSplit.elapsedCycles - 2273u : 0u;
+        state->menu_ppu_split_valid = 1u;
+        state->menu_ppu_split_scanline = rasterSplit.splitScanline;
+        state->menu_ppu_top_ctrl = rasterSplit.topCtrl;
+        state->menu_ppu_top_scroll_x = rasterSplit.topScrollX;
+        state->menu_ppu_top_scroll_y = rasterSplit.topScrollY;
         memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u],
                sizeof(state->menu_ram0300));
         memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u], sizeof(state->menu_oam));
