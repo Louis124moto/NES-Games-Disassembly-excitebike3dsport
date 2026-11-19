@@ -634,3 +634,25 @@ This proves that the bytes are reused as visual/layout data in more than one sou
 - [ ] Validate whether `$24CF` receives a tile-row update, sprite/layout data, or a mixed command payload in every phase-1 caller.
 - [ ] Extend the host ASM oracle test to compare all phase-1 state/timer side effects, then test the semantic scene patch separately against captured original frames.
 - [ ] Do not integrate phase 1 into the visible native renderer until the payload classification and frame comparison are complete.
+
+
+### Phase-2 source trace refinement — 2026-11-19
+
+The first-pass branch outline above is now expanded from the original instructions at $CBA4-$CCDA and the shared sprite builder at $D1C7-$D23A:
+
+- $CBA4: $0033 == 0 advances through the shared $CB9F exit; $0033 > $03AD returns; equality enters the $0020 ten-frame gate. When the gate expires, $002F and $000D are set to 3 and three records are processed with X = 2, 1, 0.
+- Before equality, $004B != 0 selects sub_CC15. Otherwise held controller bits masked by con_btns_ABSS select sub_CC6B when A/B/Select/Start are held; with none held, sub_CC15 is selected. The sub_CC6B route calls sub_C3AF; if $0041 is zero after that call, control jumps back to loc_C3AF.
+- sub_CC15: when $0033 == $03AD - 16 and $0020 == 0, it selects state $0045 = $0D, or $0045 = $004B + $0B when $0052 == 1. Otherwise it appends the fixed $C134 source descriptor to the legacy PPU upload buffer. If $003F & $10 is clear, sub_DFA2 derives two source parameters from $0053 and writes them into descriptor offsets $0305-$0307; if both are zero it returns without the second write.
+- After sub_CC15, loc_CC7D uses $0056. If nonzero, it bypasses the $002F branch and uses Y = $BB. If zero and $002F != 0, it sets source object fields $0380=$038C=$1F, $0378=$AF, $037C=1, $0384=0, and uses Y = $BD. If $002F == 0, it calls sub_DD6F, compares the result with $03F1, and may clamp $0055 and restart $002F at 10. It then clamps X to 0..3 from $0053-1, sets $000B=2, and calls sub_CCCA.
+- sub_CCCA selects $0000 from $C0DA[X], sets $0003=$21, selects OAM offset $0004 from $C0E8[X], and calls $D1C7. For the three-record loop, X = 2,1,0 yields source parameter tuples (Y=$80, tile-base=$B9, attribute=$41, OAM offset=$14), (Y=$70, tile-base=$B9, attribute=$01, OAM offset=$0C), and (Y=$78, tile-base=$B7, attribute=$01, OAM offset=$04) respectively. The values come from $C0DA/$C0DE/$C0E2/$C0E5/$C0E8; they describe source sprite-layout inputs, not a native PPU or OAM format.
+- $D1C7 expands those parameters into source OAM entries. This algorithm is not suitable for the native runtime. The native implementation should eventually create equivalent semantic sprite instances using extracted graphics and native sprite/quad rendering.
+
+What this trace does not yet prove: the user-visible identity/meaning of every sprite group, the precise $DD6F dynamic value semantics, all caller-state combinations, and the full visual result across frames. Therefore phase 2 is more precisely traced, but it is not translated, tested, integrated, or accepted. No phase-2 native code is added in this batch.
+
+### Updated phase-2 gate
+
+- [ ] Trace sub_DD6F and its inputs/outputs, plus the callers that set $0053, $03F1, $004B, $0052, and $003F for this transition.
+- [ ] Identify the source graphics represented by tile bases $B7/$B9 and confirm sprite group positions/attributes against the original menu capture.
+- [ ] Define semantic transition events/sprite instances; do not port $D1C7 as an OAM builder.
+- [ ] Implement the phase-2 timing and branch decisions in native C, with host ASM-oracle differential coverage for every branch.
+- [ ] Add native renderer integration and fixed-frame visual comparisons before marking phase 2 complete.
