@@ -165,6 +165,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_movement.c -o /tmp/test_bike_movement
           /tmp/test_bike_movement /tmp/prg.bin
 
+      - name: Differentially test native speed control for all four bike slots
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_object_speed.c -o /tmp/test_bike_object_speed
+          /tmp/test_bike_object_speed /tmp/prg.bin
+
       - name: Differentially test native menu selection against original ASM
         run: |
           cd 3ds-port
