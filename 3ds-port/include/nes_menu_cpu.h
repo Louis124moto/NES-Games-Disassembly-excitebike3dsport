@@ -6,6 +6,7 @@ int nesMenuCpuAvailable(void);
 int nesMenuCpuSetupCommand(uint16_t routineAddress, uint8_t asmState,
                            uint8_t course, uint8_t *ram0045,
                            uint8_t ram004D_EF[0xA3]);
+/* Audited RAM/buffer-only routines: C465, C5A3, C562 and C5C2. */
 int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800]);
 int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                          uint8_t palette[32], uint8_t *ppuCtrl,
