@@ -902,7 +902,8 @@ enum {
     TAPE_WAIT_ERROR_19,  /* con_0045_19 posted, NMI back on, waiting for the acknowledgement */
     TAPE_WAIT_HEADER,    /* con_0045_1A posted (header bytes shown), waiting for the acknowledgement */
     TAPE_WAIT_HEADER_BAD,/* same list, but the header mismatched: restart afterwards */
-    TAPE_READ_BLOCK1     /* sub_C726 + sub_C792: block 1 */
+    TAPE_READ_BLOCK1,    /* sub_C726 + sub_C792: block 1 */
+    TAPE_WAIT_SAVE_ERROR /* 3DS storage failure: show source error list, then return to design menu */
 };
 
 int menusTapeWaiting(const GameState *state)
@@ -938,11 +939,20 @@ static void menusMainThreadStep(GameState *state)
         state->menu_nmi_enabled = 0u; /* sub_C32F */
         if (state->menu_ram0048 == 1u) {
             /* sub_C6C8: write block 0 ($0060, $40 bytes) then block 1 ($05E0, $100 bytes). */
-            if (s_tapeIoSet && s_tapeIo.save != 0) {
-                (void)s_tapeIo.save(s_tapeIo.ctx, state->menu_ram0060, state->menu_ram05E0);
-            }
-            state->menu_ram0048 = 0xFFu;      /* loc_C1ED */
+            const int saved = s_tapeIoSet && s_tapeIo.save != 0
+                ? s_tapeIo.save(s_tapeIo.ctx, state->menu_ram0060, state->menu_ram05E0)
+                : 0;
+            state->menu_ram0048 = 0xFFu;      /* loc_C1ED: release the state-12 handshake */
             state->menu_nmi_enabled = 1u;     /* sub_C339 */
+            if (!saved) {
+                /*
+                 * The NES recorder has no host filesystem error result. On 3DS,
+                 * never report a failed write as success: display source list $19,
+                 * then let the ordinary state-12 completion return to state 8.
+                 */
+                state->menu_ram0045 = 0x19u;
+                state->menu_tape_phase = TAPE_WAIT_SAVE_ERROR;
+            }
         } else {
             state->menu_tape_phase = TAPE_READ_BLOCK0; /* sub_C739 */
         }
@@ -967,6 +977,10 @@ static void menusMainThreadStep(GameState *state)
         state->menu_ram0045 = 0x1Au;
         state->menu_nmi_enabled = 1u; /* sub_C339 */
         state->menu_tape_phase = mismatches != 0u ? TAPE_WAIT_HEADER_BAD : TAPE_WAIT_HEADER;
+        return;
+    case TAPE_WAIT_SAVE_ERROR:
+        if (state->menu_ram0045 != 0u) return;
+        state->menu_tape_phase = TAPE_IDLE;
         return;
     case TAPE_WAIT_ERROR_19:
     case TAPE_WAIT_HEADER_BAD:
