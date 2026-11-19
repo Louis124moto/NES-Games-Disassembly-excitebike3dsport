@@ -116,8 +116,9 @@ int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
         assets->chr_pixels == NULL || assets->chr_tile_count == 0u) return 0;
     scene = sceneForState(assets, menu->source_state);
     if (scene == NULL) return 0;
-    paletteSet = menu->source_state == 9u && menu->selected_course < 5u
-        ? (unsigned)menu->selected_course : 6u;
+    /* C551 uses palette 12 for state 9 (the >= $08 branch); other
+     * existing front-end/tape screens retain the established preset 18. */
+    paletteSet = menu->source_state == 9u ? 0u : 6u;
     drawBackground(framebuffer, assets, scene, paletteSet);
     drawCursor(framebuffer, assets, menu, paletteSet);
     return 1;
