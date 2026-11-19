@@ -889,7 +889,7 @@ Deliberate deviations from the original (not exact, stated plainly):
 Still open (Stage 2 is NOT complete):
 - [x] State handlers 4/7 (ofs_000_C465) execute through the static 6502 recompiler with persistent CPU RAM, preserving sub_C92C -> sub_C935 -> sub_CAFA.
 - [x] State 9 now executes ofs_000_C97C_09 per frame through the recompiler, including the original sub_EB17 input/object logic and B-button state-8 return; held/pressed controller bytes, OAM, editor pages, dynamic PPU buffer and scroll/PPU writes are synchronized.
-- [ ] Setup lists 2/3 (race/results) remain unported; states 2/3/5/6/9/$0A/$0B that enter the race engine remain Stage 3 work.
+- [ ] Setup lists 2/3 (race/results) remain unported and belong to the Stage 3 race/result flow. State 9 is the course editor, now handled by its own C97C frame path.
 - [ ] Sound: ram_00FB / $4015 / $4011 requests are recorded in state but nothing is played.
 - [x] The native renderer composites both 1 KiB nametable pages with the tracked horizontal/vertical scroll registers and PPUCTRL nametable selection; the editor frame now writes those registers back. This covers the supported mirrored NROM layout, not a cycle-accurate raster split.
 - [ ] Timing is per 3DS frame (60 Hz); the NES NMI is 60.0988 Hz and there is no mid-frame PPU behaviour.
