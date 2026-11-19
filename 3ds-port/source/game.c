@@ -6,6 +6,7 @@
 #include "input.h"
 #include "menus.h"
 #include "renderer.h"
+#include "nes_menu_cpu.h"
 
 /*
  * Runtime routing:
@@ -35,6 +36,7 @@ void gameInit(const char *executablePath)
     gameStateReset(&s_menuState);
     rendererInit();
     assetExtractorInit(executablePath);
+    (void)nesMenuCpuInit(executablePath); /* Source-recompiled sub_C7DE when rom.nes is present. */
 }
 
 void gameUpdate(void)
