@@ -335,6 +335,54 @@ int main(int argc, char **argv)
         }
     }
 
+
+    /* Shared transition dispatcher phase 3: ofs_CC6B_03. */
+    {
+        unsigned state_value, flag, setup, phase;
+        for (state_value = 0; state_value < 256u; ++state_value) {
+            for (flag = 0; flag < 2u; ++flag) {
+                for (setup = 0; setup < 4u; ++setup) {
+                    for (phase = 0; phase < 4u; ++phase) {
+                        NativeMenuState native_menu;
+                        int rc;
+                        memset(&native_menu, 0, sizeof(native_menu));
+                        native_menu.source_state = (uint8_t)state_value;
+                        native_menu.transition_flag_004B = (uint8_t)flag;
+                        native_menu.setup_command = (uint8_t)(0xFCu + setup);
+                        native_menu.transition_phase = (uint8_t)(0xFCu + phase);
+
+                        memset(reference.ram, 0, sizeof(reference.ram));
+                        reference.ram[0x0041u] = native_menu.source_state;
+                        reference.ram[0x004Bu] = native_menu.transition_flag_004B;
+                        reference.ram[0x0040u] = native_menu.setup_command;
+                        reference.ram[0x0044u] = native_menu.transition_phase;
+                        prepare_cpu(&reference);
+                        rc = cpu6502_call(&reference, 0xCC6Bu, 64u);
+                        if (rc != 0) {
+                            printf("FAIL: original CC6B returned %d state=%02X flag=%u\n",
+                                   rc, state_value, flag);
+                            return 1;
+                        }
+
+                        nativeMenuTransitionPhase3(&native_menu);
+                        if (native_menu.source_state != reference.ram[0x0041u] ||
+                            native_menu.setup_command != reference.ram[0x0040u] ||
+                            native_menu.transition_phase != reference.ram[0x0044u]) {
+                            printf("FAIL: CC6B state=%02X flag=%u native=%02X/%02X/%02X ASM=%02X/%02X/%02X\n",
+                                   state_value, flag,
+                                   native_menu.source_state, native_menu.setup_command,
+                                   native_menu.transition_phase,
+                                   reference.ram[0x0041u], reference.ram[0x0040u],
+                                   reference.ram[0x0044u]);
+                            return 1;
+                        }
+                        ++vectors;
+                    }
+                }
+            }
+        }
+    }
+
     printf("PASS: %lu native menu selection, state, timer and transition vectors match original ASM.\n", vectors);
     return 0;
 }
