@@ -149,7 +149,7 @@ int main(int argc, char **argv)
             if (native_state.x_low[slot] != reference.ram[0x0080u + slot] ||
                 native_state.x_high[slot] != reference.ram[0x0084u + slot] ||
                 native_state.previous_x[slot] != reference.ram[0x0390u + slot]) {
-                printf("FAIL: sub_DA7A vector=%u slot=%u native=%02X:%02X prev=%02X ASM=%02X:%02X prev=%02X\n",
+                printf("FAIL: sub_DA7A vector=%u slot=%u delta0=%02X asm60=%02X active=%u native=%02X:%02X prev=%02X ASM=%02X:%02X prev=%02X\n",
                        i, slot, native_state.movement_delta[0], reference.ram[0x0060u], native_state.object_active[slot],
                        native_state.x_high[slot], native_state.x_low[slot], native_state.previous_x[slot], reference.ram[0x0084u + slot],
                        reference.ram[0x0080u + slot], reference.ram[0x0390u + slot]);
