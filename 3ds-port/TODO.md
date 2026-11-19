@@ -78,7 +78,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Input | `inputMapNesButtons` maps libctru buttons to semantic/original input bits; all 256 combinations tested. | Full game action handling/integration. |
 | Menu logic | Owner-accepted development baseline: native title/selector/design state and direct-framebuffer presentation are integrated in the app loop. | Optional editor/tape save-load screens are deferred; race-entry transition and visual/hardware acceptance remain open. |
 | Bike speed/physics | Native four-slot speed-control prefix (sub_CD59) and active-bike dispatch (sub_CD1F), plus acceleration/deceleration/terrain gate and temperature/overheat slices. New all-slot tests compare 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame vectors against the ASM oracle. | Remaining sub_CD59 steering/posture side effects, heat state integration, jump/landing, crash/recovery, opponents and complete frame ordering. |
-| Movement | Native fixed-point movement deltas, player scroll and opponent-relative position slices. | Full object update, collision, track event and race-frame integration. |
+| Movement | Native `DA58/DC1A/DCF2/DCDE` per-bike chain and `DA6A/DA7A/DBFE` camera pass; 50,000 full `DA26` frames match original ASM. | Integration into the actual app race loop, remaining object/frame handlers, track events and collision. |
 | Track | Module/interface scaffolding. | Verified course geometry, ramps, obstacles, scrolling and native rendering. |
 | Opponents | Some movement primitives only. | Full initialization, AI/state decisions, collision and race behavior. |
 | Collision | No faithful complete implementation. | Trace and implement all original collision paths. |
@@ -90,10 +90,10 @@ A function, passing test, successful build or screenshot alone does not mean the
 
 - Native player speed-control/acceleration/terrain/temperature slices: 1,224,704 ASM reference vectors recorded in the current tracker. The new four-slot speed-control test adds 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame-dispatch vectors.
 - Native movement slices: 574,288 ASM reference vectors recorded in the current tracker.
-- Combined recorded slice count: **1,798,992 vectors**. This is not a complete physics or race validation.
-- Verified code revision: `f214e5bbc96473896ca3abbbbf9e8cb6c8cc05f8`.
-- Host differential CI: [44585477913](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585477913).
-- New 3DS build CI: [44585478080](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585478080).
+- Previous recorded slice count: **1,798,992 vectors**. The new movement milestone adds 50,000 `DC1A`, 50,000 `DCF2` and 50,000 complete `DA26` frame comparisons; these are subsystem tests, not full race validation.
+- Verified movement revision: `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
+- Host differential CI: [44615749414](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749414).
+- New 3DS build CI: [44615749343](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749343).
 - Latest documentation commit before this roadmap rewrite: `639554501e839b8758776bbd01b691f58eb9cc99`.
 
 These CI results validate only the code/tests included in that revision. They do not validate the current HEAD after later changes, nor prove a playable game.
