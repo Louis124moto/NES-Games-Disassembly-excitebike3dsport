@@ -40,6 +40,8 @@ int main(void)
         return fail("C5C2 did not initialize the editor input guard", frame, &s);
     if (s.menu_cpu_ram[0x00B7u] != 1u || s.menu_cpu_ram[0x00BEu] != 0u)
         return fail("C5C2 object state differs from the source setup", frame, &s);
+    if (s.menu_ram05E0[0] != 2u)
+        return fail("C5C2 course page was not copied into GameState", frame, &s);
 
     /* One original C97C frame must return through the emulated sprite-hit wait. */
     revision = s.menu_ppu_revision;
