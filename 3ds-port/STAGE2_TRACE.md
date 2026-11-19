@@ -680,3 +680,15 @@ The native C menu now translates the first complete setup lists for the three fr
 - The host test compares the semantic fields and cursor sprite bytes against direct ASM calls. The menu state/timer/transition differential suite reports 76,416 matching vectors; the setup command test passes. The exact code commit cb10fee3a7397021f7bb1a5901c6db69acd7f515 has a successful host verification workflow and 3DS build.
 
 These setup functions are still isolated: the application loop does not yet run the native menu, and there is no native scene renderer consuming the source asset keys. The next rendering work must load the existing exported EBPX/snapshot files and draw native tiles/sprites directly; the old PPU preview/compositor is not the final game renderer.
+
+
+## Native front-end runtime and scene rendering — 2026-11-19
+
+The initial title/selector/design path is no longer just an isolated state helper:
+
+- `game.c` initializes `NativeMenuState`, ticks its timers, dispatches input, executes one source setup command per frame, and renders the native menu scene. The optional extractor is opened with X and is not initialized on normal startup.
+- `native_menu_assets.c` reads only the exported `chr_pixels.ebp`, four source snapshots, and palette-18 files. It validates the EBPX header, exact file lengths, tile count, snapshot ordering and palette files. It does not open a ROM.
+- `native_menu_renderer.c` merges the source setup-list snapshots into three native tilemap assets, selects palette groups from the source attribute bytes, draws decoded CHR pixels directly to the 3DS top framebuffer, and draws the menu cursor as a native sprite instance. It does not call the PPU command interpreter, PPU nametable compositor or OAM builder.
+- Host test `test_native_menu_assets.c` creates synthetic exported files and verifies EBPX loading, ordered scene merge and palette loading without a ROM. The host verification workflow passes on commit `9504c4b5afd940247d1459e736c3ea235a301876`; the matching 3DS build also passes.
+
+This is a real native renderer path for the three source setup scenes, but it is not yet visually accepted. The exported static snapshots may not include every dynamic update. Remaining work: compare captures against the original, translate dynamic transition updates, finish the editor and tape/save/load flows, and verify on physical New 3DS. Unsupported states clear the native scene instead of displaying invented artwork.
