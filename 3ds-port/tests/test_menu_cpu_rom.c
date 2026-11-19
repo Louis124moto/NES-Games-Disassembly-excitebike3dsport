@@ -186,6 +186,6 @@ int main(void)
     if (memcmp(s.menu_ram06E0, s.menu_ram05E0, sizeof(s.menu_ram06E0)) != 0)
         return fail("EBA8 return did not commit the 256-byte editor page", frame + 2u, &s);
 
-    puts("PASS: original ROM list-3 setup/CB2C phase, list-5 setup, C97C editor frame, and guarded EB17 B-return.");
+    puts("PASS: original ROM D0AB/D14E raster split, list-3/CB2C, list-5/editor setup, C97C frame, and guarded EB17 B-return.");
     return 0;
 }
