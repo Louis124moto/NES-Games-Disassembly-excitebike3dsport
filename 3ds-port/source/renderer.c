@@ -63,6 +63,7 @@ static int s_gameStarted;
 static int s_menuActive;
 /* Static storage avoids putting a 184 KiB NES RGB frame on the 3DS stack. */
 static uint8_t s_ppuRgb[NES_PPU_RGB_BYTES];
+static uint8_t s_splitBgOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
 static uint8_t s_sprite0HitFound;
 static uint32_t s_sprite0HitCycle = UINT32_MAX;
 static uint8_t s_sourcePpuRgb[NES_PPU_RGB_BYTES];
@@ -228,8 +229,8 @@ static int rendererDrawPpuBackground(const GameState *state)
 {
     u16 width = 0u, height = 0u;
     uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
-    const uint8_t *pixels;
-    size_t tileCount = 0u;
+    const uint8_t *chrAll;
+    size_t chrAllCount = 0u;
     unsigned int x, y;
 
     s_sprite0HitFound = 0u;
@@ -245,32 +246,77 @@ static int rendererDrawPpuBackground(const GameState *state)
         s_bgRenderReason = 2;
         return 0;
     }
-    pixels = assetExtractorGetPixels(&tileCount);
-    s_bgChrTileCount = tileCount;
-    const uint8_t *const chrAll = pixels;
-    const size_t chrAllCount = tileCount;
-    /* PPUCTRL bit 4 selects the BG pattern table: $10 -> tiles 256..511 of the CHR. */
-    if (pixels != NULL && (state->menu_ppu_ctrl & 0x10u) != 0u) {
-        if (tileCount <= 256u) {
-            s_bgRenderReason = 3;
-            return 0;
-        }
-        pixels += 256u * 64u;
-        tileCount -= 256u;
-    }
-    if (pixels == NULL || tileCount == 0u) {
+    chrAll = assetExtractorGetPixels(&chrAllCount);
+    s_bgChrTileCount = chrAllCount;
+    if (chrAll == NULL || chrAllCount == 0u) {
         s_bgRenderReason = 4;
         return 0;
     }
-    s_bgRenderResult = nesPpuRenderMirroredNametablesOpaque(
-            pixels, tileCount, state->menu_ppu_nametables,
-            state->menu_ppu_palette, state->menu_ppu_ctrl,
-            state->menu_scroll_x, state->menu_scroll_y,
-            s_ppuRgb, sizeof(s_ppuRgb), s_bgOpaque, sizeof(s_bgOpaque));
-    if (s_bgRenderResult != NES_PPU_RENDER_OK) {
-        s_bgRenderReason = 5;
-        return 0;
+
+    if (state->menu_ppu_split_valid) {
+        const uint8_t *topPixels = chrAll;
+        const uint8_t *bottomPixels = chrAll;
+        size_t topTileCount = chrAllCount;
+        size_t bottomTileCount = chrAllCount;
+        unsigned int splitY = state->menu_ppu_split_scanline;
+        unsigned int splitX = state->menu_ppu_split_dot > 0u
+            ? (unsigned int)state->menu_ppu_split_dot - 1u : 0u;
+
+        /* Each half may select its own BG pattern table and nametable base. */
+        if ((state->menu_ppu_top_ctrl & 0x10u) != 0u) {
+            if (topTileCount <= 256u) { s_bgRenderReason = 3; return 0; }
+            topPixels += 256u * 64u;
+            topTileCount -= 256u;
+        }
+        if ((state->menu_ppu_ctrl & 0x10u) != 0u) {
+            if (bottomTileCount <= 256u) { s_bgRenderReason = 3; return 0; }
+            bottomPixels += 256u * 64u;
+            bottomTileCount -= 256u;
+        }
+        s_bgRenderResult = nesPpuRenderMirroredNametablesOpaque(
+                topPixels, topTileCount, state->menu_ppu_nametables,
+                state->menu_ppu_palette, state->menu_ppu_top_ctrl,
+                state->menu_ppu_top_scroll_x, state->menu_ppu_top_scroll_y,
+                s_ppuRgb, sizeof(s_ppuRgb), s_bgOpaque, sizeof(s_bgOpaque));
+        if (s_bgRenderResult != NES_PPU_RENDER_OK) { s_bgRenderReason = 5; return 0; }
+        s_bgRenderResult = nesPpuRenderMirroredNametablesOpaque(
+                bottomPixels, bottomTileCount, state->menu_ppu_nametables,
+                state->menu_ppu_palette, state->menu_ppu_ctrl,
+                state->menu_scroll_x, state->menu_scroll_y,
+                s_sourcePpuRgb, sizeof(s_sourcePpuRgb),
+                s_splitBgOpaque, sizeof(s_splitBgOpaque));
+        if (s_bgRenderResult != NES_PPU_RENDER_OK) { s_bgRenderReason = 5; return 0; }
+
+        if (splitY >= NES_PPU_HEIGHT) splitY = NES_PPU_HEIGHT - 1u;
+        if (splitX > NES_PPU_WIDTH) splitX = NES_PPU_WIDTH;
+        for (y = splitY + 1u; y < NES_PPU_HEIGHT; ++y) {
+            const size_t offset = (size_t)y * NES_PPU_WIDTH;
+            memcpy(&s_ppuRgb[offset * 3u], &s_sourcePpuRgb[offset * 3u], NES_PPU_WIDTH * 3u);
+            memcpy(&s_bgOpaque[offset], &s_splitBgOpaque[offset], NES_PPU_WIDTH);
+        }
+        {
+            const size_t offset = (size_t)splitY * NES_PPU_WIDTH;
+            const size_t bottomOffset = offset + splitX;
+            const size_t count = NES_PPU_WIDTH - splitX;
+            memcpy(&s_ppuRgb[bottomOffset * 3u], &s_sourcePpuRgb[bottomOffset * 3u], count * 3u);
+            memcpy(&s_bgOpaque[bottomOffset], &s_splitBgOpaque[bottomOffset], count);
+        }
+    } else {
+        const uint8_t *pixels = chrAll;
+        size_t tileCount = chrAllCount;
+        if ((state->menu_ppu_ctrl & 0x10u) != 0u) {
+            if (tileCount <= 256u) { s_bgRenderReason = 3; return 0; }
+            pixels += 256u * 64u;
+            tileCount -= 256u;
+        }
+        s_bgRenderResult = nesPpuRenderMirroredNametablesOpaque(
+                pixels, tileCount, state->menu_ppu_nametables,
+                state->menu_ppu_palette, state->menu_ppu_ctrl,
+                state->menu_scroll_x, state->menu_scroll_y,
+                s_ppuRgb, sizeof(s_ppuRgb), s_bgOpaque, sizeof(s_bgOpaque));
+        if (s_bgRenderResult != NES_PPU_RENDER_OK) { s_bgRenderReason = 5; return 0; }
     }
+
     {
         unsigned long hitCycle = ~0UL;
         if (nesPpuFindSprite0HitCycle(chrAll, chrAllCount, state->menu_oam,
@@ -281,19 +327,13 @@ static int rendererDrawPpuBackground(const GameState *state)
         }
     }
 
-    /* Source OAM sprites (8x8/8x16, flips and priority) over the rendered PPU background. */
+    /* Source OAM sprites (8x8/8x16, flips and priority) over the split-composited PPU background. */
     (void)nesPpuRenderSprites(chrAll, chrAllCount, state->menu_oam,
-                               state->menu_ppu_palette, state->menu_ppu_ctrl,
-                               state->menu_ppu_mask, s_bgOpaque, s_ppuRgb,
-                               sizeof(s_ppuRgb), NULL);
+                              state->menu_ppu_palette, state->menu_ppu_ctrl,
+                              state->menu_ppu_mask, s_bgOpaque, s_ppuRgb,
+                              sizeof(s_ppuRgb), NULL);
 
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
-    /*
-     * Keep the original 4:3 television presentation on the New 3DS 5:3 LCD.
-     * The 256x240 NES raster is expanded horizontally to 320x240 (nearest
-     * neighbour, 5:4) and centered with 40-pixel pillarboxes. Never stretch
-     * the game to the full 400-pixel LCD width.
-     */
     for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
         unsigned int dstX;
         for (dstX = 0u; dstX < 320u; ++dstX) {
