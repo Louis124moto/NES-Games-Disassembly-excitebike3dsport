@@ -224,6 +224,37 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
     bikePhysicsUpdateObjectSpeed(player);
 }
 
+/* Source: sub_CD1F ($CD1F-$CD58), object loop only. The original then
+ * performs the race-start input/timer handshake; that is intentionally not
+ * folded into this deterministic speed subsystem. */
+void bikePhysicsUpdateRaceSpeeds(BikeRaceSpeedState *race)
+{
+    int index;
+    if (race == 0 || race->race_started == 0u || race->frame_phase > 3u) {
+        return;
+    }
+
+    for (index = 3; index >= 0; --index) {
+        BikeObjectSpeedContext *object = &race->bikes[index];
+        if (race->active[index] == 0u) continue;
+
+        object->object_index = (uint8_t)index;
+        object->frame_phase = race->frame_phase;
+        object->race_finished = race->race_finished;
+
+        /* CD29-CD38: inactive-state/collision/heat flags clear the object's
+         * throttle before sub_CD59; state 5 is the special unconditional path. */
+        if (object->movement_state_009C != 5u &&
+            (object->movement_state_009C != 0u ||
+             object->collision_lock_0098 != 0u ||
+             object->overheat_lock_03E0 != 0u)) {
+            object->controller = 0u;
+        }
+
+        bikePhysicsUpdateObjectSpeed(object);
+    }
+}
+
 /* Source: sub_E359 ($E359-$E3F3), tbl_D8F7 ($D8F7-$D8FA),
  * tbl_D8FB ($D8FB-$D8FE). This translates gameplay meter/overheat state;
  * the final 12-sprite OAM loop remains in the native renderer. */
