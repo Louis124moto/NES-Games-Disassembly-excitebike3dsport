@@ -24,6 +24,14 @@ on:
       - "3ds-port/tests/host_stub/3ds.h"
       - "3ds-port/source/native_menu.c"
       - "3ds-port/source/native_menu.h"
+      - "3ds-port/source/native_menu_assets.c"
+      - "3ds-port/source/native_menu_assets.h"
+      - "3ds-port/source/native_menu_renderer.c"
+      - "3ds-port/source/native_menu_renderer.h"
+      - "3ds-port/source/native_menu_assets.c"
+      - "3ds-port/source/native_menu_assets.h"
+      - "3ds-port/source/native_menu_renderer.c"
+      - "3ds-port/source/native_menu_renderer.h"
       - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/game.c"
       - "3ds-port/source/game_state.c"
@@ -169,6 +177,11 @@ jobs:
           cd 3ds-port
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu_state.c -o /tmp/test_native_menu_state
           /tmp/test_native_menu_state /tmp/prg.bin
+
+      - name: Compile native menu asset loader test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/source 3ds-port/source/native_menu_assets.c 3ds-port/tests/test_native_menu_assets.c -o test_native_menu_assets
+      - name: Test native menu asset loader
+        run: ./test_native_menu_assets
 
       - name: Compile native 3DS controller mapping test
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/input.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping
