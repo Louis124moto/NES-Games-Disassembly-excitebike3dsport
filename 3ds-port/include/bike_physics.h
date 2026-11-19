@@ -25,13 +25,14 @@ void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
 
 /*
  * Exact native translation of the sub_CE58/sub_CE5C deceleration step for
- * player object X=0. object_status is ram_00B0_obj; only source-confirmed
- * player values 0 and 2 are accepted until initialization is fully traced.
+ * player object X=0. zero_whole_threshold is the already-resolved
+ * tbl_C0CC[ram_00B0_obj >> 1] value; the caller's object-state mapping is
+ * deliberately kept outside this low-level helper until fully traced.
  */
 void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
                                  uint8_t frame_phase,
                                  uint8_t deceleration_mode,
-                                 uint8_t object_status);
+                                 uint8_t zero_whole_threshold);
 
 /* Full per-frame bike integration is intentionally not exposed until all
  * input, heat, posture, collision and update-order dependencies are traced. */
