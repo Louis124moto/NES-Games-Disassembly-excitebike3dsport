@@ -524,6 +524,24 @@ static int testTapeFileBackend(void)
     fseek(f, 3L, SEEK_SET); fputc(b0[3] ^ 0x01, f); fclose(f);        /* corrupt one bit in block 0 */
     CHECK(io->readBlock(NULL, 0u, r0, 64u) == -1, 146);
     CHECK(io->readBlock(NULL, 1u, r1, 256u) == 1, 147);              /* block 1 is still intact */
+    CHECK(io->readBlock(NULL, 2u, r0, 64u) == -1, 148);
+    CHECK(io->readBlock(NULL, 0u, r0, 63u) == -1, 149);
+
+    /* Truncated files and trailing bytes are framing errors for either block. */
+    f = fopen(path, "wb");
+    CHECK(f != NULL, 150);
+    CHECK(fwrite(b0, 1u, 63u, f) == 63u, 151);
+    CHECK(fclose(f) == 0, 152);
+    CHECK(io->readBlock(NULL, 0u, r0, 64u) == -1, 153);
+    CHECK(io->readBlock(NULL, 1u, r1, 256u) == -1, 154);
+
+    CHECK(io->save(NULL, b0, b1) == 1, 155);
+    f = fopen(path, "ab");
+    CHECK(f != NULL, 156);
+    CHECK(fputc(0xA5, f) != EOF, 157);
+    CHECK(fclose(f) == 0, 158);
+    CHECK(io->readBlock(NULL, 0u, r0, 64u) == -1, 159);
+    CHECK(io->readBlock(NULL, 1u, r1, 256u) == -1, 160);
     remove(path);
     menuTapeFileSetPath(NULL);
     return 0;
