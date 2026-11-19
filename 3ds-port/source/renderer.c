@@ -231,7 +231,7 @@ static int rendererDrawPpuBackground(const GameState *state)
     uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     const uint8_t *chrAll;
     size_t chrAllCount = 0u;
-    unsigned int x, y;
+    unsigned int y;
 
     s_sprite0HitFound = 0u;
     s_sprite0HitCycle = UINT32_MAX;
