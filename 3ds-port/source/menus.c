@@ -433,21 +433,43 @@ static uint8_t menusRunInput(uint8_t buttons, uint8_t count, GameState *state, u
 void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKeys)
 {
     uint8_t nesButtons = 0u;
+    uint8_t nesHeldButtons = 0u;
     uint8_t changed = 0u;
 
     if (state == 0) return;
-    (void)heldKeys; /* The ASM menu consumes ram_btn_press, not ram_btn_hold. */
 
     /*
-     * vec_C23B_NMI calls sub_D310 once per frame when unpaused. Preserve the
-     * $20 divider phase and the $30/$31 timer bytes; other unmodeled timers
-     * are zero in this menu-only trace.
+     * vec_C23B_NMI increments ram_003F, then executes the original D310 timer
+     * routine. The PRG-backed path preserves every timer byte in CPU RAM;
+     * retain the small native projection only when no supported PRG is loaded.
      */
     if (!state->paused) {
-        nesSubD310DecreaseMenuTimers(&state->menu_timer20,
-                                    &state->menu_timer30,
-                                    &state->menu_timer31,
-                                    &state->menu_timer34);
+        if (nesMenuCpuAvailable()) {
+            state->menu_cpu_ram[0x0020u] = state->menu_timer20;
+            state->menu_cpu_ram[0x0030u] = state->menu_timer30;
+            state->menu_cpu_ram[0x0031u] = state->menu_timer31;
+            state->menu_cpu_ram[0x0033u] = state->menu_timer33;
+            state->menu_cpu_ram[0x0034u] = state->menu_timer34;
+            state->menu_cpu_ram[0x003Fu] =
+                (uint8_t)(state->menu_cpu_ram[0x003Fu] + 1u);
+            if (nesMenuCpuRunRamRoutine(0xD310u, state->menu_cpu_ram)) {
+                state->menu_timer20 = state->menu_cpu_ram[0x0020u];
+                state->menu_timer30 = state->menu_cpu_ram[0x0030u];
+                state->menu_timer31 = state->menu_cpu_ram[0x0031u];
+                state->menu_timer33 = state->menu_cpu_ram[0x0033u];
+                state->menu_timer34 = state->menu_cpu_ram[0x0034u];
+            } else {
+                nesSubD310DecreaseMenuTimers(&state->menu_timer20,
+                                            &state->menu_timer30,
+                                            &state->menu_timer31,
+                                            &state->menu_timer34);
+            }
+        } else {
+            nesSubD310DecreaseMenuTimers(&state->menu_timer20,
+                                        &state->menu_timer30,
+                                        &state->menu_timer31,
+                                        &state->menu_timer34);
+        }
     }
 
     /*
@@ -465,6 +487,15 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
      * Use the per-frame press edges supplied by inputUpdate. This prevents
      * a held 3DS key from being treated as a fresh NES press every frame.
      */
+    if (heldKeys & KEY_A)      nesHeldButtons |= 0x80u;
+    if (heldKeys & KEY_B)      nesHeldButtons |= 0x40u;
+    if (heldKeys & KEY_SELECT) nesHeldButtons |= 0x20u;
+    if (heldKeys & KEY_START)  nesHeldButtons |= 0x10u;
+    if (heldKeys & KEY_UP)     nesHeldButtons |= 0x08u;
+    if (heldKeys & KEY_DOWN)   nesHeldButtons |= 0x04u;
+    if (heldKeys & KEY_LEFT)   nesHeldButtons |= 0x02u;
+    if (heldKeys & KEY_RIGHT)  nesHeldButtons |= 0x01u;
+
     if (pressedKeys & KEY_A)      nesButtons |= 0x80u;
     if (pressedKeys & KEY_B)      nesButtons |= 0x40u;
     if (pressedKeys & KEY_SELECT) nesButtons |= 0x20u;
