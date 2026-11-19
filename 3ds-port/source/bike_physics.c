@@ -7,13 +7,14 @@ static const uint8_t kAccelerationIncrement[3] = { 0x18u, 0x3Fu, 0x28u };
 static const uint8_t kPlayerSpeedFractionCap[3] = { 0x20u, 0x40u, 0x7Fu };
 static const uint8_t kPlayerSpeedWholeCap[3] = { 0x03u, 0x03u, 0x01u };
 
-void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
-                                 uint8_t frame_phase,
-                                 uint8_t acceleration_mode)
+static void bikePhysicsAccelerateObject(BikeSpeedState *speed,
+                                        uint8_t frame_phase,
+                                        uint8_t object_index,
+                                        uint8_t acceleration_mode)
 {
     uint16_t sum;
 
-    if (speed == 0 || frame_phase != 0u || acceleration_mode > 2u) {
+    if (speed == 0 || frame_phase != object_index || acceleration_mode > 2u) {
         return;
     }
 
@@ -34,19 +35,27 @@ void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
 }
 
 
+void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
+                                 uint8_t frame_phase,
+                                 uint8_t acceleration_mode)
+{
+    bikePhysicsAccelerateObject(speed, frame_phase, 0u, acceleration_mode);
+}
+
 /* Source: tbl_C0C1 ($C0C1), tbl_C0CC ($C0CC), sub_CE58/sub_CE5C ($CE58-$CE82). */
 static const uint8_t kDecelerationAmount[7] = {
     0x38u, 0x0Cu, 0x00u, 0x3Cu, 0x1Cu, 0xC0u, 0x7Fu
 };
-void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
-                                 uint8_t frame_phase,
-                                 uint8_t deceleration_mode,
-                                 uint8_t zero_whole_threshold)
+static void bikePhysicsDecelerateObject(BikeSpeedState *speed,
+                                        uint8_t frame_phase,
+                                        uint8_t object_index,
+                                        uint8_t deceleration_mode,
+                                        uint8_t zero_whole_threshold)
 {
     uint8_t old_fraction;
     uint8_t amount;
 
-    if (speed == 0 || frame_phase != 0u ||
+    if (speed == 0 || frame_phase != object_index ||
         deceleration_mode >= 7u ||
         (zero_whole_threshold != 0x01u && zero_whole_threshold != 0xB0u)) {
         return;
@@ -72,6 +81,15 @@ void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
     }
 }
 
+
+void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
+                                 uint8_t frame_phase,
+                                 uint8_t deceleration_mode,
+                                 uint8_t zero_whole_threshold)
+{
+    bikePhysicsDecelerateObject(speed, frame_phase, 0u, deceleration_mode,
+                                zero_whole_threshold);
+}
 
 /* Source: sub_CDEE ($CDEE-$CE28), player object X=0. */
 uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
@@ -126,85 +144,85 @@ static int playerSpeedCompareCap(const BikeSpeedState *speed, uint8_t mode)
     return 0;
 }
 
-void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
+void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
 {
     uint8_t deceleration_mode;
     uint8_t acceleration_mode;
     uint8_t zero_whole_threshold;
     uint8_t gate_z;
+    const uint8_t index = object != 0 ? object->object_index : 0xFFu;
 
-    if (player == 0 || player->frame_phase > 3u ||
-        player->object_status_00B0 > 3u) {
+    if (object == 0 || index >= 4u || object->frame_phase > 3u ||
+        object->object_status_00B0 > 3u) {
         return;
     }
 
     zero_whole_threshold =
-        (player->object_status_00B0 & 0x02u) != 0u ? 0xB0u : 0x01u;
+        (object->object_status_00B0 & 0x02u) != 0u ? 0xB0u : 0x01u;
 
-    /* Early CDBA path: locked/colliding or non-running object state. */
-    if (player->object_lock_0374 != 0u ||
-        player->collision_lock_0098 != 0u ||
-        (player->movement_state_009C != 0u &&
-         player->movement_state_009C != 5u)) {
-        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+    if (object->object_lock_0374 != 0u ||
+        object->collision_lock_0098 != 0u ||
+        (object->movement_state_009C != 0u &&
+         object->movement_state_009C != 5u)) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
         return;
     }
 
-    /* X=0 special case in CD70: after finish, use Y=2 and its lower cap. */
-    if (player->race_finished != 0u) {
-        const int cap_order = playerSpeedCompareCap(&player->speed, 2u);
+    /* Only player X=0 takes the track-finished speed-cap branch. */
+    if (index == 0u && object->race_finished != 0u) {
+        const int cap_order = playerSpeedCompareCap(&object->speed, 2u);
         if (cap_order < 0) {
-            bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase, 2u);
+            bikePhysicsAccelerateObject(&object->speed, object->frame_phase,
+                                        index, 2u);
         } else if (cap_order > 0) {
-            bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
-                                        3u, zero_whole_threshold);
+            bikePhysicsDecelerateObject(&object->speed, object->frame_phase,
+                                        index, 3u, zero_whole_threshold);
         }
         return;
     }
 
-    /* B0 != 0 selects the slow/recovery deceleration table path. */
-    if (player->object_status_00B0 != 0u) {
-        const uint8_t direction = (uint8_t)(player->controller & 0x03u);
+    if (object->object_status_00B0 != 0u) {
+        const uint8_t direction = (uint8_t)(object->controller & 0x03u);
         deceleration_mode = direction == 0u ? 4u : (uint8_t)(direction + 1u);
-        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     deceleration_mode, zero_whole_threshold);
         return;
     }
 
-    /* Without either upper controller bit, the player coasts via Y=0. */
-    if ((player->controller & 0xC0u) == 0u) {
-        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+    if ((object->controller & 0xC0u) == 0u) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
         return;
     }
 
-    /* ASL of the masked $C0 bits: bit 7 wins (Y=0), bit 6 alone gives Y=1. */
-    acceleration_mode = (player->controller & 0x80u) != 0u ? 0u : 1u;
-    gate_z = bikePhysicsTerrainGate(&player->terrain);
-
-    /* sub_CD8F: a non-zero gate result blocks throttle only while whole speed != 0. */
-    if (gate_z == 0u && player->speed.whole != 0u) {
-        bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
+    acceleration_mode = (object->controller & 0x80u) != 0u ? 0u : 1u;
+    gate_z = bikePhysicsTerrainGate(&object->terrain);
+    if (gate_z == 0u && object->speed.whole != 0u) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
         return;
     }
 
-    /* CD9A accelerates below the cap, does nothing at the exact cap, and
-     * increments Y then calls CE58 to decelerate when above the cap. */
     {
-        const int cap_order = playerSpeedCompareCap(&player->speed, acceleration_mode);
+        const int cap_order = playerSpeedCompareCap(&object->speed, acceleration_mode);
         if (cap_order < 0) {
-            bikePhysicsAcceleratePlayer(&player->speed, player->frame_phase,
-                                        acceleration_mode);
+            bikePhysicsAccelerateObject(&object->speed, object->frame_phase,
+                                        index, acceleration_mode);
         } else if (cap_order > 0) {
-            bikePhysicsDeceleratePlayer(&player->speed, player->frame_phase,
-                                        (uint8_t)(acceleration_mode + 1u),
+            bikePhysicsDecelerateObject(&object->speed, object->frame_phase,
+                                        index, (uint8_t)(acceleration_mode + 1u),
                                         zero_whole_threshold);
         }
     }
 }
 
+void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
+{
+    if (player == 0) return;
+    player->object_index = 0u;
+    bikePhysicsUpdateObjectSpeed(player);
+}
 
 /* Source: sub_E359 ($E359-$E3F3), tbl_D8F7 ($D8F7-$D8FA),
  * tbl_D8FB ($D8FB-$D8FE). This translates gameplay meter/overheat state;
