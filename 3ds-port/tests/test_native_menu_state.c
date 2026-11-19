@@ -147,6 +147,62 @@ int main(int argc, char **argv)
         ++vectors;
     }
 
-    printf("PASS: %lu native title/selector/design state vectors match original ASM.\n", vectors);
+    /* Differentially test the 11-frame timer bank sub_D310. */
+    {
+        uint32_t random_state = 0xD310C0DEu;
+        unsigned frame_timer, sample;
+        for (frame_timer = 0; frame_timer < 256u; ++frame_timer) {
+            for (sample = 0; sample < 32u; ++sample) {
+                NativeMenuState native_menu;
+                unsigned timer_index;
+                int rc;
+                memset(&native_menu, 0, sizeof(native_menu));
+                native_menu.frame_timer = (uint8_t)frame_timer;
+                for (timer_index = 0; timer_index < 29u; ++timer_index) {
+                    random_state = random_state * 1664525u + 1013904223u;
+                    native_menu.timer_values[timer_index] = (uint8_t)(random_state >> 24);
+                }
+                native_menu.input.start_timer = native_menu.timer_values[15];
+                native_menu.input.input_timer = native_menu.timer_values[16];
+
+                memset(reference.ram, 0, sizeof(reference.ram));
+                reference.ram[0x0020u] = (uint8_t)frame_timer;
+                for (timer_index = 0; timer_index < 29u; ++timer_index) {
+                    reference.ram[0x0021u + timer_index] = native_menu.timer_values[timer_index];
+                }
+                prepare_cpu(&reference);
+                rc = cpu6502_call(&reference, 0xD310u, 128u);
+                if (rc != 0) {
+                    printf("FAIL: original sub_D310 returned %d at frame timer=%u sample=%u\n",
+                           rc, frame_timer, sample);
+                    return 1;
+                }
+
+                nativeMenuTickTimers(&native_menu);
+                if (native_menu.frame_timer != reference.ram[0x0020u] ||
+                    native_menu.input.start_timer != reference.ram[0x0030u] ||
+                    native_menu.input.input_timer != reference.ram[0x0031u]) {
+                    printf("FAIL: sub_D310 divider=%u sample=%u native=%02X/%02X/%02X ASM=%02X/%02X/%02X\n",
+                           frame_timer, sample, native_menu.frame_timer,
+                           native_menu.input.start_timer, native_menu.input.input_timer,
+                           reference.ram[0x0020u], reference.ram[0x0030u],
+                           reference.ram[0x0031u]);
+                    return 1;
+                }
+                for (timer_index = 0; timer_index < 29u; ++timer_index) {
+                    if (native_menu.timer_values[timer_index] != reference.ram[0x0021u + timer_index]) {
+                        printf("FAIL: sub_D310 divider=%u sample=%u timer=%02X native=%02X ASM=%02X\n",
+                               frame_timer, sample, 0x21u + timer_index,
+                               native_menu.timer_values[timer_index],
+                               reference.ram[0x0021u + timer_index]);
+                        return 1;
+                    }
+                }
+                ++vectors;
+            }
+        }
+    }
+
+    printf("PASS: %lu native title/selector/design and timer vectors match original ASM.\n", vectors);
     return 0;
 }
