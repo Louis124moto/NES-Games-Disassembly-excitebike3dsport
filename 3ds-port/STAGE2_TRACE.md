@@ -508,3 +508,13 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] Fixed the host menu workflow to link nes_menu_cpu.c, nes_call.c, and nes_gen_code.c; previously the menu test compile omitted the implementation of the newly called adapter functions. The workflow now triggers when the adapter source/header changes.
 - [ ] A dedicated ROM-backed frame-vector test for both timer branches is still needed. Until that exists, this is an integration step, not a claim of full state-4/7 correctness.
 - [ ] The full state-09 editor loop, B-button return, PPU raster/vblank timing, menu artwork, sound, and hardware comparison remain open.
+
+
+### 2026-11-19 — original state-09 editor frame dispatch
+
+- [x] Added `nesMenuCpuEditorFrame`, executing the original recompiled `ofs_000_C97C_09` entry once per host frame with persistent 2 KiB CPU RAM.
+- [x] Passed NES-order held and pressed controller bytes to `$0014/$0015`; retained the original `sub_EB17` object/input logic, including its guarded B-button return to state `$08`.
+- [x] Synchronized editor OAM, `$0300-$031F` dynamic PPU buffer, course/object working pages `$05A0/$05C3/$05E0/$06E0`, scroll, PPUCTRL/PPUMASK, nametable and palette writes back into GameState.
+- [x] Added a regression test proving that, without a supported `rom.nes`, state 9 holds instead of inventing a return or modifying the PPU model.
+- [ ] `sub_D19B` waits for PPUSTATUS bit `$40` (sprite-0 hit). The current host adapter acknowledges this once per call to let the original logic advance. This is explicitly a frame-level approximation, not a PPU pipeline or raster simulation; exact editor visuals and timing are not yet claimed.
+- [ ] Add ROM-backed vectors for entry/setup/frame/B-return, validate PPU writes against a NES emulator trace, and test on physical New 3DS.
