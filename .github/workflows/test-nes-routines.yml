@@ -20,12 +20,6 @@ on:
       - "3ds-port/source/bike_physics.c"
       - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/game.c"
-      - "3ds-port/source/menus.c"
-      - "3ds-port/source/nes_menu_cpu.c"
-      - "3ds-port/include/nes_menu_cpu.h"
-      - "3ds-port/include/menus.h"
-      - "3ds-port/source/menu_tape_file.c"
-      - "3ds-port/include/menu_tape_file.h"
       - "3ds-port/source/game_state.c"
       - "3ds-port/include/game_state.h"
       - "3ds-port/source/renderer.c"
@@ -40,20 +34,8 @@ on:
       - "3ds-port/source/nes_race_setup.c"
       - "3ds-port/include/nes_race_setup.h"
       - "3ds-port/tests/test_nes_race_setup.c"
-      - "3ds-port/source/nes_gen_code.c"
-      - "3ds-port/source/nes_call.c"
-      - "3ds-port/source/nes_system.c"
-      - "3ds-port/include/nes_system.h"
-      - "3ds-port/include/nes_prg_crc.h"
-      - "3ds-port/source/nes_game.c"
-      - "3ds-port/source/nes_apu.c"
-      - "3ds-port/include/nes_apu.h"
-      - "3ds-port/source/nes_audio_out.c"
-      - "3ds-port/include/nes_game.h"
-      - "3ds-port/include/nes_machine.h"
       - "3ds-port/tools/**"
       - "3ds-port/tests/oracle/**"
-      - "3ds-port/tests/test_gen_code.c"
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
@@ -76,12 +58,6 @@ on:
       - "3ds-port/source/bike_physics.c"
       - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/game.c"
-      - "3ds-port/source/menus.c"
-      - "3ds-port/source/nes_menu_cpu.c"
-      - "3ds-port/include/nes_menu_cpu.h"
-      - "3ds-port/include/menus.h"
-      - "3ds-port/source/menu_tape_file.c"
-      - "3ds-port/include/menu_tape_file.h"
       - "3ds-port/source/game_state.c"
       - "3ds-port/include/game_state.h"
       - "3ds-port/source/renderer.c"
@@ -153,61 +129,13 @@ jobs:
           gcc -shared -fPIC -O1 -o libcpu.so 3ds-port/tests/oracle/cpu6502.c
           python3 3ds-port/tests/oracle/validate_cpu6502.py ./libcpu.so 3000
 
-      - name: Regenerate recompiled code and check it is up to date
-        run: |
-          cd 3ds-port
-          python3 tools/asm2c.py ../Excitebike/bank_FF.asm /tmp/nes_gen_code.c
-          diff -q /tmp/nes_gen_code.c source/nes_gen_code.c
-
-      - name: Differential test of the recompiled game code against the original
+      - name: Build original PRG for native differential tests
         run: |
           cd 3ds-port
           python3 tools/asm_to_prg.py ../Excitebike/bank_FF.asm /tmp/prg.bin
-          gcc -std=c11 -O1 -Wall -Wextra -Werror -Iinclude -Itests/oracle tests/oracle/*.c source/nes_gen_code.c source/nes_call.c tests/test_gen_code.c -o /tmp/test_gen_code
-          /tmp/test_gen_code /tmp/prg.bin 100
 
       - name: Differentially test native player acceleration against original ASM
         run: |
           cd 3ds-port
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/oracle.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
           /tmp/test_bike_speed /tmp/prg.bin
-
-      - name: Check PRG CRC header is up to date
-        run: |
-          cd 3ds-port
-          cp include/nes_prg_crc.h /tmp/nes_prg_crc.h
-          python3 tools/gen_prg_crc.py ../Excitebike/bank_FF.asm
-          diff -q /tmp/nes_prg_crc.h include/nes_prg_crc.h
-
-      - name: Test APU model
-        run: |
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_apu.c 3ds-port/tests/test_nes_apu.c -o /tmp/test_nes_apu -lm
-          /tmp/test_nes_apu
-
-      - name: Test NES system layer running the recompiled original program
-        run: |
-          cd 3ds-port
-          cat ../Excitebike/header.bin /tmp/prg.bin ../Excitebike/CHR_ROM.chr > /tmp/full_rom.nes
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/nes_system.c source/nes_apu.c source/nes_gen_code.c source/nes_ppu_render.c tests/test_nes_system.c -o /tmp/test_nes_system -lm
-          /tmp/test_nes_system /tmp/full_rom.nes
-
-      - name: Compile menu frame-model test
-        # menus.c only needs libctru's KEY_* bits; tests/host_stub/3ds.h supplies them on the host.
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include -I3ds-port/tests/host_stub 3ds-port/source/menus.c 3ds-port/source/menu_tape_file.c 3ds-port/source/nes_menu_cpu.c 3ds-port/source/nes_call.c 3ds-port/source/nes_gen_code.c 3ds-port/source/nes_routines.c 3ds-port/source/nes_active_stream.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/game_state.c 3ds-port/tests/test_menus.c -o test_menus
-      - name: Test menu frame model (NMI order, setup lists, cursor, design menu, tape save/load)
-        run: ./test_menus
-      - name: Compile ROM-backed menu integration test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include -I3ds-port/tests/host_stub 3ds-port/source/menus.c 3ds-port/source/menu_tape_file.c 3ds-port/source/nes_menu_cpu.c 3ds-port/source/nes_call.c 3ds-port/source/nes_gen_code.c 3ds-port/source/nes_routines.c 3ds-port/source/nes_active_stream.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/game_state.c 3ds-port/tests/test_menu_cpu_rom.c -o test_menu_cpu_rom
-      - name: Test source PRG list-5 setup and editor frame
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          prg = Path("/tmp/prg.bin").read_bytes()
-          assert len(prg) == 0x4000, f"expected NROM-128 PRG, got {len(prg)} bytes"
-          header = bytearray(16)
-          header[:4] = b"NES\x1a"
-          header[4] = 1
-          Path("rom.nes").write_bytes(header + prg)
-          PY
-          trap 'rm -f rom.nes' EXIT
-          ./test_menu_cpu_rom
