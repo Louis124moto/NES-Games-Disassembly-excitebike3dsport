@@ -498,3 +498,13 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 **Regression:** `tests/test_menus.c::testEditorSetupPrelude` still checks the no-ROM fallback and verifies that the sequencer stays at `$C820` rather than advancing without a PRG. It does not yet exercise the full PRG-backed adapter.
 
 **Validation boundary:** no fresh host test run, exact-commit New 3DS build or physical-hardware test has been confirmed for this batch.
+
+
+### 2026-11-19 — state 4/7 transition handler and host-link repair
+
+- [x] ofs_000_C465_04 / ofs_000_C465_07 are now dispatched by menusUpdate through nesMenuCpuRunRamRoutine($C465) when the original PRG is loaded.
+- [x] The adapter carries persistent 2 KiB CPU RAM and synchronizes the menu-visible timer/state bytes plus $0300-$031F dynamic command buffer. The original routine's sub_C92C -> sub_C935 -> sub_CAFA chain remains in generated 6502 code; no guessed C replacement is used.
+- [x] Added $C465 to the adapter's audited entry-point allowlist.
+- [x] Fixed the host menu workflow to link nes_menu_cpu.c, nes_call.c, and nes_gen_code.c; previously the menu test compile omitted the implementation of the newly called adapter functions. The workflow now triggers when the adapter source/header changes.
+- [ ] A dedicated ROM-backed frame-vector test for both timer branches is still needed. Until that exists, this is an integration step, not a claim of full state-4/7 correctness.
+- [ ] The full state-09 editor loop, B-button return, PPU raster/vblank timing, menu artwork, sound, and hardware comparison remain open.
