@@ -113,7 +113,10 @@ typedef struct {
     uint16_t address;
     uint8_t addressHigh, addressLatch, scrollLatch, paletteWritten;
     unsigned long spriteHitCycle;
+    unsigned long spriteHitClearCycle;
 } NesMenuPpuBus;
+
+#define NES_NMI_TO_PRERENDER_CPU_CYCLES 2273UL
 
 static uint8_t nesMenuPaletteIndex(uint16_t address)
 {
@@ -129,9 +132,10 @@ static uint8_t nesMenuIoRead(NesMachine *machine, uint16_t address)
     if (address == 0x2002u) {
         bus->addressLatch = 0u;
         bus->scrollLatch = 0u;
-        /* Approximate the editor's sprite-0 hit at the source-derived CPU-cycle
-         * delay boundary. This is not a pixel-accurate PPU pipeline. */
-        return machine->cyc >= bus->spriteHitCycle ? 0x40u : 0u;
+        /* Bit 6 remains set from the previous frame until pre-render clears it,
+         * then rises only at the computed opaque sprite-0/background overlap. */
+        return (machine->cyc < bus->spriteHitClearCycle ||
+                machine->cyc >= bus->spriteHitCycle) ? 0x40u : 0u;
     }
     return 0u;
 }
@@ -212,7 +216,8 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
  */
 int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
-                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY)
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY,
+                          uint8_t previousFrameHadSprite0Hit, uint32_t *elapsedCycles)
 {
     NesMachine machine;
     NesMenuPpuBus bus;
@@ -228,7 +233,9 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     bus.nametables = nametables; bus.palette = palette;
     bus.ctrl = ppuCtrl; bus.mask = ppuMask;
     bus.scrollX = scrollX; bus.scrollY = scrollY;
-    bus.spriteHitCycle = ~0UL; /* keep bit 6 clear throughout D0AB/D14E */
+    bus.spriteHitClearCycle = previousFrameHadSprite0Hit
+        ? NES_NMI_TO_PRERENDER_CPU_CYCLES : 0UL;
+    bus.spriteHitCycle = ~0UL; /* no new-frame hit while D0AB/D14E execute */
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
@@ -238,13 +245,16 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     result = nesCall(&machine, 0xD14Eu, 100000L);
     if (result != 0) return 0;
     memcpy(cpuRam, machine.ram, sizeof(machine.ram));
+    if (elapsedCycles != NULL)
+        *elapsedCycles = machine.cyc > UINT32_MAX ? UINT32_MAX : (uint32_t)machine.cyc;
     return 1;
 }
 
 int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
                           uint8_t pressedButtons, uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
-                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY)
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY,
+                          uint32_t sprite0HitCycleFromCallStart)
 {
     NesMachine machine;
     NesMenuPpuBus bus;
@@ -262,7 +272,8 @@ int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
     bus.nametables = nametables; bus.palette = palette;
     bus.ctrl = ppuCtrl; bus.mask = ppuMask;
     bus.scrollX = scrollX; bus.scrollY = scrollY;
-    bus.spriteHitCycle = 0UL;
+    bus.spriteHitClearCycle = 0UL;
+    bus.spriteHitCycle = (unsigned long)sprite0HitCycleFromCallStart;
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
