@@ -32,6 +32,8 @@ typedef struct {
     /* RAM $0300-$031F: $0300 = buffer length, $0301.. = sub_D3C1 records (dynamic PPU buffer) */
     uint8_t menu_ram0300[32];
     uint8_t menu_ram004D_EF[0xA3];
+    /* Persistent 2 KiB NES CPU RAM for source-recompiled setup routines. */
+    uint8_t menu_cpu_ram[0x800];
     uint8_t menu_scroll_x;
     uint8_t menu_scroll_y;
     uint8_t menu_ppu_ctrl;
