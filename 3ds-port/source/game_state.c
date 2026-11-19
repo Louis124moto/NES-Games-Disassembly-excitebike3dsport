@@ -54,6 +54,10 @@ void gameStateReset(GameState *state)
     state->menu_ppu_ctrl = 0u;
     state->menu_ppu_mask = 0u;
     state->menu_ppu_background_ready = 0u;
+    state->menu_sprite0_hit_found = 0u;
+    state->menu_sprite0_hit_last_frame = 0u;
+    state->menu_sprite0_hit_cycle = 0u;
+    state->menu_ppu_cycle_phase = 0u;
     state->menu_ram_for_2001 = 0u;
     state->menu_ppu_palette_loaded = 0u;
     state->menu_ppu_revision = 0u;
