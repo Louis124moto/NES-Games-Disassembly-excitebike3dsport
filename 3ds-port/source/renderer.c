@@ -63,6 +63,8 @@ static int s_gameStarted;
 static int s_menuActive;
 /* Static storage avoids putting a 184 KiB NES RGB frame on the 3DS stack. */
 static uint8_t s_ppuRgb[NES_PPU_RGB_BYTES];
+static uint8_t s_sprite0HitFound;
+static uint32_t s_sprite0HitCycle = UINT32_MAX;
 static uint8_t s_sourcePpuRgb[NES_PPU_RGB_BYTES];
 static uint8_t s_sourceNametable[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
 static uint8_t s_sourceNametableMask[NES_EXCITEBIKE_NAMETABLE_SNAPSHOT_BYTES];
@@ -230,6 +232,8 @@ static int rendererDrawPpuBackground(const GameState *state)
     size_t tileCount = 0u;
     unsigned int x, y;
 
+    s_sprite0HitFound = 0u;
+    s_sprite0HitCycle = UINT32_MAX;
     s_bgRenderReason = 0;
     s_bgRenderResult = NES_PPU_RENDER_OK;
     s_bgChrTileCount = 0u;
@@ -266,6 +270,15 @@ static int rendererDrawPpuBackground(const GameState *state)
     if (s_bgRenderResult != NES_PPU_RENDER_OK) {
         s_bgRenderReason = 5;
         return 0;
+    }
+    {
+        unsigned long hitCycle = ~0UL;
+        if (nesPpuFindSprite0HitCycle(chrAll, chrAllCount, state->menu_oam,
+                                      state->menu_ppu_ctrl, state->menu_ppu_mask,
+                                      s_bgOpaque, &hitCycle)) {
+            s_sprite0HitFound = 1u;
+            s_sprite0HitCycle = hitCycle > UINT32_MAX ? UINT32_MAX : (uint32_t)hitCycle;
+        }
     }
 
     /* Source OAM sprites (8x8/8x16, flips and priority) over the rendered PPU background. */
@@ -577,6 +590,12 @@ static void rendererDescribeRam0045(uint8_t ram0045, char *out, size_t outSize)
     } else {
         (void)snprintf(out, outSize, "outside table");
     }
+}
+
+void rendererGetSprite0Hit(uint8_t *found, uint32_t *cycleFromPrerender)
+{
+    if (found != NULL) *found = s_sprite0HitFound;
+    if (cycleFromPrerender != NULL) *cycleFromPrerender = s_sprite0HitCycle;
 }
 
 void rendererDraw(const GameState *state)
