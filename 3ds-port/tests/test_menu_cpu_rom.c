@@ -37,6 +37,92 @@ static int testC465StateAdvance(uint8_t initialState, uint8_t expectedState)
     return 1;
 }
 
+static int testSharedTransitionDispatcherPhases(void)
+{
+    static const uint8_t states[3] = {3u, 6u, 11u};
+    unsigned int i;
+    uint8_t ram[0x800];
+
+    /* Phase 0 differs for states below 8 and state 11 (>= 8). */
+    for (i = 0u; i < 3u; ++i) {
+        memset(ram, 0, sizeof(ram));
+        ram[0x0041u] = states[i];
+        ram[0x0044u] = 0u;
+        ram[0x03F2u] = 2u;
+        ram[0x0053u] = 0u;
+        ram[0x0042u] = 0xA5u;
+        if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
+            ram[0x0044u] != 1u || ram[0x0046u] != 1u ||
+            ram[0x004Bu] != 1u || ram[0x0033u] != 7u) {
+            fprintf(stderr, "ROM menu test: CB2C phase 0 failed for state %u\n",
+                    (unsigned int)states[i]);
+            return 0;
+        }
+        if ((states[i] < 8u && ram[0x0042u] != 2u) ||
+            (states[i] >= 8u && ram[0x0042u] != 0xA5u)) {
+            fprintf(stderr, "ROM menu test: CB2C phase 0 selection rule failed for state %u\n",
+                    (unsigned int)states[i]);
+            return 0;
+        }
+    }
+
+    /* Phase 1 waits for timer 0033, then emits the source seven-byte dynamic command. */
+    memset(ram, 0, sizeof(ram));
+    ram[0x0041u] = 3u;
+    ram[0x0044u] = 1u;
+    ram[0x0033u] = 1u;
+    if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) || ram[0x0044u] != 1u ||
+        ram[0x0033u] != 1u) {
+        fputs("ROM menu test: CB2C phase 1 did not wait for timer 0033\n", stderr);
+        return 0;
+    }
+    ram[0x0033u] = 0u;
+    if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
+        ram[0x0044u] != 2u || ram[0x03ADu] != 0x20u ||
+        ram[0x0033u] != 0x23u || ram[0x0300u] != 0x0Au ||
+        ram[0x0303u] != 7u || ram[0x0305u] != 0xFBu ||
+        ram[0x0308u] != 0xFBu || ram[0x030Bu] != 0u) {
+        fputs("ROM menu test: CB2C phase 1 dynamic PPU buffer mismatch\n", stderr);
+        return 0;
+    }
+
+    /* Phase 2 with timer zero advances to phase 3 and arms the four-tick timer. */
+    ram[0x0044u] = 2u;
+    ram[0x0033u] = 0u;
+    if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
+        ram[0x0044u] != 3u || ram[0x0033u] != 4u) {
+        fputs("ROM menu test: CB2C phase 2 timer/phase mismatch\n", stderr);
+        return 0;
+    }
+
+    /* Phase 3 advances the state; with ram_004B clear, state >= 9 clamps to 8. */
+    memset(ram, 0, sizeof(ram));
+    ram[0x0041u] = 11u;
+    ram[0x0044u] = 3u;
+    ram[0x004Bu] = 0u;
+    ram[0x0040u] = 1u;
+    if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
+        ram[0x0041u] != 8u || ram[0x0040u] != 0u ||
+        ram[0x0044u] != 0u) {
+        fputs("ROM menu test: CB2C phase 3 did not clamp state 11 to design menu 8\n", stderr);
+        return 0;
+    }
+
+    /* The same phase with ram_004B set preserves the incremented state. */
+    memset(ram, 0, sizeof(ram));
+    ram[0x0041u] = 6u;
+    ram[0x0044u] = 3u;
+    ram[0x004Bu] = 1u;
+    ram[0x0040u] = 1u;
+    if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
+        ram[0x0041u] != 7u || ram[0x0040u] != 0u ||
+        ram[0x0044u] != 0u) {
+        fputs("ROM menu test: CB2C phase 3 ram_004B transition mismatch\n", stderr);
+        return 0;
+    }
+    return 1;
+}
+
 static int testRasterSplitD0AB(void)
 {
     uint8_t cpuRam[0x800];
@@ -140,6 +226,8 @@ int main(void)
     if (!testC465StateAdvance(4u, 5u) || !testC465StateAdvance(7u, 2u))
         return 1;
     if (!testRasterSplitD0AB())
+        return 1;
+    if (!testSharedTransitionDispatcherPhases())
         return 1;
     if (!testSharedTransitionList3())
         return 1;
