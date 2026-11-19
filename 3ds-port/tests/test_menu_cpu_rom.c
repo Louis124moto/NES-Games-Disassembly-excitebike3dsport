@@ -157,15 +157,22 @@ static int testRasterSplitD0AB(void)
 
     {
         NesMenuRasterSplit split;
-        if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
-                                   &scrollX, &scrollY, 0u, &split) ||
-            split.elapsedCycles == 0u ||
+        int ok;
+        memset(&split, 0, sizeof(split));
+        ok = nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
+                                   &scrollX, &scrollY, 0u, &split);
+        if (!ok || split.elapsedCycles == 0u ||
             split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
             split.topScrollY != 0x30u || split.bottomCtrl != 0x12u ||
             split.bottomScrollX != 0x40u || split.bottomScrollY != 0x50u ||
             split.splitScanline < 30u || split.splitScanline > 40u ||
             split.splitDot < 150u || split.splitDot > 250u) {
-            fputs("ROM menu test: D0AB/D14E raster phase capture failed\n", stderr);
+            fprintf(stderr, "ROM menu test: D0AB/D14E capture failed ok=%d ctrl=%u scroll=%u line=%u dot=%u top=%02X/%02X/%02X bottom=%02X/%02X/%02X elapsed=%u\n",
+                    ok, split.ctrlWrites, split.scrollPairs,
+                    split.splitScanline, split.splitDot,
+                    split.topCtrl, split.topScrollX, split.topScrollY,
+                    split.bottomCtrl, split.bottomScrollX, split.bottomScrollY,
+                    split.elapsedCycles);
             return 0;
         }
     }
