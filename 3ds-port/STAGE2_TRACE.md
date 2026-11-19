@@ -516,5 +516,5 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] Passed NES-order held and pressed controller bytes to `$0014/$0015`; retained the original `sub_EB17` object/input logic, including its guarded B-button return to state `$08`.
 - [x] Synchronized editor OAM, `$0300-$031F` dynamic PPU buffer, course/object working pages `$05A0/$05C3/$05E0/$06E0`, scroll, PPUCTRL/PPUMASK, nametable and palette writes back into GameState.
 - [x] Added a regression test proving that, without a supported `rom.nes`, state 9 holds instead of inventing a return or modifying the PPU model.
-- [ ] `sub_D19B` waits for PPUSTATUS bit `$40` (sprite-0 hit). The current host adapter acknowledges this once per call to let the original logic advance. This is explicitly a frame-level approximation, not a PPU pipeline or raster simulation; exact editor visuals and timing are not yet claimed.
+- [ ] `sub_D19B` waits for PPUSTATUS bit `$40` (sprite-0 hit). The current host adapter raises bit $40 after the traced 6431-CPU-cycle delay so the original D14E/D19B wait sequence can advance. This is a cycle-threshold approximation, not a PPU pipeline or raster simulation; exact editor visuals and timing are not yet claimed.
 - [ ] Add ROM-backed vectors for entry/setup/frame/B-return, validate PPU writes against a NES emulator trace, and test on physical New 3DS.
