@@ -3,25 +3,26 @@
 
 
 /* Source: sub_C7DE ($C7DE-$C81F). */
-void nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
+uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
                                uint8_t pressed,
                                uint8_t entry_count)
 {
     uint8_t selection;
+    uint8_t confirmed = 0u;
 
     if (menu == 0 || entry_count == 0u) {
-        return;
+        return 0u;
     }
 
     selection = menu->selection;
     if ((pressed & 0x3Cu) == 0u) {
         menu->debounce = 0u;
-        return;
+        return 0u;
     }
 
     menu->input_timer = 0x5Du;
     if (menu->debounce != 0u) {
-        return;
+        return 0u;
     }
 
     if ((pressed & 0x20u) != 0u) {
@@ -47,10 +48,12 @@ void nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
     } else {
         /* Start is a timed action, not a selection movement. */
         menu->start_timer = 4u;
+        confirmed = 1u;
     }
 
     menu->selection = selection;
     menu->debounce = (uint8_t)(menu->debounce + 1u);
+    return confirmed;
 }
 
 void nativeMenuRenderStatus(const GameState *state)
