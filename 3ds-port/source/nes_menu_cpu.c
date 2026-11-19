@@ -270,10 +270,11 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
 
     /*
      * Reproduce vec_C23B_NMI's source order for cycle accounting:
-     * JSR C32F; conditional $2001 update; OAM DMA; JSR C27F; then D0AB/D14E.
-     * PPU data writes are ignored here because menusNmiUpload's native parser
-     * applies the exact same command stream to the nametable/palette buffers.
+     * hardware NMI entry; JSR C32F; conditional $2001 update; OAM DMA;
+     * JSR C27F; then D0AB/D14E. PPU data writes are ignored here because
+     * menusNmiUpload's native parser applies the same stream to PPU memory.
      */
+    machine.cyc += 7UL; /* 6502 NMI entry latency */
     machine.cyc += 6UL; /* JSR sub_C32F */
     result = nesCall(&machine, 0xC32Fu, 50000L);
     if (result != 0) return 0;
