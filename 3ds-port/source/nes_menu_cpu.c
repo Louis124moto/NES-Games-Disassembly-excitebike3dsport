@@ -111,7 +111,7 @@ int nesMenuCpuSetupCommand(uint16_t routineAddress, uint8_t asmState,
 typedef struct {
     uint8_t *nametables, *palette, *ctrl, *mask, *scrollX, *scrollY;
     uint16_t address;
-    uint8_t addressHigh, addressLatch, scrollLatch;
+    uint8_t addressHigh, addressLatch, scrollLatch, paletteWritten;
 } NesMenuPpuBus;
 
 static uint8_t nesMenuPaletteIndex(uint16_t address)
@@ -157,6 +157,7 @@ static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
             bus->nametables[(target - 0x2000u) & 0x07FFu] = value;
         else if (target >= 0x3F00u)
             bus->palette[nesMenuPaletteIndex(target)] = value;
+            bus->paletteWritten = 1u;
         bus->address = (uint16_t)(bus->address +
             (((*bus->ctrl & 0x04u) != 0u) ? 32u : 1u));
     }
@@ -165,13 +166,14 @@ static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
 int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                          uint8_t palette[32], uint8_t *ppuCtrl,
                          uint8_t *ppuMask, uint8_t *scrollX,
-                         uint8_t *scrollY)
+                         uint8_t *scrollY, uint8_t *paletteWritten)
 {
     NesMachine machine;
     NesMenuPpuBus bus;
     int result;
     if (!s_ready || cpuRam == NULL || nametables == NULL || palette == NULL ||
-        ppuCtrl == NULL || ppuMask == NULL || scrollX == NULL || scrollY == NULL)
+        ppuCtrl == NULL || ppuMask == NULL || scrollX == NULL || scrollY == NULL ||
+        paletteWritten == NULL)
         return 0;
     memset(&machine, 0, sizeof(machine));
     memset(&bus, 0, sizeof(bus));
@@ -185,6 +187,25 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
     result = nesCall(&machine, 0xC820u, 50000L);
+    if (result != 0) return 0;
+    memcpy(cpuRam, machine.ram, sizeof(machine.ram));
+    *paletteWritten = bus.paletteWritten;
+    return 1;
+}
+
+/* Execute only setup-list routines whose full transitive effects are RAM/OAM-only. */
+int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800])
+{
+    NesMachine machine;
+    int result;
+    if (!s_ready || cpuRam == NULL) return 0;
+    if (routineAddress != 0xC5A3u && routineAddress != 0xC562u &&
+        routineAddress != 0xC5C2u) return 0;
+    memset(&machine, 0, sizeof(machine));
+    memcpy(machine.ram, cpuRam, sizeof(machine.ram));
+    machine.prg = s_prg;
+    machine.sp = 0xFDu;
+    result = nesCall(&machine, routineAddress, 100000L);
     if (result != 0) return 0;
     memcpy(cpuRam, machine.ram, sizeof(machine.ram));
     return 1;
