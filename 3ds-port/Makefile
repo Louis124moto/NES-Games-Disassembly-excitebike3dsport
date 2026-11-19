@@ -29,10 +29,8 @@ export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
-# Native-only runtime: legacy 6502/PPU/APU execution modules are excluded.
-# nes_* extraction and source-data helpers remain available where required by
-# the asset inspector; they are not a game execution engine.
-CFILES := $(filter-out $(EXCLUDED_RUNTIME_C),$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
+# Compile the current native C modules; no emulator source files remain in source/.
+CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
