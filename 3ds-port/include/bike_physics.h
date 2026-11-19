@@ -89,6 +89,24 @@ uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
                                      uint8_t race_started,
                                      uint8_t race_finished);
 
+/* Native fixed-size state for the original per-frame movement routines. */
+typedef struct BikeMovementState {
+    uint8_t speed_whole[4];          /* ram_0094_obj */
+    uint8_t speed_fraction[4];       /* ram_0090_obj */
+    uint8_t fraction_accumulator[4]; /* ram_0394_obj */
+    uint8_t movement_delta[4];       /* ram_0060_obj */
+    uint8_t object_active[4];        /* ram_00A8_obj */
+    uint8_t x_low[4];                /* ram_0080_obj */
+    uint8_t x_high[4];               /* ram_0084_obj */
+    uint8_t previous_x[4];           /* ram_0390_obj */
+    uint8_t player_scroll_x;         /* ram_0012_scroll_X */
+    uint8_t base_nametable;          /* ram_004D_base_nametable */
+} BikeMovementState;
+
+void bikePhysicsBuildMovementDeltas(BikeMovementState *movement);
+void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement);
+void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement);
+
 /* Full per-frame bike integration is intentionally not exposed until all
  * input, heat, posture, collision and update-order dependencies are traced. */
 void bikePhysicsUpdate(BikeState *bike, const InputState *input);
