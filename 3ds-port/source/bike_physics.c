@@ -337,8 +337,3 @@ void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement)
     }
 }
 
-void bikePhysicsUpdate(BikeState *bike, const InputState *input)
-{
-    (void)bike;
-    (void)input;
-}
