@@ -100,8 +100,7 @@ static int test_native_transition_phase1(void)
     menu.transition_flag_004B = 1u;
     menu.timer_values[18] = 2u;
     nativeMenuTransitionPhase1(&menu);
-    if (menu.transition_phase != 1u || menu.transition_phase != 1u ||
-        menu.timer_values[18] != 2u) {
+    if (menu.transition_phase != 1u || menu.timer_values[18] != 2u) {
         puts("FAIL: CB77 must wait while the source transition timer is nonzero");
         return 1;
     }
