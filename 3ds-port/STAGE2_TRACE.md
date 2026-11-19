@@ -571,3 +571,40 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] Added a PRG-backed vector for object Y inputs `$10/$18/$20/$30`; it verifies `$0360-$0363 = 4/3/2/0`, `$004C = $003F & 3`, the two scroll/nametable phases, the `sub_D11F` dynamic-buffer header, and that state 9 does not hide editor OAM.
 - [x] Host tests and New 3DS build passed on `7a400486fba8a39f1ce108e47754400bbc49aaac`.
 - [x] Pixel-derived sprite-0 overlap, previous-hit persistence, full source NMI prelude cycle accounting, both PPUCTRL/scroll phases and scanline/dot split composition are integrated and host-tested. Remaining: calibrate the pre-render clear and odd-frame phase against hardware, then compare exact raster output against an original-NES capture.
+
+## Native rewrite trace — shared transition phases 1 and 2 (2026-11-19)
+
+The dispatcher at `$CB2C` selects one of four handlers from `ram_0044`: `$CB3B`, `$CB77`, `$CBA4`, or `$CC6B`. Phases 0 and 3 have isolated native C translations. This section records the source dependencies for phases 1 and 2 before translating their visible behavior into native scene state.
+
+### Phase 1 — `ofs_CB77_01` (`$CB77-$CBA3`)
+
+Confirmed from the unmodified `Excitebike/bank_FF.asm`:
+
+1. Read `ram_0033_timer` into Y. If it is nonzero, return without changing the transition phase.
+2. When it reaches zero, set the temporary table index to 4 and copy seven bytes from `ram_03D9,Y` through `ram_03DF` into the dynamic update-buffer area beginning at `ram_0304 + ram_0300`.
+3. Call `sub_C94B`. It advances the legacy buffer length through `sub_C971`, selects `tbl_C0EC_ppu_address[4] = $24CF`, and appends the source command metadata and terminator. This buffer is a NES PPU upload description, not a data structure that may be retained by the native game.
+4. Set `ram_03AD` to `$20` when `ram_004B` is nonzero, otherwise `$31`. Set `ram_0033_timer` to that value plus 3, then increment `ram_0044`.
+
+The seven-byte source payload is read at timer-zero entry; the bytes are not yet classified as a native visual effect. The value at `$24CF` is a source PPU address only. With the cartridge's vertical mirroring, it resolves to physical nametable B, tile row 6, column 15; the native renderer must use a semantic screen/tile coordinate, not emulate a PPU address or command stream.
+
+**Required before native implementation:** trace every producer of `ram_03D9-$03DF` (including the copy paths around `sub_D0F4` and `sub_DF48`), establish what the seven bytes represent in each caller state, and compare the resulting visible transition against the original. Then represent the effect as native menu-scene data and preserve only the source-derived timer/phase behavior. Do not copy `sub_C94B/sub_C971` as a runtime PPU-buffer builder.
+
+### Phase 2 — `ofs_CBA4_02` (`$CBA4-$CC14`)
+
+Confirmed first-pass control flow:
+
+- A zero `ram_0033_timer` falls through the shared exit at `$CB9F`, increments `ram_0044`, and returns.
+- A nonzero timer greater than `ram_03AD` returns without advancing the phase.
+- Equality with `ram_03AD` enters the ten-frame gate at `ram_0020`; after the gate expires, the routine initializes timer/index state and iterates three table-selected transition records through `sub_CCCA`.
+- Before equality, the branch depends on `ram_004B` and the held A/B controller bits. It calls `sub_CC15` or `sub_CC6B`, with the state-zero return path able to call `sub_C3AF`.
+- The remaining paths select source tables `tbl_C0DA`, `tbl_C0DE`, `tbl_C0E2`, `tbl_C0E5`, and `tbl_C0E8`, then route into `loc_D1C7` to prepare OAM data. `sub_CC15` also constructs dynamic PPU upload data from `tbl_C134` and related state.
+
+This is not yet a complete semantic trace. The native port must identify the player-visible transition phases, timing, overlay contents and input response, then express those as native state and renderer events. The dynamic PPU buffer, OAM page, and `loc_D1C7` algorithm are source evidence only; none belongs in the final game runtime.
+
+### Next implementation gate
+
+- [ ] Trace the seven-byte transition payload's producers and meaning.
+- [ ] Trace the full phase-2 branch graph, including `sub_CC15`, `sub_CC6B`, `loc_CC7D`, `sub_CCCA`, and their source tables.
+- [ ] Define semantic native transition fields and renderer events from the visible result.
+- [ ] Add frame-by-frame differential tests for phase timing, input branches, state/flag changes and visible transition events.
+- [ ] Integrate phases 1/2 into the native menu state machine only after the semantic effect is understood.
