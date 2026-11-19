@@ -79,6 +79,8 @@ void gameRender(void)
 {
     rendererBeginFrame();
     rendererDraw(&s_menuState);
+    rendererGetSprite0Hit(&s_menuState.menu_sprite0_hit_found,
+                          &s_menuState.menu_sprite0_hit_cycle);
     rendererEndFrame();
 }
 
