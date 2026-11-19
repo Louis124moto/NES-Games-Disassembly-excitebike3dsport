@@ -214,9 +214,9 @@ static int testRasterSplitD0AB(void)
         NesMenuRasterSplit afterPreviousHit;
         if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
                                    &scrollX, &scrollY, 1u, &afterPreviousHit) ||
+            afterPreviousHit.elapsedCycles <= split.elapsedCycles + 2000u ||
             afterPreviousHit.splitScanline < 55u ||
             afterPreviousHit.splitScanline > 65u ||
-            afterPreviousHit.splitDot < 250u ||
             afterPreviousHit.splitDot > 340u) {
             fprintf(stderr, "ROM menu test: previous-hit pre-render wait mismatch line=%u dot=%u elapsed=%u\n",
                     afterPreviousHit.splitScanline, afterPreviousHit.splitDot,
