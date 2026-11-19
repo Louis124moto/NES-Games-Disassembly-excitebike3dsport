@@ -14,9 +14,21 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 - [x] **Architecture target.** Native ARM11/libctru application, C as the default implementation language, C++ only where it provides a concrete benefit; use native 3DS input, graphics, audio, filesystem, and timing APIs. Keep gameplay logic independent from platform backends so it can be tested on the host.
 - [x] **Enhanced version comes later.** Do not create or develop an `enhanced` branch yet. Finish and accept the faithful port on `main` first. Only then create `enhanced` from the accepted faithful commit; all optional improvements belong there, with the faithful branch preserved unchanged.
 
+### Runtime cutover progress — 2026-11-19
+
+- [x] `game.c` no longer initializes or steps `nesGame`, `nesSystem`, the PRG-backed menu recompiler, or the APU output. The live loop is currently the source-asset inspector only; this is an intentional honest intermediate state, not a playable game.
+- [x] The 3DS Makefile excludes `menus.c`, generated 6502 code, CPU-call/machine glue, PRG menu recompiler, NES system layer, APU model and NES audio output from the final link.
+- [x] Renderer no longer calls the old ASM/PPU menu model; a separate native-menu presentation boundary is in place.
+- [x] CI has a static guard test that rejects reintroduction of emulator boot calls or emulator runtime objects into the 3DS build.
+- [ ] Move or remove emulator implementation files from `source/` and quarantine only the minimum offline reference oracle needed for ASM differential testing. Do not link those files into the 3DSX.
+- [ ] Replace the asset-inspector-only startup with the native menu implementation. Until this is done, START/gameplay is intentionally unavailable.
+- [ ] Run and pass the exact-commit New 3DS build and native-runtime boundary CI after the cutover; record the resulting run IDs.
+
+**Important:** the old emulator/recompiler files still exist in the repository for historical/offline test work. They are excluded from the 3DS executable, not yet physically removed from the source tree. No native gameplay implementation is claimed by this cutover.
+
 ### What happens to the emulator/recompiler work
 
-- [ ] Remove emulator/recompiler execution from the active game runtime and from the final build dependencies.
+- [x] Disconnect emulator/recompiler execution from the active game loop and exclude the 6502/PPU/APU runtime objects from the 3DS build. Evidence: `source/game.c`, `Makefile`, `source/native_menu.c`, `tests/test_native_runtime_boundary.py`; exact-commit CI still being checked.
 - [ ] Remove or quarantine the generated 6502 C output, NES CPU/system/PPU/APU runtime, ROM-boot path, emulator controls, and emulator-only assets once native replacements are ready. Do not delete useful ASM traces, test vectors, or reference tools that support offline differential verification.
 - [ ] Retain the reference 6502/oracle only as a host-side test tool if it is needed to prove equivalence. Explicitly verify that no oracle/emulator source is linked into the 3DSX.
 - [ ] Audit the Makefile, source wildcards, startup flow, controls, README instructions, and CI workflows so the final executable is a native game and does not require `rom.nes` or `dspfirm.cdc`.
