@@ -667,3 +667,16 @@ The routine called at $CCA5 is sub_DD6F ($DD6F-$DD8C), not a pure lookup:
 - loc_CC7D stores this return value in ram_0055, compares it with ram_03F1, and clamps/restarts ram_002F when the result crosses the configured limit.
 
 This confirms that phase 2 includes a moving native-object parameter, not just a static sprite-table selection. The current trace still lacks the complete initialization/meaning of the object fields and their visual identity. No translation is justified until those source preconditions are established.
+
+
+## Native setup-command and cursor slice — 2026-11-19
+
+The native C menu now translates the first complete setup lists for the three front-end states:
+
+- List 0 / title: C2BD sets source visual key $02, title animation fields, cursor sprite tile/position, and idle timer; C514 sets palette key $18, debounce and setup-complete state.
+- List 1 / selector: C55E sets visual key $06; C3F3 sets visual key $03, cursor sprite and $0034 timer; C514 completes setup with palette key $18.
+- List 6 / design: C55E sets visual key $06; C575 sets selected-course field 5, cursor X/tile and visual key $0F; C514 completes setup.
+- The live input handlers now also update the cursor position using the source tables at $C080, $C083 and $C08B. The contiguous adjacent table bytes are preserved for the same out-of-range test values as the source reads.
+- The host test compares the semantic fields and cursor sprite bytes against direct ASM calls. The menu state/timer/transition differential suite reports 76,416 matching vectors; the setup command test passes. The exact code commit cb10fee3a7397021f7bb1a5901c6db69acd7f515 has a successful host verification workflow and 3DS build.
+
+These setup functions are still isolated: the application loop does not yet run the native menu, and there is no native scene renderer consuming the source asset keys. The next rendering work must load the existing exported EBPX/snapshot files and draw native tiles/sprites directly; the old PPU preview/compositor is not the final game renderer.
