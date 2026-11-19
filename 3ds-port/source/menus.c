@@ -725,6 +725,16 @@ void menusNmiUpload(GameState *state)
         if (isPalette) state->menu_ppu_palette_loaded = 1u;
         state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
     }
+    /* vec_C23B_NMI: after OAM DMA and sub_C27F, ram_0047 enables D14E. */
+    if (state->menu_cpu_ram[0x0047u] != 0u &&
+        nesMenuCpuRasterSplit(state->menu_cpu_ram, state->menu_ppu_nametables,
+                              state->menu_ppu_palette, &state->menu_ppu_ctrl,
+                              &state->menu_ppu_mask, &state->menu_scroll_x,
+                              &state->menu_scroll_y)) {
+        memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u],
+               sizeof(state->menu_ram0300));
+        memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u], sizeof(state->menu_oam));
+    }
     menusRefreshDrawable(state);
 }
 
