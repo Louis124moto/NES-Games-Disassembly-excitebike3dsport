@@ -262,16 +262,48 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     bus.scrollX = scrollX; bus.scrollY = scrollY;
     bus.spriteHitClearCycle = previousFrameHadSprite0Hit
         ? NES_NMI_TO_PRERENDER_CPU_CYCLES : 0UL;
-    bus.spriteHitCycle = ~0UL; /* no new-frame hit while D0AB/D14E execute */
-    bus.captureRasterSplit = 1u;
+    bus.spriteHitCycle = ~0UL; /* no new-frame hit while the NMI upload/raster path executes */
+    bus.timingOnly = 1u;       /* native PPU parser applies data; this pass measures source CPU timing */
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
-    /* vec_C23B_NMI runs the per-object vertical-band update before the raster split. */
-    result = nesCall(&machine, 0xD0ABu, 100000L);
+
+    /*
+     * Reproduce vec_C23B_NMI's source order for cycle accounting:
+     * JSR C32F; conditional $2001 update; OAM DMA; JSR C27F; then D0AB/D14E.
+     * PPU data writes are ignored here because menusNmiUpload's native parser
+     * applies the exact same command stream to the nametable/palette buffers.
+     */
+    machine.cyc += 6UL; /* JSR sub_C32F */
+    result = nesCall(&machine, 0xC32Fu, 50000L);
     if (result != 0) return 0;
-    result = nesCall(&machine, 0xD14Eu, 100000L);
+    if (machine.ram[0x0045u] == 0u) {
+        const uint8_t newMask = (uint8_t)(machine.ram[0x0011u] | 0x1Au);
+        machine.cyc += 3UL + 2UL + 3UL + 2UL + 4UL + 3UL; /* LDA/BNE/LDA/ORA/STA/STA */
+        nesMenuIoWrite(&machine, 0x2001u, newMask);
+        machine.ram[0x0011u] = newMask;
+    } else {
+        machine.cyc += 3UL + 3UL; /* LDA ram_0045 / taken BNE */
+    }
+    machine.cyc += 2UL + 4UL + 2UL + 4UL; /* LDA/STA $2003, LDA/STA $4014 */
+    nesMenuIoWrite(&machine, 0x2003u, 0u);
+    nesMenuIoWrite(&machine, 0x4014u, 2u); /* callback adds 513/514 DMA cycles */
+    machine.cyc += 6UL; /* JSR sub_C27F */
+    result = nesCall(&machine, 0xC27Fu, 100000L);
     if (result != 0) return 0;
+
+    machine.cyc += 3UL + 2UL; /* LDA ram_0047 / BEQ not taken */
+    if (machine.ram[0x0047u] != 0u) {
+        bus.captureRasterSplit = 1u;
+        machine.cyc += 6UL; /* JSR sub_D0AB */
+        result = nesCall(&machine, 0xD0ABu, 100000L);
+        if (result != 0) return 0;
+        machine.cyc += 6UL; /* JSR sub_D14E */
+        result = nesCall(&machine, 0xD14Eu, 100000L);
+        if (result != 0) return 0;
+    } else {
+        return 0; /* this adapter is only used for the editor raster path */
+    }
     if (split == NULL) return 0;
     split->topCtrl = bus.topCtrl;
     split->topScrollX = bus.topScrollX;
