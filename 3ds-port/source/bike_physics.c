@@ -72,6 +72,38 @@ void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
     }
 }
 
+
+/* Source: sub_CDEE ($CDEE-$CE28), player object X=0. */
+uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
+{
+    uint8_t high_path;
+
+    if (state == 0) {
+        return 0u;
+    }
+
+    high_path = (uint8_t)(
+        state->object_class == 0xE4u ||
+        (state->surface == 0x03u && state->surface_state >= 0x03u) ||
+        state->vertical_position < 0x08u ||
+        state->vertical_position >= 0x38u);
+
+    if (high_path != 0u) {
+        if (state->posture_state != 0x01u) {
+            state->posture_state = 0x02u;
+            state->player_event_flag = 0x04u;
+            return 0u;
+        }
+        state->player_event_flag = 0x04u;
+        return 1u;
+    }
+
+    if (state->posture_state != 0x01u) {
+        state->posture_state = 0x00u;
+    }
+    return 1u;
+}
+
 void bikePhysicsUpdate(BikeState *bike, const InputState *input)
 {
     (void)bike;
