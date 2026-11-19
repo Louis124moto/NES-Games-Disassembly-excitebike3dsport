@@ -884,7 +884,8 @@ Deliberate deviations from the original (not exact, stated plainly):
 - With no saved file, load waits forever like a console without a recorder; the port adds B to leave the menu path (not in the original).
 
 Still open (Stage 2 is NOT complete):
-- [ ] Handlers for states 4/7 (ofs_000_C465) and the setup lists 2/3/5 (race, results) are not ported; states 2/3/5/6/9/$0A/$0B run the race engine (Stage 3).
+- [x] State handlers 4/7 (ofs_000_C465) now execute through the static 6502 recompiler with persistent CPU RAM. This preserves the source sub_C92C -> sub_C935 -> sub_CAFA dynamic PPU-buffer path; the host workflow now links the recompiler into the menu test binary. A dedicated ROM-backed C465 frame-vector test and emulator/hardware comparison are still pending.
+- [ ] Setup lists 2/3 (race/results) remain unported; states 2/3/5/6/9/$0A/$0B that enter the race engine remain Stage 3 work.
 - [ ] Sound: ram_00FB / $4015 / $4011 requests are recorded in state but nothing is played.
 - [ ] Scroll registers and the second nametable are not rendered; only nametable 0 is drawn.
 - [ ] Timing is per 3DS frame (60 Hz); the NES NMI is 60.0988 Hz and there is no mid-frame PPU behaviour.
