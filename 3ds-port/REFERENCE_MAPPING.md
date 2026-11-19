@@ -1,3 +1,5 @@
+<!-- NATIVE-PORT STATUS NOTICE (2026-11-19): NES RAM addresses, PPU/APU registers and hardware traces in this document are source-analysis references only. They must not become the live state model or runtime hardware emulation of the final 3DS game. Translate verified meaning into semantic native C structures and native graphics/audio. See TODO.md and NATIVE_PORT_ARCHITECTURE.md. -->
+
 # Excitebike 3DS: fidelity and source mapping
 
 ## Fidelity target
