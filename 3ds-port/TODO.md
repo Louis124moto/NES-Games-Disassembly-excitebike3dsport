@@ -71,7 +71,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
 - [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; list-5 commands $C551/$C869 are now recompiled in the runtime, but setup stops at $C820. Finish the remaining state-9 setup and B-button return. State-10 race runtime is Stage 3.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
-- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch.
+- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch. Added `testEditorSetupPrelude` for the bounded state-9 `$C551/$C869` setup and intentional `$C820` stop; execution is pending.
 - [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
 - [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
 - [ ] D6 — Accept Stage 2 only after all menu routes are integrated and fidelity-checked. Stage 3 remains blocked.
