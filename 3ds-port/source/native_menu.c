@@ -233,17 +233,13 @@ void nativeMenuCompleteTimedTransition(NativeMenuState *menu)
 }
 
 
-/* Source: ofs_CB77_01 ($CB77-$CBA3), phase 1 of sub_CB2C.
- * The seven-byte payload remains opaque. Source callers reuse $03D9-$03DF
- * for more than one visual purpose, so these bytes must NOT be treated as
- * tile IDs until their producer and caller context have been fully classified.
- * The destination metadata below is a provisional trace aid only; this
- * function is isolated and is not connected to the native renderer.
+/* Source: ofs_CB77_01 ($CB77-$CBA3), phase-1 timing/state slice only.
+ * The seven-byte copy in the original feeds a dynamic PPU upload. Its semantic
+ * meaning is unresolved, so this native function deliberately does not invent
+ * a tile patch or renderer event. It is not integrated into the live menu.
  */
 void nativeMenuTransitionPhase1(NativeMenuState *menu)
 {
-    unsigned i;
-
     if (menu == 0 || menu->transition_phase != 1u) {
         return;
     }
@@ -252,14 +248,6 @@ void nativeMenuTransitionPhase1(NativeMenuState *menu)
     if (menu->timer_values[18] != 0u) {
         return;
     }
-
-    for (i = 0u; i < 7u; ++i) {
-        menu->transition_patch[i] = menu->transition_payload[i];
-    }
-    menu->transition_patch_layer = 1u;
-    menu->transition_patch_x = 15u;
-    menu->transition_patch_y = 6u;
-    menu->transition_patch_valid = 1u;
 
     /* Source chooses $20 when ram_004B != 0, otherwise $31. */
     menu->transition_duration = menu->transition_flag_004B != 0u ? 0x20u : 0x31u;
