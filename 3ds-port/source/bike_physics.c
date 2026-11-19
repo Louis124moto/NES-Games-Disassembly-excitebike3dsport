@@ -356,38 +356,43 @@ void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement)
 }
 
 
-/* Source: sub_DCDE ($DCDE-$DCF1), called once for each bike after DCF2. */
+/* Source: sub_DCDE ($DCDE-$DCF1), one bike slot. */
+static void bikePhysicsUpdateObjectLockTimer(BikeMovementState *movement, unsigned index)
+{
+    uint8_t *timer = &movement->object_lock_timer[index];
+    if (*timer == 0u) return;
+    *timer = (uint8_t)(*timer - 1u);
+    if ((movement->movement_flags[index] & 0xC0u) != 0u) *timer = 0u;
+}
+
 void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement)
 {
     int index;
     if (movement == 0) return;
     for (index = 3; index >= 0; --index) {
-        uint8_t *timer = &movement->object_lock_timer[index];
-        if (*timer == 0u) continue;
-        *timer = (uint8_t)(*timer - 1u);
-        if ((movement->movement_flags[index] & 0xC0u) != 0u) {
-            *timer = 0u;
-        }
+        bikePhysicsUpdateObjectLockTimer(movement, (unsigned)index);
     }
 }
 
-/* Source: sub_DA58 ($DA58-$DA69), all four bike slots. */
+/* Source: sub_DA58 ($DA58-$DA69), one bike slot. */
+static void bikePhysicsBuildMovementDelta(BikeMovementState *movement, unsigned index)
+{
+    const uint16_t sum = (uint16_t)movement->speed_fraction[index] +
+                         movement->fraction_accumulator[index];
+    movement->movement_delta[index] = movement->speed_whole[index];
+    movement->fraction_accumulator[index] = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->movement_delta[index] =
+            (uint8_t)(movement->movement_delta[index] + 1u);
+    }
+}
+
+/* Standalone helper used by tests/tools; the race pass calls DA58 in source order. */
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement)
 {
     unsigned i;
-    if (movement == 0) {
-        return;
-    }
-    for (i = 0; i < 4u; ++i) {
-        const uint16_t sum = (uint16_t)movement->speed_fraction[i] +
-                             movement->fraction_accumulator[i];
-        movement->movement_delta[i] = movement->speed_whole[i];
-        movement->fraction_accumulator[i] = (uint8_t)sum;
-        if (sum > 0xFFu) {
-            movement->movement_delta[i] =
-                (uint8_t)(movement->movement_delta[i] + 1u);
-        }
-    }
+    if (movement == 0) return;
+    for (i = 0; i < 4u; ++i) bikePhysicsBuildMovementDelta(movement, i);
 }
 
 /* Source: sub_DA6A ($DA6A-$DA79). The base nametable toggles only on carry. */
@@ -604,4 +609,25 @@ void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object
     if (movement->lateral_state[object_index] == 0u) {
         movement->rider_state[object_index] = 0x01u;
     }
+}
+
+
+/* Source: sub_DA26 ($DA26-$DA43), complete movement/camera portion.
+ * The caller supplies the source race-start flag. The timer-selected
+ * post-movement state jump at DA44 is intentionally outside this pass. */
+void bikePhysicsUpdateRaceMovementPass(BikeMovementState *movement, uint8_t race_started)
+{
+    int index;
+    if (movement == 0 || race_started == 0u) return;
+
+    for (index = 3; index >= 0; --index) {
+        bikePhysicsBuildMovementDelta(movement, (unsigned)index);
+        bikePhysicsUpdateVerticalRecovery(movement, (uint8_t)index);
+        bikePhysicsUpdateVerticalMotion(movement, (uint8_t)index);
+        bikePhysicsUpdateObjectLockTimer(movement, (unsigned)index);
+    }
+
+    bikePhysicsAdvancePlayerScroll(movement);
+    bikePhysicsAdvanceOpponentPositions(movement);
+    bikePhysicsAdvanceSecondaryScroll(movement);
 }
