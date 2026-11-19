@@ -107,7 +107,7 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         unsigned rc;
         memset(reference->ram, 0, sizeof(reference->ram));
         reference->ram[0x0041u] = cases[n].state;
-        reference->ram[0x0044u] = cases[n].command;
+        reference->ram[0x0044u] = (uint8_t)(cases[n].command + 1u);
         reference->ram[0x0040u] = 0u;
         reference->ram[0x03F0u] = 1u;
         reference->ram[0x00FBu] = 0xA5u;
