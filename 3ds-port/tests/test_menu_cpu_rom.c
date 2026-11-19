@@ -314,11 +314,17 @@ int main(void)
      * interaction naturally produces that mode.
      */
     s.menu_cpu_ram[0x00BEu] = 0u; /* ram_00BC_obj+2: EB17 must not early-return */
+    s.menu_ram004D_EF[0x00BEu - 0x004Du] = 0u;
     s.menu_cpu_ram[0x00B4u] = 0u; /* skip the initial countdown */
+    s.menu_ram004D_EF[0x00B4u - 0x004Du] = 0u;
     s.menu_cpu_ram[0x00BDu] = 0u;
+    s.menu_ram004D_EF[0x00BDu - 0x004Du] = 0u;
     s.menu_cpu_ram[0x00B9u] = 0u; /* EB23 gate */
+    s.menu_ram004D_EF[0x00B9u - 0x004Du] = 0u;
     s.menu_cpu_ram[0x00BFu] = 2u; /* ram_00BC_obj+3: enter bra_EB9E */
+    s.menu_ram004D_EF[0x00BFu - 0x004Du] = 2u;
     s.menu_cpu_ram[0x00C1u] = 0u; /* select bra_EB49 before the mode branch */
+    s.menu_ram004D_EF[0x00C1u - 0x004Du] = 0u;
     s.menu_cpu_ram[0x0049u] = 0u; /* return input is not locked */
     menusNmiFrame(&s, KEY_B, KEY_B);
     if (s.menu_asm_state != 8u || s.menu_ram0040 != 0u ||
