@@ -1,3 +1,5 @@
+<!-- NATIVE-PORT STATUS NOTICE (2026-11-19): This is an inventory of original ASM routines and translation evidence, not an instruction to execute them on 3DS. Any status describing an old recompiler/PPU/APU path is historical only. The final runtime must contain native C behavior and no NES execution or hardware emulation. Update statuses to distinguish source-traced, natively translated, differential-tested, integrated and hardware-verified. See TODO.md and NATIVE_PORT_ARCHITECTURE.md. -->
+
 # Excitebike ASM routine inventory
 
 Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index, not a claim that routines are already ported. There are **177 labels beginning with `sub_`**. The label count includes small helpers and some labels that may be aliases or non-returning loops; each must be classified before it is considered a standalone function.
