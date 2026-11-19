@@ -203,16 +203,17 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
 }
 
 /*
- * Run one original state-09 editor update through the generated 6502 code.
- * The preceding NMI D14E split has completed; PPUSTATUS bit 6 is therefore
- * visible to the editor's D19B wait. Pixel-level sprite collision remains
- * approximated by the host PPU bus.
- */
-/*
- * vec_C23B_NMI calls sub_D14E when ram_0047 is nonzero. It waits for the
- * previous sprite-0 hit to clear, applies the top-screen scroll split, then
- * burns the source delay loop (6431 CPU cycles in state 9).
- * The bus starts with hit clear; the following C97C frame sees it set.
+ * vec_C23B_NMI calls sub_D14E when ram_0047 is nonzero. The bus preserves a
+ * previous-frame sprite-0 hit until the modeled pre-render clear point, then
+ * returns the elapsed CPU cycles so the caller can align the following C97C
+ * wait to the current PPU phase. The delay loop is source-derived (6431 cycles
+ * in state 9); the pre-render boundary and unmodeled NMI prelude remain timing
+ * approximations.
+ *
+ * C97C receives a pixel-derived sprite-0 hit threshold computed from decoded
+ * CHR, current OAM, the rendered background-opacity map, PPUMASK and PPUCTRL.
+ * UINT32_MAX means no opaque overlap exists, so the original D19B wait times out
+ * in the bounded host adapter rather than receiving a fabricated hit.
  */
 int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
