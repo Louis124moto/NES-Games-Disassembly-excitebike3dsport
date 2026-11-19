@@ -3,7 +3,18 @@
 #include <string.h>
 #include <3ds.h>
 #include "native_menu_renderer.h"
-#include "nes_ppu_render.h"
+
+/* NTSC RGB lookup for source palette indices; no PPU state or renderer is used. */
+static const uint8_t s_nativeRgb[64][3] = {
+ {84,84,84},{0,30,116},{8,16,144},{48,0,136},{68,0,100},{92,0,48},{84,4,0},{60,24,0},
+ {32,42,0},{8,58,0},{0,64,0},{0,60,0},{0,50,60},{0,0,0},{0,0,0},{0,0,0},
+ {152,150,152},{8,76,196},{48,50,236},{92,30,228},{136,20,176},{160,20,100},{152,34,32},{120,60,0},
+ {84,90,0},{40,114,0},{8,124,0},{0,118,40},{0,102,120},{0,0,0},{0,0,0},{0,0,0},
+ {236,238,236},{76,154,236},{120,124,236},{176,98,236},{228,84,236},{236,88,180},{236,106,100},{212,136,32},
+ {160,170,0},{116,196,0},{76,208,32},{56,204,108},{56,180,204},{60,60,60},{0,0,0},{0,0,0},
+ {236,238,236},{168,204,236},{188,188,236},{212,178,236},{236,174,236},{236,174,212},{236,180,176},{228,196,144},
+ {204,210,120},{180,222,120},{168,226,144},{152,226,180},{160,214,228},{160,162,160},{0,0,0},{0,0,0}
+};
 
 static size_t framebufferOffset(unsigned int x, unsigned int y)
 {
@@ -24,7 +35,10 @@ static void putPixel(uint8_t *framebuffer, unsigned int x, unsigned int y,
 {
     uint8_t rgb[3];
     size_t offset;
-    if (x >= 400u || y >= 240u || !nesPpuColorToRgb((uint8_t)(color & 0x3Fu), rgb)) return;
+    if (x >= 400u || y >= 240u || color > 0x3Fu) return;
+    rgb[0] = s_nativeRgb[color][0];
+    rgb[1] = s_nativeRgb[color][1];
+    rgb[2] = s_nativeRgb[color][2];
     offset = framebufferOffset(x, y);
     framebuffer[offset] = rgb[2];
     framebuffer[offset + 1u] = rgb[1];
@@ -90,13 +104,14 @@ int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     u16 width = 0u, height = 0u;
     uint8_t *framebuffer;
     const NativeMenuSceneAssets *scene;
-    if (assets == NULL || menu == NULL || assets->loaded == 0u ||
-        assets->chr_pixels == NULL || assets->chr_tile_count == 0u) return 0;
-    scene = sceneForState(assets, menu->source_state);
-    if (scene == NULL) return 0;
+    if (menu == NULL) return 0;
     framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width != 240u || height != 400u) return 0;
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
+    if (assets == NULL || assets->loaded == 0u ||
+        assets->chr_pixels == NULL || assets->chr_tile_count == 0u) return 0;
+    scene = sceneForState(assets, menu->source_state);
+    if (scene == NULL) return 0;
     drawBackground(framebuffer, assets, scene);
     drawCursor(framebuffer, assets, menu);
     return 1;
