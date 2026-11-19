@@ -137,5 +137,5 @@ jobs:
       - name: Differentially test native player acceleration against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/oracle.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
           /tmp/test_bike_speed /tmp/prg.bin
