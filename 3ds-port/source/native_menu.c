@@ -1,6 +1,10 @@
 #include <string.h>
 #include "native_menu.h"
 
+static const uint8_t s_titleCursorY[3] = { 0x80u, 0x90u, 0xA0u };
+static const uint8_t s_selectorCursorX[5] = { 0x48u, 0x60u, 0x78u, 0x90u, 0xA8u };
+static const uint8_t s_designCursorY[6] = { 0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u };
+
 
 /* Source: sub_C7DE ($C7DE-$C81F). */
 uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
@@ -212,8 +216,11 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
             menu->source_state = choice == 2u ? 8u : 1u;
             nativeMenuResetSetupSequence(menu);
         } else {
-            /* ofs_000_C346 stores TXA (zero) to ram_03F2 on the idle path. */
+            /* TXA=0 path: C346 loads tbl_C080_spr_Y,Y into OAM sprite 0 Y. */
             menu->selected_mode = 0u;
+            if (menu->input.selection < 3u) {
+                menu->cursor_sprite_y = s_titleCursorY[menu->input.selection];
+            }
         }
         break;
 
@@ -227,12 +234,21 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
             menu->selected_course = menu->input.selection;
             menu->source_state = 2u;
             nativeMenuResetSetupSequence(menu);
+        } else if (menu->input.selection < 5u) {
+            /* C3B8 -> C411 updates only cursor X, attribute and ram_0046. */
+            menu->cursor_sprite_x = s_selectorCursorX[menu->input.selection];
+            menu->cursor_sprite_attribute = 0u;
+            menu->transition_flag_0046 = 0u;
         }
         break;
     }
 
     case 8u: /* ofs_000_C3BD_08 — design/options */
         confirmed = nativeMenuUpdateSelection(&menu->input, pressed, 6u);
+        if (confirmed == 0u && menu->input.selection < 6u) {
+            /* C3EA -> C3EF updates the design-menu cursor Y. */
+            menu->cursor_sprite_y = s_designCursorY[menu->input.selection];
+        }
         if (confirmed != 0u) {
             const uint8_t choice = menu->input.selection;
             if (choice < 2u) {
