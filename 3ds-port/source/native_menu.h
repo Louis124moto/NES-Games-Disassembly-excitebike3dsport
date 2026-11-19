@@ -26,6 +26,23 @@ uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
                                uint8_t pressed,
                                uint8_t entry_count);
 
+typedef struct NativeMenuState {
+    uint8_t source_state;       /* ram_0041 */
+    NativeMenuSelectionState input;
+    uint8_t selected_course;    /* ram_0043 */
+    uint8_t selected_mode;      /* ram_03F2 */
+    uint8_t setup_command;      /* ram_0040 */
+    uint8_t transition_phase;   /* ram_0044 */
+    uint8_t cursor_state;       /* ram_004A */
+    uint8_t title_flag_03F0;
+    uint8_t title_flag_03F3;
+    uint8_t title_flag_03F7;
+} NativeMenuState;
+
+/* Native state transitions for the original title, course selector and
+ * design menu handlers (source states 0, 1 and 8). */
+void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
+
 void nativeMenuRenderStatus(const GameState *state);
 
 #endif
