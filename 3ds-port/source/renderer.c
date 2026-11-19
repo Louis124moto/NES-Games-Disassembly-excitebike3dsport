@@ -270,7 +270,7 @@ static int rendererDrawPpuBackground(const GameState *state)
         return 0;
     }
 
-    /* OAM sprites (the menu cursor) over the background; unsupported features draw nothing. */
+    /* Source OAM sprites (8x8/8x16, flips and priority) over the rendered PPU background. */
     s_spritePixels = 0u;
     s_spriteResult = nesPpuRenderSprites(chrAll, chrAllCount, state->menu_oam,
                                          state->menu_ppu_palette, state->menu_ppu_ctrl,
