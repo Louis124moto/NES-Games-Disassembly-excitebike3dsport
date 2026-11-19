@@ -607,7 +607,16 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_ram0048 = 0u;
             state->menu_ram004B = 0u;
             state->menu_ram00FB = 0u;
+            state->menu_ram00FF = 0u;
             memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
+            /*
+             * loc_CA85 clears CPU RAM $0021-$00FF inclusive, then increments
+             * $0049 and restores the saved $0042 selection. Preserve $0020
+             * and all bytes outside the source clear range.
+             */
+            memset(&state->menu_cpu_ram[0x0021u], 0, 0x00DFu);
+            state->menu_cpu_ram[0x0042u] = state->menu_selection;
+            state->menu_cpu_ram[0x0049u] = state->menu_repeat_guard;
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
         }
