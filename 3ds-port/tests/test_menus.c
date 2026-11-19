@@ -229,6 +229,36 @@ static int testState7Setup(void)
 }
 
 
+/* State 9: execute only the two recompiled list-5 setup commands, then hold at C820. */
+static int testEditorSetupPrelude(void)
+{
+    GameState *s = newState();
+    unsigned int i;
+    if (s == NULL) return 1;
+    s->menu_asm_state = 9u; /* tbl_C01C_index[9] = 5 -> off_C064_05 */
+    s->menu_ram0040 = 0u;
+    s->menu_ram0044 = 0u;
+    for (i = 0u; i < sizeof(s->menu_ram004D_EF); ++i)
+        s->menu_ram004D_EF[i] = (uint8_t)(i ^ 0xA5u);
+
+    menusUpdate(s, 0u, 0u); /* prelude */
+    CHECK(s->menu_ram0044 == 1u && s->menu_asm_state == 9u, 150);
+    menusUpdate(s, 0u, 0u); /* $C551: LDA #$12; state 9 does not add ram_0043 */
+    CHECK(s->menu_ram0045 == 0x12u && s->menu_ram0044 == 2u, 151);
+    menusUpdate(s, 0u, 0u); /* $C869: clear $004D-$00EF */
+    for (i = 0u; i < sizeof(s->menu_ram004D_EF); ++i)
+        CHECK(s->menu_ram004D_EF[i] == 0u, 152);
+    CHECK(s->menu_ram0044 == 3u, 153);
+
+    /* $C820 has dynamic PPU effects: the sequencer must stop without consuming it. */
+    menusUpdate(s, 0u, 0u);
+    CHECK(s->menu_asm_state == 9u && s->menu_ram0044 == 3u, 154);
+    CHECK(s->menu_ram0045 == 0x12u, 155);
+    free(s);
+    return 0;
+}
+
+
 /* Drive a fresh GameState to the design menu through the real title -> state 8 path. */
 static GameState *designMenu(void)
 {
@@ -441,6 +471,7 @@ int main(void)
     if ((rc = testDynamicBuffer()) != 0) return rc;
     if ((rc = testState4DynamicWrite()) != 0) return rc;
     if ((rc = testState7Setup()) != 0) return rc;
+    if ((rc = testEditorSetupPrelude()) != 0) return rc;
     if ((rc = testDesignMenu()) != 0) return rc;
     if ((rc = testDesignConfirm()) != 0) return rc;
     if ((rc = testTapeSave()) != 0) return rc;
