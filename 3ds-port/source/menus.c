@@ -71,6 +71,9 @@ static int menusRunSetupSequence(GameState *state)
         if (state->menu_ram0044 > 3u) return 1;
     } else if (listIndex == 7u) {
         if (state->menu_ram0044 > 3u) return 1;
+    } else if (listIndex == 5u) {
+        /* Execute the two safe list-5 commands, then stop before dynamic PPU setup. */
+        if (state->menu_ram0044 > 2u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
     }
@@ -172,6 +175,25 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_repeat_guard = 1u;
             state->menu_ram0040 = 1u;
             state->menu_ram0044 = 0u;
+            return 1;
+        }
+    } else if (listIndex == 5u) {
+        if (commandIndex == 0u) { /* ofs_001_C551_05_01 */
+            if (!nesMenuCpuSetupCommand(0xC551u, state->menu_asm_state,
+                                        state->menu_ram0043, &state->menu_ram0045,
+                                        state->menu_ram004D_EF)) {
+                /* Exact source-C fallback for environments without the PRG image. */
+                state->menu_ram0045 = (state->menu_asm_state < 8u)
+                    ? (uint8_t)(0x12u + state->menu_ram0043) : 0x12u;
+            }
+            return 1;
+        }
+        if (commandIndex == 1u) { /* ofs_001_C869_05_02 */
+            if (!nesMenuCpuSetupCommand(0xC869u, state->menu_asm_state,
+                                        state->menu_ram0043, &state->menu_ram0045,
+                                        state->menu_ram004D_EF)) {
+                memset(state->menu_ram004D_EF, 0, sizeof(state->menu_ram004D_EF));
+            }
             return 1;
         }
     } else if (listIndex == 7u) {
