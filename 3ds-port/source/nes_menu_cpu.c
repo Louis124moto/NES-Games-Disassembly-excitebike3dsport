@@ -114,6 +114,9 @@ typedef struct {
     uint8_t addressHigh, addressLatch, scrollLatch, paletteWritten;
     unsigned long spriteHitCycle;
     unsigned long spriteHitClearCycle;
+    uint8_t captureRasterSplit, ctrlWriteCount, scrollPairCount;
+    uint8_t topCtrl, topScrollX, topScrollY;
+    uint8_t bottomCtrl, bottomScrollX, bottomScrollY;
 } NesMenuPpuBus;
 
 #define NES_NMI_TO_PRERENDER_CPU_CYCLES 2273UL
@@ -143,11 +146,29 @@ static uint8_t nesMenuIoRead(NesMachine *machine, uint16_t address)
 static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
 {
     NesMenuPpuBus *bus = (NesMenuPpuBus *)machine->user;
-    if (address == 0x2000u) *bus->ctrl = value;
-    else if (address == 0x2001u) *bus->mask = value;
+    if (address == 0x2000u) {
+        *bus->ctrl = value;
+        if (bus->captureRasterSplit) {
+            if (bus->ctrlWriteCount == 0u) bus->topCtrl = value;
+            else bus->bottomCtrl = value;
+            if (bus->ctrlWriteCount < 2u) ++bus->ctrlWriteCount;
+        }
+    } else if (address == 0x2001u) *bus->mask = value;
     else if (address == 0x2005u) {
-        if (bus->scrollLatch == 0u) *bus->scrollX = value;
-        else *bus->scrollY = value;
+        if (bus->scrollLatch == 0u) {
+            *bus->scrollX = value;
+            if (bus->captureRasterSplit) {
+                if (bus->scrollPairCount == 0u) bus->topScrollX = value;
+                else bus->bottomScrollX = value;
+            }
+        } else {
+            *bus->scrollY = value;
+            if (bus->captureRasterSplit) {
+                if (bus->scrollPairCount == 0u) bus->topScrollY = value;
+                else bus->bottomScrollY = value;
+                if (bus->scrollPairCount < 2u) ++bus->scrollPairCount;
+            }
+        }
         bus->scrollLatch ^= 1u;
     } else if (address == 0x2006u) {
         if (bus->addressLatch == 0u) {
@@ -218,7 +239,7 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
 int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
                           uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY,
-                          uint8_t previousFrameHadSprite0Hit, uint32_t *elapsedCycles)
+                          uint8_t previousFrameHadSprite0Hit, NesMenuRasterSplit *split)
 {
     NesMachine machine;
     NesMenuPpuBus bus;
@@ -237,6 +258,7 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     bus.spriteHitClearCycle = previousFrameHadSprite0Hit
         ? NES_NMI_TO_PRERENDER_CPU_CYCLES : 0UL;
     bus.spriteHitCycle = ~0UL; /* no new-frame hit while D0AB/D14E execute */
+    bus.captureRasterSplit = 1u;
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
@@ -245,9 +267,24 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     if (result != 0) return 0;
     result = nesCall(&machine, 0xD14Eu, 100000L);
     if (result != 0) return 0;
+    if (split == NULL || bus.ctrlWriteCount < 2u || bus.scrollPairCount < 2u)
+        return 0;
     memcpy(cpuRam, machine.ram, sizeof(machine.ram));
-    if (elapsedCycles != NULL)
-        *elapsedCycles = machine.cyc > UINT32_MAX ? UINT32_MAX : (uint32_t)machine.cyc;
+    split->topCtrl = bus.topCtrl;
+    split->topScrollX = bus.topScrollX;
+    split->topScrollY = bus.topScrollY;
+    split->bottomCtrl = bus.bottomCtrl;
+    split->bottomScrollX = bus.bottomScrollX;
+    split->bottomScrollY = bus.bottomScrollY;
+    split->elapsedCycles = machine.cyc > UINT32_MAX ? UINT32_MAX : (uint32_t)machine.cyc;
+    {
+        const uint32_t phase = split->elapsedCycles > NES_NMI_TO_PRERENDER_CPU_CYCLES
+            ? split->elapsedCycles - NES_NMI_TO_PRERENDER_CPU_CYCLES : 0u;
+        const uint64_t dots = (uint64_t)phase * 3u;
+        uint64_t scanline = dots / 341u;
+        if (scanline > 239u) scanline = 239u;
+        split->splitScanline = (uint8_t)scanline;
+    }
     return 1;
 }
 
