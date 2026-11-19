@@ -54,4 +54,7 @@ void nativeMenuTransitionPhase0(NativeMenuState *menu);
 /* Exact timer-expired branch of ofs_000_C465_04 / _07 (sub_C3AF). */
 void nativeMenuCompleteTimedTransition(NativeMenuState *menu);
 
+/* Exact phase-3 native translation of ofs_CC6B_03. */
+void nativeMenuTransitionPhase3(NativeMenuState *menu);
+
 #endif
