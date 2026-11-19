@@ -81,6 +81,7 @@ void gameRender(void)
     rendererDraw(&s_menuState);
     rendererGetSprite0Hit(&s_menuState.menu_sprite0_hit_found,
                           &s_menuState.menu_sprite0_hit_cycle);
+    s_menuState.menu_sprite0_hit_last_frame = s_menuState.menu_sprite0_hit_found;
     rendererEndFrame();
 }
 
