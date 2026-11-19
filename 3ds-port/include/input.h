@@ -10,4 +10,9 @@ typedef struct InputState {
 
 void inputUpdate(InputState *input);
 
+/* Map libctru's physical key bits to the original NES controller byte. */
+uint8_t inputMapNesButtons(u32 keys);
+uint8_t inputNesHeld(const InputState *input);
+uint8_t inputNesPressed(const InputState *input);
+
 #endif
