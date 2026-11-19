@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include "native_menu.h"
 
@@ -59,6 +58,19 @@ uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
     return confirmed;
 }
 
+
+
+void nativeMenuInit(NativeMenuState *menu)
+{
+    if (menu == 0) {
+        return;
+    }
+    memset(menu, 0, sizeof(*menu));
+    menu->source_state = 0u;
+    /* ofs_001_C2BD_00_01 initializes the title idle timer to $38. */
+    menu->input.input_timer = 0x38u;
+    menu->timer_values[16] = 0x38u;
+}
 
 static void nativeMenuResetSetupSequence(NativeMenuState *menu)
 {
@@ -195,11 +207,3 @@ void nativeMenuTickTimers(NativeMenuState *menu)
     menu->input.input_timer = menu->timer_values[16];
 }
 
-void nativeMenuRenderStatus(const GameState *state)
-{
-    (void)state;
-    puts("EXCITEBIKE — NATIVE PORT");
-    puts("------------------------");
-    puts("The legacy NES runtime has been disconnected.");
-    puts("Native menu reconstruction is the next implementation stage.");
-}
