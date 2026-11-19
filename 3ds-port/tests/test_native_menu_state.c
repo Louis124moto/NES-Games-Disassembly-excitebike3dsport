@@ -145,6 +145,56 @@ static int test_native_transition_phase1(void)
     return 0;
 }
 
+static int test_native_transition_phase1_differential(Cpu6502 *reference)
+{
+    unsigned flag, sample, i;
+    unsigned long vectors = 0u;
+    for (flag = 0u; flag < 2u; ++flag) {
+        for (sample = 0u; sample < 32u; ++sample) {
+            NativeMenuState native_menu;
+            int rc;
+            memset(reference->ram, 0, sizeof(reference->ram));
+            reference->ram[0x0033u] = 0u;
+            reference->ram[0x0044u] = 1u;
+            reference->ram[0x004Bu] = (uint8_t)flag;
+            reference->ram[0x0300u] = 0u;
+            for (i = 0u; i < 7u; ++i) {
+                reference->ram[0x03D9u + i] = (uint8_t)(sample * 7u + i * 19u);
+            }
+            prepare_cpu(reference);
+            rc = cpu6502_call(reference, 0xCB77u, 2048u);
+            if (rc != 0) {
+                printf("FAIL: original CB77 returned %d flag=%u sample=%u\\n", rc, flag, sample);
+                return 1;
+            }
+
+            memset(&native_menu, 0, sizeof(native_menu));
+            native_menu.transition_phase = 1u;
+            native_menu.transition_flag_004B = (uint8_t)flag;
+            native_menu.timer_values[18] = 0u;
+            for (i = 0u; i < 7u; ++i) {
+                native_menu.transition_payload[i] = (uint8_t)(sample * 7u + i * 19u);
+            }
+            nativeMenuTransitionPhase1(&native_menu);
+            if (native_menu.transition_phase != reference->ram[0x0044u] ||
+                native_menu.transition_duration != reference->ram[0x03ADu] ||
+                native_menu.timer_values[18] != reference->ram[0x0033u]) {
+                printf("FAIL: CB77 native/ASM state mismatch flag=%u sample=%u\\n", flag, sample);
+                return 1;
+            }
+            for (i = 0u; i < 7u; ++i) {
+                if (native_menu.transition_patch[i] != reference->ram[0x03D9u + i]) {
+                    printf("FAIL: CB77 payload mismatch flag=%u sample=%u byte=%u\\n", flag, sample, i);
+                    return 1;
+                }
+            }
+            ++vectors;
+        }
+    }
+    printf("PASS: %lu native CB77 phase-1 transition vectors match original ASM state/timing/payload.\\n", vectors);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 reference;
@@ -167,6 +217,8 @@ int main(int argc, char **argv)
         if (fclose(f) != 0 || n != sizeof(reference.prg)) return 2;
         cpu6502_reset_state(&reference);
     }
+
+    if (test_native_transition_phase1_differential(&reference) != 0) return 1;
 
     for (si = 0; si < 3u; ++si) {
         for (selection = 0; selection < 8u; ++selection) {
