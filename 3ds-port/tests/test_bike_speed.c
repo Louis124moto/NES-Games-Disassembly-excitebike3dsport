@@ -274,6 +274,84 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("PASS: %lu native player speed-control and terrain vectors match original ASM.\n", vectors);
+    /* Differentially test temperature/overheat state from sub_E359. */
+    {
+        static const uint8_t whole_values[] = {
+            0u, 7u, 8u, 9u, 16u, 17u, 18u, 25u, 26u, 31u, 32u, 33u, 0xFFu
+        };
+        static const uint8_t fraction_values[] = { 0u, 0x0Au, 0x0Bu, 0x0Cu, 0xFFu };
+        unsigned controller2, started2, finished2, overheat2, timer2, wi, fi2;
+        for (controller2 = 0; controller2 < 256u; ++controller2) {
+            for (started2 = 0; started2 < 2u; ++started2) {
+                for (finished2 = 0; finished2 < 2u; ++finished2) {
+                    for (overheat2 = 0; overheat2 < 2u; ++overheat2) {
+                        for (timer2 = 0; timer2 < 2u; ++timer2) {
+                            for (wi = 0; wi < sizeof(whole_values); ++wi) {
+                                for (fi2 = 0; fi2 < sizeof(fraction_values); ++fi2) {
+                                    BikeTemperatureState native_temperature;
+                                    uint8_t native_tile;
+                                    int rc;
+                                    native_temperature.fraction = fraction_values[fi2];
+                                    native_temperature.whole = whole_values[wi];
+                                    native_temperature.overheat_state = overheat2 ? 0x20u : 0u;
+                                    native_temperature.overheat_timer = (uint8_t)timer2;
+                                    native_temperature.sound_flags = 0x05u;
+
+                                    memset(reference.ram, 0, sizeof(reference.ram));
+                                    reference.ram[0x0052u] = (uint8_t)finished2;
+                                    reference.ram[0x03E0u] = native_temperature.overheat_state;
+                                    reference.ram[0x003Cu] = native_temperature.overheat_timer;
+                                    reference.ram[0x005Cu] = (uint8_t)controller2;
+                                    reference.ram[0x004Fu] = (uint8_t)started2;
+                                    reference.ram[0x03B5u] = native_temperature.fraction;
+                                    reference.ram[0x03B6u] = native_temperature.whole;
+                                    reference.ram[0x00FCu] = native_temperature.sound_flags;
+                                    reference.a = 0u;
+                                    reference.x = 0u;
+                                    reference.y = 0u;
+                                    reference.sp = 0xFDu;
+                                    reference.p = 0x24u;
+                                    reference.cycles = 0u;
+                                    reference.bad_opcode = -1;
+                                    rc = cpu6502_call(&reference, 0xE359u, 512u);
+                                    if (rc != 0) {
+                                        printf("FAIL: original sub_E359 returned %d at controller=%02X started=%u finished=%u overheat=%u timer=%u heat=%02X:%02X\n",
+                                               rc, controller2, started2, finished2, overheat2,
+                                               timer2, whole_values[wi], fraction_values[fi2]);
+                                        return 1;
+                                    }
+
+                                    native_tile = bikePhysicsUpdateTemperature(&native_temperature,
+                                                                               (uint8_t)controller2,
+                                                                               (uint8_t)started2,
+                                                                               (uint8_t)finished2);
+                                    if (native_temperature.fraction != reference.ram[0x03B5u] ||
+                                        native_temperature.whole != reference.ram[0x03B6u] ||
+                                        native_temperature.overheat_state != reference.ram[0x03E0u] ||
+                                        native_temperature.overheat_timer != reference.ram[0x003Cu] ||
+                                        native_temperature.sound_flags != reference.ram[0x00FCu] ||
+                                        native_tile != reference.ram[0x0001u]) {
+                                        printf("FAIL: sub_E359 controller=%02X start=%u finish=%u overheat=%u timer=%u heat=%02X:%02X native=%02X:%02X state=%02X timer=%02X fc=%02X tile=%02X ASM=%02X:%02X state=%02X timer=%02X fc=%02X tile=%02X\n",
+                                               controller2, started2, finished2, overheat2, timer2,
+                                               whole_values[wi], fraction_values[fi2],
+                                               native_temperature.whole, native_temperature.fraction,
+                                               native_temperature.overheat_state, native_temperature.overheat_timer,
+                                               native_temperature.sound_flags, native_tile,
+                                               reference.ram[0x03B6u], reference.ram[0x03B5u],
+                                               reference.ram[0x03E0u], reference.ram[0x003Cu],
+                                               reference.ram[0x00FCu], reference.ram[0x0001u]);
+                                        return 1;
+                                    }
+                                    ++vectors;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    printf("PASS: %lu native player speed-control, terrain and temperature vectors match original ASM.\n", vectors);
     return 0;
 }
