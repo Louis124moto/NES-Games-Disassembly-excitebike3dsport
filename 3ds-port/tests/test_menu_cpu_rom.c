@@ -70,6 +70,7 @@ static int testSharedTransitionDispatcherPhases(void)
     memset(ram, 0, sizeof(ram));
     ram[0x0041u] = 3u;
     ram[0x0044u] = 1u;
+    ram[0x004Bu] = 1u; /* transition animation selects the $20 timer */
     ram[0x0033u] = 1u;
     if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) || ram[0x0044u] != 1u ||
         ram[0x0033u] != 1u) {
