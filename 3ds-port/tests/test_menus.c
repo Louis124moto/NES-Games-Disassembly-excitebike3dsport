@@ -399,12 +399,14 @@ static int testDesignConfirm(void)
     return 0;
 }
 
-typedef struct { uint8_t b0[64], b1[256]; int haveData; unsigned reads; int failNext; int saveCalls; } FakeTape;
+typedef struct { uint8_t b0[64], b1[256]; int haveData; unsigned reads; int failNext; int saveCalls; int failSave; } FakeTape;
 
 static int fakeSave(void *ctx, const uint8_t *b0, const uint8_t *b1)
 {
     FakeTape *t = (FakeTape *)ctx;
-    memcpy(t->b0, b0, 64u); memcpy(t->b1, b1, 256u); t->haveData = 1; ++t->saveCalls;
+    ++t->saveCalls;
+    if (t->failSave) return 0;
+    memcpy(t->b0, b0, 64u); memcpy(t->b1, b1, 256u); t->haveData = 1;
     return 1;
 }
 
@@ -438,6 +440,29 @@ static int testTapeSave(void)
     CHECK(s->menu_asm_state == 8u && s->menu_ram0048 == 0xFFu, 113);
     CHECK(tape.reads == 0u, 114);              /* a save must never go through the read path */
     CHECK(s->menu_ram00FB == 0x40u, 115);      /* loc_C447 */
+    menusSetTapeIo(NULL);
+    free(s);
+    return 0;
+}
+
+/* A host filesystem write failure must not be reported as a successful recorder save. */
+static int testTapeSaveFailure(void)
+{
+    FakeTape tape;
+    MenusTapeIo io;
+    GameState *s = NULL;
+    memset(&tape, 0, sizeof(tape));
+    tape.failSave = 1;
+    io.save = fakeSave;
+    io.readBlock = fakeRead;
+    io.ctx = &tape;
+    menusSetTapeIo(&io);
+    if (confirmFrom(3u, &s)) return 1;
+    frames(s, 200u, 0u);
+    CHECK(tape.saveCalls == 1 && tape.haveData == 0, 116);
+    CHECK(s->menu_asm_state == 8u && s->menu_ram0048 == 0xFFu, 117);
+    CHECK(s->menu_nmi_enabled == 1u && s->menu_ram0045 == 0u, 118);
+    CHECK(s->menu_ppu_revision != 0u, 119); /* error list $19 was consumed */
     menusSetTapeIo(NULL);
     free(s);
     return 0;
@@ -562,6 +587,7 @@ int main(void)
     if ((rc = testDesignMenu()) != 0) return rc;
     if ((rc = testDesignConfirm()) != 0) return rc;
     if ((rc = testTapeSave()) != 0) return rc;
+    if ((rc = testTapeSaveFailure()) != 0) return rc;
     if ((rc = testTapeLoad()) != 0) return rc;
     if ((rc = testTapeFileBackend()) != 0) return rc;
     puts("PASS: menu frame model (NMI order, setup sequencer, cursor OAM, navigation, dynamic buffer).");
