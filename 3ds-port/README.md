@@ -15,9 +15,14 @@ make clean
 
 The CI build should produce `build/excitebike3ds.3dsx` and `build/excitebike3ds.elf`. Generated objects, dependency files, and final binaries belong under `build/`. The `.3dsx` can be copied to an SD card for a homebrew launcher, once the build and launch have been verified.
 
-## Faithful game path (2026-11-19)
+## Runtime target — faithful native port
 
-With the player's own `rom.nes` beside the 3DSX (mapper 0, PRG identical to the disassembly), press **SELECT** on the diagnostics screen to run the original program: it is statically recompiled from `../Excitebike/bank_FF.asm` (`tools/asm2c.py` -> `source/nes_gen_code.c`) and executed on a software NES system layer (`source/nes_system.c`, `source/nes_apu.c`). Title, menus, races and sound are therefore the original code, not re-implementations. D-pad/A/B/SELECT/START = NES pad; hold L+R for one second to leave. Audio requires `dspfirm.cdc` on the SD card. The tape (data recorder) is not emulated. Evidence and open items: see "Faithful full-system path" in [TODO.md](TODO.md). No hardware run has been recorded yet.
+The final application is a **native Excitebike implementation in C/C++ for Nintendo 3DS**. It must not load or execute `rom.nes`, run generated 6502 code, or use a software NES CPU/PPU/APU. The original ASM is studied and translated into native game logic; verified original graphics, course data and sound assets may be imported into native formats.
+
+The previous SELECT-to-run-ROM / software-NES-system path is retired as the product direction. Emulator/recompiler code is historical or temporary reference work only and must be removed from the final runtime/build. An independent 6502 oracle or NES emulator may remain in host-only differential tests. See the controlling specification in [TODO.md](TODO.md) and the rules in [PORTING_RULES.md](PORTING_RULES.md).
+
+The released game must launch and play without `rom.nes` or `dspfirm.cdc`. Native menus, gameplay, rendering, audio, input and save/load are implemented as independent modules and validated against reproducible original-NES reference scenarios.
+
 
 ## Architecture status
 
