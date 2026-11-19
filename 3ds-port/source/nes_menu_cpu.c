@@ -128,6 +128,9 @@ static uint8_t nesMenuIoRead(NesMachine *machine, uint16_t address)
     if (address == 0x2002u) {
         bus->addressLatch = 0u;
         bus->scrollLatch = 0u;
+        /* The editor's D19B waits for the sprite-0-hit flag. This frame-level
+         * adapter acknowledges the wait; it does not emulate pixel/raster timing. */
+        return 0x40u;
     }
     return 0u;
 }
@@ -191,6 +194,42 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     if (result != 0) return 0;
     memcpy(cpuRam, machine.ram, sizeof(machine.ram));
     *paletteWritten = bus.paletteWritten;
+    return 1;
+}
+
+/*
+ * Run one original state-09 editor update through the generated 6502 code.
+ * The editor waits on PPUSTATUS bit 6 in sub_D19B. We acknowledge that wait
+ * once per host frame; this keeps the original RAM/object/control logic but
+ * is explicitly NOT a pixel-accurate sprite-0/raster simulation.
+ */
+int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
+                          uint8_t pressedButtons, uint8_t nametables[2048],
+                          uint8_t palette[32], uint8_t *ppuCtrl,
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY)
+{
+    NesMachine machine;
+    NesMenuPpuBus bus;
+    int result;
+    if (!s_ready || cpuRam == NULL || nametables == NULL || palette == NULL ||
+        ppuCtrl == NULL || ppuMask == NULL || scrollX == NULL || scrollY == NULL)
+        return 0;
+    memset(&machine, 0, sizeof(machine));
+    memset(&bus, 0, sizeof(bus));
+    memcpy(machine.ram, cpuRam, sizeof(machine.ram));
+    machine.prg = s_prg;
+    machine.sp = 0xFDu;
+    machine.ram[0x0014u] = heldButtons;
+    machine.ram[0x0015u] = pressedButtons;
+    bus.nametables = nametables; bus.palette = palette;
+    bus.ctrl = ppuCtrl; bus.mask = ppuMask;
+    bus.scrollX = scrollX; bus.scrollY = scrollY;
+    machine.user = &bus;
+    machine.io_read = nesMenuIoRead;
+    machine.io_write = nesMenuIoWrite;
+    result = nesCall(&machine, 0xC97Cu, 1000000L);
+    if (result != 0) return 0;
+    memcpy(cpuRam, machine.ram, sizeof(machine.ram));
     return 1;
 }
 
