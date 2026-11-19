@@ -71,6 +71,24 @@ typedef struct BikePlayerSpeedContext {
 
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player);
 
+/* Player temperature/overheat meter state from ram_03B5/$03B6,
+ * ram_03E0, ram_003C and ram_00FC. */
+typedef struct BikeTemperatureState {
+    uint8_t fraction;
+    uint8_t whole;
+    uint8_t overheat_state;
+    uint8_t overheat_timer;
+    uint8_t sound_flags;
+} BikeTemperatureState;
+
+/* Native gameplay-state translation of sub_E359; returns the source sprite
+ * tile selector ($FE normal / blink-off, $FC blink-on). Sprite/OAM writes
+ * remain the renderer's responsibility. */
+uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
+                                     uint8_t controller,
+                                     uint8_t race_started,
+                                     uint8_t race_finished);
+
 /* Full per-frame bike integration is intentionally not exposed until all
  * input, heat, posture, collision and update-order dependencies are traced. */
 void bikePhysicsUpdate(BikeState *bike, const InputState *input);
