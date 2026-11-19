@@ -92,14 +92,11 @@ void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
 }
 
 /* Source: sub_CDEE ($CDEE-$CE28), player object X=0. */
-uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
+uint8_t bikePhysicsTerrainGateForObject(BikeTerrainGateState *state, uint8_t object_index)
 {
     uint8_t high_path;
 
-    if (state == 0) {
-        return 0u;
-    }
-
+    if (state == 0) return 0u;
     high_path = (uint8_t)(
         state->object_class == 0xE4u ||
         (state->surface == 0x03u && state->surface_state >= 0x03u) ||
@@ -107,19 +104,20 @@ uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
         state->vertical_position >= 0x38u);
 
     if (high_path != 0u) {
-        if (state->posture_state != 0x01u) {
-            state->posture_state = 0x02u;
-        }
-        state->player_event_flag = 0x04u;
+        if (state->posture_state != 0x01u) state->posture_state = 0x02u;
+        /* sub_CDEE writes global $00FD only for X=0, not opponent slots. */
+        if (object_index == 0u) state->player_event_flag = 0x04u;
         return 0u;
     }
 
-    if (state->posture_state != 0x01u) {
-        state->posture_state = 0x00u;
-    }
+    if (state->posture_state != 0x01u) state->posture_state = 0x00u;
     return 1u;
 }
 
+uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
+{
+    return bikePhysicsTerrainGateForObject(state, 0u);
+}
 
 /* Player branch of sub_CD59 ($CD59-$CDEB), excluding its later steering/
  * animation side effects at loc_CDBD. The exact called speed/gate helpers
@@ -197,7 +195,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
     }
 
     acceleration_mode = (object->controller & 0x80u) != 0u ? 0u : 1u;
-    gate_z = bikePhysicsTerrainGate(&object->terrain);
+    gate_z = bikePhysicsTerrainGateForObject(&object->terrain, index);
     if (gate_z == 0u && object->speed.whole != 0u) {
         bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
