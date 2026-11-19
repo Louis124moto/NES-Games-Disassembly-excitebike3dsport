@@ -3,9 +3,9 @@
 /* Source: Excitebike/bank_FF.asm, tbl_C0BC ($C0BC), tbl_C0CE ($C0CE),
  * tbl_C0D1 ($C0D1), and sub_CE29 ($CE29-$CE57).
  * The values below are copied from the source tables, not tuned estimates. */
-static const uint8_t kAccelerationIncrement[2] = { 0x18u, 0x3Fu };
-static const uint8_t kPlayerSpeedFractionCap[2] = { 0x20u, 0x40u };
-static const uint8_t kPlayerSpeedWholeCap[2] = { 0x03u, 0x03u };
+static const uint8_t kAccelerationIncrement[3] = { 0x18u, 0x3Fu, 0x28u };
+static const uint8_t kPlayerSpeedFractionCap[3] = { 0x20u, 0x40u, 0x7Fu };
+static const uint8_t kPlayerSpeedWholeCap[3] = { 0x03u, 0x03u, 0x01u };
 
 void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
                                  uint8_t frame_phase,
@@ -13,7 +13,7 @@ void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
 {
     uint16_t sum;
 
-    if (speed == 0 || frame_phase != 0u || acceleration_mode > 1u) {
+    if (speed == 0 || frame_phase != 0u || acceleration_mode > 2u) {
         return;
     }
 
