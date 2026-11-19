@@ -345,7 +345,7 @@ The existing `testDesignConfirm` exercises all six selection values in `ofs_000_
 - 4 -> state `$0D` (load), including missing-file, header mismatch, retry/checksum failure and successful return in `testTapeLoad`.
 - 5 -> clear `$0021-$00FF`, return to state `$00`, restore selection 2.
 
-Thus the menu's six-way branch decision and the save/load/title-return paths are covered. The unresolved menu destination is state 9: its six setup commands now have a PRG-backed path, including dynamic PPU uploads and OAM initialization, but the per-frame `$C97C` handler and B-button return are not yet integrated. The state-10 race path is a Stage 3 destination, not an unfinished menu cursor branch.
+Thus the menu's six-way branch decision and the save/load/title-return paths are covered. State 9 is the course editor: its six setup commands and `$C97C` per-frame handler now execute through the static recompiler, with the original `$EB17` B-button branch. The state-10 race path is a Stage 3 destination, not an unfinished menu cursor branch.
 
 ### `sub_C7DE` input equivalence checkpoint (commit `b2fa4fb21146`)
 
