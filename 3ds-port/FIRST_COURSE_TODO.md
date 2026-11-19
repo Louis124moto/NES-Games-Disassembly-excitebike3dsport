@@ -16,7 +16,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 ### A. Complete the minimum native race simulation
 - [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
 - [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.
-- [ ] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`.
+- [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
 - [ ] Complete steering, braking, posture, jump/landing, heat/overheat, collision/crash/recovery and opponent decisions.
 - [ ] Differential-test each routine and deterministic whole-frame scenarios against the host-only original-ASM oracle.
 - [ ] Integrate the semantic race update into the native application loop. No NES RAM image or CPU execution in the shipped runtime.
@@ -61,12 +61,13 @@ This is the execution order for completing the first playable race. A checked it
 - [x] `DA58`: speed fixed-point fraction → per-frame movement delta.
 - [x] `DBFE`: secondary/parallax scroll accumulator.
 - [x] `DCDE`: per-object lock-timer decay helper.
-- [ ] `DC1A`: source-faithful rider/object recovery and vertical-position gate. Required state: `00B0`, `03F1`, `00BC`, object Y-low, `008C`, `0364`, `0052`, `0388`, `00D4`, `00AC`, `0368`, `00CC`, `0098`, `0374`, plus exact `D86C/D87C` thresholds. Reuse `DC97/DC9A` only after its carry semantics are checked in caller context.
-- [ ] `DCF2`: movement/AI substate step. Required dependencies: `DD38` object-motion initialization, `DD6F` fixed-point update, `D868` direction delta table, incoming carry from the bit-0/frame-phase branch, and object fields `00B0/005C/004C/0094/008C/00CC/0364/0380/0384/038C/0378/037C`. Existing helpers in `nes_routines.c` are reusable only after their semantic interfaces are integrated and differentially verified.
-- [ ] Add semantic native object state; do not add a live NES-RAM struct. Map every field to a named bike/rider/movement concept.
-- [ ] Add direct ASM-oracle differential tests for `DC1A` and `DCF2`, including every branch and carry edge.
-- [ ] Integrate exact per-bike order `DA58 → DC1A → DCF2 → DCDE` for slots 3,2,1,0; test full state after each pass.
-- [ ] Integrate `DA6A → DA7A → DBFE` and compare full movement state across deterministic frames.
+- [x] `DC1A`: source-derived vertical recovery, branch thresholds and rider/object state updates; 50,000 randomized ASM differential vectors.
+- [x] `DCF2`: source-derived vertical movement, `DD38` initialization, `DD6F` fixed-point/carry chain and `D868` direction table; 50,000 randomized ASM differential vectors.
+- [x] Add semantic native bike/rider/movement state; the shipped runtime does not use a live NES RAM image.
+- [x] Add direct ASM-oracle differential tests for `DC1A` and `DCF2`.
+- [x] Integrate exact per-bike order `DA58 → DC1A → DCF2 → DCDE` for slots 3,2,1,0; test the complete `DA26` pass across 50,000 randomized states.
+- [x] Integrate `DA6A → DA7A → DBFE` and compare the complete movement/camera state against `sub_DA26`.
+- [ ] Integrate the verified movement pass into the actual native race frame loop; the app currently remains a front-end prototype.
 
 ### 2. Complete player and opponent simulation
 - [ ] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects; retain existing speed-control differential coverage.
@@ -105,3 +106,12 @@ This is the execution order for completing the first playable race. A checked it
 3. Differential-test both against the host-only oracle.
 4. Wire the complete four-slot `DA26` object pass and test the combined state.
 5. Continue upward through the remaining race-frame calls; do not stop at a helper or a successful build.
+
+
+## Verified movement milestone — 2026-11-19 21:09 CET
+
+- Commit: `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
+- Native routines: `DC1A`, `DCF2`, their `DD38/DD6F` dependencies, and the complete `DA26` movement/camera pass.
+- Differential tests: 50,000 `DC1A` vectors, 50,000 `DCF2` vectors, and 50,000 complete `DA26` frames.
+- CI: [host differential tests](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749414) and [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749343) passed.
+- Important boundary: this is a verified simulation subsystem, not yet connected to the app's native menu/race state machine. Course data, full frame order, AI, collisions, race rendering and finish/results remain outstanding.
