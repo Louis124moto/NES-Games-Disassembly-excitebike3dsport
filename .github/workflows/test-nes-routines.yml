@@ -3,6 +3,9 @@ name: Verify NES routine translations
 on:
   push:
     paths:
+      - "3ds-port/README.md"
+      - "3ds-port/TODO.md"
+      - "3ds-port/ASM_FUNCTION_INVENTORY.md"
       - "3ds-port/source/nes_routines.c"
       - "3ds-port/include/nes_routines.h"
       - "3ds-port/tests/**"
