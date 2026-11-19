@@ -1,3 +1,5 @@
+> **Current native-port status — 2026-11-19:** This README contains older dated development notes. The controlling status is [the root README](../README.md) and [TODO.md](TODO.md). Stage 1 was owner-accepted on 2026-11-17 (verification debt remains); Stage 2 native menus are in progress; Stage 3 is blocked until Stage 2 acceptance. The current executable is still an asset inspector, not a playable game. A ROM may be supplied as optional source material to that inspector, but the final game must never load or execute it. Any old recompiler, PPU/NMI, RAM-backed runtime, or emulator-oriented prototype described below is historical evidence only and must not be restored to the 3DS runtime.
+
 # Excitebike 3DS — native homebrew port
 
 This directory contains the native Nintendo 3DS application. The original NES disassembly remains in `../Excitebike/` and is preserved separately.
