@@ -526,3 +526,11 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] `menusNmiUpload` now runs D14E after the NMI PPU stream upload when persistent `ram_0047` is nonzero, matching the source order before the state handler.
 - [x] D14E's source delay loop, dynamic `$0300` command construction, PPUCTRL and scroll writes are executed by the static recompiler and synchronized back to GameState. The next state-09 C97C call sees sprite-hit bit `$40` set.
 - [ ] The host bus models the sprite-hit flag at frame boundaries; it does not render pixels to determine the real sprite-0 collision. Emulator trace and physical New 3DS timing comparison remain mandatory.
+
+
+### 2026-11-19 — source-PRG-backed integration regression
+
+- [x] CI now wraps the exact 16 KiB PRG emitted from `Excitebike/bank_FF.asm` in a temporary iNES header, loads it through `nesMenuCpuInit`, and exercises the actual recompiled menu code.
+- [x] The integration test verifies C465 timer-zero transitions `4 -> 5` and `7 -> 2`, all six state-9 list-5 setup commands, C5C2's object/course-page side effects, and one C97C frame receiving LEFT as NES controller bit `$02`.
+- [x] The complete host workflow and New 3DS build both pass on commit `bc035d9` (2026-11-19).
+- [ ] This smoke test does not yet vector-test the guarded B-button exit, every editor object interaction, or pixel-accurate PPU timing; those remain open.
