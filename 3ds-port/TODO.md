@@ -77,7 +77,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 |---|---|---|
 | Input | `inputMapNesButtons` maps libctru buttons to semantic/original input bits; all 256 combinations tested. | Full game action handling/integration. |
 | Menu logic | `nativeMenuUpdateSelection` (`sub_C7DE`), title/selector/design state logic, timer bank (`sub_D310`), transition phase 0 (`CB3B`), phase 3 (`CC6B`) and timer-expired `C465` branch have source-derived tests. | Remaining transition phases/branches, setup command semantics, complete editor/save/load, native visual/audio presentation, app integration and reference capture comparison. |
-| Bike speed/physics | Native player speed control, acceleration/deceleration, terrain gate and temperature/overheat paths. | Full braking/gear behavior, steering, posture, jump, landing, crash/recovery, complete frame ordering and gameplay integration. |
+| Bike speed/physics | Native four-slot speed-control prefix (sub_CD59) and active-bike dispatch (sub_CD1F), plus acceleration/deceleration/terrain gate and temperature/overheat slices. New all-slot tests compare 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame vectors against the ASM oracle. | Remaining sub_CD59 steering/posture side effects, heat state integration, jump/landing, crash/recovery, opponents and complete frame ordering. |
 | Movement | Native fixed-point movement deltas, player scroll and opponent-relative position slices. | Full object update, collision, track event and race-frame integration. |
 | Track | Module/interface scaffolding. | Verified course geometry, ramps, obstacles, scrolling and native rendering. |
 | Opponents | Some movement primitives only. | Full initialization, AI/state decisions, collision and race behavior. |
@@ -88,7 +88,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 
 ### Existing differential evidence
 
-- Native player speed-control/acceleration/terrain/temperature slices: 1,224,704 ASM reference vectors recorded in the current tracker.
+- Native player speed-control/acceleration/terrain/temperature slices: 1,224,704 ASM reference vectors recorded in the current tracker. The new four-slot speed-control test adds 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame-dispatch vectors.
 - Native movement slices: 574,288 ASM reference vectors recorded in the current tracker.
 - Combined recorded slice count: **1,798,992 vectors**. This is not a complete physics or race validation.
 - Verified code revision: `f214e5bbc96473896ca3abbbbf9e8cb6c8cc05f8`.
@@ -119,9 +119,9 @@ Owner acceptance allows Stage 2 work to proceed; it does not mean every extracto
 
 ### Stage 2 — native menus and front-end
 
-**Status: IN PROGRESS. Stage 3 is blocked until Stage 2 is accepted.**
+**Status: MAIN-MENU BASELINE ACCEPTED BY OWNER FOR ENGINE WORK (2026-11-19); optional editor/tape submenus deferred.**
 
-Goal: reproduce the original title, selector, design/options menu, course editor entry/return, save/load flow, transitions and menu audio/visuals entirely in native code.
+Goal: retain the usable native title, selector and design/options flow needed to enter a race. The owner explicitly deferred the course editor and tape save/load menus so work can move to the race engine. Any transition or setup behavior required to enter/play a race remains in scope; optional submenus do not block Stage 3.
 
 - [x] Trace the original state dispatcher and setup-list mapping. Evidence: `STAGE2_TRACE.md`.
 - [x] Trace the shared transition dispatcher and timer behavior.
@@ -149,21 +149,22 @@ Goal: reproduce the original title, selector, design/options menu, course editor
 - [ ] Compare fixed-frame screenshots and input/replay scenarios against the original NES reference.
 - [ ] Run the integrated menu on physical New 3DS and record evidence.
 - [ ] Exact-commit host tests and New 3DS build pass.
-- [ ] Stage 2 acceptance report complete; only then unlock Stage 3.
+- [x] Owner authorized starting Stage 3 with the title/selector/design baseline; editor and tape save/load are deferred. This is a development-gate override, not a claim that every original menu subsystem is complete.
 
 Do not carry forward emulator-specific goals such as scanline accuracy, PPU register emulation, NMI simulation, sprite-0 hit simulation or a NES RAM-backed live menu. Translate only the observable menu behavior into native scene/state logic.
 
 ### Stage 3 — first complete playable race
 
-**Status: BLOCKED until Stage 2 acceptance. Some isolated native physics slices already exist.**
+**Status: IN PROGRESS by owner instruction. Some isolated native physics slices and the first four-bike speed-control frame pass are now implemented and differential-tested.**
 
 Goal: one original course playable from menu entry through finish/results, with source-faithful game behavior.
 
-- [ ] Complete source trace of state-2 race entry, setup sequence and exact per-frame update order.
+- [ ] Complete source trace of state-2 race entry, setup sequence and exact per-frame update order. Initial evidence: dispatcher state 2 enters ofs_000_C99A_02; sub_CD1F runs from loc_C9D5 and dispatches active bike slots 3..0 through sub_CD59.
 - [ ] Establish player/opponent identity and all persistent semantic state from initialization, writers, input flow and callers.
 - [ ] Convert race setup results into semantic native track/race structures; do not use a NES RAM image as live state.
 - [ ] Decode/import the first course's verified geometry, ramps, terrain, obstacles and visual data.
-- [ ] Complete player acceleration, braking, speed limits, heat/cooling, steering, posture, jumps, landing, collisions, crashes and recovery.
+- [x] Translate and differential-test the active-bike speed-control pass (sub_CD1F) and its sub_CD59 speed/terrain prefix for all four object slots.
+- [ ] Complete player acceleration, braking, speed limits, heat/cooling, steering, posture, jumps, landing, collisions, crashes and recovery; speed-control translation is only one subsystem, not a complete bike controller.
 - [ ] Complete opponent initialization, movement, AI and collision behavior.
 - [ ] Implement race timers, lap/finish detection, scoring, result flow and return-to-menu behavior.
 - [ ] Implement native rendering for track, bike, opponents, HUD and animation.
