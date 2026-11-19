@@ -234,10 +234,11 @@ void nativeMenuCompleteTimedTransition(NativeMenuState *menu)
 
 
 /* Source: ofs_CB77_01 ($CB77-$CBA3), phase 1 of sub_CB2C.
- * The seven source bytes are represented as semantic tile data. The original
- * writes them to a dynamic PPU command stream at $24CF; the native port emits
- * a scene patch at physical nametable B, tile coordinate (15,6), instead.
- * The payload must have been populated by the translated scene/setup producer.
+ * The seven-byte payload remains opaque. Source callers reuse $03D9-$03DF
+ * for more than one visual purpose, so these bytes must NOT be treated as
+ * tile IDs until their producer and caller context have been fully classified.
+ * The destination metadata below is a provisional trace aid only; this
+ * function is isolated and is not connected to the native renderer.
  */
 void nativeMenuTransitionPhase1(NativeMenuState *menu)
 {
