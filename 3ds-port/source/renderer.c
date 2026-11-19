@@ -193,8 +193,6 @@ static const char *viewName(unsigned int mode)
 static uint8_t s_bgOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
 
 /* Result of the last sprite composition (shown in the bottom log). */
-static int s_spriteResult = NES_PPU_RENDER_OK;
-static size_t s_spritePixels;
 static size_t s_bgChrTileCount;
 static int s_bgRenderResult;
 static int s_bgRenderReason;
@@ -271,11 +269,10 @@ static int rendererDrawPpuBackground(const GameState *state)
     }
 
     /* Source OAM sprites (8x8/8x16, flips and priority) over the rendered PPU background. */
-    s_spritePixels = 0u;
-    s_spriteResult = nesPpuRenderSprites(chrAll, chrAllCount, state->menu_oam,
-                                         state->menu_ppu_palette, state->menu_ppu_ctrl,
-                                         state->menu_ppu_mask, s_bgOpaque, s_ppuRgb, sizeof(s_ppuRgb),
-                                         &s_spritePixels);
+    (void)nesPpuRenderSprites(chrAll, chrAllCount, state->menu_oam,
+                               state->menu_ppu_palette, state->menu_ppu_ctrl,
+                               state->menu_ppu_mask, s_bgOpaque, s_ppuRgb,
+                               sizeof(s_ppuRgb), NULL);
 
     memset(framebuffer, 0, (size_t)width * (size_t)height * 3u);
     /*
