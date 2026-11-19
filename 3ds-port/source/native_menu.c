@@ -101,13 +101,12 @@ uint8_t nativeMenuStepSetup(NativeMenuState *menu)
             menu->title_animation_counter = 0x04u;
             menu->source_visual_asset = 0x02u;
             nativeMenuSetCursorSprite(menu, 0u);
-            if (menu->title_animation_flag == 0u) menu->title_animation_flag = 1u;
-            menu->title_animation_flag = (uint8_t)(menu->title_animation_flag & 0xFFu);
-            menu->title_animation_counter = 0x04u;
+            if (menu->title_animation_index == 0u) menu->title_animation_flag = 1u;
+            if (menu->title_animation_index >= 2u) menu->title_animation_index = 0xFFu;
+            menu->title_animation_index = (uint8_t)(menu->title_animation_index + 1u);
             menu->timer_values[16] = 0x38u;
             menu->input.input_timer = 0x38u;
             menu->cursor_sprite_y = 0x80u;
-            menu->title_animation_counter = 0x04u;
             menu->transition_phase = 1u;
             return 1u;
         }
