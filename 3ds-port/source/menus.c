@@ -72,8 +72,8 @@ static int menusRunSetupSequence(GameState *state)
     } else if (listIndex == 7u) {
         if (state->menu_ram0044 > 3u) return 1;
     } else if (listIndex == 5u) {
-        /* Commands $C551, $C869 and $C820 are source-recompiled. */
-        if (state->menu_ram0044 > 3u) return 1;
+        /* Six original list-5 commands: $C551, $C869, $C820, $C5A3, $C562, $C5C2. */
+        if (state->menu_ram0044 > 6u) return 1;
     } else {
         return 1; /* setup list is not translated; hold state for inspection */
     }
@@ -249,7 +249,6 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0040 = state->menu_cpu_ram[0x0040u];
             state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
             state->menu_repeat_guard = state->menu_cpu_ram[0x0049u];
-            state->menu_ram0047 = state->menu_cpu_ram[0x0047u];
             memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u],
                    sizeof(state->menu_oam));
             return 1;
