@@ -58,22 +58,22 @@ The original NES disassembly is the behavioral reference. Its source files must 
 |---|---|
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
-| Stage 2 — original menu | REOPENED / IN PROGRESS (2026-11-18); input/state paths are partial, original artwork/layout and complete flow remain unverified. Stage 3 blocked. |
+| Stage 2 — original menu | IN PROGRESS (2026-11-19); PRG-backed list-3/shared-transition, list-5/editor, C465, C97C and guarded B-return paths are integrated and host-tested. Authentic artwork, full PPU timing, remaining menu routes and physical comparison remain open. Stage 3 blocked. |
 | Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
-| Latest code batch | The static recompiler executes `$C7DE` for menu input and has a PRG-backed path for all six state-9 setup-list commands; editor frame processing and return remain open. |
-| Latest host test / 3DS build | Pending for the 2026-11-19 menu-recompiler adapter commits; do not infer a pass from earlier CI runs. |
+| Latest code batch | The static recompiler executes `$C7DE`, all five list-3 setup commands, the shared `$CB2C` dispatcher for states 3/6/11, `$C465` for states 4/7, list 5, and the state-9 editor frame/guarded B-return. The original `$D310` timer routine is also used when a supported PRG is loaded. |
+| Latest host test / 3DS build | **Passed** on `a547c0f2` in [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) and [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084). A subsequent CPU-RAM reset cleanup is being revalidated. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
 A function definition, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
 A function definition, matching name/address, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
 
-## Current implementation status — 2026-11-18
+## Current implementation status — 2026-11-19
 
 ### Extractor and original menu
 
 - Stage 1 was accepted by owner decision on 2026-11-17. Its remaining source-audit, edge-case, export, and reproducibility items remain follow-up debt; this is not a claim that every extractor criterion has been independently verified.
-- Stage 2 was previously marked accepted prematurely and is now reopened at the owner's request (2026-11-18). The owner report says the native menu responds to controls on New 3DS, but original boxes/artwork and complete menu flow are not faithfully reproduced. See `3ds-port/STAGE2_TRACE.md`; Stage 3 is blocked.
+- Stage 2 remains reopened at the owner's request. The PRG-backed menu integration now covers list 3/shared transitions, list 5/editor setup, C465 transitions, one C97C frame and the guarded EB17 B-return branch. Original title/menu artwork, natural route coverage, full editor interactions, pixel-accurate PPU timing, save/load edge cases and physical New 3DS comparison are still incomplete. See `3ds-port/STAGE2_TRACE.md`; Stage 3 remains blocked.
 - Commit `2bc8d15` added a centered 4:3 viewport and full OAM/scroll redraw tracking. Commit `8707ef5` added explicit PPU render-failure diagnostics. The viewport/diagnostic changes still need a fresh hardware retest and a title-menu capture comparison.
 - Do not replace missing source-confirmed menu art with invented rectangles, labels, or placeholder graphics.
 
@@ -196,7 +196,7 @@ The first native extraction/export pass is integrated into the 3DSX runtime. It 
 
 ## Current next priorities
 
-Stage 2 is the active and only implementation priority. Follow `3ds-port/TODO.md` and `3ds-port/STAGE2_TRACE.md`: finish the original menu state/command trace, complete source-derived PPU/OAM/scroll rendering, reconstruct authentic menu artwork and transitions, and validate against the original NES. Stage 3 work in `3ds-port/STAGE3_TRACE.md` is parked until Stage 2 is accepted.
+Stage 2 is the active and only implementation priority. Follow `3ds-port/TODO.md` and `3ds-port/STAGE2_TRACE.md`: finish reset/cancel and save/load edge cases, integrate the remaining NMI/OAM work, reconstruct authentic menu artwork, and validate every route against the original NES and physical New 3DS. Stage 3 work in `3ds-port/STAGE3_TRACE.md` is parked until Stage 2 is accepted.
 
 Stage 2's authentic menu artwork and hardware/reference comparison remain explicit follow-up debt; no complete menu fidelity claim is made.
  
