@@ -141,6 +141,8 @@ static int menusRunSetupSequence(GameState *state)
         if (state->menu_ram0044 > 6u) return 1;
     } else if (listIndex == 8u) {
         if (state->menu_ram0044 > 2u) return 1;
+    } else if (listIndex == 3u) {
+        if (state->menu_ram0044 > 5u) return 1;
     } else if (listIndex == 4u) {
         if (state->menu_ram0044 > 4u) return 1;
     } else if (listIndex == 6u) {
@@ -208,6 +210,22 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_ram0044 = 0u;
             return 1;
         }
+    } else if (listIndex == 3u) {
+        static const uint16_t routines[5] = {
+            0xC55Eu, /* ofs_001_C55E_03_01 */
+            0xC56Au, /* ofs_001_C56A_03_02 */
+            0xC455u, /* ofs_001_C455_03_03 */
+            0xC5A7u, /* ofs_001_C5A7_03_04 */
+            0xC485u  /* ofs_001_C485_03_05 */
+        };
+        menusCopyStateToCpuRam(state);
+        if (!nesMenuCpuRunRamRoutine(routines[commandIndex], state->menu_cpu_ram)) {
+            /* Without the original PRG, keep this command pending rather than guess. */
+            state->menu_ram0044 = (uint8_t)(state->menu_ram0044 - 1u);
+            return 1;
+        }
+        menusCopyCpuRamToState(state);
+        return 1;
     } else if (listIndex == 4u) {
         if (commandIndex == 0u) { /* ofs_001_C55E_04_01 */
             state->menu_ram0045 = 0x06u;
