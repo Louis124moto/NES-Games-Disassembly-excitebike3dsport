@@ -271,6 +271,72 @@ uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
     return 0xFEu;
 }
 
+
+/* Source: sub_DA58 ($DA58-$DA69), all four bike slots. */
+void bikePhysicsBuildMovementDeltas(BikeMovementState *movement)
+{
+    unsigned i;
+    if (movement == 0) {
+        return;
+    }
+    for (i = 0; i < 4u; ++i) {
+        const uint16_t sum = (uint16_t)movement->speed_fraction[i] +
+                             movement->fraction_accumulator[i];
+        movement->movement_delta[i] = movement->speed_whole[i];
+        movement->fraction_accumulator[i] = (uint8_t)sum;
+        if (sum > 0xFFu) {
+            movement->movement_delta[i] =
+                (uint8_t)(movement->movement_delta[i] + 1u);
+        }
+    }
+}
+
+/* Source: sub_DA6A ($DA6A-$DA79). The base nametable toggles only on carry. */
+void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement)
+{
+    uint16_t sum;
+    if (movement == 0) {
+        return;
+    }
+    sum = (uint16_t)movement->player_scroll_x + movement->movement_delta[0];
+    movement->player_scroll_x = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->base_nametable ^= 0x01u;
+    }
+}
+
+/* Source: sub_DA7A ($DA7A-$DAA0). Slots 3,2,1 are opponent-relative;
+ * slot 0 is the player and moves the camera instead. previous_x is shifted
+ * for every opponent slot, even when its active flag is clear. */
+void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement)
+{
+    int i;
+    if (movement == 0) {
+        return;
+    }
+    for (i = 3; i >= 1; --i) {
+        if (movement->object_active[i] != 0u) {
+            const uint16_t sum = (uint16_t)movement->x_low[i] +
+                                 movement->movement_delta[i];
+            const uint8_t moved_low = (uint8_t)sum;
+            uint8_t moved_high = movement->x_high[i];
+            uint8_t relative_low;
+            if (sum > 0xFFu) {
+                moved_high = (uint8_t)(moved_high + 1u);
+            }
+
+            relative_low = (uint8_t)(moved_low - movement->movement_delta[0]);
+            if (moved_low < movement->movement_delta[0]) {
+                moved_high = (uint8_t)(moved_high - 1u);
+            }
+            movement->x_low[i] = relative_low;
+            movement->x_high[i] = moved_high;
+        }
+        movement->previous_x[i] =
+            (uint8_t)(movement->previous_x[i] - movement->movement_delta[0]);
+    }
+}
+
 void bikePhysicsUpdate(BikeState *bike, const InputState *input)
 {
     (void)bike;
