@@ -132,9 +132,30 @@ static int testSprites(void)
     memset(&oam[0], 0xF8, 36u);
     oam[0] = 10u; oam[1] = 5u; oam[2] = 0u; oam[3] = 20u;
 
-    /* unmodelled features refuse and draw nothing; off-screen sprites do not count */
+    /* 8x16 mode uses an even tile pair; tile bit 0 selects the pattern table. */
+    memset(chr + 6u * 64u, 1, 64u);
+    memset(chr + 7u * 64u, 2, 64u);
+    memset(chr + 262u * 64u, 3, 64u);
+    memset(chr + 263u * 64u, 2, 64u);
+    oam[0] = 30u; oam[1] = 6u; oam[2] = 0u; oam[3] = 50u;
     memset(rgb, 7, NES_PPU_RGB_BYTES);
-    if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x30u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, NULL) != NES_PPU_RENDER_UNSUPPORTED) { rc = 126; goto done; }
+    if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x30u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, &drawn) != NES_PPU_RENDER_OK) { rc = 126; goto done; }
+    if (!pixelIs(rgb, 50u, 31u, 0x16u) || !pixelIs(rgb, 50u, 38u, 0x16u) ||
+        !pixelIs(rgb, 50u, 39u, 0x21u) || !pixelIs(rgb, 50u, 46u, 0x21u) ||
+        !pixelUntouched(rgb, 50u, 47u) || drawn != 128u) { rc = 132; goto done; }
+    /* Vertical flip reverses all 16 rows, including the tile-pair order. */
+    oam[2] = 0x80u; memset(rgb, 7, NES_PPU_RGB_BYTES);
+    if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x30u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, NULL) != NES_PPU_RENDER_OK) { rc = 133; goto done; }
+    if (!pixelIs(rgb, 50u, 31u, 0x21u) || !pixelIs(rgb, 50u, 46u, 0x16u)) { rc = 134; goto done; }
+    /* Odd tile selects pattern table 1 even when PPUCTRL bit 3 is clear/set. */
+    oam[1] = 7u; oam[2] = 0u; memset(rgb, 7, NES_PPU_RGB_BYTES);
+    if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x38u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, NULL) != NES_PPU_RENDER_OK) { rc = 135; goto done; }
+    if (!pixelIs(rgb, 50u, 31u, 0x30u) || !pixelIs(rgb, 50u, 39u, 0x21u)) { rc = 136; goto done; }
+    if (nesPpuRenderSprites(chr, 263u, oam, pal, 0x38u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, NULL) != NES_PPU_RENDER_MISSING_TILE) { rc = 137; goto done; }
+
+    /* Behind-background priority still requires a background-opacity map; off-screen sprites do not count. */
+    oam[0] = 10u; oam[1] = 5u; oam[2] = 0x20u; oam[3] = 20u;
+    memset(rgb, 7, NES_PPU_RGB_BYTES);
     oam[2] = 0x20u;
     if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x10u, 0x1Au, NULL, rgb, NES_PPU_RGB_BYTES, NULL) != NES_PPU_RENDER_UNSUPPORTED) { rc = 127; goto done; }
     if (!pixelUntouched(rgb, 20u, 11u)) { rc = 128; goto done; }
