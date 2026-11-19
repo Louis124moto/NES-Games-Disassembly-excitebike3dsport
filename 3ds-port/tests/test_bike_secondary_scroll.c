@@ -74,6 +74,36 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("PASS: %u secondary-scroll vectors match sub_DBFE ASM.\n", vectors);
+
+    /* sub_DCDE is called for each object after the per-bike DC1A/DCF2 work. */
+    for (vector = 0u; vector < 25000u; ++vector) {
+        unsigned slot;
+        for (slot = 0u; slot < 4u; ++slot) {
+            BikeMovementState native = { 0 };
+            int rc;
+            native.object_lock_timer[slot] = nextByte();
+            native.movement_flags[slot] = nextByte();
+            memset(reference.ram, 0, sizeof(reference.ram));
+            reference.ram[0x0374u + slot] = native.object_lock_timer[slot];
+            reference.ram[0x005Cu + slot] = native.movement_flags[slot];
+            prepareCpu(&reference);
+            reference.x = (uint8_t)slot;
+            rc = cpu6502_call(&reference, 0xDCDEu, 32u);
+            if (rc != 0) {
+                printf("FAIL: sub_DCDE returned %d slot=%u vector=%u\\n", rc, slot, vector);
+                return 1;
+            }
+            bikePhysicsUpdateObjectLockTimers(&native);
+            if (native.object_lock_timer[slot] != reference.ram[0x0374u + slot]) {
+                printf("FAIL: sub_DCDE slot=%u vector=%u timer=%02X flags=%02X native=%02X ASM=%02X\\n",
+                       slot, vector, reference.ram[0x0374u + slot],
+                       native.movement_flags[slot], native.object_lock_timer[slot],
+                       reference.ram[0x0374u + slot]);
+                return 1;
+            }
+        }
+    }
+
+    printf("PASS: %u DBFE scroll + 100000 DCDE lock-timer vectors match ASM.\n", vectors);
     return 0;
 }
