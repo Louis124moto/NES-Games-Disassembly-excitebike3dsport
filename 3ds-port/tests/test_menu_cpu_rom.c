@@ -142,6 +142,7 @@ static int testRasterSplitD0AB(void)
     memset(nametables, 0, sizeof(nametables));
     memset(palette, 0, sizeof(palette));
     cpuRam[0x0041u] = 9u;       /* editor: D14E must not blanket-hide OAM */
+    cpuRam[0x0047u] = 1u;       /* vec_C23B_NMI enables D0AB/D14E */
     cpuRam[0x0010u] = 0x10u;    /* source PPUCTRL baseline */
     cpuRam[0x004Eu] = 0x01u;    /* first raster half: nametable B */
     cpuRam[0x004Du] = 0x02u;    /* second raster half: nametable A + vertical bit */
