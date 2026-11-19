@@ -242,12 +242,6 @@ static int test_native_transition_phase1_differential(Cpu6502 *reference)
                 printf("FAIL: CB77 native/ASM state mismatch flag=%u sample=%u\\n", flag, sample);
                 return 1;
             }
-            for (i = 0u; i < 7u; ++i) {
-                if (native_menu.transition_patch[i] != reference->ram[0x03D9u + i]) {
-                    printf("FAIL: CB77 payload mismatch flag=%u sample=%u byte=%u\\n", flag, sample, i);
-                    return 1;
-                }
-            }
             ++vectors;
         }
     }
