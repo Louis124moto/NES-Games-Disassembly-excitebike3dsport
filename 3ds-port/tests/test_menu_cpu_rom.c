@@ -156,11 +156,15 @@ static int testRasterSplitD0AB(void)
     for (i = 0u; i < 256u; ++i) cpuRam[0x0200u + i] = (uint8_t)(i ^ 0x5Au);
 
     {
-        uint32_t elapsedCycles = 0u;
+        NesMenuRasterSplit split;
         if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
-                                   &scrollX, &scrollY, 0u, &elapsedCycles) ||
-            elapsedCycles == 0u) {
-            fputs("ROM menu test: D0AB/D14E raster adapter failed\n", stderr);
+                                   &scrollX, &scrollY, 0u, &split) ||
+            split.elapsedCycles == 0u ||
+            split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
+            split.topScrollY != 0x30u || split.bottomCtrl != 0x12u ||
+            split.bottomScrollX != 0x40u || split.bottomScrollY != 0x50u ||
+            split.splitScanline < 30u || split.splitScanline > 40u) {
+            fputs("ROM menu test: D0AB/D14E raster phase capture failed\n", stderr);
             return 0;
         }
     }
