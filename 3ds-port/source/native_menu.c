@@ -122,10 +122,6 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
             } else if (choice == 2u) {
                 menu->source_state = 9u;
                 nativeMenuResetSetupSequence(menu);
-            } else if (choice == 3u || choice == 4u) {
-                menu->source_state = choice == 3u ? 12u : 13u;
-                menu->input.selection = 0u;
-                nativeMenuResetSetupSequence(menu);
             } else if (choice == 5u) {
                 /* sub_CA85 clears $21-$FF but preserves ram_0042 via the stack. */
                 menu->source_state = 0u;
@@ -138,6 +134,11 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
                 menu->setup_command = 0u;
                 menu->transition_phase = 0u;
                 menu->cursor_state = 0u;
+            } else {
+                /* The source adds 9 to any other selection >= 3. */
+                menu->source_state = (uint8_t)(choice + 9u);
+                menu->input.selection = 0u;
+                nativeMenuResetSetupSequence(menu);
             }
         }
         break;
