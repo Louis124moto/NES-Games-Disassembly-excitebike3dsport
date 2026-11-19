@@ -186,6 +186,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical.c -o /tmp/test_bike_vertical
           /tmp/test_bike_vertical /tmp/prg.bin
 
+      - name: Differentially test complete native DA26 four-bike movement pass
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_race_movement.c -o /tmp/test_bike_race_movement
+          /tmp/test_bike_race_movement /tmp/prg.bin
+
       - name: Differentially test native menu selection against original ASM
         run: |
           cd 3ds-port
