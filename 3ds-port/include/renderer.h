@@ -6,6 +6,7 @@
 void rendererInit(void);
 void rendererBeginFrame(void);
 void rendererDraw(const GameState *state);
+void rendererGetSprite0Hit(uint8_t *found, uint32_t *cycleFromPrerender);
 void rendererEndFrame(void);
 void rendererSetGameStarted(int started);
 void rendererSetMenuActive(int active);
