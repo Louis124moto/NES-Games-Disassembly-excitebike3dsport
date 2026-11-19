@@ -86,11 +86,11 @@ static int testSharedTransitionDispatcherPhases(void)
         return 0;
     }
 
-    /* Phase 2 with timer zero advances to phase 3 and arms the four-tick timer. */
+    /* Phase 2 with timer zero advances to phase 3; the source leaves timer 0033 at zero. */
     ram[0x0044u] = 2u;
     ram[0x0033u] = 0u;
     if (!nesMenuCpuRunRamRoutine(0xCB2Cu, ram) ||
-        ram[0x0044u] != 3u || ram[0x0033u] != 4u) {
+        ram[0x0044u] != 3u || ram[0x0033u] != 0u) {
         fputs("ROM menu test: CB2C phase 2 timer/phase mismatch\n", stderr);
         return 0;
     }
