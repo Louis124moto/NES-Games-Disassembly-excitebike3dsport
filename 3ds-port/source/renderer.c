@@ -623,11 +623,10 @@ void rendererDraw(const GameState *state)
             s_lastScrollY = state->menu_scroll_y;
             memcpy(s_lastOam, state->menu_oam, sizeof(s_lastOam));
             if (state->menu_ppu_background_ready == 0u && rendererDrawBackdrop(state)) {
-                /* $2001 has rendering off (setup frames): the PPU shows only the backdrop. */
+                /* $2001 is off during setup: show the source PPU backdrop, not debug text. */
                 consoleSelect(&s_bottomConsole);
                 consoleClear();
                 rendererStoreConsoleText("");
-                menusRender(state);
             } else if (!rendererDrawPpuBackground(state)) {
                 consoleSelect(&s_bottomConsole);
                 consoleClear();
@@ -645,21 +644,10 @@ void rendererDraw(const GameState *state)
                     printf("PPU BG unavailable: no decoded CHR data.\n");
                 }
             } else {
-                char menuLog[256];
-                snprintf(menuLog, sizeof(menuLog),
-                         "EXCITEBIKE 3DS / ORIGINAL MENU\n"
-                         "State %u  sel %u  list %02X\n"
-                         "OAM0 Y%02X T%02X A%02X X%02X\n"
-                         "Sprites: %s (%u px)\n",
-                         (unsigned int)state->menu_asm_state, (unsigned int)state->menu_selection,
-                         (unsigned int)state->menu_ram0045,
-                         (unsigned int)state->menu_oam[0], (unsigned int)state->menu_oam[1],
-                         (unsigned int)state->menu_oam[2], (unsigned int)state->menu_oam[3],
-                         s_spriteResult == NES_PPU_RENDER_OK ? "drawn"
-                         : (s_spriteResult == NES_PPU_RENDER_UNSUPPORTED ? "UNSUPPORTED (8x16/behind-BG)"
-                                                                         : "error"),
-                         (unsigned int)s_spritePixels);
-                rendererWriteConsole(menuLog);
+                /* Normal play shows only the source-derived NES frame; diagnostics stay in error paths. */
+                consoleSelect(&s_bottomConsole);
+                consoleClear();
+                rendererStoreConsoleText("");
             }
         }
         return;
