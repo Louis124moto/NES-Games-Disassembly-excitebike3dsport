@@ -99,6 +99,8 @@ jobs:
           python-version: "3.x"
       - name: Test Python CHR extraction tools
         run: python -m unittest discover -s 3ds-port/tools -p 'test_*.py'
+      - name: Guard the native 3DS runtime boundary
+        run: python -m unittest 3ds-port/tests/test_native_runtime_boundary.py
       - name: Compile host-side reference test
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
       - name: Exhaustively compare all 8-bit inputs
