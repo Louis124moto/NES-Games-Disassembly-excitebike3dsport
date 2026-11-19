@@ -281,7 +281,7 @@ static int testEditorFrameWithoutRom(void)
     s->menu_asm_state = 9u;
     s->menu_ram0040 = 1u;
     s->menu_ram0045 = 0x12u;
-    s->menu_ram0049 = 1u;
+    s->menu_repeat_guard = 1u;
     memset(s->menu_cpu_ram, 0x5Au, sizeof(s->menu_cpu_ram));
     memcpy(before, s->menu_ppu_nametables, sizeof(before));
     menusUpdate(s, K_B, K_B);
