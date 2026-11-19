@@ -34,7 +34,7 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
         makefile = (PORT / "Makefile").read_text(encoding="utf-8")
         self.assertNotIn("EXCLUDED_RUNTIME_C", makefile)
         self.assertIn("CFILES := $(foreach dir,$(SOURCES)", makefile)
-        self.assertIn("native_menu.c", (PORT / "source/native_menu.c").read_text(encoding="utf-8"))
+        self.assertIn("nativeMenuRenderStatus", (PORT / "source/native_menu.c").read_text(encoding="utf-8"))
         self.assertIn("nativeMenuRenderStatus(state)", (PORT / "source/renderer.c").read_text(encoding="utf-8"))
 
     def test_native_physics_is_part_of_default_source_glob(self):
