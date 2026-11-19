@@ -251,6 +251,14 @@ static int menusRunSetupSequence(GameState *state)
             state->menu_repeat_guard = state->menu_cpu_ram[0x0049u];
             memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u],
                    sizeof(state->menu_oam));
+            memcpy(state->menu_ram05A0, &state->menu_cpu_ram[0x05A0u],
+                   sizeof(state->menu_ram05A0));
+            memcpy(state->menu_ram05C3, &state->menu_cpu_ram[0x05C3u],
+                   sizeof(state->menu_ram05C3));
+            memcpy(state->menu_ram05E0, &state->menu_cpu_ram[0x05E0u],
+                   sizeof(state->menu_ram05E0));
+            memcpy(state->menu_ram06E0, &state->menu_cpu_ram[0x06E0u],
+                   sizeof(state->menu_ram06E0));
             return 1;
         }
     } else if (listIndex == 7u) {
