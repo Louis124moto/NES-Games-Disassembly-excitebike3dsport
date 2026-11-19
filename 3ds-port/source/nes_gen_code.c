@@ -27,13 +27,13 @@ dispatch:
     case 0xC191: L_C191: /* 00:C191: 29 80     AND #$80 */
         m->cyc += 2; m->a &= 0x80; nesSetNZ(m, m->a);
     case 0xC193: L_C193: /* 00:C193: F0 F9     BEQ bra_C18E_infinite_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC18E; return 1; }  goto L_C18E; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC18E; return 1; }  goto L_C18E; }
     case 0xC195: L_C195: /* 00:C195: AD 02 20  LDA $2002 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x2002));
     case 0xC198: L_C198: /* 00:C198: 29 80     AND #$80 */
         m->cyc += 2; m->a &= 0x80; nesSetNZ(m, m->a);
     case 0xC19A: L_C19A: /* 00:C19A: F0 F9     BEQ bra_C195_infinite_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC195; return 1; }  goto L_C195; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC195; return 1; }  goto L_C195; }
     case 0xC19C: L_C19C: /* 00:C19C: A0 07     LDY #$07    ; > 0700 */
         m->cyc += 2; m->y = nesLoad(m, 0x07);
     case 0xC19E: L_C19E: /* 00:C19E: AD CE 05  LDA ram_reset_check_1 */
@@ -63,11 +63,11 @@ dispatch:
     case 0xC1B7: L_C1B7: /* 00:C1B7: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xC1B8: L_C1B8: /* 00:C1B8: D0 FB     BNE bra_C1B5_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC1B5; return 1; }  goto L_C1B5; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1B5; return 1; }  goto L_C1B5; }
     case 0xC1BA: L_C1BA: /* 00:C1BA: C6 01     DEC ram_0000_t01_data + $01 */
         m->cyc += 5; t16 = 0x0001; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC1BC: L_C1BC: /* 00:C1BC: 10 F7     BPL bra_C1B5_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC1B5; return 1; }  goto L_C1B5; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1B5; return 1; }  goto L_C1B5; }
     case 0xC1BE: L_C1BE: /* 00:C1BE: AD CE 05  LDA ram_reset_check_1 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x05CE));
     case 0xC1C1: L_C1C1: /* 00:C1C1: D0 03     BNE bra_C1C6 */
@@ -93,9 +93,9 @@ dispatch:
     case 0xC1DB: L_C1DB: /* 00:C1DB: A5 48     LDA ram_0048 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0048));
     case 0xC1DD: L_C1DD: /* 00:C1DD: 30 F9     BMI bra_C1D8_loop */
-        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC1D8; return 1; }  goto L_C1D8; }
+        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1D8; return 1; }  goto L_C1D8; }
     case 0xC1DF: L_C1DF: /* 00:C1DF: F0 F7     BEQ bra_C1D8_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC1D8; return 1; }  goto L_C1D8; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1D8; return 1; }  goto L_C1D8; }
     case 0xC1E1: L_C1E1: /* 00:C1E1: 20 2F C3  JSR sub_C32F */
         m->cyc += 6; nesPush(m, 0xC1); nesPush(m, 0xE3); goto L_C32F;
     case 0xC1E4: L_C1E4: /* 00:C1E4: A5 48     LDA ram_0048 */
@@ -113,11 +113,11 @@ dispatch:
     case 0xC1F1: L_C1F1: /* 00:C1F1: 20 39 C3  JSR sub_C339 */
         m->cyc += 6; nesPush(m, 0xC1); nesPush(m, 0xF3); goto L_C339;
     case 0xC1F4: L_C1F4: /* 00:C1F4: 4C D8 C1  JMP loc_C1D8_loop */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC1D8; return 1; } goto L_C1D8;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1D8; return 1; } goto L_C1D8;
     case 0xC1F7: L_C1F7: /* 00:C1F7: 20 39 C7  JSR sub_C739 */
         m->cyc += 6; nesPush(m, 0xC1); nesPush(m, 0xF9); goto L_C739;
     case 0xC1FA: L_C1FA: /* 00:C1FA: 4C ED C1  JMP loc_C1ED_loop */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC1ED; return 1; } goto L_C1ED;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1ED; return 1; } goto L_C1ED;
     case 0xC1FD: L_C1FD: /* 00:C1FD: A2 1E     LDX #$1E */
         m->cyc += 2; m->x = nesLoad(m, 0x1E);
     case 0xC1FF: L_C1FF: /* 00:C1FF: BD 91 C0  LDA tbl_C091,X */
@@ -129,7 +129,7 @@ dispatch:
     case 0xC208: L_C208: /* 00:C208: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC209: L_C209: /* 00:C209: 10 F4     BPL bra_C1FF_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC1FF; return 1; }  goto L_C1FF; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC1FF; return 1; }  goto L_C1FF; }
     case 0xC20B: L_C20B: /* 00:C20B: A2 01     LDX #$01 */
         m->cyc += 2; m->x = nesLoad(m, 0x01);
     case 0xC20D: L_C20D: /* 00:C20D: 8E E0 06  STX ram_06E0 */
@@ -143,7 +143,7 @@ dispatch:
     case 0xC216: L_C216: /* 00:C216: E0 CF     CPX #$CF */
         m->cyc += 2; nesCmp(m, m->x, 0xCF);
     case 0xC218: L_C218: /* 00:C218: 90 F6     BCC bra_C210_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC210; return 1; }  goto L_C210; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC210; return 1; }  goto L_C210; }
     case 0xC21A: L_C21A: /* 00:C21A: A9 09     LDA #$09 */
         m->cyc += 2; m->a = nesLoad(m, 0x09);
     case 0xC21C: L_C21C: /* 00:C21C: 9D E0 06  STA ram_06E0,X */
@@ -171,7 +171,7 @@ dispatch:
     case 0xC236: L_C236: /* 00:C236: E0 03     CPX #$03 */
         m->cyc += 2; nesCmp(m, m->x, 0x03);
     case 0xC238: L_C238: /* 00:C238: 90 F3     BCC bra_C22D_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC22D; return 1; }  goto L_C22D; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC22D; return 1; }  goto L_C22D; }
     case 0xC23A: L_C23A: /* 00:C23A: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC23B: L_C23B: /* 00:C23B: 20 2F C3  JSR sub_C32F */
@@ -331,7 +331,7 @@ dispatch:
     case 0xC2F0: L_C2F0: /* 00:C2F0: A5 30     LDA ram_0030_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0030));
     case 0xC2F2: L_C2F2: /* 00:C2F2: D0 F8     BNE bra_C2EC_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC2EC; return 1; }  goto L_C2EC; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC2EC; return 1; }  goto L_C2EC; }
     case 0xC2F4: L_C2F4: /* 00:C2F4: A6 41     LDX ram_0041 */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x0041));
     case 0xC2F6: L_C2F6: /* 00:C2F6: BD 1C C0  LDA tbl_C01C_index,X */
@@ -405,13 +405,13 @@ dispatch:
     case 0xC33C: L_C33C: /* 00:C33C: 29 80     AND #$80 */
         m->cyc += 2; m->a &= 0x80; nesSetNZ(m, m->a);
     case 0xC33E: L_C33E: /* 00:C33E: D0 F9     BNE bra_C339_infinite_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC339; return 1; }  goto L_C339; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC339; return 1; }  goto L_C339; }
     case 0xC340: L_C340: /* 00:C340: A5 10     LDA ram_for_2000 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0010));
     case 0xC342: L_C342: /* 00:C342: 09 80     ORA #$80 */
         m->cyc += 2; m->a |= 0x80; nesSetNZ(m, m->a);
     case 0xC344: L_C344: /* 00:C344: D0 ED     BNE bra_C333    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC333; return 1; }  goto L_C333; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC333; return 1; }  goto L_C333; }
     case 0xC346: L_C346: /* 00:C346: A5 31     LDA ram_0031_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0031));
     case 0xC348: L_C348: /* 00:C348: D0 0F     BNE bra_C359 */
@@ -545,7 +545,7 @@ dispatch:
     case 0xC3D0: L_C3D0: /* 00:C3D0: E6 41     INC ram_0041 */
         m->cyc += 5; t16 = 0x0041; t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC3D2: L_C3D2: /* 00:C3D2: 4C AF C3  JMP loc_C3AF */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC3AF; return 1; } goto L_C3AF;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC3AF; return 1; } goto L_C3AF;
     case 0xC3D5: L_C3D5: /* 00:C3D5: C9 05     CMP #$05 */
         m->cyc += 2; nesCmp(m, m->a, 0x05);
     case 0xC3D7: L_C3D7: /* 00:C3D7: F0 0B     BEQ bra_C3E4 */
@@ -561,7 +561,7 @@ dispatch:
     case 0xC3E0: L_C3E0: /* 00:C3E0: 85 42     STA ram_0042 */
         m->cyc += 3; nesWr(m, 0x0042, m->a);
     case 0xC3E2: L_C3E2: /* 00:C3E2: F0 CD     BEQ bra_C3B1    ; jmp */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC3B1; return 1; }  goto L_C3B1; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC3B1; return 1; }  goto L_C3B1; }
     case 0xC3E4: L_C3E4: /* 00:C3E4: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xC3E5: L_C3E5: /* 00:C3E5: 85 42     STA ram_0042 */
@@ -597,7 +597,7 @@ dispatch:
     case 0xC405: L_C405: /* 00:C405: A9 B0     LDA #$B0 */
         m->cyc += 2; m->a = nesLoad(m, 0xB0);
     case 0xC407: L_C407: /* 00:C407: D0 E6     BNE bra_C3EF    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC3EF; return 1; }  goto L_C3EF; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC3EF; return 1; }  goto L_C3EF; }
     case 0xC409: L_C409: /* 00:C409: A9 FA     LDA #$FA */
         m->cyc += 2; m->a = nesLoad(m, 0xFA);
     case 0xC40B: L_C40B: /* 00:C40B: 8D 01 02  STA ram_spr_T */
@@ -639,7 +639,7 @@ dispatch:
     case 0xC434: L_C434: /* 00:C434: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC435: L_C435: /* 00:C435: 10 F3     BPL bra_C42A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC42A; return 1; }  goto L_C42A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC42A; return 1; }  goto L_C42A; }
     case 0xC437: L_C437: /* 00:C437: 20 3B EC  JSR sub_EC3B */
         m->cyc += 6; nesPush(m, 0xC4); nesPush(m, 0x39); goto L_EC3B;
     case 0xC43A: L_C43A: /* 00:C43A: 4C 47 C4  JMP loc_C447 */
@@ -699,7 +699,7 @@ dispatch:
     case 0xC470: L_C470: /* 00:C470: 29 10     AND #$10 */
         m->cyc += 2; m->a &= 0x10; nesSetNZ(m, m->a);
     case 0xC472: L_C472: /* 00:C472: D0 F0     BNE bra_C464_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC464; return 1; }  goto L_C464; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC464; return 1; }  goto L_C464; }
     case 0xC474: L_C474: /* 00:C474: 4C FA CA  JMP loc_CAFA */
         m->cyc += 3; goto L_CAFA;
     case 0xC477: L_C477: /* 00:C477: 20 AF C3  JSR sub_C3AF */
@@ -751,7 +751,7 @@ dispatch:
     case 0xC4A5: L_C4A5: /* 00:C4A5: E0 03     CPX #$03 */
         m->cyc += 2; nesCmp(m, m->x, 0x03);
     case 0xC4A7: L_C4A7: /* 00:C4A7: 30 F5     BMI bra_C49E_loop */
-        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC49E; return 1; }  goto L_C49E; }
+        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC49E; return 1; }  goto L_C49E; }
     case 0xC4A9: L_C4A9: /* 00:C4A9: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xC4AB: L_C4AB: /* 00:C4AB: D0 65     BNE bra_C512    ; jmp */
@@ -813,7 +813,7 @@ dispatch:
     case 0xC4E0: L_C4E0: /* 00:C4E0: 69 3C     ADC #$3C */
         m->cyc += 2; nesAdc(m, 0x3C);
     case 0xC4E2: L_C4E2: /* 00:C4E2: 90 F8     BCC bra_C4DC_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC4DC; return 1; }  goto L_C4DC; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC4DC; return 1; }  goto L_C4DC; }
     case 0xC4E4: L_C4E4: /* 00:C4E4: A9 FF     LDA #$FF */
         m->cyc += 2; m->a = nesLoad(m, 0xFF);
     case 0xC4E6: L_C4E6: /* 00:C4E6: D0 23     BNE bra_C50B    ; jmp */
@@ -839,7 +839,7 @@ dispatch:
     case 0xC4F8: L_C4F8: /* 00:C4F8: 65 08     ADC ram_0008_t01 */
         m->cyc += 3; nesAdc(m, nesRd(m, 0x0008));
     case 0xC4FA: L_C4FA: /* 00:C4FA: B0 E8     BCS bra_C4E4 */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC4E4; return 1; }  goto L_C4E4; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC4E4; return 1; }  goto L_C4E4; }
     case 0xC4FC: L_C4FC: /* 00:C4FC: C5 09     CMP ram_0009_t02 */
         m->cyc += 3; nesCmp(m, m->a, nesRd(m, 0x0009));
     case 0xC4FE: L_C4FE: /* 00:C4FE: B0 0B     BCS bra_C50B */
@@ -855,7 +855,7 @@ dispatch:
     case 0xC507: L_C507: /* 00:C507: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xC508: L_C508: /* 00:C508: 4C 03 C5  JMP loc_C503_loop */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC503; return 1; } goto L_C503;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC503; return 1; } goto L_C503;
     case 0xC50B: L_C50B: /* 00:C50B: 38        SEC */
         m->cyc += 2; m->c = 1u;
     case 0xC50C: L_C50C: /* 00:C50C: E5 09     SBC ram_0009_t02 */
@@ -963,7 +963,7 @@ dispatch:
     case 0xC571: L_C571: /* 00:C571: A9 09     LDA #con_0045_09 */
         m->cyc += 2; m->a = nesLoad(m, 0x09);
     case 0xC573: L_C573: /* 00:C573: D0 F9     BNE bra_C56E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
     case 0xC575: L_C575: /* 00:C575: A9 05     LDA #$05 */
         m->cyc += 2; m->a = nesLoad(m, 0x05);
     case 0xC577: L_C577: /* 00:C577: 85 43     STA ram_0043 */
@@ -975,11 +975,11 @@ dispatch:
     case 0xC57E: L_C57E: /* 00:C57E: A9 0F     LDA #con_0045_0F */
         m->cyc += 2; m->a = nesLoad(m, 0x0F);
     case 0xC580: L_C580: /* 00:C580: D0 EC     BNE bra_C56E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
     case 0xC582: L_C582: /* 00:C582: A9 11     LDA #con_0045_11 */
         m->cyc += 2; m->a = nesLoad(m, 0x11);
     case 0xC584: L_C584: /* 00:C584: D0 E8     BNE bra_C56E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
     case 0xC586: L_C586: /* 00:C586: A2 03     LDX #$03 */
         m->cyc += 2; m->x = nesLoad(m, 0x03);
     case 0xC588: L_C588: /* 00:C588: D0 0A     BNE bra_C594    ; jmp */
@@ -999,17 +999,17 @@ dispatch:
     case 0xC599: L_C599: /* 00:C599: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC59A: L_C59A: /* 00:C59A: 10 EE     BPL bra_C58A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC58A; return 1; }  goto L_C58A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC58A; return 1; }  goto L_C58A; }
     case 0xC59C: L_C59C: /* 00:C59C: 20 21 C6  JSR sub_C621 */
         m->cyc += 6; nesPush(m, 0xC5); nesPush(m, 0x9E); goto L_C621;
     case 0xC59F: L_C59F: /* 00:C59F: A9 10     LDA #con_0045_10 */
         m->cyc += 2; m->a = nesLoad(m, 0x10);
     case 0xC5A1: L_C5A1: /* 00:C5A1: D0 CB     BNE bra_C56E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
     case 0xC5A3: L_C5A3: /* 00:C5A3: A9 17     LDA #con_0045_17 */
         m->cyc += 2; m->a = nesLoad(m, 0x17);
     case 0xC5A5: L_C5A5: /* 00:C5A5: D0 C7     BNE bra_C56E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC56E; return 1; }  goto L_C56E; }
     case 0xC5A7: L_C5A7: /* 00:C5A7: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xC5A9: L_C5A9: /* 00:C5A9: 4C 2C C9  JMP loc_C92C */
@@ -1027,7 +1027,7 @@ dispatch:
     case 0xC5B8: L_C5B8: /* 00:C5B8: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC5B9: L_C5B9: /* 00:C5B9: 10 F7     BPL bra_C5B2_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC5B2; return 1; }  goto L_C5B2; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC5B2; return 1; }  goto L_C5B2; }
     case 0xC5BB: L_C5BB: /* 00:C5BB: A6 43     LDX ram_0043 */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x0043));
     case 0xC5BD: L_C5BD: /* 00:C5BD: E8        INX */
@@ -1089,7 +1089,7 @@ dispatch:
     case 0xC5F8: L_C5F8: /* 00:C5F8: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC5F9: L_C5F9: /* 00:C5F9: 10 F7     BPL bra_C5F2_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC5F2; return 1; }  goto L_C5F2; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC5F2; return 1; }  goto L_C5F2; }
     case 0xC5FB: L_C5FB: /* 00:C5FB: A9 05     LDA #$05 */
         m->cyc += 2; m->a = nesLoad(m, 0x05);
     case 0xC5FD: L_C5FD: /* 00:C5FD: 85 B1     STA ram_00B0_obj + $01 */
@@ -1135,7 +1135,7 @@ dispatch:
     case 0xC629: L_C629: /* 00:C629: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC62A: L_C62A: /* 00:C62A: D0 F7     BNE bra_C623_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC623; return 1; }  goto L_C623; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC623; return 1; }  goto L_C623; }
     case 0xC62C: L_C62C: /* 00:C62C: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC62D: L_C62D: /* 00:C62D: A9 05     LDA #$05 */
@@ -1163,7 +1163,7 @@ dispatch:
     case 0xC63F: L_C63F: /* 00:C63F: 29 02     AND #$02 */
         m->cyc += 2; m->a &= 0x02; nesSetNZ(m, m->a);
     case 0xC641: L_C641: /* 00:C641: F0 F6     BEQ bra_C639_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC639; return 1; }  goto L_C639; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC639; return 1; }  goto L_C639; }
     case 0xC643: L_C643: /* 00:C643: 20 2D C6  JSR sub_C62D */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0x45); goto L_C62D;
     case 0xC646: L_C646: /* 00:C646: AD 16 40  LDA $4016 */
@@ -1171,7 +1171,7 @@ dispatch:
     case 0xC649: L_C649: /* 00:C649: 29 02     AND #$02 */
         m->cyc += 2; m->a &= 0x02; nesSetNZ(m, m->a);
     case 0xC64B: L_C64B: /* 00:C64B: D0 F6     BNE bra_C643_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC643; return 1; }  goto L_C643; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC643; return 1; }  goto L_C643; }
     case 0xC64D: L_C64D: /* 00:C64D: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC64E: L_C64E: /* 00:C64E: 48        PHA */
@@ -1195,7 +1195,7 @@ dispatch:
     case 0xC65F: L_C65F: /* 00:C65F: C6 07     DEC ram_0007_t05_loop_counter */
         m->cyc += 5; t16 = 0x0007; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC661: L_C661: /* 00:C661: D0 FC     BNE bra_C65F_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC65F; return 1; }  goto L_C65F; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC65F; return 1; }  goto L_C65F; }
     case 0xC663: L_C663: /* 00:C663: A9 FF     LDA #$FF */
         m->cyc += 2; m->a = nesLoad(m, 0xFF);
     case 0xC665: L_C665: /* 00:C665: 8D 16 40  STA $4016 */
@@ -1203,7 +1203,7 @@ dispatch:
     case 0xC668: L_C668: /* 00:C668: C6 0C     DEC ram_000C_t04_loop_counter */
         m->cyc += 5; t16 = 0x000C; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC66A: L_C66A: /* 00:C66A: D0 FC     BNE bra_C668_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC668; return 1; }  goto L_C668; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC668; return 1; }  goto L_C668; }
     case 0xC66C: L_C66C: /* 00:C66C: 68        PLA */
         m->cyc += 4; m->a = nesLoad(m, nesPull(m));
     case 0xC66D: L_C66D: /* 00:C66D: 60        RTS */
@@ -1225,7 +1225,7 @@ dispatch:
     case 0xC67D: L_C67D: /* 00:C67D: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC67E: L_C67E: /* 00:C67E: D0 F3     BNE bra_C673_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC673; return 1; }  goto L_C673; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC673; return 1; }  goto L_C673; }
     case 0xC680: L_C680: /* 00:C680: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC681: L_C681: /* 00:C681: 20 53 C6  JSR sub_C653 */
@@ -1233,7 +1233,7 @@ dispatch:
     case 0xC684: L_C684: /* 00:C684: 20 8A C6  JSR sub_C68A */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0x86); goto L_C68A;
     case 0xC687: L_C687: /* 00:C687: 4C 7D C6  JMP loc_C67D */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC67D; return 1; } goto L_C67D;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC67D; return 1; } goto L_C67D;
     case 0xC68A: L_C68A: /* 00:C68A: E6 08     INC ram_0008_t02_lo */
         m->cyc += 5; t16 = 0x0008; t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC68C: L_C68C: /* 00:C68C: D0 02     BNE bra_C690_RTS */
@@ -1251,7 +1251,7 @@ dispatch:
     case 0xC698: L_C698: /* 00:C698: C6 01     DEC ram_0001_t03_loop_counter */
         m->cyc += 5; t16 = 0x0001; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC69A: L_C69A: /* 00:C69A: D0 FC     BNE bra_C698_garbage_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC698; return 1; }  goto L_C698; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC698; return 1; }  goto L_C698; }
     case 0xC69C: L_C69C: /* 00:C69C: 20 2D C6  JSR sub_C62D */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0x9E); goto L_C62D;
     case 0xC69F: L_C69F: /* 00:C69F: AD 16 40  LDA $4016 */
@@ -1287,7 +1287,7 @@ dispatch:
     case 0xC6BE: L_C6BE: /* 00:C6BE: C6 03     DEC ram_0003_t04_loop_counter */
         m->cyc += 5; t16 = 0x0003; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC6C0: L_C6C0: /* 00:C6C0: D0 EB     BNE bra_C6AD_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6AD; return 1; }  goto L_C6AD; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6AD; return 1; }  goto L_C6AD; }
     case 0xC6C2: L_C6C2: /* 00:C6C2: 20 39 C6  JSR sub_C639 */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0xC4); goto L_C639;
     case 0xC6C5: L_C6C5: /* 00:C6C5: A5 04     LDA ram_0004_t04 */
@@ -1313,23 +1313,23 @@ dispatch:
     case 0xC6DC: L_C6DC: /* 00:C6DC: C6 0A     DEC ram_000A_t04_loop_counter_1 */
         m->cyc += 5; t16 = 0x000A; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC6DE: L_C6DE: /* 00:C6DE: D0 F9     BNE bra_C6D9_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6D9; return 1; }  goto L_C6D9; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6D9; return 1; }  goto L_C6D9; }
     case 0xC6E0: L_C6E0: /* 00:C6E0: C6 0B     DEC ram_000B_t05_loop_counter_2 */
         m->cyc += 5; t16 = 0x000B; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC6E2: L_C6E2: /* 00:C6E2: D0 F5     BNE bra_C6D9_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6D9; return 1; }  goto L_C6D9; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6D9; return 1; }  goto L_C6D9; }
     case 0xC6E4: L_C6E4: /* 00:C6E4: 20 53 C6  JSR sub_C653 */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0xE6); goto L_C653;
     case 0xC6E7: L_C6E7: /* 00:C6E7: C6 05     DEC ram_0005_t03_loop_counter */
         m->cyc += 5; t16 = 0x0005; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC6E9: L_C6E9: /* 00:C6E9: D0 F9     BNE bra_C6E4_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6E4; return 1; }  goto L_C6E4; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6E4; return 1; }  goto L_C6E4; }
     case 0xC6EB: L_C6EB: /* 00:C6EB: 20 4E C6  JSR sub_C64E */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0xED); goto L_C64E;
     case 0xC6EE: L_C6EE: /* 00:C6EE: C6 06     DEC ram_0006_t02_loop_counter */
         m->cyc += 5; t16 = 0x0006; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC6F0: L_C6F0: /* 00:C6F0: D0 F9     BNE bra_C6EB_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6EB; return 1; }  goto L_C6EB; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6EB; return 1; }  goto L_C6EB; }
     case 0xC6F2: L_C6F2: /* 00:C6F2: 20 53 C6  JSR sub_C653 */
         m->cyc += 6; nesPush(m, 0xC6); nesPush(m, 0xF4); goto L_C653;
     case 0xC6F5: L_C6F5: /* 00:C6F5: A9 00     LDA #$00 */
@@ -1349,7 +1349,7 @@ dispatch:
     case 0xC703: L_C703: /* 00:C703: C4 0D     CPY ram_000D_t01_max_index */
         m->cyc += 3; nesCmp(m, m->y, nesRd(m, 0x000D));
     case 0xC705: L_C705: /* 00:C705: D0 F6     BNE bra_C6FD_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC6FD; return 1; }  goto L_C6FD; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC6FD; return 1; }  goto L_C6FD; }
     case 0xC707: L_C707: /* 00:C707: A5 09     LDA ram_0009_t01_hi */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0009));
     case 0xC709: L_C709: /* 00:C709: 48        PHA */
@@ -1363,7 +1363,7 @@ dispatch:
     case 0xC710: L_C710: /* 00:C710: 20 6E C6  JSR sub_C66E */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0x12); goto L_C66E;
     case 0xC713: L_C713: /* 00:C713: 4C 53 C6  JMP loc_C653 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC653; return 1; } goto L_C653;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC653; return 1; } goto L_C653;
     case 0xC716: L_C716: /* 00:C716: A9 40     LDA #$40 */
         m->cyc += 2; m->a = nesLoad(m, 0x40);
     case 0xC718: L_C718: /* 00:C718: 85 0D     STA ram_000D_t01_max_index */
@@ -1417,9 +1417,9 @@ dispatch:
     case 0xC74B: L_C74B: /* 00:C74B: A5 45     LDA ram_0045 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0045));
     case 0xC74D: L_C74D: /* 00:C74D: D0 FC     BNE bra_C74B_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC74B; return 1; }  goto L_C74B; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC74B; return 1; }  goto L_C74B; }
     case 0xC74F: L_C74F: /* 00:C74F: F0 E8     BEQ bra_C739_loop    ; jmp */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC739; return 1; }  goto L_C739; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC739; return 1; }  goto L_C739; }
     case 0xC751: L_C751: /* 00:C751: A2 00     LDX #$00 */
         m->cyc += 2; m->x = nesLoad(m, 0x00);
     case 0xC753: L_C753: /* 00:C753: 86 A8     STX ram_00A8_obj */
@@ -1441,7 +1441,7 @@ dispatch:
     case 0xC763: L_C763: /* 00:C763: C0 05     CPY #$05 */
         m->cyc += 2; nesCmp(m, m->y, 0x05);
     case 0xC765: L_C765: /* 00:C765: D0 F0     BNE bra_C757_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC757; return 1; }  goto L_C757; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC757; return 1; }  goto L_C757; }
     case 0xC767: L_C767: /* 00:C767: A9 07     LDA #$07 */
         m->cyc += 2; m->a = nesLoad(m, 0x07);
     case 0xC769: L_C769: /* 00:C769: 85 A0     STA ram_00A0_obj */
@@ -1465,13 +1465,13 @@ dispatch:
     case 0xC77B: L_C77B: /* 00:C77B: E0 00     CPX #$00 */
         m->cyc += 2; nesCmp(m, m->x, 0x00);
     case 0xC77D: L_C77D: /* 00:C77D: D0 C9     BNE bra_C748 */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC748; return 1; }  goto L_C748; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC748; return 1; }  goto L_C748; }
     case 0xC77F: L_C77F: /* 00:C77F: 20 39 C3  JSR sub_C339 */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0x81); goto L_C339;
     case 0xC782: L_C782: /* 00:C782: A5 45     LDA ram_0045 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0045));
     case 0xC784: L_C784: /* 00:C784: D0 FC     BNE bra_C782_infinite_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC782; return 1; }  goto L_C782; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC782; return 1; }  goto L_C782; }
     case 0xC786: L_C786: /* 00:C786: 20 2F C3  JSR sub_C32F */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0x88); goto L_C32F;
     case 0xC789: L_C789: /* 00:C789: 20 26 C7  JSR sub_C726 */
@@ -1479,7 +1479,7 @@ dispatch:
     case 0xC78C: L_C78C: /* 00:C78C: 20 92 C7  JSR sub_C792 */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0x8E); goto L_C792;
     case 0xC78F: L_C78F: /* 00:C78F: B0 B3     BCS bra_C744_loop */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC744; return 1; }  goto L_C744; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC744; return 1; }  goto L_C744; }
     case 0xC791: L_C791: /* 00:C791: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC792: L_C792: /* 00:C792: A5 05     LDA ram_0005_t03_loop_counter */
@@ -1489,11 +1489,11 @@ dispatch:
     case 0xC796: L_C796: /* 00:C796: 20 91 C6  JSR sub_C691_unk___infinite_wait */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0x98); goto L_C691;
     case 0xC799: L_C799: /* 00:C799: D0 F7     BNE bra_C792_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC792; return 1; }  goto L_C792; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC792; return 1; }  goto L_C792; }
     case 0xC79B: L_C79B: /* 00:C79B: C6 00     DEC ram_0000_t10_loop_counter */
         m->cyc += 5; t16 = 0x0000; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC79D: L_C79D: /* 00:C79D: D0 F7     BNE bra_C796_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC796; return 1; }  goto L_C796; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC796; return 1; }  goto L_C796; }
     case 0xC79F: L_C79F: /* 00:C79F: A5 06     LDA ram_0006_t02_loop_counter */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0006));
     case 0xC7A1: L_C7A1: /* 00:C7A1: 85 00     STA ram_0000_t11_loop_counter */
@@ -1501,11 +1501,11 @@ dispatch:
     case 0xC7A3: L_C7A3: /* 00:C7A3: 20 91 C6  JSR sub_C691_unk___infinite_wait */
         m->cyc += 6; nesPush(m, 0xC7); nesPush(m, 0xA5); goto L_C691;
     case 0xC7A6: L_C7A6: /* 00:C7A6: F0 EA     BEQ bra_C792_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC792; return 1; }  goto L_C792; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC792; return 1; }  goto L_C792; }
     case 0xC7A8: L_C7A8: /* 00:C7A8: C6 00     DEC ram_0000_t11_loop_counter */
         m->cyc += 5; t16 = 0x0000; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xC7AA: L_C7AA: /* 00:C7AA: D0 F7     BNE bra_C7A3_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC7A3; return 1; }  goto L_C7A3; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC7A3; return 1; }  goto L_C7A3; }
     case 0xC7AC: L_C7AC: /* 00:C7AC: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xC7AE: L_C7AE: /* 00:C7AE: 85 08     STA ram_0008_t02_lo */
@@ -1527,7 +1527,7 @@ dispatch:
     case 0xC7C0: L_C7C0: /* 00:C7C0: C4 0D     CPY ram_000D_t01_max_index */
         m->cyc += 3; nesCmp(m, m->y, nesRd(m, 0x000D));
     case 0xC7C2: L_C7C2: /* 00:C7C2: D0 F6     BNE bra_C7BA_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC7BA; return 1; }  goto L_C7BA; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC7BA; return 1; }  goto L_C7BA; }
     case 0xC7C4: L_C7C4: /* 00:C7C4: A5 08     LDA ram_0008_t02_lo */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0008));
     case 0xC7C6: L_C7C6: /* 00:C7C6: 85 0A     STA ram_000A_t05_lo */
@@ -1579,7 +1579,7 @@ dispatch:
     case 0xC7F1: L_C7F1: /* 00:C7F1: A5 49     LDA ram_0049 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0049));
     case 0xC7F3: L_C7F3: /* 00:C7F3: D0 F7     BNE bra_C7EC_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC7EC; return 1; }  goto L_C7EC; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC7EC; return 1; }  goto L_C7EC; }
     case 0xC7F5: L_C7F5: /* 00:C7F5: A5 15     LDA ram_btn_press */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0015));
     case 0xC7F7: L_C7F7: /* 00:C7F7: 2C CE C0  BIT tbl__C0CE_20 */
@@ -1655,7 +1655,7 @@ dispatch:
     case 0xC834: L_C834: /* 00:C834: C0 40     CPY #$40 */
         m->cyc += 2; nesCmp(m, m->y, 0x40);
     case 0xC836: L_C836: /* 00:C836: B0 F9     BCS bra_C831_loop */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC831; return 1; }  goto L_C831; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC831; return 1; }  goto L_C831; }
     case 0xC838: L_C838: /* 00:C838: A2 7F     LDX #$7F */
         m->cyc += 2; m->x = nesLoad(m, 0x7F);
     case 0xC83A: L_C83A: /* 00:C83A: A9 3B     LDA #$3B */
@@ -1671,7 +1671,7 @@ dispatch:
     case 0xC847: L_C847: /* 00:C847: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC848: L_C848: /* 00:C848: 10 F0     BPL bra_C83A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC83A; return 1; }  goto L_C83A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC83A; return 1; }  goto L_C83A; }
     case 0xC84A: L_C84A: /* 00:C84A: A9 BF     LDA #$BF */
         m->cyc += 2; m->a = nesLoad(m, 0xBF);
     case 0xC84C: L_C84C: /* 00:C84C: 8D 00 02  STA ram_spr_Y */
@@ -1713,7 +1713,7 @@ dispatch:
     case 0xC870: L_C870: /* 00:C870: E0 4C     CPX #$4C */
         m->cyc += 2; nesCmp(m, m->x, 0x4C);
     case 0xC872: L_C872: /* 00:C872: D0 F9     BNE bra_C86D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC86D; return 1; }  goto L_C86D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC86D; return 1; }  goto L_C86D; }
     case 0xC874: L_C874: /* 00:C874: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xC875: L_C875: /* 00:C875: E6 47     INC ram_0047 */
@@ -1803,7 +1803,7 @@ dispatch:
     case 0xC8D0: L_C8D0: /* 00:C8D0: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC8D1: L_C8D1: /* 00:C8D1: 10 D9     BPL bra_C8AC_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC8AC; return 1; }  goto L_C8AC; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC8AC; return 1; }  goto L_C8AC; }
     case 0xC8D3: L_C8D3: /* 00:C8D3: B5 19     LDA ram_0019,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x19 + m->x)));
     case 0xC8D5: L_C8D5: /* 00:C8D5: 29 03     AND #$03 */
@@ -1835,7 +1835,7 @@ dispatch:
     case 0xC8F0: L_C8F0: /* 00:C8F0: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xC8F1: L_C8F1: /* 00:C8F1: 10 F7     BPL bra_C8EA_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC8EA; return 1; }  goto L_C8EA; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC8EA; return 1; }  goto L_C8EA; }
     case 0xC8F3: L_C8F3: /* 00:C8F3: AD F3 03  LDA ram_03F3 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03F3));
     case 0xC8F6: L_C8F6: /* 00:C8F6: 20 A2 DF  JSR sub_DFA2 */
@@ -1915,7 +1915,7 @@ dispatch:
     case 0xC947: L_C947: /* 00:C947: C0 07     CPY #$07 */
         m->cyc += 2; nesCmp(m, m->y, 0x07);
     case 0xC949: L_C949: /* 00:C949: 90 F4     BCC bra_C93F_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC93F; return 1; }  goto L_C93F; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC93F; return 1; }  goto L_C93F; }
     case 0xC94B: L_C94B: /* 00:C94B: A9 0A     LDA #$0A */
         m->cyc += 2; m->a = nesLoad(m, 0x0A);
     case 0xC94D: L_C94D: /* 00:C94D: 20 71 C9  JSR sub_C971 */
@@ -1983,7 +1983,7 @@ dispatch:
     case 0xC9A0: L_C9A0: /* 00:C9A0: 0D B2 03  ORA ram_pause_timer */
         m->cyc += 4; m->a |= nesRd(m, 0x03B2); nesSetNZ(m, m->a);
     case 0xC9A3: L_C9A3: /* 00:C9A3: D0 F2     BNE bra_C997 */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xC997; return 1; }  goto L_C997; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC997; return 1; }  goto L_C997; }
     case 0xC9A5: L_C9A5: /* 00:C9A5: 20 18 D9  JSR sub_D918 */
         m->cyc += 6; nesPush(m, 0xC9); nesPush(m, 0xA7); goto L_D918;
     case 0xC9A8: L_C9A8: /* 00:C9A8: 20 8D DD  JSR sub_DD8D */
@@ -2061,7 +2061,7 @@ dispatch:
     case 0xCA10: L_CA10: /* 00:CA10: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCA11: L_CA11: /* 00:CA11: 10 F7     BPL bra_CA0A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCA0A; return 1; }  goto L_CA0A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCA0A; return 1; }  goto L_CA0A; }
     case 0xCA13: L_CA13: /* 00:CA13: AD F7 03  LDA ram_03F7 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03F7));
     case 0xCA16: L_CA16: /* 00:CA16: D0 08     BNE bra_CA20 */
@@ -2099,7 +2099,7 @@ dispatch:
     case 0xCA33: L_CA33: /* 00:CA33: 85 47     STA ram_0047 */
         m->cyc += 3; nesWr(m, 0x0047, m->a);
     case 0xCA35: L_CA35: /* 00:CA35: 4C 6A C3  JMP loc_C36A */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC36A; return 1; } goto L_C36A;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC36A; return 1; } goto L_C36A;
     case 0xCA38: L_CA38: /* 00:CA38: AD B2 03  LDA ram_pause_timer */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03B2));
     case 0xCA3B: L_CA3B: /* 00:CA3B: D0 26     BNE bra_CA63 */
@@ -2183,7 +2183,7 @@ dispatch:
     case 0xCA8F: L_CA8F: /* 00:CA8F: E0 20     CPX #$20 */
         m->cyc += 2; nesCmp(m, m->x, 0x20);
     case 0xCA91: L_CA91: /* 00:CA91: D0 F9     BNE bra_CA8C_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCA8C; return 1; }  goto L_CA8C; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCA8C; return 1; }  goto L_CA8C; }
     case 0xCA93: L_CA93: /* 00:CA93: 85 FC     STA ram_00FC */
         m->cyc += 3; nesWr(m, 0x00FC, m->a);
     case 0xCA95: L_CA95: /* 00:CA95: E6 49     INC ram_0049 */
@@ -2203,7 +2203,7 @@ dispatch:
     case 0xCAA2: L_CAA2: /* 00:CAA2: AD F7 03  LDA ram_03F7 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03F7));
     case 0xCAA5: L_CAA5: /* 00:CAA5: D0 DE     BNE bra_CA85_clear_0021_00FF */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCA85; return 1; }  goto L_CA85; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCA85; return 1; }  goto L_CA85; }
     case 0xCAA7: L_CAA7: /* 00:CAA7: 85 47     STA ram_0047 */
         m->cyc += 3; nesWr(m, 0x0047, m->a);
     case 0xCAA9: L_CAA9: /* 00:CAA9: 60        RTS */
@@ -2223,7 +2223,7 @@ dispatch:
     case 0xCAB8: L_CAB8: /* 00:CAB8: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCAB9: L_CAB9: /* 00:CAB9: D0 EE     BNE bra_CAA9_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCAA9; return 1; }  goto L_CAA9; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCAA9; return 1; }  goto L_CAA9; }
     case 0xCABB: L_CABB: /* 00:CABB: A5 3F     LDA ram_003F */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x003F));
     case 0xCABD: L_CABD: /* 00:CABD: 4A        LSR */
@@ -2291,7 +2291,7 @@ dispatch:
     case 0xCB02: L_CB02: /* 00:CB02: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xCB03: L_CB03: /* 00:CB03: 10 F9     BPL bra_CAFE_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCAFE; return 1; }  goto L_CAFE; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCAFE; return 1; }  goto L_CAFE; }
     case 0xCB05: L_CB05: /* 00:CB05: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xCB06: L_CB06: /* 00:CB06: 20 13 CB  JSR sub_CB13 */
@@ -2327,7 +2327,7 @@ dispatch:
     case 0xCB21: L_CB21: /* 00:CB21: 69 03     ADC #$03 */
         m->cyc += 2; nesAdc(m, 0x03);
     case 0xCB23: L_CB23: /* 00:CB23: D0 F8     BNE bra_CB1D_loop   ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCB1D; return 1; }  goto L_CB1D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCB1D; return 1; }  goto L_CB1D; }
     case 0xCB25: L_CB25: /* 00:CB25: A4 46     LDY ram_0046_flag */
         m->cyc += 3; m->y = nesLoad(m, nesRd(m, 0x0046));
     case 0xCB27: L_CB27: /* 00:CB27: F0 02     BEQ bra_CB2B_RTS */
@@ -2427,7 +2427,7 @@ dispatch:
     case 0xCB8A: L_CB8A: /* 00:CB8A: C0 07     CPY #$07 */
         m->cyc += 2; nesCmp(m, m->y, 0x07);
     case 0xCB8C: L_CB8C: /* 00:CB8C: D0 F4     BNE bra_CB82_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCB82; return 1; }  goto L_CB82; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCB82; return 1; }  goto L_CB82; }
     case 0xCB8E: L_CB8E: /* 00:CB8E: 20 4B C9  JSR sub_C94B */
         m->cyc += 6; nesPush(m, 0xCB); nesPush(m, 0x90); goto L_C94B;
     case 0xCB91: L_CB91: /* 00:CB91: A9 20     LDA #$20 */
@@ -2453,13 +2453,13 @@ dispatch:
     case 0xCBA4: L_CBA4: /* 00:CBA4: A5 33     LDA ram_0033_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0033));
     case 0xCBA6: L_CBA6: /* 00:CBA6: F0 F7     BEQ bra_CB9F */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCB9F; return 1; }  goto L_CB9F; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCB9F; return 1; }  goto L_CB9F; }
     case 0xCBA8: L_CBA8: /* 00:CBA8: CD AD 03  CMP ram_03AD */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, 0x03AD));
     case 0xCBAB: L_CBAB: /* 00:CBAB: F0 1C     BEQ bra_CBC9 */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_CBC9; }
     case 0xCBAD: L_CBAD: /* 00:CBAD: B0 F4     BCS bra_CBA3_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
     case 0xCBAF: L_CBAF: /* 00:CBAF: A5 4B     LDA ram_004B */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x004B));
     case 0xCBB1: L_CBB1: /* 00:CBB1: D0 06     BNE bra_CBB9 */
@@ -2479,13 +2479,13 @@ dispatch:
     case 0xCBC2: L_CBC2: /* 00:CBC2: A5 41     LDA ram_0041 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0041));
     case 0xCBC4: L_CBC4: /* 00:CBC4: D0 DD     BNE bra_CBA3_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
     case 0xCBC6: L_CBC6: /* 00:CBC6: 4C AF C3  JMP loc_C3AF */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC3AF; return 1; } goto L_C3AF;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC3AF; return 1; } goto L_C3AF;
     case 0xCBC9: L_CBC9: /* 00:CBC9: A5 20     LDA ram_0020_0A_frm_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0020));
     case 0xCBCB: L_CBCB: /* 00:CBCB: D0 D6     BNE bra_CBA3_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCBA3; return 1; }  goto L_CBA3; }
     case 0xCBCD: L_CBCD: /* 00:CBCD: A2 03     LDX #$03 */
         m->cyc += 2; m->x = nesLoad(m, 0x03);
     case 0xCBCF: L_CBCF: /* 00:CBCF: 86 2F     STX ram_002F_timer */
@@ -2511,7 +2511,7 @@ dispatch:
     case 0xCBE6: L_CBE6: /* 00:CBE6: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCBE7: L_CBE7: /* 00:CBE7: 10 EB     BPL bra_CBD4_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCBD4; return 1; }  goto L_CBD4; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCBD4; return 1; }  goto L_CBD4; }
     case 0xCBE9: L_CBE9: /* 00:CBE9: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xCBEB: L_CBEB: /* 00:CBEB: A6 53     LDX ram_0053 */
@@ -2603,7 +2603,7 @@ dispatch:
     case 0xCC41: L_CC41: /* 00:CC41: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xCC42: L_CC42: /* 00:CC42: 10 F6     BPL bra_CC3A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCC3A; return 1; }  goto L_CC3A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCC3A; return 1; }  goto L_CC3A; }
     case 0xCC44: L_CC44: /* 00:CC44: A5 3F     LDA ram_003F */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x003F));
     case 0xCC46: L_CC46: /* 00:CC46: 29 10     AND #$10 */
@@ -2797,7 +2797,7 @@ dispatch:
     case 0xCD0A: L_CD0A: /* 00:CD0A: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCD0B: L_CD0B: /* 00:CD0B: 10 DF     BPL bra_CCEC_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCCEC; return 1; }  goto L_CCEC; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCCEC; return 1; }  goto L_CCEC; }
     case 0xCD0D: L_CD0D: /* 00:CD0D: A9 F8     LDA #$F8 */
         m->cyc += 2; m->a = nesLoad(m, 0xF8);
     case 0xCD0F: L_CD0F: /* 00:CD0F: 8D D0 02  STA ram_spr_Y + $D0 */
@@ -2813,7 +2813,7 @@ dispatch:
     case 0xCD1B: L_CD1B: /* 00:CD1B: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCD1C: L_CD1C: /* 00:CD1C: 10 F7     BPL bra_CD15_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCD15; return 1; }  goto L_CD15; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCD15; return 1; }  goto L_CD15; }
     case 0xCD1E: L_CD1E: /* 00:CD1E: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xCD1F: L_CD1F: /* 00:CD1F: A5 4F     LDA ram_004F_race_started_flag */
@@ -2847,7 +2847,7 @@ dispatch:
     case 0xCD3D: L_CD3D: /* 00:CD3D: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xCD3E: L_CD3E: /* 00:CD3E: 10 E5     BPL bra_CD25_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCD25; return 1; }  goto L_CD25; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCD25; return 1; }  goto L_CD25; }
     case 0xCD40: L_CD40: /* 00:CD40: A5 34     LDA ram_0034_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0034));
     case 0xCD42: L_CD42: /* 00:CD42: D0 14     BNE bra_CD58_RTS */
@@ -3111,7 +3111,7 @@ dispatch:
     case 0xCE48: L_CE48: /* 00:CE48: D9 CE C0  CMP tbl_C0CE,Y */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, (uint16_t)(0xC0CE + m->y)));
     case 0xCE4B: L_CE4B: /* 00:CE4B: 90 F8     BCC bra_CE45_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCE45; return 1; }  goto L_CE45; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCE45; return 1; }  goto L_CE45; }
     case 0xCE4D: L_CE4D: /* 00:CE4D: B9 CE C0  LDA tbl_C0CE,Y */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0xC0CE + m->y)));
     case 0xCE50: L_CE50: /* 00:CE50: 95 90     STA ram_0090_obj,X */
@@ -3297,7 +3297,7 @@ dispatch:
     case 0xCF07: L_CF07: /* 00:CF07: E0 04     CPX #$04 */
         m->cyc += 2; nesCmp(m, m->x, 0x04);
     case 0xCF09: L_CF09: /* 00:CF09: 90 C7     BCC bra_CED2_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCED2; return 1; }  goto L_CED2; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCED2; return 1; }  goto L_CED2; }
     case 0xCF0B: L_CF0B: /* 00:CF0B: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xCF0C: L_CF0C: /* 00:CF0C: B5 84     LDA ram_0084_obj,X */
@@ -3305,7 +3305,7 @@ dispatch:
     case 0xCF0E: L_CF0E: /* 00:CF0E: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xCF0F: L_CF0F: /* 00:CF0F: 90 FA     BCC bra_CF0B_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCF0B; return 1; }  goto L_CF0B; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCF0B; return 1; }  goto L_CF0B; }
     case 0xCF11: L_CF11: /* 00:CF11: B5 70     LDA ram_0070_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x70 + m->x)));
     case 0xCF13: L_CF13: /* 00:CF13: 85 02     STA ram_0002_t08 */
@@ -3323,7 +3323,7 @@ dispatch:
     case 0xCF21: L_CF21: /* 00:CF21: 0A        ASL */
         m->cyc += 2; m->a = nesAsl(m, m->a);
     case 0xCF22: L_CF22: /* 00:CF22: 90 E7     BCC bra_CF0B_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCF0B; return 1; }  goto L_CF0B; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCF0B; return 1; }  goto L_CF0B; }
     case 0xCF24: L_CF24: /* 00:CF24: B5 18     LDA ram_0018,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x18 + m->x)));
     case 0xCF26: L_CF26: /* 00:CF26: 4A        LSR */
@@ -3395,7 +3395,7 @@ dispatch:
     case 0xCF66: L_CF66: /* 00:CF66: C9 E6     CMP #$E6 */
         m->cyc += 2; nesCmp(m, m->a, 0xE6);
     case 0xCF68: L_CF68: /* 00:CF68: F0 DD     BEQ bra_CF47_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCF47; return 1; }  goto L_CF47; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCF47; return 1; }  goto L_CF47; }
     case 0xCF6A: L_CF6A: /* 00:CF6A: BC 60 03  LDY ram_0360_obj,X */
         m->cyc += 4; m->y = nesLoad(m, nesRd(m, (uint16_t)(0x0360 + m->x)));
     case 0xCF6D: L_CF6D: /* 00:CF6D: C8        INY */
@@ -3403,7 +3403,7 @@ dispatch:
     case 0xCF6E: L_CF6E: /* 00:CF6E: C0 05     CPY #$05 */
         m->cyc += 2; nesCmp(m, m->y, 0x05);
     case 0xCF70: L_CF70: /* 00:CF70: 10 D5     BPL bra_CF47_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCF47; return 1; }  goto L_CF47; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCF47; return 1; }  goto L_CF47; }
     case 0xCF72: L_CF72: /* 00:CF72: 20 88 CF  JSR sub_CF88 */
         m->cyc += 6; nesPush(m, 0xCF); nesPush(m, 0x74); goto L_CF88;
     case 0xCF75: L_CF75: /* 00:CF75: B0 10     BCS bra_CF87_RTS */
@@ -3491,7 +3491,7 @@ dispatch:
     case 0xCFC5: L_CFC5: /* 00:CFC5: C0 04     CPY #$04 */
         m->cyc += 2; nesCmp(m, m->y, 0x04);
     case 0xCFC7: L_CFC7: /* 00:CFC7: 90 DD     BCC bra_CFA6_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCFA6; return 1; }  goto L_CFA6; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCFA6; return 1; }  goto L_CFA6; }
     case 0xCFC9: L_CFC9: /* 00:CFC9: 18        CLC */
         m->cyc += 2; m->c = 0u;
     case 0xCFCA: L_CFCA: /* 00:CFCA: 60        RTS */
@@ -3563,13 +3563,13 @@ dispatch:
     case 0xD008: L_D008: /* 00:D008: 29 10     AND #$10 */
         m->cyc += 2; m->a &= 0x10; nesSetNZ(m, m->a);
     case 0xD00A: L_D00A: /* 00:D00A: F0 F3     BEQ bra_CFFF_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCFFF; return 1; }  goto L_CFFF; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCFFF; return 1; }  goto L_CFFF; }
     case 0xD00C: L_D00C: /* 00:D00C: B5 1A     LDA ram_001A,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x1A + m->x)));
     case 0xD00E: L_D00E: /* 00:D00E: C9 C0     CMP #$C0 */
         m->cyc += 2; nesCmp(m, m->a, 0xC0);
     case 0xD010: L_D010: /* 00:D010: 90 ED     BCC bra_CFFF_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xCFFF; return 1; }  goto L_CFFF; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCFFF; return 1; }  goto L_CFFF; }
     case 0xD012: L_D012: /* 00:D012: D0 01     BNE bra_D015 */
         m->cyc += 2; if (!m->z) { m->cyc += 1;  goto L_D015; }
     case 0xD014: L_D014: /* 00:D014: C8        INY */
@@ -3629,7 +3629,7 @@ dispatch:
     case 0xD048: L_D048: /* 00:D048: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD049: L_D049: /* 00:D049: 10 DA     BPL bra_D025_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD025; return 1; }  goto L_D025; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD025; return 1; }  goto L_D025; }
     case 0xD04B: L_D04B: /* 00:D04B: A0 00     LDY #$00 */
         m->cyc += 2; m->y = nesLoad(m, 0x00);
     case 0xD04D: L_D04D: /* 00:D04D: B5 58     LDA ram_0058_obj,X */
@@ -3685,11 +3685,11 @@ dispatch:
     case 0xD07D: L_D07D: /* 00:D07D: 20 8B CF  JSR sub_CF8B */
         m->cyc += 6; nesPush(m, 0xD0); nesPush(m, 0x7F); goto L_CF8B;
     case 0xD080: L_D080: /* 00:D080: B0 ED     BCS bra_D06F_loop */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD06F; return 1; }  goto L_D06F; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD06F; return 1; }  goto L_D06F; }
     case 0xD082: L_D082: /* 00:D082: 20 47 CF  JSR sub_CF47 */
         m->cyc += 6; nesPush(m, 0xD0); nesPush(m, 0x84); goto L_CF47;
     case 0xD085: L_D085: /* 00:D085: 4C 4B D0  JMP loc_D04B */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xD04B; return 1; } goto L_D04B;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD04B; return 1; } goto L_D04B;
     case 0xD088: L_D088: /* 00:D088: BC 60 03  LDY ram_0360_obj,X */
         m->cyc += 4; m->y = nesLoad(m, nesRd(m, (uint16_t)(0x0360 + m->x)));
     case 0xD08B: L_D08B: /* 00:D08B: C8        INY */
@@ -3697,7 +3697,7 @@ dispatch:
     case 0xD08C: L_D08C: /* 00:D08C: C0 06     CPY #$06 */
         m->cyc += 2; nesCmp(m, m->y, 0x06);
     case 0xD08E: L_D08E: /* 00:D08E: 10 BB     BPL bra_D04B */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD04B; return 1; }  goto L_D04B; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD04B; return 1; }  goto L_D04B; }
     case 0xD090: L_D090: /* 00:D090: 20 03 E8  JSR sub_E803 */
         m->cyc += 6; nesPush(m, 0xD0); nesPush(m, 0x92); goto L_E803;
     case 0xD093: L_D093: /* 00:D093: A4 07     LDY ram_0007_t08 */
@@ -3705,15 +3705,15 @@ dispatch:
     case 0xD095: L_D095: /* 00:D095: C9 E4     CMP #$E4 */
         m->cyc += 2; nesCmp(m, m->a, 0xE4);
     case 0xD097: L_D097: /* 00:D097: F0 B2     BEQ bra_D04B */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD04B; return 1; }  goto L_D04B; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD04B; return 1; }  goto L_D04B; }
     case 0xD099: L_D099: /* 00:D099: 20 8B CF  JSR sub_CF8B */
         m->cyc += 6; nesPush(m, 0xD0); nesPush(m, 0x9B); goto L_CF8B;
     case 0xD09C: L_D09C: /* 00:D09C: B0 ED     BCS bra_D08B_loop */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD08B; return 1; }  goto L_D08B; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD08B; return 1; }  goto L_D08B; }
     case 0xD09E: L_D09E: /* 00:D09E: 20 6A CF  JSR sub_CF6A */
         m->cyc += 6; nesPush(m, 0xD0); nesPush(m, 0xA0); goto L_CF6A;
     case 0xD0A1: L_D0A1: /* 00:D0A1: 4C 4B D0  JMP loc_D04B */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xD04B; return 1; } goto L_D04B;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD04B; return 1; } goto L_D04B;
     case 0xD0A4: L_D0A4: /* 00:D0A4: A9 09     LDA #$09 */
         m->cyc += 2; m->a = nesLoad(m, 0x09);
     case 0xD0A6: L_D0A6: /* 00:D0A6: 95 7C     STA ram_007C_obj,X */
@@ -3743,7 +3743,7 @@ dispatch:
     case 0xD0BA: L_D0BA: /* 00:D0BA: E9 08     SBC #$08 */
         m->cyc += 2; nesSbc(m, 0x08);
     case 0xD0BC: L_D0BC: /* 00:D0BC: 10 F8     BPL bra_D0B6_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD0B6; return 1; }  goto L_D0B6; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD0B6; return 1; }  goto L_D0B6; }
     case 0xD0BE: L_D0BE: /* 00:D0BE: 98        TYA */
         m->cyc += 2; m->a = nesLoad(m, m->y);
     case 0xD0BF: L_D0BF: /* 00:D0BF: 9D 60 03  STA ram_0360_obj,X */
@@ -3751,7 +3751,7 @@ dispatch:
     case 0xD0C2: L_D0C2: /* 00:D0C2: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD0C3: L_D0C3: /* 00:D0C3: 10 E8     BPL bra_D0AD_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD0AD; return 1; }  goto L_D0AD; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD0AD; return 1; }  goto L_D0AD; }
     case 0xD0C5: L_D0C5: /* 00:D0C5: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD0C6: L_D0C6: /* 00:D0C6: A2 03     LDX #$03 */
@@ -3799,11 +3799,11 @@ dispatch:
     case 0xD0EC: L_D0EC: /* 00:D0EC: C6 0B     DEC ram_000B_t02_loop_counter */
         m->cyc += 5; t16 = 0x000B; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xD0EE: L_D0EE: /* 00:D0EE: D0 E9     BNE bra_D0D9_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD0D9; return 1; }  goto L_D0D9; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD0D9; return 1; }  goto L_D0D9; }
     case 0xD0F0: L_D0F0: /* 00:D0F0: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD0F1: L_D0F1: /* 00:D0F1: 10 D5     BPL bra_D0C8_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD0C8; return 1; }  goto L_D0C8; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD0C8; return 1; }  goto L_D0C8; }
     case 0xD0F3: L_D0F3: /* 00:D0F3: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD0F4: L_D0F4: /* 00:D0F4: A2 06     LDX #$06 */
@@ -3815,7 +3815,7 @@ dispatch:
     case 0xD0FC: L_D0FC: /* 00:D0FC: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD0FD: L_D0FD: /* 00:D0FD: 10 F7     BPL bra_D0F6_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD0F6; return 1; }  goto L_D0F6; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD0F6; return 1; }  goto L_D0F6; }
     case 0xD0FF: L_D0FF: /* 00:D0FF: A9 56     LDA #< $2356 */
         m->cyc += 2; m->a = nesLoad(m, 0x56);
     case 0xD101: L_D101: /* 00:D101: 85 00     STA ram_0000_t20_lo */
@@ -3867,7 +3867,7 @@ dispatch:
     case 0xD138: L_D138: /* 00:D138: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD139: L_D139: /* 00:D139: D0 FA     BNE bra_D135_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD135; return 1; }  goto L_D135; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD135; return 1; }  goto L_D135; }
     case 0xD13B: L_D13B: /* 00:D13B: 8E 12 03  STX ram_0312 */
         m->cyc += 4; nesWr(m, 0x0312, m->x);
     case 0xD13E: L_D13E: /* 00:D13E: 60        RTS */
@@ -3889,7 +3889,7 @@ dispatch:
     case 0xD151: L_D151: /* 00:D151: 29 40     AND #$40 */
         m->cyc += 2; m->a &= 0x40; nesSetNZ(m, m->a);
     case 0xD153: L_D153: /* 00:D153: D0 F9     BNE bra_D14E_infinite_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD14E; return 1; }  goto L_D14E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD14E; return 1; }  goto L_D14E; }
     case 0xD155: L_D155: /* 00:D155: 20 B3 D1  JSR sub_D1B3 */
         m->cyc += 6; nesPush(m, 0xD1); nesPush(m, 0x57); goto L_D1B3;
     case 0xD158: L_D158: /* 00:D158: A5 3F     LDA ram_003F */
@@ -3923,7 +3923,7 @@ dispatch:
     case 0xD173: L_D173: /* 00:D173: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD174: L_D174: /* 00:D174: D0 F7     BNE bra_D16D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD16D; return 1; }  goto L_D16D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD16D; return 1; }  goto L_D16D; }
     case 0xD176: L_D176: /* 00:D176: 20 C6 D0  JSR sub_D0C6 */
         m->cyc += 6; nesPush(m, 0xD1); nesPush(m, 0x78); goto L_D0C6;
     case 0xD179: L_D179: /* 00:D179: 20 F4 D0  JSR sub_D0F4 */
@@ -3935,11 +3935,11 @@ dispatch:
     case 0xD180: L_D180: /* 00:D180: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD181: L_D181: /* 00:D181: D0 FD     BNE bra_D180_garbage_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD180; return 1; }  goto L_D180; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD180; return 1; }  goto L_D180; }
     case 0xD183: L_D183: /* 00:D183: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD184: L_D184: /* 00:D184: D0 F8     BNE bra_D17E_garbage_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD17E; return 1; }  goto L_D17E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD17E; return 1; }  goto L_D17E; }
     case 0xD186: L_D186: /* 00:D186: A5 10     LDA ram_for_2000 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0010));
     case 0xD188: L_D188: /* 00:D188: 05 4D     ORA ram_004D_base_nametable */
@@ -3963,7 +3963,7 @@ dispatch:
     case 0xD19E: L_D19E: /* 00:D19E: 29 40     AND #$40 */
         m->cyc += 2; m->a &= 0x40; nesSetNZ(m, m->a);
     case 0xD1A0: L_D1A0: /* 00:D1A0: F0 F9     BEQ bra_D19B_infinite_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD19B; return 1; }  goto L_D19B; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD19B; return 1; }  goto L_D19B; }
     case 0xD1A2: L_D1A2: /* 00:D1A2: A5 10     LDA ram_for_2000 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0010));
     case 0xD1A4: L_D1A4: /* 00:D1A4: 29 F0     AND #$F0 */
@@ -3977,7 +3977,7 @@ dispatch:
     case 0xD1AE: L_D1AE: /* 00:D1AE: 8D 05 20  STA $2005 */
         m->cyc += 4; nesWr(m, 0x2005, m->a);
     case 0xD1B1: L_D1B1: /* 00:D1B1: F0 E4     BEQ bra_D197    ; jmp */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD197; return 1; }  goto L_D197; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD197; return 1; }  goto L_D197; }
     case 0xD1B3: L_D1B3: /* 00:D1B3: A5 10     LDA ram_for_2000 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0010));
     case 0xD1B5: L_D1B5: /* 00:D1B5: 05 4E     ORA ram_004E_base_nametable */
@@ -3993,7 +3993,7 @@ dispatch:
     case 0xD1C2: L_D1C2: /* 00:D1C2: A5 51     LDA ram_0051_scroll_Y */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0051));
     case 0xD1C4: L_D1C4: /* 00:D1C4: 4C 97 D1  JMP loc_D197 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xD197; return 1; } goto L_D197;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD197; return 1; } goto L_D197;
     case 0xD1C7: L_D1C7: /* 00:D1C7: 85 0A     STA ram_000A_t08 */
         m->cyc += 3; nesWr(m, 0x000A, m->a);
     case 0xD1C9: L_D1C9: /* 00:D1C9: 8A        TXA */
@@ -4037,7 +4037,7 @@ dispatch:
     case 0xD1E5: L_D1E5: /* 00:D1E5: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD1E6: L_D1E6: /* 00:D1E6: D0 FB     BNE bra_D1E3_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD1E3; return 1; }  goto L_D1E3; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD1E3; return 1; }  goto L_D1E3; }
     case 0xD1E8: L_D1E8: /* 00:D1E8: 85 08     STA ram_0008_t05_max_index */
         m->cyc += 3; nesWr(m, 0x0008, m->a);
     case 0xD1EA: L_D1EA: /* 00:D1EA: A5 02     LDA ram_0002_t03 */
@@ -4083,7 +4083,7 @@ dispatch:
     case 0xD20B: L_D20B: /* 00:D20B: E4 08     CPX ram_0008_t05_max_index */
         m->cyc += 3; nesCmp(m, m->x, nesRd(m, 0x0008));
     case 0xD20D: L_D20D: /* 00:D20D: D0 DF     BNE bra_D1EE_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD1EE; return 1; }  goto L_D1EE; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD1EE; return 1; }  goto L_D1EE; }
     case 0xD20F: L_D20F: /* 00:D20F: A0 00     LDY #$00 */
         m->cyc += 2; m->y = nesLoad(m, 0x00);
     case 0xD211: L_D211: /* 00:D211: A6 06     LDX ram_0006_t03 */
@@ -4117,7 +4117,7 @@ dispatch:
     case 0xD228: L_D228: /* 00:D228: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD229: L_D229: /* 00:D229: D0 EC     BNE bra_D217_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD217; return 1; }  goto L_D217; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD217; return 1; }  goto L_D217; }
     case 0xD22B: L_D22B: /* 00:D22B: A5 00     LDA ram_0000_t15 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0000));
     case 0xD22D: L_D22D: /* 00:D22D: 18        CLC */
@@ -4129,7 +4129,7 @@ dispatch:
     case 0xD232: L_D232: /* 00:D232: C6 07     DEC ram_0007_t06_loop_counter */
         m->cyc += 5; t16 = 0x0007; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xD234: L_D234: /* 00:D234: D0 DB     BNE bra_D211_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD211; return 1; }  goto L_D211; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD211; return 1; }  goto L_D211; }
     case 0xD236: L_D236: /* 00:D236: 68        PLA */
         m->cyc += 4; m->a = nesLoad(m, nesPull(m));
     case 0xD237: L_D237: /* 00:D237: A8        TAY */
@@ -4161,7 +4161,7 @@ dispatch:
     case 0xD24A: L_D24A: /* 00:D24A: E0 03     CPX #$03 */
         m->cyc += 2; nesCmp(m, m->x, 0x03);
     case 0xD24C: L_D24C: /* 00:D24C: 90 EF     BCC bra_D23D_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD23D; return 1; }  goto L_D23D; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD23D; return 1; }  goto L_D23D; }
     case 0xD24E: L_D24E: /* 00:D24E: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD24F: L_D24F: /* 00:D24F: A9 00     LDA #$00 */
@@ -4179,7 +4179,7 @@ dispatch:
     case 0xD25C: L_D25C: /* 00:D25C: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD25D: L_D25D: /* 00:D25D: D0 FA     BNE bra_D259_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD259; return 1; }  goto L_D259; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD259; return 1; }  goto L_D259; }
     case 0xD25F: L_D25F: /* 00:D25F: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD260: L_D260: /* 00:D260: AD 02 20  LDA $2002 */
@@ -4199,7 +4199,7 @@ dispatch:
     case 0xD26F: L_D26F: /* 00:D26F: C6 01     DEC ram_0001_t05_loop_counter */
         m->cyc += 5; t16 = 0x0001; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xD271: L_D271: /* 00:D271: D0 FA     BNE bra_D26D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD26D; return 1; }  goto L_D26D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD26D; return 1; }  goto L_D26D; }
     case 0xD273: L_D273: /* 00:D273: 85 02     STA ram_0002_t04_ppu_hi */
         m->cyc += 3; nesWr(m, 0x0002, m->a);
     case 0xD275: L_D275: /* 00:D275: 8D 06 20  STA $2006 */
@@ -4219,11 +4219,11 @@ dispatch:
     case 0xD286: L_D286: /* 00:D286: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD287: L_D287: /* 00:D287: D0 FA     BNE bra_D283_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD283; return 1; }  goto L_D283; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD283; return 1; }  goto L_D283; }
     case 0xD289: L_D289: /* 00:D289: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD28A: L_D28A: /* 00:D28A: D0 F7     BNE bra_D283_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD283; return 1; }  goto L_D283; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD283; return 1; }  goto L_D283; }
     case 0xD28C: L_D28C: /* 00:D28C: A5 02     LDA ram_0002_t04_ppu_hi */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0002));
     case 0xD28E: L_D28E: /* 00:D28E: 69 03     ADC #$03 */
@@ -4243,7 +4243,7 @@ dispatch:
     case 0xD29F: L_D29F: /* 00:D29F: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD2A0: L_D2A0: /* 00:D2A0: D0 FA     BNE bra_D29C_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD29C; return 1; }  goto L_D29C; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD29C; return 1; }  goto L_D29C; }
     case 0xD2A2: L_D2A2: /* 00:D2A2: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD2A3: L_D2A3: /* 00:D2A3: 8A        TXA */
@@ -4305,7 +4305,7 @@ dispatch:
     case 0xD2DA: L_D2DA: /* 00:D2DA: C6 06     DEC ram_0006_t04_loop_counter */
         m->cyc += 5; t16 = 0x0006; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xD2DC: L_D2DC: /* 00:D2DC: D0 F3     BNE bra_D2D1_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD2D1; return 1; }  goto L_D2D1; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD2D1; return 1; }  goto L_D2D1; }
     case 0xD2DE: L_D2DE: /* 00:D2DE: 20 FF D2  JSR sub_D2FF    ; possible PLA PLA */
         m->cyc += 6; nesPush(m, 0xD2); nesPush(m, 0xE0); goto L_D2FF;
     case 0xD2E1: L_D2E1: /* 00:D2E1: 8E 00 03  STX ram_0300 */
@@ -4327,7 +4327,7 @@ dispatch:
     case 0xD2F1: L_D2F1: /* 00:D2F1: C6 04     DEC ram_0004_t02_loop_counter */
         m->cyc += 5; t16 = 0x0004; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xD2F3: L_D2F3: /* 00:D2F3: D0 C5     BNE bra_D2BA_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD2BA; return 1; }  goto L_D2BA; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD2BA; return 1; }  goto L_D2BA; }
     case 0xD2F5: L_D2F5: /* 00:D2F5: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xD2F7: L_D2F7: /* 00:D2F7: 9D 01 03  STA ram_0301,X */
@@ -4383,7 +4383,7 @@ dispatch:
     case 0xD322: L_D322: /* 00:D322: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD323: L_D323: /* 00:D323: 10 F7     BPL bra_D31C_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD31C; return 1; }  goto L_D31C; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD31C; return 1; }  goto L_D31C; }
     case 0xD325: L_D325: /* 00:D325: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD326: L_D326: /* 00:D326: A5 18     LDA ram_0018 */
@@ -4461,7 +4461,7 @@ dispatch:
     case 0xD369: L_D369: /* 00:D369: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xD36A: L_D36A: /* 00:D36A: D0 F1     BNE bra_D35D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD35D; return 1; }  goto L_D35D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD35D; return 1; }  goto L_D35D; }
     case 0xD36C: L_D36C: /* 00:D36C: 86 00     STX ram_0000_t23_btns */
         m->cyc += 3; nesWr(m, 0x0000, m->x);
     case 0xD36E: L_D36E: /* 00:D36E: 06 00     ASL ram_0000_t23_btns */
@@ -4543,7 +4543,7 @@ dispatch:
     case 0xD3B2: L_D3B2: /* 00:D3B2: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD3B3: L_D3B3: /* 00:D3B3: D0 F5     BNE bra_D3AA_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD3AA; return 1; }  goto L_D3AA; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD3AA; return 1; }  goto L_D3AA; }
     case 0xD3B5: L_D3B5: /* 00:D3B5: 38        SEC */
         m->cyc += 2; m->c = 1u;
     case 0xD3B6: L_D3B6: /* 00:D3B6: 98        TYA */
@@ -4565,7 +4565,7 @@ dispatch:
     case 0xD3C6: L_D3C6: /* 00:D3C6: B1 00     LDA (ram_0000_t03_ppu_data),Y */
         m->cyc += 5; m->a = nesLoad(m, nesRd(m, nesPtrY(m, 0x00)));
     case 0xD3C8: L_D3C8: /* 00:D3C8: D0 BD     BNE bra_D387_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD387; return 1; }  goto L_D387; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD387; return 1; }  goto L_D387; }
     case 0xD3CA: L_D3CA: /* 00:D3CA: AD 02 20  LDA $2002 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x2002));
     case 0xD3CD: L_D3CD: /* 00:D3CD: A9 00     LDA #$00 */
@@ -4586,7 +4586,7 @@ dispatch:
     case 0xD920: L_D920: /* 00:D920: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xD921: L_D921: /* 00:D921: 10 F7     BPL bra_D91A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xD91A; return 1; }  goto L_D91A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD91A; return 1; }  goto L_D91A; }
     case 0xD923: L_D923: /* 00:D923: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xD924: L_D924: /* 00:D924: B4 9C     LDY ram_009C_obj,X */
@@ -4776,7 +4776,7 @@ dispatch:
     case 0xD9E2: L_D9E2: /* 00:D9E2: F0 0F     BEQ bra_D9F3 */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_D9F3; }
     case 0xD9E4: L_D9E4: /* 00:D9E4: 4C 85 CA  JMP loc_CA85_clear_0021_00FF */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xCA85; return 1; } goto L_CA85;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCA85; return 1; } goto L_CA85;
     case 0xD9E7: L_D9E7: /* 00:D9E7: A5 22     LDA ram_0022_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0022));
     case 0xD9E9: L_D9E9: /* 00:D9E9: D0 0A     BNE bra_D9F5_RTS */
@@ -4862,7 +4862,7 @@ dispatch:
     case 0xDA38: L_DA38: /* 00:DA38: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDA39: L_DA39: /* 00:DA39: 10 F1     BPL bra_DA2C_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDA2C; return 1; }  goto L_DA2C; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDA2C; return 1; }  goto L_DA2C; }
     case 0xDA3B: L_DA3B: /* 00:DA3B: 20 6A DA  JSR sub_DA6A */
         m->cyc += 6; nesPush(m, 0xDA); nesPush(m, 0x3D); goto L_DA6A;
     case 0xDA3E: L_DA3E: /* 00:DA3E: 20 7A DA  JSR sub_DA7A */
@@ -4958,7 +4958,7 @@ dispatch:
     case 0xDA9B: L_DA9B: /* 00:DA9B: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDA9C: L_DA9C: /* 00:DA9C: D0 DE     BNE bra_DA7C_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDA7C; return 1; }  goto L_DA7C; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDA7C; return 1; }  goto L_DA7C; }
     case 0xDA9E: L_DA9E: /* 00:DA9E: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xDA9F: L_DA9F: /* 00:DA9F: A2 03     LDX #$03 */
@@ -5022,7 +5022,7 @@ dispatch:
     case 0xDAD7: L_DAD7: /* 00:DAD7: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDAD8: L_DAD8: /* 00:DAD8: D0 EE     BNE bra_DAC8_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDAC8; return 1; }  goto L_DAC8; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDAC8; return 1; }  goto L_DAC8; }
     case 0xDADA: L_DADA: /* 00:DADA: A6 00     LDX ram_0000_t25_save_X */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x0000));
     case 0xDADC: L_DADC: /* 00:DADC: 20 E3 DA  JSR sub_DAE3 */
@@ -5030,7 +5030,7 @@ dispatch:
     case 0xDADF: L_DADF: /* 00:DADF: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDAE0: L_DAE0: /* 00:DAE0: D0 C3     BNE bra_DAA5_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDAA5; return 1; }  goto L_DAA5; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDAA5; return 1; }  goto L_DAA5; }
     case 0xDAE2: L_DAE2: /* 00:DAE2: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xDAE3: L_DAE3: /* 00:DAE3: 20 95 DB  JSR sub_DB95_clear_opponent_bike_data */
@@ -5176,11 +5176,11 @@ dispatch:
     case 0xDB6F: L_DB6F: /* 00:DB6F: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xDB70: L_DB70: /* 00:DB70: B0 EA     BCS bra_DB5C */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
     case 0xDB72: L_DB72: /* 00:DB72: A5 94     LDA ram_0094_obj */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0094));
     case 0xDB74: L_DB74: /* 00:DB74: F0 E6     BEQ bra_DB5C */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
     case 0xDB76: L_DB76: /* 00:DB76: 95 78     STA ram_0078,X */
         m->cyc += 4; nesWr(m, (uint16_t)(uint8_t)(0x78 + m->x), m->a);
     case 0xDB78: L_DB78: /* 00:DB78: A5 90     LDA ram_0090_obj */
@@ -5196,7 +5196,7 @@ dispatch:
     case 0xDB82: L_DB82: /* 00:DB82: C9 40     CMP #$40 */
         m->cyc += 2; nesCmp(m, m->a, 0x40);
     case 0xDB84: L_DB84: /* 00:DB84: B0 D6     BCS bra_DB5C */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDB5C; return 1; }  goto L_DB5C; }
     case 0xDB86: L_DB86: /* 00:DB86: A5 70     LDA ram_0070_obj */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0070));
     case 0xDB88: L_DB88: /* 00:DB88: C5 73     CMP ram_0070_obj + $03 */
@@ -5260,7 +5260,7 @@ dispatch:
     case 0xDBC4: L_DBC4: /* 00:DBC4: AD A8 03  LDA ram_03A8 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03A8));
     case 0xDBC7: L_DBC7: /* 00:DBC7: F0 FA     BEQ bra_DBC3_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
     case 0xDBC9: L_DBC9: /* 00:DBC9: A5 AB     LDA ram_00A8_obj + $03 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x00AB));
     case 0xDBCB: L_DBCB: /* 00:DBCB: F0 13     BEQ bra_DBE0 */
@@ -5272,7 +5272,7 @@ dispatch:
     case 0xDBD1: L_DBD1: /* 00:DBD1: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xDBD2: L_DBD2: /* 00:DBD2: B0 EF     BCS bra_DBC3_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
     case 0xDBD4: L_DBD4: /* 00:DBD4: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xDBD5: L_DBD5: /* 00:DBD5: B0 06     BCS bra_DBDD */
@@ -5282,9 +5282,9 @@ dispatch:
     case 0xDBD9: L_DBD9: /* 00:DBD9: C9 EA     CMP #$EA */
         m->cyc += 2; nesCmp(m, m->a, 0xEA);
     case 0xDBDB: L_DBDB: /* 00:DBDB: B0 E6     BCS bra_DBC3_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
     case 0xDBDD: L_DBDD: /* 00:DBDD: 4C 95 DB  JMP loc_DB95_clear_opponent_bike_data */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDB95; return 1; } goto L_DB95;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDB95; return 1; } goto L_DB95;
     case 0xDBE0: L_DBE0: /* 00:DBE0: A0 00     LDY #$00 */
         m->cyc += 2; m->y = nesLoad(m, 0x00);
     case 0xDBE2: L_DBE2: /* 00:DBE2: 8C A8 03  STY ram_03A8 */
@@ -5300,7 +5300,7 @@ dispatch:
     case 0xDBEB: L_DBEB: /* 00:DBEB: 20 E3 DA  JSR sub_DAE3 */
         m->cyc += 6; nesPush(m, 0xDB); nesPush(m, 0xED); goto L_DAE3;
     case 0xDBEE: L_DBEE: /* 00:DBEE: F0 D3     BEQ bra_DBC3_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDBC3; return 1; }  goto L_DBC3; }
     case 0xDBF0: L_DBF0: /* 00:DBF0: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xDBF2: L_DBF2: /* 00:DBF2: 85 97     STA ram_0094_obj + $03 */
@@ -5348,7 +5348,7 @@ dispatch:
     case 0xDC1A: L_DC1A: /* 00:DC1A: B5 B0     LDA ram_00B0_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xB0 + m->x)));
     case 0xDC1C: L_DC1C: /* 00:DC1C: F0 FB     BEQ bra_DC19_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
     case 0xDC1E: L_DC1E: /* 00:DC1E: 20 97 DC  JSR sub_DC97 */
         m->cyc += 6; nesPush(m, 0xDC); nesPush(m, 0x20); goto L_DC97;
     case 0xDC21: L_DC21: /* 00:DC21: 85 01     STA ram_0001_t08 */
@@ -5356,17 +5356,17 @@ dispatch:
     case 0xDC23: L_DC23: /* 00:DC23: D5 8C     CMP ram_008C,X */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, (uint16_t)(uint8_t)(0x8C + m->x)));
     case 0xDC25: L_DC25: /* 00:DC25: B0 F2     BCS bra_DC19_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
     case 0xDC27: L_DC27: /* 00:DC27: B5 8C     LDA ram_008C,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x8C + m->x)));
     case 0xDC29: L_DC29: /* 00:DC29: C9 A8     CMP #$A8 */
         m->cyc += 2; nesCmp(m, m->a, 0xA8);
     case 0xDC2B: L_DC2B: /* 00:DC2B: B0 EC     BCS bra_DC19_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
     case 0xDC2D: L_DC2D: /* 00:DC2D: BD 64 03  LDA ram_0364_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x0364 + m->x)));
     case 0xDC30: L_DC30: /* 00:DC30: F0 E7     BEQ bra_DC19_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDC19; return 1; }  goto L_DC19; }
     case 0xDC32: L_DC32: /* 00:DC32: 8A        TXA */
         m->cyc += 2; m->a = nesLoad(m, m->x);
     case 0xDC33: L_DC33: /* 00:DC33: D0 04     BNE bra_DC39 */
@@ -5462,7 +5462,7 @@ dispatch:
     case 0xDC8E: L_DC8E: /* 00:DC8E: B5 D4     LDA ram_00D4_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xD4 + m->x)));
     case 0xDC90: L_DC90: /* 00:DC90: D0 FB     BNE bra_DC8D_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDC8D; return 1; }  goto L_DC8D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDC8D; return 1; }  goto L_DC8D; }
     case 0xDC92: L_DC92: /* 00:DC92: A9 06     LDA #$06 */
         m->cyc += 2; m->a = nesLoad(m, 0x06);
     case 0xDC94: L_DC94: /* 00:DC94: 95 AC     STA ram_00AC_obj,X */
@@ -5574,11 +5574,11 @@ dispatch:
     case 0xDCFE: L_DCFE: /* 00:DCFE: B5 98     LDA ram_0098_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x98 + m->x)));
     case 0xDD00: L_DD00: /* 00:DD00: D0 F8     BNE bra_DCFA */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDCFA; return 1; }  goto L_DCFA; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDCFA; return 1; }  goto L_DCFA; }
     case 0xDD02: L_DD02: /* 00:DD02: F6 94     INC ram_0094_obj,X */
         m->cyc += 6; t16 = (uint16_t)(uint8_t)(0x94 + m->x); t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xDD04: L_DD04: /* 00:DD04: D0 F4     BNE bra_DCFA    ; jmp? */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDCFA; return 1; }  goto L_DCFA; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDCFA; return 1; }  goto L_DCFA; }
     case 0xDD06: L_DD06: /* 00:DD06: B5 94     LDA ram_0094_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x94 + m->x)));
     case 0xDD08: L_DD08: /* 00:DD08: 9D 84 03  STA ram_0384_obj,X */
@@ -5710,7 +5710,7 @@ dispatch:
     case 0xDD8F: L_DD8F: /* 00:DD8F: 0D E0 03  ORA ram_03E0_obj */
         m->cyc += 4; m->a |= nesRd(m, 0x03E0); nesSetNZ(m, m->a);
     case 0xDD92: L_DD92: /* 00:DD92: F0 F8     BEQ bra_DD8C_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDD8C; return 1; }  goto L_DD8C; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDD8C; return 1; }  goto L_DD8C; }
     case 0xDD94: L_DD94: /* 00:DD94: A5 3C     LDA ram_003C_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x003C));
     case 0xDD96: L_DD96: /* 00:DD96: C9 08     CMP #$08 */
@@ -5752,7 +5752,7 @@ dispatch:
     case 0xDDBA: L_DDBA: /* 00:DDBA: 86 DC     STX ram_00DC_obj */
         m->cyc += 3; nesWr(m, 0x00DC, m->x);
     case 0xDDBC: L_DDBC: /* 00:DDBC: 4C DD CC  JMP loc_CCDD */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xCCDD; return 1; } goto L_CCDD;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCCDD; return 1; } goto L_CCDD;
     case 0xDDBF: L_DDBF: /* 00:DDBF: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xDDC1: L_DDC1: /* 00:DDC1: 8D E0 03  STA ram_03E0_obj */
@@ -5766,7 +5766,7 @@ dispatch:
     case 0xDDCB: L_DDCB: /* 00:DDCB: 8D 74 03  STA ram_0374_obj */
         m->cyc += 4; nesWr(m, 0x0374, m->a);
     case 0xDDCE: L_DDCE: /* 00:DDCE: 4C 13 CD  JMP loc_CD13 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xCD13; return 1; } goto L_CD13;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xCD13; return 1; } goto L_CD13;
     case 0xDDD1: L_DDD1: /* 00:DDD1: A2 03     LDX #$03 */
         m->cyc += 2; m->x = nesLoad(m, 0x03);
     case 0xDDD3: L_DDD3: /* 00:DDD3: B5 98     LDA ram_0098_obj,X */
@@ -5864,7 +5864,7 @@ dispatch:
     case 0xDE2D: L_DE2D: /* 00:DE2D: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDE2E: L_DE2E: /* 00:DE2E: 10 A3     BPL bra_DDD3_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDDD3; return 1; }  goto L_DDD3; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDDD3; return 1; }  goto L_DDD3; }
     case 0xDE30: L_DE30: /* 00:DE30: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xDE31: L_DE31: /* 00:DE31: A5 24     LDA ram_0024_timer */
@@ -5974,7 +5974,7 @@ dispatch:
     case 0xDE9A: L_DE9A: /* 00:DE9A: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xDE9B: L_DE9B: /* 00:DE9B: 10 D2     BPL bra_DE6F_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDE6F; return 1; }  goto L_DE6F; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDE6F; return 1; }  goto L_DE6F; }
     case 0xDE9D: L_DE9D: /* 00:DE9D: A5 34     LDA ram_0034_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0034));
     case 0xDE9F: L_DE9F: /* 00:DE9F: F0 04     BEQ bra_DEA5_RTS */
@@ -5998,13 +5998,13 @@ dispatch:
     case 0xDEB0: L_DEB0: /* 00:DEB0: 8D B4 03  STA ram_03B4 */
         m->cyc += 4; nesWr(m, 0x03B4, m->a);
     case 0xDEB3: L_DEB3: /* 00:DEB3: 90 F0     BCC bra_DEA5_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDEA5; return 1; }  goto L_DEA5; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDEA5; return 1; }  goto L_DEA5; }
     case 0xDEB5: L_DEB5: /* 00:DEB5: A9 02     LDA #$02 */
         m->cyc += 2; m->a = nesLoad(m, 0x02);
     case 0xDEB7: L_DEB7: /* 00:DEB7: 85 24     STA ram_0024_timer */
         m->cyc += 3; nesWr(m, 0x0024, m->a);
     case 0xDEB9: L_DEB9: /* 00:DEB9: D0 93     BNE bra_DE4E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDE4E; return 1; }  goto L_DE4E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDE4E; return 1; }  goto L_DE4E; }
     case 0xDEBB: L_DEBB: /* 00:DEBB: A2 03     LDX #$03 */
         m->cyc += 2; m->x = nesLoad(m, 0x03);
     case 0xDEBD: L_DEBD: /* 00:DEBD: B5 84     LDA ram_0084_obj,X */
@@ -6042,7 +6042,7 @@ dispatch:
     case 0xDEDE: L_DEDE: /* 00:DEDE: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDEDF: L_DEDF: /* 00:DEDF: D0 DC     BNE bra_DEBD_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDEBD; return 1; }  goto L_DEBD; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDEBD; return 1; }  goto L_DEBD; }
     case 0xDEE1: L_DEE1: /* 00:DEE1: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xDEE2: L_DEE2: /* 00:DEE2: A2 00     LDX #$00 */
@@ -6056,7 +6056,7 @@ dispatch:
     case 0xDEEB: L_DEEB: /* 00:DEEB: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xDEEC: L_DEEC: /* 00:DEEC: B0 B7     BCS bra_DEA5_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDEA5; return 1; }  goto L_DEA5; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDEA5; return 1; }  goto L_DEA5; }
     case 0xDEEE: L_DEEE: /* 00:DEEE: A2 02     LDX #$02 */
         m->cyc += 2; m->x = nesLoad(m, 0x02);
     case 0xDEF0: L_DEF0: /* 00:DEF0: A5 94     LDA ram_0094_obj */
@@ -6074,7 +6074,7 @@ dispatch:
     case 0xDEFC: L_DEFC: /* 00:DEFC: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDEFD: L_DEFD: /* 00:DEFD: 10 F9     BPL bra_DEF8_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDEF8; return 1; }  goto L_DEF8; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDEF8; return 1; }  goto L_DEF8; }
     case 0xDEFF: L_DEFF: /* 00:DEFF: A9 02     LDA #$02 */
         m->cyc += 2; m->a = nesLoad(m, 0x02);
     case 0xDF01: L_DF01: /* 00:DF01: A4 B0     LDY ram_00B0_obj */
@@ -6162,7 +6162,7 @@ dispatch:
     case 0xDF4E: L_DF4E: /* 00:DF4E: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDF4F: L_DF4F: /* 00:DF4F: 10 F7     BPL bra_DF48_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDF48; return 1; }  goto L_DF48; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDF48; return 1; }  goto L_DF48; }
     case 0xDF51: L_DF51: /* 00:DF51: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xDF52: L_DF52: /* 00:DF52: A5 6B     LDA ram_006B */
@@ -6180,7 +6180,7 @@ dispatch:
     case 0xDF5D: L_DF5D: /* 00:DF5D: C9 64     CMP #$64 */
         m->cyc += 2; nesCmp(m, m->a, 0x64);
     case 0xDF5F: L_DF5F: /* 00:DF5F: 90 DA     BCC bra_DF3B_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
     case 0xDF61: L_DF61: /* 00:DF61: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xDF63: L_DF63: /* 00:DF63: 85 6A     STA ram_0068 + $02 */
@@ -6192,7 +6192,7 @@ dispatch:
     case 0xDF69: L_DF69: /* 00:DF69: C9 3C     CMP #$3C */
         m->cyc += 2; nesCmp(m, m->a, 0x3C);
     case 0xDF6B: L_DF6B: /* 00:DF6B: 90 CE     BCC bra_DF3B_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
     case 0xDF6D: L_DF6D: /* 00:DF6D: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xDF6F: L_DF6F: /* 00:DF6F: 85 69     STA ram_0068 + $01 */
@@ -6204,13 +6204,13 @@ dispatch:
     case 0xDF75: L_DF75: /* 00:DF75: C9 09     CMP #$09 */
         m->cyc += 2; nesCmp(m, m->a, 0x09);
     case 0xDF77: L_DF77: /* 00:DF77: 90 C2     BCC bra_DF3B_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDF3B; return 1; }  goto L_DF3B; }
     case 0xDF79: L_DF79: /* 00:DF79: A9 02     LDA #$02 */
         m->cyc += 2; m->a = nesLoad(m, 0x02);
     case 0xDF7B: L_DF7B: /* 00:DF7B: 85 52     STA ram_0052_track_finished_flag */
         m->cyc += 3; nesWr(m, 0x0052, m->a);
     case 0xDF7D: L_DF7D: /* 00:DF7D: D0 C2     BNE bra_DF41    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDF41; return 1; }  goto L_DF41; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDF41; return 1; }  goto L_DF41; }
     case 0xDF7F: L_DF7F: /* 00:DF7F: B5 00     LDA ram_0005_t02 - $05,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x00 + m->x)));
     case 0xDF81: L_DF81: /* 00:DF81: 48        PHA */
@@ -6256,7 +6256,7 @@ dispatch:
     case 0xDFAA: L_DFAA: /* 00:DFAA: E5 0F     SBC ram_000F_temp */
         m->cyc += 3; nesSbc(m, nesRd(m, 0x000F));
     case 0xDFAC: L_DFAC: /* 00:DFAC: 10 FA     BPL bra_DFA8_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDFA8; return 1; }  goto L_DFA8; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFA8; return 1; }  goto L_DFA8; }
     case 0xDFAE: L_DFAE: /* 00:DFAE: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xDFAF: L_DFAF: /* 00:DFAF: 65 0F     ADC ram_000F_temp */
@@ -6280,7 +6280,7 @@ dispatch:
     case 0xDFC0: L_DFC0: /* 00:DFC0: C0 05     CPY #$05 */
         m->cyc += 2; nesCmp(m, m->y, 0x05);
     case 0xDFC2: L_DFC2: /* 00:DFC2: 30 F6     BMI bra_DFBA_loop */
-        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDFBA; return 1; }  goto L_DFBA; }
+        m->cyc += 2; if (m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFBA; return 1; }  goto L_DFBA; }
     case 0xDFC4: L_DFC4: /* 00:DFC4: A0 00     LDY #$00 */
         m->cyc += 2; m->y = nesLoad(m, 0x00);
     case 0xDFC6: L_DFC6: /* 00:DFC6: 98        TYA */
@@ -6322,7 +6322,7 @@ dispatch:
     case 0xDFE7: L_DFE7: /* 00:DFE7: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xDFE8: L_DFE8: /* 00:DFE8: 90 F3     BCC bra_DFDD */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
     case 0xDFEA: L_DFEA: /* 00:DFEA: B9 84 00  LDA ram_0084_obj,Y */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x0084 + m->y)));
     case 0xDFED: L_DFED: /* 00:DFED: 4A        LSR */
@@ -6332,7 +6332,7 @@ dispatch:
     case 0xDFF0: L_DFF0: /* 00:DFF0: B5 70     LDA ram_0070_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x70 + m->x)));
     case 0xDFF2: L_DFF2: /* 00:DFF2: F0 E9     BEQ bra_DFDD */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
     case 0xDFF4: L_DFF4: /* 00:DFF4: D9 70 00  CMP ram_0070_obj,Y */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, (uint16_t)(0x0070 + m->y)));
     case 0xDFF7: L_DFF7: /* 00:DFF7: D0 24     BNE bra_E01D */
@@ -6342,7 +6342,7 @@ dispatch:
     case 0xDFFB: L_DFFB: /* 00:DFFB: 1D E0 03  ORA ram_03E0_obj,X */
         m->cyc += 4; m->a |= nesRd(m, (uint16_t)(0x03E0 + m->x)); nesSetNZ(m, m->a);
     case 0xDFFE: L_DFFE: /* 00:DFFE: D0 DD     BNE bra_DFDD */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFDD; return 1; }  goto L_DFDD; }
     case 0xE000: L_E000: /* 00:E000: B9 98 00  LDA ram_0098_obj,Y */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x0098 + m->y)));
     case 0xE003: L_E003: /* 00:E003: D0 79     BNE bra_E07E */
@@ -6458,7 +6458,7 @@ dispatch:
     case 0xE081: L_E081: /* 00:E081: F0 03     BEQ bra_E086 */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_E086; }
     case 0xE083: L_E083: /* 00:E083: 4C E0 DF  JMP loc_DFE0 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDFE0; return 1; } goto L_DFE0;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFE0; return 1; } goto L_DFE0;
     case 0xE086: L_E086: /* 00:E086: E8        INX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x + 1u));
     case 0xE087: L_E087: /* 00:E087: 8A        TXA */
@@ -6472,7 +6472,7 @@ dispatch:
     case 0xE08C: L_E08C: /* 00:E08C: F0 09     BEQ bra_E097_RTS */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_E097; }
     case 0xE08E: L_E08E: /* 00:E08E: 4C D9 DF  JMP loc_DFD9 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDFD9; return 1; } goto L_DFD9;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDFD9; return 1; } goto L_DFD9;
     case 0xE091: L_E091: /* 00:E091: C9 E7     CMP #$E7 */
         m->cyc += 2; nesCmp(m, m->a, 0xE7);
     case 0xE093: L_E093: /* 00:E093: B0 02     BCS bra_E097_RTS */
@@ -6570,7 +6570,7 @@ dispatch:
     case 0xE0EA: L_E0EA: /* 00:E0EA: 05 24     ORA ram_0024_timer */
         m->cyc += 3; m->a |= nesRd(m, 0x0024); nesSetNZ(m, m->a);
     case 0xE0EC: L_E0EC: /* 00:E0EC: D0 B0     BNE bra_E09E_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE09E; return 1; }  goto L_E09E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE09E; return 1; }  goto L_E09E; }
     case 0xE0EE: L_E0EE: /* 00:E0EE: AD A0 03  LDA ram_03A0 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03A0));
     case 0xE0F1: L_E0F1: /* 00:E0F1: D0 17     BNE bra_E10A */
@@ -6578,7 +6578,7 @@ dispatch:
     case 0xE0F3: L_E0F3: /* 00:E0F3: A5 2E     LDA ram_002E_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x002E));
     case 0xE0F5: L_E0F5: /* 00:E0F5: D0 A7     BNE bra_E09E_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE09E; return 1; }  goto L_E09E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE09E; return 1; }  goto L_E09E; }
     case 0xE0F7: L_E0F7: /* 00:E0F7: A5 18     LDA ram_0018 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0018));
     case 0xE0F9: L_E0F9: /* 00:E0F9: 29 03     AND #$03 */
@@ -6710,7 +6710,7 @@ dispatch:
     case 0xE17B: L_E17B: /* 00:E17B: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xE17C: L_E17C: /* 00:E17C: 10 F0     BPL bra_E16E_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE16E; return 1; }  goto L_E16E; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE16E; return 1; }  goto L_E16E; }
     case 0xE17E: L_E17E: /* 00:E17E: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE17F: L_E17F: /* 00:E17F: 20 F4 E3  JSR sub_E3F4 */
@@ -6744,7 +6744,7 @@ dispatch:
     case 0xE19F: L_E19F: /* 00:E19F: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE1A0: L_E1A0: /* 00:E1A0: 10 E2     BPL bra_E184_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE184; return 1; }  goto L_E184; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE184; return 1; }  goto L_E184; }
     case 0xE1A2: L_E1A2: /* 00:E1A2: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE1A3: L_E1A3: /* 00:E1A3: B5 80     LDA ram_0080_obj,X */
@@ -6828,7 +6828,7 @@ dispatch:
     case 0xE1EE: L_E1EE: /* 00:E1EE: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xE1EF: L_E1EF: /* 00:E1EF: 10 F1     BPL bra_E1E2_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE1E2; return 1; }  goto L_E1E2; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE1E2; return 1; }  goto L_E1E2; }
     case 0xE1F1: L_E1F1: /* 00:E1F1: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE1F2: L_E1F2: /* 00:E1F2: A0 15     LDY #$15 */
@@ -6964,23 +6964,23 @@ dispatch:
     case 0xE26A: L_E26A: /* 00:E26A: AD 9F 03  LDA ram_039C_obj + $03 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x039F));
     case 0xE26D: L_E26D: /* 00:E26D: F0 FA     BEQ bra_E269_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE269; return 1; }  goto L_E269; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE269; return 1; }  goto L_E269; }
     case 0xE26F: L_E26F: /* 00:E26F: B5 84     LDA ram_0084_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x84 + m->x)));
     case 0xE271: L_E271: /* 00:E271: C9 02     CMP #$02 */
         m->cyc += 2; nesCmp(m, m->a, 0x02);
     case 0xE273: L_E273: /* 00:E273: F0 F4     BEQ bra_E269_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE269; return 1; }  goto L_E269; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE269; return 1; }  goto L_E269; }
     case 0xE275: L_E275: /* 00:E275: BD 90 03  LDA ram_0390_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x0390 + m->x)));
     case 0xE278: L_E278: /* 00:E278: C9 F8     CMP #$F8 */
         m->cyc += 2; nesCmp(m, m->a, 0xF8);
     case 0xE27A: L_E27A: /* 00:E27A: B0 ED     BCS bra_E269_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE269; return 1; }  goto L_E269; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE269; return 1; }  goto L_E269; }
     case 0xE27C: L_E27C: /* 00:E27C: D5 80     CMP ram_0080_obj,X */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, (uint16_t)(uint8_t)(0x80 + m->x)));
     case 0xE27E: L_E27E: /* 00:E27E: 90 E9     BCC bra_E269_RTS */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE269; return 1; }  goto L_E269; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE269; return 1; }  goto L_E269; }
     case 0xE280: L_E280: /* 00:E280: BD 90 03  LDA ram_0390_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x0390 + m->x)));
     case 0xE283: L_E283: /* 00:E283: 85 00     STA ram_0000_t15 */
@@ -7024,7 +7024,7 @@ dispatch:
     case 0xE2AA: L_E2AA: /* 00:E2AA: 49 03     EOR #$03 */
         m->cyc += 2; m->a ^= 0x03; nesSetNZ(m, m->a);
     case 0xE2AC: L_E2AC: /* 00:E2AC: 4C C7 D1  JMP loc_D1C7 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xD1C7; return 1; } goto L_D1C7;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD1C7; return 1; } goto L_D1C7;
     case 0xE2AF: L_E2AF: /* 00:E2AF: AD BD 03  LDA ram_03BD */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03BD));
     case 0xE2B2: L_E2B2: /* 00:E2B2: 38        SEC */
@@ -7044,7 +7044,7 @@ dispatch:
     case 0xE2C1: L_E2C1: /* 00:E2C1: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xE2C2: L_E2C2: /* 00:E2C2: D0 A5     BNE bra_E269_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE269; return 1; }  goto L_E269; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE269; return 1; }  goto L_E269; }
     case 0xE2C4: L_E2C4: /* 00:E2C4: A5 20     LDA ram_0020_0A_frm_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0020));
     case 0xE2C6: L_E2C6: /* 00:E2C6: D0 08     BNE bra_E2D0 */
@@ -7088,7 +7088,7 @@ dispatch:
     case 0xE2F1: L_E2F1: /* 00:E2F1: 85 0B     STA ram_000B_t01 */
         m->cyc += 3; nesWr(m, 0x000B, m->a);
     case 0xE2F3: L_E2F3: /* 00:E2F3: 4C C7 D1  JMP loc_D1C7 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xD1C7; return 1; } goto L_D1C7;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xD1C7; return 1; } goto L_D1C7;
     case 0xE2F6: L_E2F6: /* 00:E2F6: BD 6C 03  LDA ram_036C_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0x036C + m->x)));
     case 0xE2F9: L_E2F9: /* 00:E2F9: F0 5D     BEQ bra_E358_RTS */
@@ -7330,7 +7330,7 @@ dispatch:
     case 0xE3F0: L_E3F0: /* 00:E3F0: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE3F1: L_E3F1: /* 00:E3F1: 10 E1     BPL bra_E3D4_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE3D4; return 1; }  goto L_E3D4; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE3D4; return 1; }  goto L_E3D4; }
     case 0xE3F3: L_E3F3: /* 00:E3F3: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE3F4: L_E3F4: /* 00:E3F4: A2 03     LDX #$03 */
@@ -7346,7 +7346,7 @@ dispatch:
     case 0xE3FD: L_E3FD: /* 00:E3FD: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE3FE: L_E3FE: /* 00:E3FE: 10 F6     BPL bra_E3F6_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE3F6; return 1; }  goto L_E3F6; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE3F6; return 1; }  goto L_E3F6; }
     case 0xE400: L_E400: /* 00:E400: AD 73 03  LDA ram_0370_obj + $03 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x0373));
     case 0xE403: L_E403: /* 00:E403: F0 04     BEQ bra_E409 */
@@ -7382,11 +7382,11 @@ dispatch:
     case 0xE422: L_E422: /* 00:E422: C4 0D     CPY ram_000D_t02_loop_counter */
         m->cyc += 3; nesCmp(m, m->y, nesRd(m, 0x000D));
     case 0xE424: L_E424: /* 00:E424: D0 E9     BNE bra_E40F_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE40F; return 1; }  goto L_E40F; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE40F; return 1; }  goto L_E40F; }
     case 0xE426: L_E426: /* 00:E426: C6 0D     DEC ram_000D_t02_loop_counter */
         m->cyc += 5; t16 = 0x000D; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xE428: L_E428: /* 00:E428: D0 E3     BNE bra_E40D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE40D; return 1; }  goto L_E40D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE40D; return 1; }  goto L_E40D; }
     case 0xE42A: L_E42A: /* 00:E42A: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE42B: L_E42B: /* 00:E42B: AD A3 03  LDA ram_03A3_flag */
@@ -7418,7 +7418,7 @@ dispatch:
     case 0xE44A: L_E44A: /* 00:E44A: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE44B: L_E44B: /* 00:E44B: 10 E5     BPL bra_E432_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE432; return 1; }  goto L_E432; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE432; return 1; }  goto L_E432; }
     case 0xE44D: L_E44D: /* 00:E44D: AD B3 03  LDA ram_03B3 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x03B3));
     case 0xE450: L_E450: /* 00:E450: 49 02     EOR #$02 */
@@ -7492,7 +7492,7 @@ dispatch:
     case 0xE497: L_E497: /* 00:E497: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xE498: L_E498: /* 00:E498: 10 BE     BPL bra_E458_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE458; return 1; }  goto L_E458; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE458; return 1; }  goto L_E458; }
     case 0xE49A: L_E49A: /* 00:E49A: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE49B: L_E49B: /* 00:E49B: A2 00     LDX #$00 */
@@ -7514,7 +7514,7 @@ dispatch:
     case 0xE4A8: L_E4A8: /* 00:E4A8: E0 03     CPX #$03 */
         m->cyc += 2; nesCmp(m, m->x, 0x03);
     case 0xE4AA: L_E4AA: /* 00:E4AA: 90 F1     BCC bra_E49D_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE49D; return 1; }  goto L_E49D; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE49D; return 1; }  goto L_E49D; }
     case 0xE4AC: L_E4AC: /* 00:E4AC: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE4AD: L_E4AD: /* 00:E4AD: A9 02     LDA #> ram_oam */
@@ -7546,7 +7546,7 @@ dispatch:
     case 0xE4C3: L_E4C3: /* 00:E4C3: C0 0C     CPY #$0C */
         m->cyc += 2; nesCmp(m, m->y, 0x0C);
     case 0xE4C5: L_E4C5: /* 00:E4C5: 90 F6     BCC bra_E4BD_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE4BD; return 1; }  goto L_E4BD; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE4BD; return 1; }  goto L_E4BD; }
     case 0xE4C7: L_E4C7: /* 00:E4C7: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE4C8: L_E4C8: /* 00:E4C8: A2 01     LDX #$01 */
@@ -7614,7 +7614,7 @@ dispatch:
     case 0xE500: L_E500: /* 00:E500: C0 04     CPY #$04 */
         m->cyc += 2; nesCmp(m, m->y, 0x04);
     case 0xE502: L_E502: /* 00:E502: 90 DC     BCC bra_E4E0_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE4E0; return 1; }  goto L_E4E0; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE4E0; return 1; }  goto L_E4E0; }
     case 0xE504: L_E504: /* 00:E504: A5 0A     LDA ram_000A_t09_counter */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x000A));
     case 0xE506: L_E506: /* 00:E506: C9 02     CMP #$02 */
@@ -7626,7 +7626,7 @@ dispatch:
     case 0xE50C: L_E50C: /* 00:E50C: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE50D: L_E50D: /* 00:E50D: 10 BB     BPL bra_E4CA_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE4CA; return 1; }  goto L_E4CA; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE4CA; return 1; }  goto L_E4CA; }
     case 0xE50F: L_E50F: /* 00:E50F: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xE511: L_E511: /* 00:E511: F0 15     BEQ bra_E528    ; jmp */
@@ -7654,7 +7654,7 @@ dispatch:
     case 0xE521: L_E521: /* 00:E521: 20 2C E5  JSR sub_E52C */
         m->cyc += 6; nesPush(m, 0xE5); nesPush(m, 0x23); goto L_E52C;
     case 0xE524: L_E524: /* 00:E524: F0 E4     BEQ bra_E50A */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE50A; return 1; }  goto L_E50A; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE50A; return 1; }  goto L_E50A; }
     case 0xE526: L_E526: /* 00:E526: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xE528: L_E528: /* 00:E528: 8D A3 03  STA ram_03A3_flag */
@@ -7721,7 +7721,7 @@ dispatch:
     case 0xE72F: L_E72F: /* 00:E72F: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE730: L_E730: /* 00:E730: 10 DB     BPL bra_E70D_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE70D; return 1; }  goto L_E70D; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE70D; return 1; }  goto L_E70D; }
     case 0xE732: L_E732: /* 00:E732: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE733: L_E733: /* 00:E733: A2 03     LDX #$03 */
@@ -7731,7 +7731,7 @@ dispatch:
     case 0xE738: L_E738: /* 00:E738: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE739: L_E739: /* 00:E739: D0 FA     BNE bra_E735_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE735; return 1; }  goto L_E735; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE735; return 1; }  goto L_E735; }
     case 0xE73B: L_E73B: /* 00:E73B: B5 60     LDA ram_0060,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x60 + m->x)));
     case 0xE73D: L_E73D: /* 00:E73D: 18        CLC */
@@ -7801,7 +7801,7 @@ dispatch:
     case 0xE77A: L_E77A: /* 00:E77A: F0 02     BEQ bra_E77E */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_E77E; }
     case 0xE77C: L_E77C: /* 00:E77C: B0 D5     BCS bra_E753_RTS */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE753; return 1; }  goto L_E753; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE753; return 1; }  goto L_E753; }
     case 0xE77E: L_E77E: /* 00:E77E: C8        INY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y + 1u));
     case 0xE77F: L_E77F: /* 00:E77F: B1 0A     LDA (ram_000A_t01_data),Y */
@@ -7821,7 +7821,7 @@ dispatch:
     case 0xE790: L_E790: /* 00:E790: F6 C4     INC ram_00C4_obj,X */
         m->cyc += 6; t16 = (uint16_t)(uint8_t)(0xC4 + m->x); t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xE792: L_E792: /* 00:E792: D0 CE     BNE bra_E762_loop   ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE762; return 1; }  goto L_E762; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE762; return 1; }  goto L_E762; }
     case 0xE794: L_E794: /* 00:E794: 0A        ASL */
         m->cyc += 2; m->a = nesAsl(m, m->a);
     case 0xE795: L_E795: /* 00:E795: A8        TAY */
@@ -7881,7 +7881,7 @@ dispatch:
     case 0xE7CC: L_E7CC: /* 00:E7CC: F6 C4     INC ram_00C4_obj,X */
         m->cyc += 6; t16 = (uint16_t)(uint8_t)(0xC4 + m->x); t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xE7CE: L_E7CE: /* 00:E7CE: D0 92     BNE bra_E762_loop   ; jmp? */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE762; return 1; }  goto L_E762; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE762; return 1; }  goto L_E762; }
     case 0xE7D0: L_E7D0: /* 00:E7D0: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xE7D2: L_E7D2: /* 00:E7D2: 95 58     STA ram_0058_obj,X */
@@ -7925,7 +7925,7 @@ dispatch:
     case 0xE7F8: L_E7F8: /* 00:E7F8: 95 D0     STA ram_00D0_obj,X */
         m->cyc += 4; nesWr(m, (uint16_t)(uint8_t)(0xD0 + m->x), m->a);
     case 0xE7FA: L_E7FA: /* 00:E7FA: 10 CE     BPL bra_E7CA    ; jmp? */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE7CA; return 1; }  goto L_E7CA; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE7CA; return 1; }  goto L_E7CA; }
     case 0xE7FC: L_E7FC: /* 00:E7FC: BC 60 03  LDY ram_0360_obj,X */
         m->cyc += 4; m->y = nesLoad(m, nesRd(m, (uint16_t)(0x0360 + m->x)));
     case 0xE7FF: L_E7FF: /* 00:E7FF: B5 E0     LDA ram_00E0_obj,X */
@@ -7997,7 +7997,7 @@ dispatch:
     case 0xE841: L_E841: /* 00:E841: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE842: L_E842: /* 00:E842: 10 F4     BPL bra_E838_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE838; return 1; }  goto L_E838; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE838; return 1; }  goto L_E838; }
     case 0xE844: L_E844: /* 00:E844: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE845: L_E845: /* 00:E845: A9 80     LDA #$80 */
@@ -8163,13 +8163,13 @@ dispatch:
     case 0xE8E3: L_E8E3: /* 00:E8E3: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xE8E5: L_E8E5: /* 00:E8E5: D0 DC     BNE bra_E8C3    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE8C3; return 1; }  goto L_E8C3; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE8C3; return 1; }  goto L_E8C3; }
     case 0xE8E7: L_E8E7: /* 00:E8E7: B5 B0     LDA ram_00B0_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xB0 + m->x)));
     case 0xE8E9: L_E8E9: /* 00:E8E9: D0 F7     BNE bra_E8E2_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE8E2; return 1; }  goto L_E8E2; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE8E2; return 1; }  goto L_E8E2; }
     case 0xE8EB: L_E8EB: /* 00:E8EB: 4C FE DC  JMP loc_DCFE */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDCFE; return 1; } goto L_DCFE;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDCFE; return 1; } goto L_DCFE;
     case 0xE8EE: L_E8EE: /* 00:E8EE: A9 02     LDA #$02 */
         m->cyc += 2; m->a = nesLoad(m, 0x02);
     case 0xE8F0: L_E8F0: /* 00:E8F0: 95 A0     STA ram_00A0_obj,X */
@@ -8181,11 +8181,11 @@ dispatch:
     case 0xE8F5: L_E8F5: /* 00:E8F5: A9 30     LDA #$30 */
         m->cyc += 2; m->a = nesLoad(m, 0x30);
     case 0xE8F7: L_E8F7: /* 00:E8F7: 4C 4F E8  JMP loc_E84F */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xE84F; return 1; } goto L_E84F;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE84F; return 1; } goto L_E84F;
     case 0xE8FA: L_E8FA: /* 00:E8FA: A9 10     LDA #$10 */
         m->cyc += 2; m->a = nesLoad(m, 0x10);
     case 0xE8FC: L_E8FC: /* 00:E8FC: 4C 4F E8  JMP loc_E84F */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xE84F; return 1; } goto L_E84F;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE84F; return 1; } goto L_E84F;
     case 0xE8FF: L_E8FF: /* 00:E8FF: B5 B0     LDA ram_00B0_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xB0 + m->x)));
     case 0xE901: L_E901: /* 00:E901: D0 23     BNE bra_E926_RTS */
@@ -8243,19 +8243,19 @@ dispatch:
     case 0xE930: L_E930: /* 00:E930: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xE931: L_E931: /* 00:E931: 10 F6     BPL bra_E929_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE929; return 1; }  goto L_E929; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE929; return 1; }  goto L_E929; }
     case 0xE933: L_E933: /* 00:E933: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xE934: L_E934: /* 00:E934: B5 B0     LDA ram_00B0_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xB0 + m->x)));
     case 0xE936: L_E936: /* 00:E936: D0 FB     BNE bra_E933_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE933; return 1; }  goto L_E933; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE933; return 1; }  goto L_E933; }
     case 0xE938: L_E938: /* 00:E938: A0 00     LDY #$00 */
         m->cyc += 2; m->y = nesLoad(m, 0x00);
     case 0xE93A: L_E93A: /* 00:E93A: B5 94     LDA ram_0094_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x94 + m->x)));
     case 0xE93C: L_E93C: /* 00:E93C: F0 F5     BEQ bra_E933_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE933; return 1; }  goto L_E933; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE933; return 1; }  goto L_E933; }
     case 0xE93E: L_E93E: /* 00:E93E: C9 02     CMP #$02 */
         m->cyc += 2; nesCmp(m, m->a, 0x02);
     case 0xE940: L_E940: /* 00:E940: B0 07     BCS bra_E949 */
@@ -8279,19 +8279,19 @@ dispatch:
     case 0xE951: L_E951: /* 00:E951: F0 0D     BEQ bra_E960 */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_E960; }
     case 0xE953: L_E953: /* 00:E953: 4C FA DC  JMP loc_DCFA */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDCFA; return 1; } goto L_DCFA;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDCFA; return 1; } goto L_DCFA;
     case 0xE956: L_E956: /* 00:E956: B5 A4     LDA ram_00A4_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xA4 + m->x)));
     case 0xE958: L_E958: /* 00:E958: C9 01     CMP #$01 */
         m->cyc += 2; nesCmp(m, m->a, 0x01);
     case 0xE95A: L_E95A: /* 00:E95A: D0 D7     BNE bra_E933_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE933; return 1; }  goto L_E933; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE933; return 1; }  goto L_E933; }
     case 0xE95C: L_E95C: /* 00:E95C: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xE95E: L_E95E: /* 00:E95E: 95 BC     STA ram_00BC_obj,X */
         m->cyc += 4; nesWr(m, (uint16_t)(uint8_t)(0xBC + m->x), m->a);
     case 0xE960: L_E960: /* 00:E960: 4C 06 DD  JMP loc_DD06 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xDD06; return 1; } goto L_DD06;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xDD06; return 1; } goto L_DD06;
     case 0xE963: L_E963: /* 00:E963: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xE965: L_E965: /* 00:E965: 95 CC     STA ram_00CC_obj,X */
@@ -8333,7 +8333,7 @@ dispatch:
     case 0xE988: L_E988: /* 00:E988: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xE989: L_E989: /* 00:E989: 10 F6     BPL bra_E981_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE981; return 1; }  goto L_E981; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE981; return 1; }  goto L_E981; }
     case 0xE98B: L_E98B: /* 00:E98B: B5 A4     LDA ram_00A4_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0xA4 + m->x)));
     case 0xE98D: L_E98D: /* 00:E98D: F0 35     BEQ bra_E9C4 */
@@ -8425,7 +8425,7 @@ dispatch:
     case 0xE9E4: L_E9E4: /* 00:E9E4: 30 21     BMI bra_EA07 */
         m->cyc += 2; if (m->n) { m->cyc += 1;  goto L_EA07; }
     case 0xE9E6: L_E9E6: /* 00:E9E6: 4C 6E E9  JMP loc_E96E_loop */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xE96E; return 1; } goto L_E96E;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE96E; return 1; } goto L_E96E;
     case 0xE9E9: L_E9E9: /* 00:E9E9: B5 9C     LDA ram_009C_obj,X */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(uint8_t)(0x9C + m->x)));
     case 0xE9EB: L_E9EB: /* 00:E9EB: D0 04     BNE bra_E9F1 */
@@ -8447,15 +8447,15 @@ dispatch:
     case 0xE9FB: L_E9FB: /* 00:E9FB: E0 00     CPX #$00 */
         m->cyc += 2; nesCmp(m, m->x, 0x00);
     case 0xE9FD: L_E9FD: /* 00:E9FD: F0 DA     BEQ bra_E9D9 */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE9D9; return 1; }  goto L_E9D9; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE9D9; return 1; }  goto L_E9D9; }
     case 0xE9FF: L_E9FF: /* 00:E9FF: D0 D1     BNE bra_E9D2    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE9D2; return 1; }  goto L_E9D2; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE9D2; return 1; }  goto L_E9D2; }
     case 0xEA01: L_EA01: /* 00:EA01: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xEA03: L_EA03: /* 00:EA03: 95 DC     STA ram_00DC_obj,X */
         m->cyc += 4; nesWr(m, (uint16_t)(uint8_t)(0xDC + m->x), m->a);
     case 0xEA05: L_EA05: /* 00:EA05: F0 DC     BEQ bra_E9E3    ; jmp */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xE9E3; return 1; }  goto L_E9E3; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xE9E3; return 1; }  goto L_E9E3; }
     case 0xEA07: L_EA07: /* 00:EA07: A5 4F     LDA ram_004F_race_started_flag */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x004F));
     case 0xEA09: L_EA09: /* 00:EA09: F0 38     BEQ bra_EA43_RTS */
@@ -8589,7 +8589,7 @@ dispatch:
     case 0xEA8B: L_EA8B: /* 00:EA8B: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xEA8C: L_EA8C: /* 00:EA8C: 10 B8     BPL bra_EA46_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEA46; return 1; }  goto L_EA46; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEA46; return 1; }  goto L_EA46; }
     case 0xEA8E: L_EA8E: /* 00:EA8E: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xEA8F: L_EA8F: /* 00:EA8F: E0 00     CPX #$00 */
@@ -8629,7 +8629,7 @@ dispatch:
     case 0xEAAF: L_EAAF: /* 00:EAAF: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xEAB0: L_EAB0: /* 00:EAB0: 10 F3     BPL bra_EAA5_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEAA5; return 1; }  goto L_EAA5; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEAA5; return 1; }  goto L_EAA5; }
     case 0xEAB2: L_EAB2: /* 00:EAB2: A6 0D     LDX ram_000D_t03_save_X */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x000D));
     case 0xEAB4: L_EAB4: /* 00:EAB4: 60        RTS */
@@ -8657,11 +8657,11 @@ dispatch:
     case 0xEAC7: L_EAC7: /* 00:EAC7: 05 3C     ORA ram_003C_timer */
         m->cyc += 3; m->a |= nesRd(m, 0x003C); nesSetNZ(m, m->a);
     case 0xEAC9: L_EAC9: /* 00:EAC9: D0 F5     BNE bra_EAC0 */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEAC0; return 1; }  goto L_EAC0; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEAC0; return 1; }  goto L_EAC0; }
     case 0xEACB: L_EACB: /* 00:EACB: A5 3A     LDA ram_003A_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x003A));
     case 0xEACD: L_EACD: /* 00:EACD: F0 F5     BEQ bra_EAC4_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEAC4; return 1; }  goto L_EAC4; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEAC4; return 1; }  goto L_EAC4; }
     case 0xEACF: L_EACF: /* 00:EACF: A2 00     LDX #$00 */
         m->cyc += 2; m->x = nesLoad(m, 0x00);
     case 0xEAD1: L_EAD1: /* 00:EAD1: A0 03     LDY #$03 */
@@ -8707,7 +8707,7 @@ dispatch:
     case 0xEAFA: L_EAFA: /* 00:EAFA: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xEAFB: L_EAFB: /* 00:EAFB: D0 E3     BNE bra_EAE0_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEAE0; return 1; }  goto L_EAE0; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEAE0; return 1; }  goto L_EAE0; }
     case 0xEAFD: L_EAFD: /* 00:EAFD: A2 06     LDX #$06 */
         m->cyc += 2; m->x = nesLoad(m, 0x06);
     case 0xEAFF: L_EAFF: /* 00:EAFF: A9 4A     LDA #$4A */
@@ -8733,7 +8733,7 @@ dispatch:
     case 0xEB13: L_EB13: /* 00:EB13: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xEB14: L_EB14: /* 00:EB14: 10 E9     BPL bra_EAFF_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEAFF; return 1; }  goto L_EAFF; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEAFF; return 1; }  goto L_EAFF; }
     case 0xEB16: L_EB16: /* 00:EB16: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xEB17: L_EB17: /* 00:EB17: A5 BE     LDA ram_00BC_obj + $02 */
@@ -8859,7 +8859,7 @@ dispatch:
     case 0xEB8F: L_EB8F: /* 00:EB8F: C9 09     CMP #$09 */
         m->cyc += 2; nesCmp(m, m->a, 0x09);
     case 0xEB91: L_EB91: /* 00:EB91: F0 B0     BEQ bra_EB43 */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEB43; return 1; }  goto L_EB43; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEB43; return 1; }  goto L_EB43; }
     case 0xEB93: L_EB93: /* 00:EB93: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xEB95: L_EB95: /* 00:EB95: 85 BE     STA ram_00BC_obj + $02 */
@@ -8909,7 +8909,7 @@ dispatch:
     case 0xEBC0: L_EBC0: /* 00:EBC0: A5 3A     LDA ram_003A_timer */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x003A));
     case 0xEBC2: L_EBC2: /* 00:EBC2: D0 F8     BNE bra_EBBC_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEBBC; return 1; }  goto L_EBBC; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEBBC; return 1; }  goto L_EBBC; }
     case 0xEBC4: L_EBC4: /* 00:EBC4: E6 3A     INC ram_003A_timer */
         m->cyc += 5; t16 = 0x003A; t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xEBC6: L_EBC6: /* 00:EBC6: A5 5C     LDA ram_005C_obj */
@@ -8947,15 +8947,15 @@ dispatch:
     case 0xEBE9: L_EBE9: /* 00:EBE9: C9 04     CMP #$04 */
         m->cyc += 2; nesCmp(m, m->a, 0x04);
     case 0xEBEB: L_EBEB: /* 00:EBEB: D0 C9     BNE bra_EBB6 */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEBB6; return 1; }  goto L_EBB6; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEBB6; return 1; }  goto L_EBB6; }
     case 0xEBED: L_EBED: /* 00:EBED: CE E0 05  DEC ram_05E0 */
         m->cyc += 6; t16 = 0x05E0; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xEBF0: L_EBF0: /* 00:EBF0: D0 ED     BNE bra_EBDF */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEBDF; return 1; }  goto L_EBDF; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEBDF; return 1; }  goto L_EBDF; }
     case 0xEBF2: L_EBF2: /* 00:EBF2: A9 09     LDA #$09 */
         m->cyc += 2; m->a = nesLoad(m, 0x09);
     case 0xEBF4: L_EBF4: /* 00:EBF4: D0 E6     BNE bra_EBDC    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEBDC; return 1; }  goto L_EBDC; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEBDC; return 1; }  goto L_EBDC; }
     case 0xEBF6: L_EBF6: /* 00:EBF6: A5 2C     LDA ram_002A_timer + $02 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x002C));
     case 0xEBF8: L_EBF8: /* 00:EBF8: D0 40     BNE bra_EC3A_RTS */
@@ -9033,7 +9033,7 @@ dispatch:
     case 0xEC43: L_EC43: /* 00:EC43: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xEC44: L_EC44: /* 00:EC44: D0 F7     BNE bra_EC3D_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEC3D; return 1; }  goto L_EC3D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEC3D; return 1; }  goto L_EC3D; }
     case 0xEC46: L_EC46: /* 00:EC46: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xEC47: L_EC47: /* 00:EC47: A9 CF     LDA #$CF */
@@ -9115,7 +9115,7 @@ dispatch:
     case 0xEC99: L_EC99: /* 00:EC99: A5 60     LDA ram_0060 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0060));
     case 0xEC9B: L_EC9B: /* 00:EC9B: F0 FB     BEQ bra_EC98_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEC98; return 1; }  goto L_EC98; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEC98; return 1; }  goto L_EC98; }
     case 0xEC9D: L_EC9D: /* 00:EC9D: 18        CLC */
         m->cyc += 2; m->c = 0u;
     case 0xEC9E: L_EC9E: /* 00:EC9E: 65 B9     ADC ram_obj_pos_Y_lo + $01 */
@@ -9125,7 +9125,7 @@ dispatch:
     case 0xECA2: L_ECA2: /* 00:ECA2: C9 08     CMP #$08 */
         m->cyc += 2; nesCmp(m, m->a, 0x08);
     case 0xECA4: L_ECA4: /* 00:ECA4: D0 F2     BNE bra_EC98_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xEC98; return 1; }  goto L_EC98; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xEC98; return 1; }  goto L_EC98; }
     case 0xECA6: L_ECA6: /* 00:ECA6: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xECA8: L_ECA8: /* 00:ECA8: 85 C0     STA ram_00C0_obj */
@@ -9181,7 +9181,7 @@ dispatch:
     case 0xECDC: L_ECDC: /* 00:ECDC: D9 C0 04  CMP ram_04C0,Y */
         m->cyc += 4; nesCmp(m, m->a, nesRd(m, (uint16_t)(0x04C0 + m->y)));
     case 0xECDF: L_ECDF: /* 00:ECDF: F0 E5     BEQ bra_ECC6 */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xECC6; return 1; }  goto L_ECC6; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xECC6; return 1; }  goto L_ECC6; }
     case 0xECE1: L_ECE1: /* 00:ECE1: A9 01     LDA #$01 */
         m->cyc += 2; m->a = nesLoad(m, 0x01);
     case 0xECE3: L_ECE3: /* 00:ECE3: 60        RTS */
@@ -9197,7 +9197,7 @@ dispatch:
     case 0xECED: L_ECED: /* 00:ECED: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xECEE: L_ECEE: /* 00:ECEE: 10 F6     BPL bra_ECE6_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xECE6; return 1; }  goto L_ECE6; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xECE6; return 1; }  goto L_ECE6; }
     case 0xECF0: L_ECF0: /* 00:ECF0: A5 05     LDA ram_0002_t06_array + $03 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0005));
     case 0xECF2: L_ECF2: /* 00:ECF2: 8D 00 04  STA ram_0400 */
@@ -9223,7 +9223,7 @@ dispatch:
     case 0xED0A: L_ED0A: /* 00:ED0A: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xED0B: L_ED0B: /* 00:ED0B: 10 F2     BPL bra_ECFF_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xECFF; return 1; }  goto L_ECFF; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xECFF; return 1; }  goto L_ECFF; }
     case 0xED0D: L_ED0D: /* 00:ED0D: A5 05     LDA ram_0002_t06_array + $03 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0005));
     case 0xED0F: L_ED0F: /* 00:ED0F: 49 04     EOR #$04 */
@@ -9251,7 +9251,7 @@ dispatch:
     case 0xED29: L_ED29: /* 00:ED29: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xED2A: L_ED2A: /* 00:ED2A: 10 F2     BPL bra_ED1E_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xED1E; return 1; }  goto L_ED1E; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xED1E; return 1; }  goto L_ED1E; }
     case 0xED2C: L_ED2C: /* 00:ED2C: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xED2E: L_ED2E: /* 00:ED2E: 8D 46 04  STA ram_0446 */
@@ -9263,7 +9263,7 @@ dispatch:
     case 0xED35: L_ED35: /* 00:ED35: A9 04     LDA #> ram_0400 */
         m->cyc += 2; m->a = nesLoad(m, 0x04);
     case 0xED37: L_ED37: /* 00:ED37: 4C 89 C2  JMP loc_C289 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xC289; return 1; } goto L_C289;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xC289; return 1; } goto L_C289;
         m->pc = 0xED3A; return 2; /* gap (data) before F4FF */
     case 0xF4FF: L_F4FF: /* 00:F4FF: A6 43     LDX ram_0043 */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x0043));
@@ -9328,7 +9328,7 @@ dispatch:
     case 0xF53E: L_F53E: /* 00:F53E: B1 07     LDA (ram_0007_t01_data),Y */
         m->cyc += 5; m->a = nesLoad(m, nesRd(m, nesPtrY(m, 0x07)));
     case 0xF540: L_F540: /* 00:F540: F0 CF     BEQ bra_F511_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF511; return 1; }  goto L_F511; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF511; return 1; }  goto L_F511; }
     case 0xF542: L_F542: /* 00:F542: 2C D8 F3  BIT tbl_F3D8_80 */
         m->cyc += 4; t8 = nesRd(m, 0xF3D8); m->z = (uint8_t)((m->a & t8) == 0u); m->n = (uint8_t)(t8 >> 7); m->v = (uint8_t)((t8 >> 6) & 1u);
     case 0xF545: L_F545: /* 00:F545: F0 04     BEQ bra_F54B */
@@ -9336,7 +9336,7 @@ dispatch:
     case 0xF547: L_F547: /* 00:F547: A5 46     LDA ram_0046_flag */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0046));
     case 0xF549: L_F549: /* 00:F549: F0 CF     BEQ bra_F51A_loop */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF51A; return 1; }  goto L_F51A; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF51A; return 1; }  goto L_F51A; }
     case 0xF54B: L_F54B: /* 00:F54B: B1 07     LDA (ram_0007_t01_data),Y */
         m->cyc += 5; m->a = nesLoad(m, nesRd(m, nesPtrY(m, 0x07)));
     case 0xF54D: L_F54D: /* 00:F54D: 2C B5 F0  BIT tbl_F0B5_40 */
@@ -9402,7 +9402,7 @@ dispatch:
     case 0xF588: L_F588: /* 00:F588: 8E A8 03  STX ram_03A8 */
         m->cyc += 4; nesWr(m, 0x03A8, m->x);
     case 0xF58B: L_F58B: /* 00:F58B: 10 8D     BPL bra_F51A_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF51A; return 1; }  goto L_F51A; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF51A; return 1; }  goto L_F51A; }
     case 0xF58D: L_F58D: /* 00:F58D: 29 7F     AND #$7F */
         m->cyc += 2; m->a &= 0x7F; nesSetNZ(m, m->a);
     case 0xF58F: L_F58F: /* 00:F58F: 85 EC     STA ram_00EC */
@@ -9556,7 +9556,7 @@ dispatch:
     case 0xF633: L_F633: /* 00:F633: F0 03     BEQ bra_F638 */
         m->cyc += 2; if (m->z) { m->cyc += 1;  goto L_F638; }
     case 0xF635: L_F635: /* 00:F635: 4C 1A F5  JMP loc_F51A */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xF51A; return 1; } goto L_F51A;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF51A; return 1; } goto L_F51A;
     case 0xF638: L_F638: /* 00:F638: EE A4 03  INC ram_03A4 */
         m->cyc += 6; t16 = 0x03A4; t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xF63B: L_F63B: /* 00:F63B: C6 57     DEC ram_0057 */
@@ -9574,7 +9574,7 @@ dispatch:
     case 0xF648: L_F648: /* 00:F648: 8D A5 03  STA ram_03A5 */
         m->cyc += 4; nesWr(m, 0x03A5, m->a);
     case 0xF64B: L_F64B: /* 00:F64B: 4C 25 F5  JMP loc_F525 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xF525; return 1; } goto L_F525;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF525; return 1; } goto L_F525;
     case 0xF64E: L_F64E: /* 00:F64E: A2 05     LDX #$05 */
         m->cyc += 2; m->x = nesLoad(m, 0x05);
     case 0xF650: L_F650: /* 00:F650: A9 0D     LDA #$0D */
@@ -9602,7 +9602,7 @@ dispatch:
     case 0xF666: L_F666: /* 00:F666: A5 0C     LDA ram_000C_t03_loop_counter */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x000C));
     case 0xF668: L_F668: /* 00:F668: 10 F1     BPL bra_F65B_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF65B; return 1; }  goto L_F65B; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF65B; return 1; }  goto L_F65B; }
     case 0xF66A: L_F66A: /* 00:F66A: A4 0F     LDY ram_000F_temp */
         m->cyc += 3; m->y = nesLoad(m, nesRd(m, 0x000F));
     case 0xF66C: L_F66C: /* 00:F66C: 91 03     STA (ram_0003_t01_data),Y */
@@ -9614,7 +9614,7 @@ dispatch:
     case 0xF672: L_F672: /* 00:F672: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xF673: L_F673: /* 00:F673: 10 DF     BPL bra_F654_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF654; return 1; }  goto L_F654; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF654; return 1; }  goto L_F654; }
     case 0xF675: L_F675: /* 00:F675: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xF676: L_F676: /* 00:F676: A2 0A     LDX #$0A */
@@ -9626,7 +9626,7 @@ dispatch:
     case 0xF67D: L_F67D: /* 00:F67D: CA        DEX */
         m->cyc += 2; m->x = nesLoad(m, (uint8_t)(m->x - 1u));
     case 0xF67E: L_F67E: /* 00:F67E: D0 FA     BNE bra_F67A_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF67A; return 1; }  goto L_F67A; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF67A; return 1; }  goto L_F67A; }
     case 0xF680: L_F680: /* 00:F680: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xF681: L_F681: /* 00:F681: C8        INY */
@@ -9640,13 +9640,13 @@ dispatch:
     case 0xF688: L_F688: /* 00:F688: E0 0F     CPX #$0F */
         m->cyc += 2; nesCmp(m, m->x, 0x0F);
     case 0xF68A: L_F68A: /* 00:F68A: D0 F5     BNE bra_F681_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF681; return 1; }  goto L_F681; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF681; return 1; }  goto L_F681; }
     case 0xF68C: L_F68C: /* 00:F68C: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xF68D: L_F68D: /* 00:F68D: A5 BE     LDA ram_00BC_obj + $02 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x00BE));
     case 0xF68F: L_F68F: /* 00:F68F: F0 FB     BEQ bra_F68C_RTS */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF68C; return 1; }  goto L_F68C; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF68C; return 1; }  goto L_F68C; }
     case 0xF691: L_F691: /* 00:F691: A5 CA     LDA ram_obj_pos_X_lo + $02 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x00CA));
     case 0xF693: L_F693: /* 00:F693: D0 32     BNE bra_F6C7 */
@@ -9910,7 +9910,7 @@ dispatch:
     case 0xF794: L_F794: /* 00:F794: A6 04     LDX ram_0004_t03 */
         m->cyc += 3; m->x = nesLoad(m, nesRd(m, 0x0004));
     case 0xF796: L_F796: /* 00:F796: 10 C7     BPL bra_F75F_loop */
-        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF75F; return 1; }  goto L_F75F; }
+        m->cyc += 2; if (!m->n) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF75F; return 1; }  goto L_F75F; }
     case 0xF798: L_F798: /* 00:F798: 60        RTS */
         m->cyc += 6; t16 = nesPull(m); t16 = (uint16_t)(t16 | (nesPull(m) << 8)); pc = (uint16_t)(t16 + 1u); goto dispatch;
     case 0xF799: L_F799: /* 00:F799: A5 C4     LDA ram_00C4_obj */
@@ -9940,7 +9940,7 @@ dispatch:
     case 0xF7B2: L_F7B2: /* 00:F7B2: A5 C6     LDA ram_00C4_obj + $02 */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x00C6));
     case 0xF7B4: L_F7B4: /* 00:F7B4: D0 E2     BNE bra_F798_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF798; return 1; }  goto L_F798; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF798; return 1; }  goto L_F798; }
     case 0xF7B6: L_F7B6: /* 00:F7B6: E6 C5     INC ram_00C4_obj + $01 */
         m->cyc += 5; t16 = 0x00C5; t8 = (uint8_t)(nesRd(m, t16) + 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xF7B8: L_F7B8: /* 00:F7B8: A5 C5     LDA ram_00C4_obj + $01 */
@@ -10036,7 +10036,7 @@ dispatch:
     case 0xF814: L_F814: /* 00:F814: B1 07     LDA (ram_0007_t02_data),Y */
         m->cyc += 5; m->a = nesLoad(m, nesRd(m, nesPtrY(m, 0x07)));
     case 0xF816: L_F816: /* 00:F816: F0 D4     BEQ bra_F7EC */
-        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF7EC; return 1; }  goto L_F7EC; }
+        m->cyc += 2; if (m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF7EC; return 1; }  goto L_F7EC; }
     case 0xF818: L_F818: /* 00:F818: 9D E0 05  STA ram_05E0,X */
         m->cyc += 5; nesWr(m, (uint16_t)(0x05E0 + m->x), m->a);
     case 0xF81B: L_F81B: /* 00:F81B: E8        INX */
@@ -10046,7 +10046,7 @@ dispatch:
     case 0xF81E: L_F81E: /* 00:F81E: C8        INY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y + 1u));
     case 0xF81F: L_F81F: /* 00:F81F: D0 F1     BNE bra_F812_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF812; return 1; }  goto L_F812; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF812; return 1; }  goto L_F812; }
     case 0xF821: L_F821: /* 00:F821: A9 40     LDA #$40 */
         m->cyc += 2; m->a = nesLoad(m, 0x40);
     case 0xF823: L_F823: /* 00:F823: 9D E0 05  STA ram_05E0,X */
@@ -10138,11 +10138,11 @@ dispatch:
     case 0xF885: L_F885: /* 00:F885: A2 04     LDX #$04 */
         m->cyc += 2; m->x = nesLoad(m, 0x04);
     case 0xF887: L_F887: /* 00:F887: D0 EA     BNE bra_F873    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF873; return 1; }  goto L_F873; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF873; return 1; }  goto L_F873; }
     case 0xF889: L_F889: /* 00:F889: A2 08     LDX #$08 */
         m->cyc += 2; m->x = nesLoad(m, 0x08);
     case 0xF88B: L_F88B: /* 00:F88B: D0 E6     BNE bra_F873    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF873; return 1; }  goto L_F873; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF873; return 1; }  goto L_F873; }
     case 0xF88D: L_F88D: /* 00:F88D: 84 F0     STY ram_00F0 */
         m->cyc += 3; nesWr(m, 0x00F0, m->y);
     case 0xF88F: L_F88F: /* 00:F88F: A9 01     LDA #$01 */
@@ -10156,7 +10156,7 @@ dispatch:
     case 0xF897: L_F897: /* 00:F897: A9 04     LDA #$04 */
         m->cyc += 2; m->a = nesLoad(m, 0x04);
     case 0xF899: L_F899: /* 00:F899: 4C 6B F8  JMP loc_F86B */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xF86B; return 1; } goto L_F86B;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF86B; return 1; } goto L_F86B;
     case 0xF89C: L_F89C: /* 00:F89C: 84 F0     STY ram_00F0 */
         m->cyc += 3; nesWr(m, 0x00F0, m->y);
     case 0xF89E: L_F89E: /* 00:F89E: A9 10     LDA #$10 */
@@ -10218,7 +10218,7 @@ dispatch:
     case 0xF8DC: L_F8DC: /* 00:F8DC: 46 FF     LSR ram_00FF */
         m->cyc += 5; t16 = 0x00FF; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xF8DE: L_F8DE: /* 00:F8DE: B0 AD     BCS bra_F88D */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF88D; return 1; }  goto L_F88D; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF88D; return 1; }  goto L_F88D; }
     case 0xF8E0: L_F8E0: /* 00:F8E0: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xF8E1: L_F8E1: /* 00:F8E1: B0 57     BCS bra_F93A */
@@ -10226,19 +10226,19 @@ dispatch:
     case 0xF8E3: L_F8E3: /* 00:F8E3: 46 FF     LSR ram_00FF */
         m->cyc += 5; t16 = 0x00FF; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xF8E5: L_F8E5: /* 00:F8E5: B0 B5     BCS bra_F89C */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF89C; return 1; }  goto L_F89C; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF89C; return 1; }  goto L_F89C; }
     case 0xF8E7: L_F8E7: /* 00:F8E7: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xF8E8: L_F8E8: /* 00:F8E8: B0 C1     BCS bra_F8AB */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF8AB; return 1; }  goto L_F8AB; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF8AB; return 1; }  goto L_F8AB; }
     case 0xF8EA: L_F8EA: /* 00:F8EA: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xF8EB: L_F8EB: /* 00:F8EB: B0 CC     BCS bra_F8B9 */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF8B9; return 1; }  goto L_F8B9; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF8B9; return 1; }  goto L_F8B9; }
     case 0xF8ED: L_F8ED: /* 00:F8ED: 46 FF     LSR ram_00FF */
         m->cyc += 5; t16 = 0x00FF; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xF8EF: L_F8EF: /* 00:F8EF: B0 BD     BCS bra_F8AE */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF8AE; return 1; }  goto L_F8AE; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF8AE; return 1; }  goto L_F8AE; }
     case 0xF8F1: L_F8F1: /* 00:F8F1: 46 FF     LSR ram_00FF */
         m->cyc += 5; t16 = 0x00FF; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xF8F3: L_F8F3: /* 00:F8F3: B0 19     BCS bra_F90E */
@@ -10300,7 +10300,7 @@ dispatch:
     case 0xF927: L_F927: /* 00:F927: C9 03     CMP #$03 */
         m->cyc += 2; nesCmp(m, m->a, 0x03);
     case 0xF929: L_F929: /* 00:F929: D0 E2     BNE bra_F90D_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF90D; return 1; }  goto L_F90D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF90D; return 1; }  goto L_F90D; }
     case 0xF92B: L_F92B: /* 00:F92B: A9 9A     LDA #$9A */
         m->cyc += 2; m->a = nesLoad(m, 0x9A);
     case 0xF92D: L_F92D: /* 00:F92D: 8D 01 40  STA $4001 */
@@ -10356,15 +10356,15 @@ dispatch:
     case 0xF961: L_F961: /* 00:F961: C9 04     CMP #$04 */
         m->cyc += 2; nesCmp(m, m->a, 0x04);
     case 0xF963: L_F963: /* 00:F963: D0 A8     BNE bra_F90D_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF90D; return 1; }  goto L_F90D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF90D; return 1; }  goto L_F90D; }
     case 0xF965: L_F965: /* 00:F965: A9 9A     LDA #$9A */
         m->cyc += 2; m->a = nesLoad(m, 0x9A);
     case 0xF967: L_F967: /* 00:F967: D0 C4     BNE bra_F92D    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF92D; return 1; }  goto L_F92D; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF92D; return 1; }  goto L_F92D; }
     case 0xF969: L_F969: /* 00:F969: A9 93     LDA #$93 */
         m->cyc += 2; m->a = nesLoad(m, 0x93);
     case 0xF96B: L_F96B: /* 00:F96B: D0 C6     BNE bra_F933    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF933; return 1; }  goto L_F933; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF933; return 1; }  goto L_F933; }
     case 0xF96D: L_F96D: /* 00:F96D: 84 F0     STY ram_00F0 */
         m->cyc += 3; nesWr(m, 0x00F0, m->y);
     case 0xF96F: L_F96F: /* 00:F96F: A9 02     LDA #$02 */
@@ -10372,15 +10372,15 @@ dispatch:
     case 0xF971: L_F971: /* 00:F971: 85 F5     STA ram_00F5 */
         m->cyc += 3; nesWr(m, 0x00F5, m->a);
     case 0xF973: L_F973: /* 00:F973: D0 D9     BNE bra_F94E    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF94E; return 1; }  goto L_F94E; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF94E; return 1; }  goto L_F94E; }
     case 0xF975: L_F975: /* 00:F975: C6 F6     DEC ram_00F6 */
         m->cyc += 5; t16 = 0x00F6; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xF977: L_F977: /* 00:F977: D0 E6     BNE bra_F95F */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF95F; return 1; }  goto L_F95F; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF95F; return 1; }  goto L_F95F; }
     case 0xF979: L_F979: /* 00:F979: A9 94     LDA #$94 */
         m->cyc += 2; m->a = nesLoad(m, 0x94);
     case 0xF97B: L_F97B: /* 00:F97B: D0 B6     BNE bra_F933    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF933; return 1; }  goto L_F933; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF933; return 1; }  goto L_F933; }
     case 0xF97D: L_F97D: /* 00:F97D: 84 F0     STY ram_00F0 */
         m->cyc += 3; nesWr(m, 0x00F0, m->y);
     case 0xF97F: L_F97F: /* 00:F97F: A9 21     LDA #$21 */
@@ -10416,7 +10416,7 @@ dispatch:
     case 0xF99E: L_F99E: /* 00:F99E: 8D 00 40  STA $4000 */
         m->cyc += 4; nesWr(m, 0x4000, m->a);
     case 0xF9A1: L_F9A1: /* 00:F9A1: D0 97     BNE bra_F93A    ; jmp */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xF93A; return 1; }  goto L_F93A; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF93A; return 1; }  goto L_F93A; }
         m->pc = 0xF9A3; return 2; /* gap (data) before FA4F */
     case 0xFA4F: L_FA4F: /* 00:FA4F: A0 15     LDY #$15 */
         m->cyc += 2; m->y = nesLoad(m, 0x15);
@@ -10453,11 +10453,11 @@ dispatch:
     case 0xFA74: L_FA74: /* 00:FA74: A4 FE     LDY ram_00FE_flag */
         m->cyc += 3; m->y = nesLoad(m, nesRd(m, 0x00FE));
     case 0xFA76: L_FA76: /* 00:FA76: D0 D7     BNE bra_FA4F */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFA4F; return 1; }  goto L_FA4F; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFA4F; return 1; }  goto L_FA4F; }
     case 0xFA78: L_FA78: /* 00:FA78: A4 F1     LDY ram_00F1 */
         m->cyc += 3; m->y = nesLoad(m, nesRd(m, 0x00F1));
     case 0xFA7A: L_FA7A: /* 00:FA7A: D0 D9     BNE bra_FA55 */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFA55; return 1; }  goto L_FA55; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFA55; return 1; }  goto L_FA55; }
     case 0xFA7C: L_FA7C: /* 00:FA7C: A5 FC     LDA ram_00FC */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x00FC));
     case 0xFA7E: L_FA7E: /* 00:FA7E: 29 7F     AND #$7F */
@@ -10609,7 +10609,7 @@ dispatch:
     case 0xFB14: L_FB14: /* 00:FB14: 88        DEY */
         m->cyc += 2; m->y = nesLoad(m, (uint8_t)(m->y - 1u));
     case 0xFB15: L_FB15: /* 00:FB15: D0 F9     BNE bra_FB10_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFB10; return 1; }  goto L_FB10; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFB10; return 1; }  goto L_FB10; }
     case 0xFB17: L_FB17: /* 00:FB17: A5 00     LDA ram_0000_t33_hi */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0000));
     case 0xFB19: L_FB19: /* 00:FB19: 4A        LSR */
@@ -10663,7 +10663,7 @@ dispatch:
     case 0xFB41: L_FB41: /* 00:FB41: AD F9 07  LDA ram_07F9 */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, 0x07F9));
     case 0xFB44: L_FB44: /* 00:FB44: D0 E2     BNE bra_FB28_loop */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFB28; return 1; }  goto L_FB28; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFB28; return 1; }  goto L_FB28; }
     case 0xFB46: L_FB46: /* 00:FB46: A5 01     LDA ram_0001_t02_lo */
         m->cyc += 3; m->a = nesLoad(m, nesRd(m, 0x0001));
     case 0xFB48: L_FB48: /* 00:FB48: 8D 06 40  STA $4006 */
@@ -10776,19 +10776,19 @@ dispatch:
     case 0xFC41: L_FC41: /* 00:FC41: 46 FD     LSR ram_00FD */
         m->cyc += 5; t16 = 0x00FD; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xFC43: L_FC43: /* 00:FC43: B0 BA     BCS bra_FBFF */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFBFF; return 1; }  goto L_FBFF; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFBFF; return 1; }  goto L_FBFF; }
     case 0xFC45: L_FC45: /* 00:FC45: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xFC46: L_FC46: /* 00:FC46: B0 BE     BCS bra_FC06 */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC06; return 1; }  goto L_FC06; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC06; return 1; }  goto L_FC06; }
     case 0xFC48: L_FC48: /* 00:FC48: 46 FD     LSR ram_00FD */
         m->cyc += 5; t16 = 0x00FD; nesWr(m, t16, nesLsr(m, nesRd(m, t16)));
     case 0xFC4A: L_FC4A: /* 00:FC4A: B0 D3     BCS bra_FC1F */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC1F; return 1; }  goto L_FC1F; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC1F; return 1; }  goto L_FC1F; }
     case 0xFC4C: L_FC4C: /* 00:FC4C: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xFC4D: L_FC4D: /* 00:FC4D: B0 DF     BCS bra_FC2E */
-        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC2E; return 1; }  goto L_FC2E; }
+        m->cyc += 2; if (m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC2E; return 1; }  goto L_FC2E; }
     case 0xFC4F: L_FC4F: /* 00:FC4F: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xFC50: L_FC50: /* 00:FC50: B0 11     BCS bra_FC63 */
@@ -10830,11 +10830,11 @@ dispatch:
     case 0xFC7A: L_FC7A: /* 00:FC7A: CE F6 07  DEC ram_07F6 */
         m->cyc += 6; t16 = 0x07F6; t8 = (uint8_t)(nesRd(m, t16) - 1u); nesWr(m, t16, t8); nesSetNZ(m, t8);
     case 0xFC7D: L_FC7D: /* 00:FC7D: D0 D7     BNE bra_FC56_RTS */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC56; return 1; }  goto L_FC56; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC56; return 1; }  goto L_FC56; }
     case 0xFC7F: L_FC7F: /* 00:FC7F: AC F7 07  LDY ram_07F7 */
         m->cyc += 4; m->y = nesLoad(m, nesRd(m, 0x07F7));
     case 0xFC82: L_FC82: /* 00:FC82: D0 9B     BNE bra_FC1F */
-        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC1F; return 1; }  goto L_FC1F; }
+        m->cyc += 2; if (!m->z) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC1F; return 1; }  goto L_FC1F; }
     case 0xFC84: L_FC84: /* 00:FC84: A9 00     LDA #$00 */
         m->cyc += 2; m->a = nesLoad(m, 0x00);
     case 0xFC86: L_FC86: /* 00:FC86: 85 F2     STA ram_00F2 */
@@ -10861,7 +10861,7 @@ dispatch:
     case 0xFC9B: L_FC9B: /* 00:FC9B: 4A        LSR */
         m->cyc += 2; m->a = nesLsr(m, m->a);
     case 0xFC9C: L_FC9C: /* 00:FC9C: 90 FC     BCC bra_FC9A_loop */
-        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0) { m->pc = 0xFC9A; return 1; }  goto L_FC9A; }
+        m->cyc += 2; if (!m->c) { m->cyc += 1; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xFC9A; return 1; }  goto L_FC9A; }
     case 0xFC9E: L_FC9E: /* 00:FC9E: B9 D2 FD  LDA tbl_FDD3_index - $01,Y */
         m->cyc += 4; m->a = nesLoad(m, nesRd(m, (uint16_t)(0xFDD2 + m->y)));
     case 0xFCA1: L_FCA1: /* 00:FCA1: A8        TAY */
@@ -10983,7 +10983,7 @@ dispatch:
     case 0xFD2D: L_FD2D: /* 00:FD2D: 85 F4     STA ram_00F4 */
         m->cyc += 3; nesWr(m, 0x00F4, m->a);
     case 0xFD2F: L_FD2F: /* 00:FD2F: 4C 42 F9  JMP loc_F942 */
-        m->cyc += 3; if (--*budget <= 0) { m->pc = 0xF942; return 1; } goto L_F942;
+        m->cyc += 3; if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0xF942; return 1; } goto L_F942;
     case 0xFD32: L_FD32: /* 00:FD32: 20 53 FF  JSR sub_FF53 */
         m->cyc += 6; nesPush(m, 0xFD); nesPush(m, 0x34); goto L_FF53;
     case 0xFD35: L_FD35: /* 00:FD35: 8D E5 07  STA ram_07E5 */

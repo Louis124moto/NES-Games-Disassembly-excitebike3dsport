@@ -187,14 +187,14 @@ for a in addrs:
             if t not in ins: s = 'm->pc = 0x%04X; return 2; /* JMP into data */' % t
             else:
                 back = t <= a
-                s = ('if (--*budget <= 0) { m->pc = 0x%04X; return 1; } ' % t if back else '') + 'goto L_%04X;' % t
+                s = ('if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0x%04X; return 1; } ' % t if back else '') + 'goto L_%04X;' % t
         else:
             p = data[1] | data[2] << 8
             s = 'pc = nesReadVec(m, 0x%04X); goto dispatch;' % p
     elif mode == 'rel':
         t = (a + 2 + (data[1] - 256 if data[1] >= 128 else data[1])) & 0xFFFF
         cond = {'BPL': '!m->n', 'BMI': 'm->n', 'BVC': '!m->v', 'BVS': 'm->v', 'BCC': '!m->c', 'BCS': 'm->c', 'BNE': '!m->z', 'BEQ': 'm->z'}[mn]
-        bud = 'if (--*budget <= 0) { m->pc = 0x%04X; return 1; } ' % t if t <= a else ''
+        bud = 'if (--*budget <= 0 || (m->cyc_limit != 0ul && m->cyc >= m->cyc_limit)) { m->pc = 0x%04X; return 1; } ' % t if t <= a else ''
         s = 'if (%s) { m->cyc += 1; %s goto L_%04X; }' % (cond, bud, t)
         if t not in ins: s = 'if (%s) { m->pc = 0x%04X; return 2; }' % (cond, t)
     if s is None: sys.exit('no translation for %s %s at %04X' % (mn, mode, a))

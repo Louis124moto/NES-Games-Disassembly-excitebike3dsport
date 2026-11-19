@@ -40,6 +40,11 @@ on:
       - "3ds-port/tests/test_nes_race_setup.c"
       - "3ds-port/source/nes_gen_code.c"
       - "3ds-port/source/nes_call.c"
+      - "3ds-port/source/nes_system.c"
+      - "3ds-port/include/nes_system.h"
+      - "3ds-port/include/nes_prg_crc.h"
+      - "3ds-port/source/nes_game.c"
+      - "3ds-port/include/nes_game.h"
       - "3ds-port/include/nes_machine.h"
       - "3ds-port/tools/**"
       - "3ds-port/tests/oracle/**"
@@ -151,6 +156,20 @@ jobs:
           python3 tools/asm_to_prg.py ../Excitebike/bank_FF.asm /tmp/prg.bin
           gcc -std=c11 -O1 -Wall -Wextra -Werror -Iinclude -Itests/oracle tests/oracle/*.c source/nes_gen_code.c source/nes_call.c tests/test_gen_code.c -o /tmp/test_gen_code
           /tmp/test_gen_code /tmp/prg.bin 100
+
+      - name: Check PRG CRC header is up to date
+        run: |
+          cd 3ds-port
+          cp include/nes_prg_crc.h /tmp/nes_prg_crc.h
+          python3 tools/gen_prg_crc.py ../Excitebike/bank_FF.asm
+          diff -q /tmp/nes_prg_crc.h include/nes_prg_crc.h
+
+      - name: Test NES system layer running the recompiled original program
+        run: |
+          cd 3ds-port
+          cat ../Excitebike/header.bin /tmp/prg.bin ../Excitebike/CHR_ROM.chr > /tmp/full_rom.nes
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/nes_system.c source/nes_gen_code.c source/nes_ppu_render.c tests/test_nes_system.c -o /tmp/test_nes_system
+          /tmp/test_nes_system /tmp/full_rom.nes
 
       - name: Compile menu frame-model test
         # menus.c only needs libctru's KEY_* bits; tests/host_stub/3ds.h supplies them on the host.

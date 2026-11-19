@@ -24,6 +24,7 @@ struct NesMachine {
     uint8_t pother;                     /* I ($04) and D ($08) status bits, kept only for PHP/PLP */
     uint16_t pc;                        /* resume/error address reported by nesRunCode */
     unsigned long cyc;                  /* CPU cycles executed (approximate: base cycles + taken branches) */
+    unsigned long cyc_limit;            /* nesRunCode yields (returns 1) at the next backward jump once cyc >= cyc_limit; 0 = no limit */
     void *user;
 };
 

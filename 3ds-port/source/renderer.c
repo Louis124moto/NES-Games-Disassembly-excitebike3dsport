@@ -897,6 +897,43 @@ void rendererEndFrame(void)
     gspWaitForVBlank();
 }
 
+/*
+ * Faithful game path: present one complete 256x240 RGB NES frame (row-major) on the top screen,
+ * centred in the 400x240 panel, then publish and wait for vblank. The bottom screen console is left alone.
+ */
+void rendererPresentNesFrame(const uint8_t *rgb)
+{
+    u16 width = 0u, height = 0u;
+    uint8_t *framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
+    unsigned int x, y;
+    if (framebuffer != NULL && rgb != NULL && width == 240u && height == 400u) {
+        for (x = 0u; x < 400u; ++x) {
+            const int nx = (int)x - 72;
+            for (y = 0u; y < 240u; ++y) {
+                const size_t dst = topFramebufferOffset(x, y);
+                if (nx < 0 || nx >= 256) {
+                    framebuffer[dst] = framebuffer[dst + 1u] = framebuffer[dst + 2u] = 0u;
+                } else {
+                    const uint8_t *p = &rgb[((size_t)y * 256u + (unsigned int)nx) * 3u];
+                    framebuffer[dst] = p[2];
+                    framebuffer[dst + 1u] = p[1];
+                    framebuffer[dst + 2u] = p[0];
+                }
+            }
+        }
+    }
+    gfxFlushBuffers();
+    gfxSwapBuffers();
+    gspWaitForVBlank();
+}
+
+void rendererPrintBottom(const char *text)
+{
+    consoleSelect(&s_bottomConsole);
+    consoleClear();
+    printf("%s", text);
+}
+
 void rendererSetGameStarted(int started)
 {
     s_gameStarted = started != 0;

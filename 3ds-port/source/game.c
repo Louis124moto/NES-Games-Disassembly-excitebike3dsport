@@ -7,6 +7,7 @@
 #include "menus.h"
 #include "renderer.h"
 #include "nes_menu_cpu.h"
+#include "nes_game.h"
 
 /*
  * Runtime routing:
@@ -27,21 +28,40 @@
 static InputState s_input;
 static GameState s_menuState;
 static int s_menuActive;
+static int s_nesGameActive;      /* faithful path: original program running on the NES system layer */
+static unsigned s_leaveHold;     /* port-only L+R hold counter to leave the faithful path */
 
 void gameInit(const char *executablePath)
 {
     s_input.held = 0u;
     s_input.pressed = 0u;
     s_menuActive = 0;
+    s_nesGameActive = 0;
+    s_leaveHold = 0u;
     gameStateReset(&s_menuState);
     rendererInit();
     assetExtractorInit(executablePath);
     (void)nesMenuCpuInit(executablePath); /* Source-recompiled sub_C7DE when rom.nes is present. */
+    (void)nesGameInit(executablePath);    /* Faithful path: needs rom.nes with the disassembled PRG. */
 }
 
 void gameUpdate(void)
 {
     inputUpdate(&s_input);
+
+    if (s_nesGameActive) {
+        /* Port-only escape (not in the original): hold L+R for about one second to return to the diagnostics. */
+        if ((s_input.held & (KEY_L | KEY_R)) == (KEY_L | KEY_R)) {
+            if (++s_leaveHold >= 60u) { s_nesGameActive = 0; s_leaveHold = 0u; rendererPrintBottom("Faithful game stopped.\nSTART: diagnostics/menu path\n"); }
+        } else {
+            s_leaveHold = 0u;
+        }
+        if (s_nesGameActive && !nesGameFrame(s_input.held)) {
+            s_nesGameActive = 0;
+            rendererPrintBottom("Recompiled program reached an unknown address.\nFaithful game stopped.\n");
+        }
+        return;
+    }
 
     if (!s_menuActive) {
         /*
@@ -50,6 +70,14 @@ void gameUpdate(void)
          * is loaded: the menu model needs real tiles and must not run on air.
          * The press is consumed here so the menu does not see it as a NES press.
          */
+        if ((s_input.pressed & KEY_SELECT) && nesGameAvailable()) {
+            /* Faithful game: the original program from its reset vector (see nes_game.h). */
+            nesGameBoot();
+            s_nesGameActive = 1;
+            s_leaveHold = 0u;
+            rendererPrintBottom("Excitebike (original program)\nD-pad/A/B/SELECT/START = NES pad\nHold L+R 1 s: leave (port only)\nNo audio / tape yet\n");
+            return;
+        }
         if ((s_input.pressed & KEY_START) && assetExtractorGetTotalTiles() > 0u) {
             s_menuActive = 1;
             gameStateReset(&s_menuState);
@@ -77,6 +105,10 @@ void gameUpdate(void)
 
 void gameRender(void)
 {
+    if (s_nesGameActive) {
+        rendererPresentNesFrame(nesGameFramebuffer());
+        return;
+    }
     rendererBeginFrame();
     rendererDraw(&s_menuState);
     rendererGetSprite0Hit(&s_menuState.menu_sprite0_hit_found,

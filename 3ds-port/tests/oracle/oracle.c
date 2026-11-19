@@ -56,6 +56,7 @@ void oracleSync(Oracle *o)
     o->m.a = o->cpu.a; o->m.x = o->cpu.x; o->m.y = o->cpu.y;
     o->m.c = (uint8_t)(o->cpu.p & 1u); o->m.z = (uint8_t)((o->cpu.p >> 1) & 1u);
     o->m.n = (uint8_t)(o->cpu.p >> 7); o->m.v = (uint8_t)((o->cpu.p >> 6) & 1u);
+    o->m.cyc_limit = 0ul; o->m.cyc = 0;
     o->m.sp = o->cpu.sp; o->m.pother = (uint8_t)(o->cpu.p & 0x0Cu);
     memcpy(o->ioPort, o->cpu.io + 0x2000, 0); /* placeholder */
     { unsigned k; for (k = 0x2000u; k < 0x4020u; ++k) o->ioPort[k] = o->cpu.io[k]; }
