@@ -243,7 +243,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
 - [x] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes (see the transition-dispatcher trace below).
 - [x] A4. Classify state-$09 as the interactive course-design/editor loop, distinct from race states `$02/$05/$0A`; trace its entry, per-frame path and B-button return to state `$08`. Its setup list 5/editor implementation remains a separate C3 handoff dependency.
-- [ ] A5. Finish transitive traces for all reachable setup commands. List 5's six commands and C5C2 state writes are now inventoried; `sub_E1A3`, `sub_EC25`, `loc_EC47`, C820 dynamic PPU uploads and remaining list-3 dependencies still need full traces.
+- [ ] A5. Finish transitive traces for all reachable setup commands. List 5's six commands are inventoried and now have a PRG-backed recompiler path; full state-9 frame-loop and list-3 dependencies remain.
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
 
 ### B. PPU, OAM, and visual reconstruction
@@ -340,12 +340,12 @@ C2 is complete for the title/selector menu boundary. State 2's setup/race is sti
 
 The existing `testDesignConfirm` exercises all six selection values in `ofs_000_C3BD_08`:
 - 0 and 1 -> state `$0A` (race handoff; Stage 3).
-- 2 -> state `$09` (course-design editor; list 5 remains unsupported).
+- 2 -> state `$09` (course-design editor; all six setup commands now have a recompiled path, but the editor frame loop is incomplete).
 - 3 -> state `$0C` (save), with the file-backed recorder replacement covered by `testTapeSave`.
 - 4 -> state `$0D` (load), including missing-file, header mismatch, retry/checksum failure and successful return in `testTapeLoad`.
 - 5 -> clear `$0021-$00FF`, return to state `$00`, restore selection 2.
 
-Thus the menu's six-way branch decision and the save/load/title-return paths are covered. The unresolved menu destination is state 9: it enters setup list 5, which is deliberately held by the current sequencer because its object/OAM/PPU dependencies are not integrated. The state-10 race path is a Stage 3 destination, not an unfinished menu cursor branch.
+Thus the menu's six-way branch decision and the save/load/title-return paths are covered. The unresolved menu destination is state 9: its six setup commands now have a PRG-backed path, including dynamic PPU uploads and OAM initialization, but the per-frame `$C97C` handler and B-button return are not yet integrated. The state-10 race path is a Stage 3 destination, not an unfinished menu cursor branch.
 
 ### `sub_C7DE` input equivalence checkpoint (commit `b2fa4fb21146`)
 
@@ -365,7 +365,7 @@ C1 is complete. C2 (full title/selector transition flow) remains open; this help
 
 ### Setup list 5: state-$09 course-design editor initialization
 
-List 5 (`off_C064_05`) is selected for state `$09`. It is not currently accepted by `menusRunSetupSequence`; the native sequencer stops at the unsupported-list guard. Its six commands are:
+List 5 (`off_C064_05`) is selected for state `$09`. The native sequencer now dispatches its six commands through the PRG-backed recompiler when a supported `rom.nes` is available. Its six commands are:
 
 | Index | Routine | Source effects |
 |---:|---|---|
@@ -385,9 +385,9 @@ Command 5 (`$C5C2-$C61E`) details:
 - Initializes `ram_00B0-$00B3` to `[$21,$05,$05,$03]`, sets `ram_0064=8`, `ram_00E0=9`, `ram_00B4=$7A`.
 - Increments `ram_0040` and `ram_0047`, calls `sub_EC25` with A=`$D0`, then jumps to `loc_EC47`.
 
-**Existing isolated translations:** `nesSubE1F9SelectObjectSprite()` and `nesSubE1A3PrepareObjectSprite()` already model the object-selection/table preparation path; `testNewE1F9` and `testSubE1A3Exact` cover selected branches. `nesSubC621CopyPage()` and `nesSubEC3BCopyPageDescending()` also exist. These helpers are not yet wired into the list-5 runtime sequence.
+**Runtime integration:** `$C5C2` now executes through the generated 6502 code with persistent 2 KiB CPU RAM, so the original `$C621`, `$E1A3`, `$E1F9`, `$D1C7`, `$EC25` and `$EC47` call chain runs together. The isolated C helpers remain useful for differential tests, but are not substituted for this original instruction path.
 
-**Unresolved dependencies before list 5 can be accepted:** the final `sub_D1C7` OAM record emitter, direct `sub_EC25`/`loc_EC47` sprite writes, full state-9 object-array backing, C820's dynamic PPU uploads, and the `$0047` split-scroll timing. Do not replace these with a static placeholder bike or approximate object state.
+**Unresolved dependencies after setup:** the state-$09 frame handler `$C97C` and its object/update/render callees, the `$D19B` vblank wait, the `$0047` split-scroll/raster timing, B-button return through `$EB17`, and deterministic original-NES frame comparison. Do not replace these with a static placeholder bike or approximate object state.
 
 ### List-5 object/OAM dependency trace (source audit)
 
@@ -422,7 +422,7 @@ State `$09` is not the title menu or race loop. It uses setup-list index 5 (`off
 
 **Return to design menu:** in `sub_EB17`, when the editor's mode/object gates permit input and `ram_0049=0`, the held B-button bit (`ram_005C_obj & $40`, after two ASLs) enters `bra_EBA8`. That branch calls `sub_C3B1` and `sub_EC3B`, then writes `ram_0047=0`, `ram_0042=0`, and `ram_0041=8`. This is the editor's explicit return to the six-choice design menu. Other branches process editor controls and course data; they are not a menu cursor.
 
-**Scope boundary:** Stage 2 must implement the design-menu choices and the correct setup/return handoff. The full interactive course editor in state 9 is not itself a menu screen; its editing mechanics can be tracked separately from the Stage 3 race. However, the current native setup sequencer does not implement list 5, so selecting a state-9 option is not yet a working handoff. C3 remains open until the state-9 setup list is source-faithfully executed and the editor can return to state 8 without placeholders.
+**Scope boundary:** Stage 2 must implement the design-menu choices and a working setup/return handoff. The six list-5 setup commands now have a recompiled path, but state 9 is not yet a working handoff because its per-frame handler and B-button return are not integrated. C3 remains open until the editor can run and return to state 8 without placeholders.
 
 ### Shared transition dispatcher: completed branch trace (`$CB2C-$CC7C`)
 
