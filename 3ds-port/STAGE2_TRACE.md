@@ -682,6 +682,17 @@ The native C menu now translates the first complete setup lists for the three fr
 These setup functions are still isolated: the application loop does not yet run the native menu, and there is no native scene renderer consuming the source asset keys. The next rendering work must load the existing exported EBPX/snapshot files and draw native tiles/sprites directly; the old PPU preview/compositor is not the final game renderer.
 
 
+## Native editor and tape-screen scene assets — 2026-11-19
+
+The exported snapshot set includes source command streams 05, 16 and 17, which correspond to the final visible background setup streams used by the editor (state 9), tape-save (state 12) and tape-load (state 13) paths. The exporter names these files by one-based stream slot, so the source keys $05/$10/$11 are read as snapshot files 05/16/17 respectively.
+
+- `native_menu_assets.c` now loads snapshots 05, 16 and 17 into separate native scene buffers, in addition to title/selector/design scenes.
+- The loader now imports palette presets 12 through 18 and their write masks. The editor setup's C551 branch sees state 9 ($09 >= $08), so it selects source palette key $12 (palette preset 12); other current front-end/tape scenes retain preset 18.
+- `native_menu_renderer.c` draws these three additional backgrounds directly to the top framebuffer for states 9, 12 and 13. No PPU interpreter, OAM builder, CPU or ROM is used.
+- `test_native_menu_assets.c` creates synthetic exported snapshots and all seven palette files, then verifies the six scene buffers and palette indexing.
+
+**Scope limitation:** these are static command-stream snapshots, not complete original frames. The editor's C5C2 object setup, editor cursor/object interaction and guarded B-return are not translated here; save/load state handshakes and the native SD-card file backend are also not implemented. Dynamic transition sprites, missing OAM overlays, visual comparisons and physical New 3DS validation remain open. This milestone must not be described as a finished editor or functional save/load menu.
+
 ## Native front-end runtime and scene rendering — 2026-11-19
 
 The initial title/selector/design path is no longer just an isolated state helper:
