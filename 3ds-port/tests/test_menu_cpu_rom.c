@@ -4,6 +4,7 @@
  * temporary iNES header and writes ./rom.nes beside this test executable.
  */
 #include <stdio.h>
+#include <string.h>
 #include <3ds.h>
 #include "game_state.h"
 #include "menus.h"
