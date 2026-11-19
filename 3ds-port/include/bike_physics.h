@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "game_state.h"
-#include "input.h"
+typedef struct InputState InputState;
 
 /* NES speed is a 16-bit fixed-point value split across $0090 (fraction)
  * and $0094 (whole). Keep the bytes explicit to preserve 6502 wraparound. */
