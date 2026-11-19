@@ -258,10 +258,6 @@ static int rendererDrawPpuBackground(const GameState *state)
         const uint8_t *bottomPixels = chrAll;
         size_t topTileCount = chrAllCount;
         size_t bottomTileCount = chrAllCount;
-        unsigned int splitY = state->menu_ppu_split_scanline;
-        unsigned int splitX = state->menu_ppu_split_dot > 0u
-            ? (unsigned int)state->menu_ppu_split_dot - 1u : 0u;
-
         /* Each half may select its own BG pattern table and nametable base. */
         if ((state->menu_ppu_top_ctrl & 0x10u) != 0u) {
             if (topTileCount <= 256u) { s_bgRenderReason = 3; return 0; }
@@ -287,19 +283,15 @@ static int rendererDrawPpuBackground(const GameState *state)
                 s_splitBgOpaque, sizeof(s_splitBgOpaque));
         if (s_bgRenderResult != NES_PPU_RENDER_OK) { s_bgRenderReason = 5; return 0; }
 
-        if (splitY >= NES_PPU_HEIGHT) splitY = NES_PPU_HEIGHT - 1u;
-        if (splitX > NES_PPU_WIDTH) splitX = NES_PPU_WIDTH;
-        for (y = splitY + 1u; y < NES_PPU_HEIGHT; ++y) {
-            const size_t offset = (size_t)y * NES_PPU_WIDTH;
-            memcpy(&s_ppuRgb[offset * 3u], &s_sourcePpuRgb[offset * 3u], NES_PPU_WIDTH * 3u);
-            memcpy(&s_bgOpaque[offset], &s_splitBgOpaque[offset], NES_PPU_WIDTH);
-        }
-        {
-            const size_t offset = (size_t)splitY * NES_PPU_WIDTH;
-            const size_t bottomOffset = offset + splitX;
-            const size_t count = NES_PPU_WIDTH - splitX;
-            memcpy(&s_ppuRgb[bottomOffset * 3u], &s_sourcePpuRgb[bottomOffset * 3u], count * 3u);
-            memcpy(&s_bgOpaque[bottomOffset], &s_splitBgOpaque[bottomOffset], count);
+        if (!nesPpuCompositeRasterSplit(s_ppuRgb, s_bgOpaque,
+                                        s_sourcePpuRgb, s_splitBgOpaque,
+                                        state->menu_ppu_split_scanline,
+                                        state->menu_ppu_split_dot,
+                                        s_ppuRgb, sizeof(s_ppuRgb),
+                                        s_bgOpaque, sizeof(s_bgOpaque))) {
+            s_bgRenderReason = 5;
+            s_bgRenderResult = NES_PPU_RENDER_UNSUPPORTED;
+            return 0;
         }
     } else {
         const uint8_t *pixels = chrAll;
