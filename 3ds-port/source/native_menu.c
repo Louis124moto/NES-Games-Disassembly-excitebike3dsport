@@ -244,9 +244,8 @@ void nativeMenuTransitionPhase3(NativeMenuState *menu)
     menu->setup_command = 0u;
     menu->transition_phase = 0u;
 
-    if (menu->transition_flag_004B == 0u &&
-        menu->source_state >= 0x09u) {
-        menu->source_state = 0x08u;
+    if (menu->transition_flag_004B == 0u) {
+        menu->source_state = menu->source_state >= 0x09u ? 0x08u : 0x00u;
     }
 }
 
