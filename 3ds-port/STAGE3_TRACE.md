@@ -1,6 +1,6 @@
 # Stage 3 trace — first course entry (started 2026-11-18)
 
-Status: **source trace only. No gameplay code is ported yet.** Everything below is read from `Excitebike/bank_FF.asm`; nothing is inferred from slot numbers or generic physics.
+Status: **partial native physics slices implemented and host-differential-tested; no playable race yet.** The trace below is read from `Excitebike/bank_FF.asm`; nothing is inferred from slot numbers or generic physics.
 
 ## Entry
 - Track selector (state 1) confirm → `sub_C3AF` INC state → state 2 (`tbl_C000` → `ofs_000_C99A_02`), with `ram_0043` = selected track, `ram_03F2` = 1 for the selection from the title menu (design-menu path uses states 8→0A).
@@ -26,7 +26,7 @@ This is a narrow native implementation, not a complete physics port.
 - `sub_CD59` selects the acceleration-table index from the two upper controller bits: bit 7 takes the no-increment path after ASL (Y=0); bit 6 alone increments the saved index (Y=1). If both are held, bit 7 wins. This records the exact bit-path; the control labels are not inferred from game feel.
 - `sub_CE29` first compares X with `ram_004C`; on the matching phase it adds `tbl_C0BC[Y]` to the fractional byte, increments the whole byte on carry, and for X=0 clamps against `tbl_C0CE[Y]` and `tbl_C0D1[Y]`.
 - `sub_CE58` gates the deceleration path on the same phase match, then falls through to `sub_CE5C`. For player X=0, if the whole speed byte is zero it computes `Y = ram_00B0_obj >> 1` and compares the fraction with `tbl_C0CC[Y]`. It then subtracts `tbl_C0C1[Y_decel]`; a borrow decrements the whole byte, or clamps the fraction to zero when the whole byte is already zero.
-- Source table values used by the player path: increments `$18/$3F` (`$C0BC/$C0BD`), fractional caps `$20/$40` (`$C0CE/$C0CF`), whole caps `$03/$03` (`$C0D1/$C0D2`).
+- Source table values used by the player path: increments `$18/$3F/$28` (`$C0BC-$C0BE`), fractional caps `$20/$40/$7F` (`$C0CE-$C0D0`), whole caps `$03/$03/$01` (`$C0D1-$C0D3`).
 
 ### Native temperature / overheat state
 
@@ -53,13 +53,25 @@ The player-only control path from `sub_CD59` is now implemented as `bikePhysicsU
 
 The integration test runs the original `sub_CD59` routine directly on the host-only 6502 reference CPU with 8,192 deterministic combinations (all 256 controller bytes × four update phases × four `$00B0` status values × both track-finished states), randomized speed/lock/terrain state, and compares the player speed bytes plus `$036C`/ `$00FD` terrain side effects. It deliberately keeps the later `loc_CDBD` steering timer path inert; that path is not claimed as ported.
 
+### Native movement integration
+
+The movement core is now translated into three platform-independent C functions:
+
+- `sub_DA58` → `bikePhysicsBuildMovementDeltas`: for all four slots, copy the whole speed byte to the frame movement delta, add the fractional speed byte to the carried fractional accumulator, and increment the movement delta on carry.
+- `sub_DA6A` → `bikePhysicsAdvancePlayerScroll`: add player movement delta to the horizontal scroll byte; toggle bit 0 of the base-nametable selector only when the 8-bit addition carries.
+- `sub_DA7A` → `bikePhysicsAdvanceOpponentPositions`: iterate opponent slots 3, 2, 1; active opponents move by their own delta minus the player's delta, with 16-bit carry/borrow into the high coordinate byte. Inactive slots are skipped. The player itself is camera-relative and is represented by scroll rather than an opponent coordinate.
+
+`tests/test_bike_movement.c` compares these routines directly with the original ASM: 262,144 `sub_DA58` vectors, 262,144 `sub_DA6A` vectors, and 50,000 deterministic `sub_DA7A` vectors (**574,288 total**). Exact-commit validation passed on `81380f81f263b9899fb34395873da5c3b7aec80f`: [host workflow 44577215677](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44577215677) and [New 3DS build 44577215802](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44577215802).
+
+This is movement integration only. The full `sub_DA26` caller also runs object updates/collisions/timers around these helpers; those routines and the complete race-frame order still need to be ported.
+
 ### Native implementation
 
 - `source/bike_physics.c::bikePhysicsAcceleratePlayer` translates `sub_CE29` for X=0, preserving byte wraparound and the original phase gate.
-- `source/bike_physics.c::bikePhysicsDeceleratePlayer` translates the `sub_CE58/sub_CE5C` player path. The caller supplies the resolved low-whole threshold from `tbl_C0CC`; mapping the player's `ram_00B0_obj` state to that threshold remains a separate trace task.
-- `tests/test_bike_speed.c` executes the original `$CE29` and `$CE58` routines directly on the host-only 6502 reference CPU and compares the speed bytes with native C. It checks all 2 acceleration modes × 4 phases × 256 whole × 256 fractional states, plus 2 deceleration thresholds × 7 table modes × 4 phases × 256 whole values × 10 boundary fractions: **950,272 vectors total** for the speed helpers and terrain gate, before the full sub_CD59 integration vectors. The temperature/overheat test adds 266,240 more.
+- `source/bike_physics.c::bikePhysicsDeceleratePlayer` translates the `sub_CE58/sub_CE5C` player path. The player speed-control wrapper resolves `ram_00B0_obj >> 1` through `tbl_C0CC` ($01 or $B0) before calling this low-level helper.
+- `tests/test_bike_speed.c` executes the original `$CE29` and `$CE58` routines directly on the host-only 6502 reference CPU and compares the speed bytes with native C. It checks all 3 acceleration modes × 4 phases × 256 whole × 256 fractional states, plus 2 deceleration thresholds × 7 table modes × 4 phases × 256 whole values × 10 boundary fractions, plus 20,480 terrain-gate states: **950,272 vectors**. The 8,192-vector full player-control comparison and 266,240 temperature/overheat vectors bring the speed/temperature suite to **1,224,704 vectors**. The temperature/overheat test adds 266,240 more.
 - The test consumes a PRG rebuilt from the unmodified `Excitebike/bank_FF.asm`. No generated recompiler, NES system, PPU, or APU is used by this differential test.
-- Exact-commit validation for the helper slice passed on `3e6d5da164d872afcdb1081c61cc048050b81188`: [host workflow 44574307056](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44574307056) and [New 3DS build 44574307046](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44574307046). The player-control integration passed **958,464 total vectors** on `e3f00d26cb4bdfa476b00ac7f979b156104f7f6d`: [host workflow 44575202175](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575202175) and [New 3DS build 44575202241](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575202241). Adding temperature/overheat passed **1,224,704 total vectors** on `dd9c3bd4d39b115b351354f88f9a8039e173d041`: [host workflow 44575918494](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918494) and [New 3DS build 44575918042](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918042).
+- Exact-commit validation for the helper slice passed on `3e6d5da164d872afcdb1081c61cc048050b81188`: [host workflow 44574307056](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44574307056) and [New 3DS build 44574307046](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44574307046). The player-control integration passed **958,464 total vectors** on `e3f00d26cb4bdfa476b00ac7f979b156104f7f6d`: [host workflow 44575202175](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575202175) and [New 3DS build 44575202241](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575202241). Adding temperature/overheat passed **1,224,704 vectors** on `dd9c3bd4d39b115b351354f88f9a8039e173d041`: [host workflow 44575918494](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918494) and [New 3DS build 44575918042](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918042). The movement core then passed **574,288 more vectors** on `81380f81f263b9899fb34395873da5c3b7aec80f`: [host workflow 44577215677](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44577215677) and [New 3DS build 44577215802](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44577215802).
 - `bikePhysicsUpdate` remains deliberately empty. This one helper does not implement throttle selection conditions, braking/coasting, temperature, jumps, posture, collisions, AI, or per-frame integration.
 
 ### Still required before this is accepted as player physics
