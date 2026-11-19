@@ -2,8 +2,6 @@
 #define EXCITEBIKE_BIKE_PHYSICS_H
 
 #include <stdint.h>
-#include "game_state.h"
-typedef struct InputState InputState;
 
 /* NES speed is a 16-bit fixed-point value split across $0090 (fraction)
  * and $0094 (whole). Keep the bytes explicit to preserve 6502 wraparound. */
@@ -106,9 +104,5 @@ typedef struct BikeMovementState {
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement);
 void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement);
 void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement);
-
-/* Full per-frame bike integration is intentionally not exposed until all
- * input, heat, posture, collision and update-order dependencies are traced. */
-void bikePhysicsUpdate(BikeState *bike, const InputState *input);
 
 #endif
