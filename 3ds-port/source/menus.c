@@ -478,6 +478,42 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
         }
+    } else if (state->menu_asm_state == 4u || state->menu_asm_state == 7u) {
+        /*
+         * ofs_000_C465_04 / ofs_000_C465_07. This handler is not a race-frame
+         * loop: it advances the result/transition menu timer and builds the
+         * next dynamic PPU command through sub_C92C -> sub_C935 -> sub_CAFA.
+         * Run the original instructions so the table arithmetic and buffer
+         * bytes remain ROM-derived. The persistent CPU RAM carries the
+         * transitive scratch/table state between frames.
+         */
+        state->menu_cpu_ram[0x0034u] = state->menu_timer34;
+        state->menu_cpu_ram[0x0040u] = state->menu_ram0040;
+        state->menu_cpu_ram[0x0041u] = state->menu_asm_state;
+        state->menu_cpu_ram[0x0043u] = state->menu_ram0043;
+        state->menu_cpu_ram[0x0044u] = state->menu_ram0044;
+        state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+        state->menu_cpu_ram[0x0046u] = state->menu_ram0046;
+        state->menu_cpu_ram[0x03F2u] = state->menu_ram03F2;
+        state->menu_cpu_ram[0x03F3u] = state->menu_ram03F3;
+        state->menu_cpu_ram[0x03F8u] = state->menu_ram03F8;
+        if (nesMenuCpuRunRamRoutine(0xC465u, state->menu_cpu_ram)) {
+            state->menu_timer34 = state->menu_cpu_ram[0x0034u];
+            state->menu_ram0040 = state->menu_cpu_ram[0x0040u];
+            state->menu_asm_state = state->menu_cpu_ram[0x0041u];
+            state->menu_ram0043 = state->menu_cpu_ram[0x0043u];
+            state->menu_ram0044 = state->menu_cpu_ram[0x0044u];
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            state->menu_ram0046 = state->menu_cpu_ram[0x0046u];
+            state->menu_ram03F2 = state->menu_cpu_ram[0x03F2u];
+            state->menu_ram03F3 = state->menu_cpu_ram[0x03F3u];
+            state->menu_ram03F8 = state->menu_cpu_ram[0x03F8u];
+            memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u],
+                   sizeof(state->menu_ram0300));
+            state->menu_ram00FB = state->menu_cpu_ram[0x00FBu];
+        }
+        state->menu_action_x = 0u;
+        state->menu_selection_changed = 0u;
     } else if (state->menu_asm_state == 12u || state->menu_asm_state == 13u) {
         /*
          * ofs_000_C43D_0C (tape SAVE, ram_0048 = 1) and ofs_000_C41C_0D (tape LOAD, ram_0048 = 2).
