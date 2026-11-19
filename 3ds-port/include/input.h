@@ -3,7 +3,7 @@
 
 #include <3ds.h>
 
-typedef struct {
+typedef struct InputState {
     u32 held;
     u32 pressed;
 } InputState;
