@@ -181,7 +181,7 @@ int main(int argc, char **argv)
                     reference.ram[0x0021u + timer_index] = native_menu.timer_values[timer_index];
                 }
                 prepare_cpu(&reference);
-                rc = cpu6502_call(&reference, 0xD310u, 128u);
+                rc = cpu6502_call(&reference, 0xD310u, 512u);
                 if (rc != 0) {
                     printf("FAIL: original sub_D310 returned %d at frame timer=%u sample=%u\n",
                            rc, frame_timer, sample);
