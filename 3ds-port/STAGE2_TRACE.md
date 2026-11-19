@@ -1,3 +1,18 @@
+## Native C translation progress — 2026-11-19
+
+The former 6502 recompiler / NES-system runtime is not the target and has been deleted from the active game source tree. The functions below are native C reimplementations; the original PRG/ASM is executed only by the host-side differential oracle.
+
+- Menu selection: `nativeMenuUpdateSelection` translates `sub_C7DE`; 393,216 vectors pass.
+- Title/selector/design state handlers: `nativeMenuUpdate` covers source states 0, 1 and 8.
+- Shared menu transition phase 0: `nativeMenuTransitionPhase0` translates `CB3B` for states 3/6/11; 51,840 vectors pass.
+- Timer-expired timed transition: `nativeMenuCompleteTimedTransition` translates the `C477-C484` branch used by `C465`.
+- Timer bank: `nativeMenuTickTimers` translates `sub_D310` and is compared to ASM.
+- Physics and movement slices are listed in `STAGE3_TRACE.md` and `TODO.md`; they do not yet constitute a complete playable physics loop.
+
+The latest exact code commit, `7972ed9fad04c3963fb41a031a44537ffeae3853`, passed host differential CI [44584137040](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137040) and the New 3DS build [44584137025](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137025).
+
+**Important:** these are isolated source-derived native functions, not a complete menu, renderer, editor, or game runtime. The remaining sections below are historical source-trace evidence. Any mention of PRG-backed recompiler execution describes the retired experiment and must not be reintroduced into the product runtime.
+
 # Stage 2 — original menu source trace
 
 Status: **IN PROGRESS / REOPENED 2026-11-18**. Stage 3 is blocked until this stage is accepted.
