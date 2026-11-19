@@ -48,6 +48,7 @@ typedef struct BikeTerrainGateState {
 } BikeTerrainGateState;
 
 uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state);
+uint8_t bikePhysicsTerrainGateForObject(BikeTerrainGateState *state, uint8_t object_index);
 
 /*
  * Source-derived inputs for the player speed-control branch in sub_CD59.
