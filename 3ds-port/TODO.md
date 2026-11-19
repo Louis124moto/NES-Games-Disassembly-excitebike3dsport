@@ -125,6 +125,7 @@ Goal: reproduce the original title, selector, design/options menu, course editor
 - [x] Translate/test menu selection, title/selector/design state slices, timer bank and some shared transition phases.
 - [x] Translate/test libctru-to-game input mapping for all 256 controller-byte combinations.
 - [ ] Finish every remaining menu transition branch and setup-list side effect as semantic native state changes.
+- [ ] Translate shared transition phases 1 and 2 into semantic native menu state and renderer events; see the 2026-11-19 source trace in `STAGE2_TRACE.md`. Do not reproduce the dynamic PPU command buffer or OAM algorithm in the game runtime.
 - [ ] Implement native title, selector, design/options and editor entry/return screens from verified assets.
 - [ ] Implement all cursor/selection movement, confirmation, cancel/back and state transitions.
 - [ ] Implement native save/load format and UI. Preserve original user-visible behavior where possible; document unavoidable platform differences instead of pretending they are identical.
