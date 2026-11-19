@@ -24,7 +24,7 @@ python3 3ds-port/tools/nes_chr_to_ppm.py game.nes /tmp/chr.png --chr-offset 0x40
 
 **Do not guess that offset:** inspect the disassembly/ROM first. The tool refuses to treat a CHR-RAM iNES header as if it contained CHR-ROM. If a 16-byte background palette dump or 32-byte full PPU palette dump is available, pass it with `--palette-file palette.bin --subpalette 0`; use `--sprite-palette` to select sprite palettes from a 32-byte dump. Palette bytes must be NES color indices 0–63.
 
-The extractor decodes raw 2bpp tile patterns; it does not decompress arbitrary PRG streams or infer the title screen's nametable, attribute table, tile placement, transparency rules, scrolling, or PPU upload timing. PNG output is a readable inspection atlas, not yet a faithful in-game texture pack. Run its host checks with `python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'`.
+The extractor decodes raw 2bpp tile patterns and exports source PPU-list snapshots. It does not decompress arbitrary PRG streams or infer dynamic menu updates. The native front-end consumes the exported EBPX tile pack plus the verified static setup-list snapshots; it composes these as native scene data and draws them directly with the 3DS framebuffer, without a runtime PPU or OAM emulator. These three scenes still require screenshot comparison against the original. Run its host checks with `python3 -m unittest discover -s 3ds-port/tools -p 'test_*.py'`.
 
 ## Remaining work
 
@@ -65,3 +65,15 @@ python3 3ds-port/tools/extract_nes_assets.py game.nes --chr-offset 0x4000 --chr-
 The offset and size above are examples only; derive them from the actual ROM/disassembly before use. Outputs default to `3ds-port/build/extracted-assets/`, which is generated build data. `--install-header` explicitly installs the generated C header for the native diagnostic renderer. No ROM or dump is embedded in the repository.
 
 The extractor does not reconstruct compressed PRG graphics, nametable/attribute layout, exact game palettes unless supplied, OAM ordering, or PPU timing. Those are still required before the title screen can be called faithful.
+
+## Native front-end asset loading
+
+The normal game startup does not open `rom.nes`. It reads the existing exported files from the `extracted/` directory beside the `.3dsx`:
+
+- `chr_pixels.ebp` — versioned EBPX decoded 8x8 tile pack
+- `ppu_snapshot_02.bin` — title setup scene
+- `ppu_snapshot_06.bin` + `ppu_snapshot_03.bin` — selector setup scene, merged in source order
+- `ppu_snapshot_06.bin` + `ppu_snapshot_15.bin` — design setup scene, merged in source order
+- `ppu_palette_18.bin` and `ppu_palette_18_mask.bin` — palette selected by C514
+
+Press **X** in the native front-end to open the optional asset extractor. It can generate/update these files from a source ROM/CHR file. Closing the inspector returns to the native front-end, which reloads the exported pack. The renderer uses native framebuffer pixel composition and a semantic cursor sprite; it does not run the PPU command interpreter, OAM builder or NES scanline renderer.
