@@ -43,6 +43,8 @@ The original NES disassembly is the behavioral reference. Its source files must 
 
 > **Current status (2026-11-19): the faithful native port is not complete.** Stage 1's extractor was owner-accepted, with verification debt. The previous menu/PPU/recompiler work is an experimental emulator-oriented implementation and is not accepted as the native game. Stage 2 must now be completed as native C/C++ menus and front-end code; Stage 3 remains blocked until then. Existing ASM traces, asset extraction, and host-side differential tests may be reused, but the generated 6502 runtime and NES hardware emulation are being removed from the final executable. No playable native race or full-game fidelity is claimed.
 
+> **Runtime cutover (2026-11-19):** the live 3DS loop no longer starts the NES 6502/system/APU runtime, and those runtime objects are excluded from the 3DS link. The old emulator/recompiler sources remain in the repository for offline reference/test cleanup; they are not the game. At this intermediate commit the app is an asset inspector, not a playable native Excitebike port. Native menus and gameplay have not yet been implemented. See the runtime cutover checklist in `3ds-port/TODO.md`.
+
 ## Project goals
 
 - Reproduce the original game's observable behavior in native game logic, rendering, and audio; NES hardware emulation is not part of the final runtime.
