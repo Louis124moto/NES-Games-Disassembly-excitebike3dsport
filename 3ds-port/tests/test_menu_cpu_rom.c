@@ -218,7 +218,7 @@ static int testRasterSplitD0AB(void)
             afterPreviousHit.splitScanline > 65u ||
             afterPreviousHit.splitDot < 250u ||
             afterPreviousHit.splitDot > 340u) {
-            fprintf(stderr, "ROM menu test: previous-hit pre-render wait mismatch line=%u dot=%u elapsed=%u\\n",
+            fprintf(stderr, "ROM menu test: previous-hit pre-render wait mismatch line=%u dot=%u elapsed=%u\n",
                     afterPreviousHit.splitScanline, afterPreviousHit.splitDot,
                     afterPreviousHit.elapsedCycles);
             return 0;
