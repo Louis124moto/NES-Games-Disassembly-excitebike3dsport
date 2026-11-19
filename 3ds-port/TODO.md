@@ -165,6 +165,8 @@ Goal: one original course playable from menu entry through finish/results, with 
 - [ ] Decode/import the first course's verified geometry, ramps, terrain, obstacles and visual data.
 - [x] Translate and differential-test the active-bike speed-control pass (sub_CD1F) and its sub_CD59 speed/terrain prefix for all four object slots.
 - [ ] Complete player acceleration, braking, speed limits, heat/cooling, steering, posture, jumps, landing, collisions, crashes and recovery; speed-control translation is only one subsystem, not a complete bike controller.
+- [x] Translate the secondary camera/parallax accumulator (`sub_DBFE`) into semantic native movement state; 100,000 randomized vectors match the ASM oracle, including carry into the secondary nametable bit.
+- [x] Translate the four-object lock-timer decay (`sub_DCDE`) into semantic native movement state; 100,000 randomized per-slot vectors match the ASM oracle.
 - [ ] Complete opponent initialization, movement, AI and collision behavior.
 - [ ] Implement race timers, lap/finish detection, scoring, result flow and return-to-menu behavior.
 - [ ] Implement native rendering for track, bike, opponents, HUD and animation.
@@ -175,7 +177,7 @@ Goal: one original course playable from menu entry through finish/results, with 
 - [ ] Exact-commit host tests and New 3DS build pass.
 - [ ] Stage 3 acceptance report complete.
 
-Existing speed, temperature and movement vectors are reusable evidence. They do not waive any item above.
+The new `sub_DBFE` and `sub_DCDE` helpers are isolated translations and are not yet wired into the full `sub_DA26` frame sequence. Existing speed, temperature and movement vectors are reusable evidence. They do not waive any item above.
 
 ### Stage 4 — remaining original game
 
