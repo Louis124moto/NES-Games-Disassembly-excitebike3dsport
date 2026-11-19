@@ -98,6 +98,9 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
             menu->selected_mode = choice;
             menu->source_state = choice == 2u ? 8u : 1u;
             nativeMenuResetSetupSequence(menu);
+        } else {
+            /* ofs_000_C346 stores TXA (zero) to ram_03F2 on the idle path. */
+            menu->selected_mode = 0u;
         }
         break;
 
