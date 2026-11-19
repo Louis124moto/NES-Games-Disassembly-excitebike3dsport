@@ -91,6 +91,81 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
     return 0;
 }
 
+ 
+static int test_native_menu_setup_commands(Cpu6502 *reference)
+{
+    static const struct {
+        uint8_t state, command, address;
+    } cases[] = {
+        {0u, 0u, 0xC2BDu}, {0u, 1u, 0xC514u},
+        {1u, 0u, 0xC55Eu}, {1u, 1u, 0xC3F3u}, {1u, 2u, 0xC514u},
+        {8u, 0u, 0xC55Eu}, {8u, 1u, 0xC575u}, {8u, 2u, 0xC514u}
+    };
+    unsigned n;
+    for (n = 0u; n < sizeof(cases) / sizeof(cases[0]); ++n) {
+        NativeMenuState native;
+        unsigned rc;
+        memset(reference->ram, 0, sizeof(reference->ram));
+        reference->ram[0x0041u] = cases[n].state;
+        reference->ram[0x0044u] = cases[n].command;
+        reference->ram[0x0040u] = 0u;
+        reference->ram[0x03F0u] = 1u;
+        reference->ram[0x00FBu] = 0xA5u;
+        reference->ram[0x03F8u] = 0x77u;
+        reference->ram[0x0200u] = 0xF8u;
+        reference->ram[0x0201u] = 0xF8u;
+        reference->ram[0x0202u] = 0xF8u;
+        reference->ram[0x0203u] = 0xF8u;
+        prepare_cpu(reference);
+        rc = (unsigned)cpu6502_call(reference, cases[n].address, 2048u);
+        if (rc != 0u) {
+            printf("FAIL: ASM menu setup command %04X returned %u\n", cases[n].address, rc);
+            return 1;
+        }
+
+        memset(&native, 0, sizeof(native));
+        native.source_state = cases[n].state;
+        native.transition_phase = cases[n].command;
+        native.setup_command = 0u;
+        native.title_animation_index = 1u;
+        native.title_animation_flag = 0xA5u;
+        native.title_animation_counter = 0x77u;
+        native.cursor_sprite_y = 0xF8u;
+        native.cursor_sprite_tile = 0xF8u;
+        native.cursor_sprite_attribute = 0xF8u;
+        native.cursor_sprite_x = 0xF8u;
+        if (nativeMenuStepSetup(&native) != 1u) {
+            puts("FAIL: native menu setup command was not dispatched");
+            return 1;
+        }
+#define SETUP_CHECK(native_value, ram_address, field) do { \
+    if ((native_value) != reference->ram[(ram_address)]) { \
+        printf("FAIL: setup %04X %s native=%02X ASM=%02X\n", cases[n].address, #field, \
+               (unsigned)(native_value), reference->ram[(ram_address)]); return 1; \
+    } \
+} while (0)
+        SETUP_CHECK(native.source_visual_asset, 0x0045u, visual_asset);
+        SETUP_CHECK(native.title_animation_counter, 0x03F8u, title_counter);
+        SETUP_CHECK(native.title_animation_index, 0x03F0u, title_index);
+        SETUP_CHECK(native.title_animation_flag, 0x00FBu, title_flag);
+        SETUP_CHECK(native.cursor_sprite_y, 0x0200u, cursor_y);
+        SETUP_CHECK(native.cursor_sprite_tile, 0x0201u, cursor_tile);
+        SETUP_CHECK(native.cursor_sprite_attribute, 0x0202u, cursor_attribute);
+        SETUP_CHECK(native.cursor_sprite_x, 0x0203u, cursor_x);
+        SETUP_CHECK(native.transition_flag_0046, 0x0046u, flag_0046);
+        SETUP_CHECK(native.input.selection, 0x0042u, selection);
+        SETUP_CHECK(native.selected_course, 0x0043u, course);
+        SETUP_CHECK(native.input.debounce, 0x0049u, debounce);
+        SETUP_CHECK(native.setup_command, 0x0040u, setup_complete);
+        SETUP_CHECK(native.transition_phase, 0x0044u, setup_index);
+        SETUP_CHECK(native.input.input_timer, 0x0031u, idle_timer);
+        SETUP_CHECK(native.transition_timer_0034, 0x0034u, timer_0034);
+#undef SETUP_CHECK
+    }
+    puts("PASS: title, selector and design setup commands match the original ASM.");
+    return 0;
+}
+
 static int test_native_transition_phase1(void)
 {
     NativeMenuState menu;
@@ -204,6 +279,7 @@ int main(int argc, char **argv)
     }
 
     if (test_native_transition_phase1_differential(&reference) != 0) return 1;
+    if (test_native_menu_setup_commands(&reference) != 0) return 1;
 
     for (si = 0; si < 3u; ++si) {
         for (selection = 0; selection < 8u; ++selection) {
