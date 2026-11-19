@@ -78,6 +78,10 @@ void nativeMenuInit(NativeMenuState *menu)
     }
     memset(menu, 0, sizeof(*menu));
     menu->source_state = 0u;
+    menu->cursor_sprite_y = 0xF8u;
+    menu->cursor_sprite_tile = 0xF8u;
+    menu->cursor_sprite_attribute = 0xF8u;
+    menu->cursor_sprite_x = 0xF8u;
     /* ofs_001_C2BD_00_01 initializes the title idle timer to $38. */
     menu->input.input_timer = 0x38u;
     menu->timer_values[16] = 0x38u;
