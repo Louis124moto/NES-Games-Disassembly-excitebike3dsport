@@ -1,3 +1,5 @@
+> **Owner-approved architecture (2026-11-19): faithful native port only.** The final game on `main` is to be reimplemented in native C/C++ for Nintendo 3DS. It must not execute a 6502 CPU, emulate NES hardware, or require/load `rom.nes`. The original ASM remains the behavioral reference; native code must reproduce its menus, physics, courses, opponents, scoring, graphics and sound. Differential comparison against the original is mandatory, but any emulator/oracle is host-test-only. The `enhanced` branch will be created only after the faithful `main` port is accepted. The earlier static-recompiler/software-NES-system experiment is not the final architecture and is being retired from the game runtime. See [the controlling native-port specification](3ds-port/TODO.md) and [native porting rules](3ds-port/PORTING_RULES.md).
+
 # Excitebike 3DS — faithful NES port
 
 ## Mandatory development order and acceptance gates
@@ -60,7 +62,7 @@ The original NES disassembly is the behavioral reference. Its source files must 
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
 | Stage 2 — original menu | IN PROGRESS (2026-11-19); PRG-backed title/selector/design input, list-3/shared transitions, C465, list-5/editor, file-backed save/load, full NMI raster prefix, split-aware PPU composition and pixel-derived sprite-0 hit are integrated. Original-NES frame comparison, remaining editor interactions, exact PPU calibration, sound and physical New 3DS validation remain open. Stage 3 blocked. |
 | Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
-| Latest code batch | The static recompiler executes `$C7DE`, list-3 and list-5 setup, shared `$CB2C` transitions, `$C465`, `$C97C` editor frames, guarded `$EB17` return, `$D310` timers, and the timing-only NMI chain `$C32F → $C27F → DMA → $D0AB → $D14E`. PPU split scroll and sprite-0 hit are connected to the renderer/editor wait. |
+| Latest code batch | Historical emulator/recompiler experiment only; it is not the final runtime architecture. Native C/C++ menu and gameplay reimplementation is the active direction. |
 | Latest host test / 3DS build | **Passed** on exact code commit `19304fbc5293ebcd79e81a1afcf4bf760e9b0c9b`: [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711483) · [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711481). Later commits in this documentation pass do not change runtime code. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
