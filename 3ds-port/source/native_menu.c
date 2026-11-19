@@ -72,6 +72,107 @@ void nativeMenuInit(NativeMenuState *menu)
     menu->timer_values[16] = 0x38u;
 }
 
+
+/* sub_C409: native semantic cursor-sprite setup used by C2BD/C3F3/C575. */
+static void nativeMenuSetCursorSprite(NativeMenuState *menu, uint8_t tableIndex)
+{
+    static const uint8_t cursorX[3] = { 0x50u, 0x48u, 0x4Cu };
+    if (tableIndex >= 3u) return;
+    menu->cursor_sprite_tile = 0xFAu;
+    menu->cursor_sprite_x = cursorX[tableIndex];
+    menu->cursor_sprite_attribute = 0u;
+    menu->transition_flag_0046 = 0u;
+}
+
+/* Source setup commands C2BD, C514, C55E, C3F3 and C575.
+ * These update semantic menu state only; the renderer consumes the asset key
+ * and cursor instance separately. No PPU command list or OAM memory is built.
+ */
+uint8_t nativeMenuStepSetup(NativeMenuState *menu)
+{
+    uint8_t command;
+    if (menu == 0 || menu->setup_command != 0u) return 0u;
+    if (menu->timer_values[15] != 0u) return 0u; /* sub_C2ED waits for $0030 */
+
+    command = menu->transition_phase;
+    switch (menu->source_state) {
+    case 0u: /* setup list 0: C2BD, C514 */
+        if (command == 0u) {
+            menu->title_animation_counter = 0x04u;
+            menu->source_visual_asset = 0x02u;
+            nativeMenuSetCursorSprite(menu, 0u);
+            if (menu->title_animation_flag == 0u) menu->title_animation_flag = 1u;
+            menu->title_animation_flag = (uint8_t)(menu->title_animation_flag & 0xFFu);
+            menu->title_animation_counter = 0x04u;
+            menu->timer_values[16] = 0x38u;
+            menu->input.input_timer = 0x38u;
+            menu->cursor_sprite_y = 0x80u;
+            menu->title_animation_counter = 0x04u;
+            menu->transition_phase = 1u;
+            return 1u;
+        }
+        if (command == 1u) {
+            menu->source_visual_asset = 0x18u;
+            menu->input.debounce = 1u;
+            menu->setup_command = 1u;
+            menu->transition_phase = 0u;
+            return 1u;
+        }
+        break;
+
+    case 1u: /* setup list 1: C55E, C3F3, C514 */
+        if (command == 0u) {
+            menu->source_visual_asset = 0x06u;
+            menu->transition_phase = 1u;
+            return 1u;
+        }
+        if (command == 1u) {
+            menu->title_animation_flag = 0x04u;
+            menu->source_visual_asset = 0x03u;
+            nativeMenuSetCursorSprite(menu, 1u);
+            menu->input.selection = 0u;
+            menu->transition_timer_0034 = 0x2Du;
+            menu->timer_values[19] = 0x2Du;
+            menu->cursor_sprite_y = 0xB0u;
+            menu->transition_phase = 2u;
+            return 1u;
+        }
+        if (command == 2u) {
+            menu->source_visual_asset = 0x18u;
+            menu->input.debounce = 1u;
+            menu->setup_command = 1u;
+            menu->transition_phase = 0u;
+            return 1u;
+        }
+        break;
+
+    case 8u: /* setup list 6: C55E, C575, C514 */
+        if (command == 0u) {
+            menu->source_visual_asset = 0x06u;
+            menu->transition_phase = 1u;
+            return 1u;
+        }
+        if (command == 1u) {
+            menu->selected_course = 0x05u;
+            nativeMenuSetCursorSprite(menu, 2u);
+            menu->source_visual_asset = 0x0Fu;
+            menu->transition_phase = 2u;
+            return 1u;
+        }
+        if (command == 2u) {
+            menu->source_visual_asset = 0x18u;
+            menu->input.debounce = 1u;
+            menu->setup_command = 1u;
+            menu->transition_phase = 0u;
+            return 1u;
+        }
+        break;
+    default:
+        break;
+    }
+    return 0u;
+}
+
 static void nativeMenuResetSetupSequence(NativeMenuState *menu)
 {
     menu->setup_command = 0u;
