@@ -383,6 +383,7 @@ static int testDesignConfirm(void)
     if (s == NULL) return 1;
     s->menu_selection = 5u;
     s->menu_ram00FF = 0x77u;
+    s->menu_timer20 = 0x5Au; /* GameState's mapped view of CPU RAM $0020 */
     memset(&s->menu_cpu_ram[0x0021u], 0xA5, 0x00DFu);
     s->menu_cpu_ram[0x0020u] = 0x5Au;   /* outside the source clear range */
     s->menu_cpu_ram[0x0100u] = 0x66u;   /* outside the source clear range */
