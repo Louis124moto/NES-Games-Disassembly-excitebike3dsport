@@ -70,6 +70,27 @@ int main(void)
     if (s.menu_cpu_ram[0x005Cu] != 0x02u)
         return fail("C97C did not copy held LEFT into ram_005C", frame + 1u, &s);
 
-    puts("PASS: original ROM list-5 setup and one recompiled state-09 editor frame.");
+    /*
+     * Exercise the source-guarded EB9E -> EBA8 return branch. EB9E is selected
+     * only for ram_00BC_obj+3 > 1; seed that traced mode explicitly so this
+     * vector tests the B-button branch without claiming the preceding editor
+     * interaction naturally produces that mode.
+     */
+    s.menu_cpu_ram[0x00BEu] = 0u; /* ram_00BC_obj+2: EB17 must not early-return */
+    s.menu_cpu_ram[0x00B4u] = 0u; /* skip the initial countdown */
+    s.menu_cpu_ram[0x00BDu] = 0u;
+    s.menu_cpu_ram[0x00B9u] = 0u; /* EB23 gate */
+    s.menu_cpu_ram[0x00BFu] = 2u; /* ram_00BC_obj+3: enter bra_EB9E */
+    s.menu_cpu_ram[0x00C1u] = 0u; /* select bra_EB49 before the mode branch */
+    s.menu_cpu_ram[0x0049u] = 0u; /* return input is not locked */
+    menusNmiFrame(&s, KEY_B, KEY_B);
+    if (s.menu_asm_state != 8u || s.menu_ram0040 != 0u ||
+        s.menu_selection != 0u || s.menu_cpu_ram[0x0047u] != 0u)
+        return fail("held B did not execute the original EB9E/EBA8 return to state 8",
+                    frame + 2u, &s);
+    if (memcmp(s.menu_ram06E0, s.menu_ram05E0, sizeof(s.menu_ram06E0)) != 0)
+        return fail("EBA8 return did not commit the 256-byte editor page", frame + 2u, &s);
+
+    puts("PASS: original ROM list-5 setup, C97C editor frame, and guarded EB17 B-return.");
     return 0;
 }
