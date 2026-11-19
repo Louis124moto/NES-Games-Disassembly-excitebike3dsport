@@ -43,6 +43,7 @@ typedef struct NativeMenuState {
     uint8_t transition_duration; /* source ram_03AD */
     uint8_t source_visual_asset; /* source ram_0045: native asset selector, not a PPU address */
     uint8_t title_animation_counter; /* source ram_03F8 */
+    uint8_t title_animation_index; /* source ram_03F0 */
     uint8_t title_animation_flag; /* source ram_00FB */
     uint8_t cursor_sprite_y, cursor_sprite_tile, cursor_sprite_attribute, cursor_sprite_x;
     uint8_t transition_timer_0034;
