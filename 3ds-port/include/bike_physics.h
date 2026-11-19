@@ -124,6 +124,8 @@ typedef struct BikeMovementState {
     uint8_t secondary_scroll_fraction; /* ram_03BF */
     uint8_t secondary_scroll_x;         /* ram_0050 */
     uint8_t secondary_base_nametable;   /* ram_004E */
+    uint8_t object_lock_timer[4];       /* ram_0374_obj */
+    uint8_t movement_flags[4];          /* ram_005C_obj */
 } BikeMovementState;
 
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement);
@@ -131,5 +133,7 @@ void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement);
 void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement);
 /* sub_DBFE: fractional parallax accumulator and secondary camera scroll. */
 void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement);
+/* sub_DCDE: update the four per-bike lock timers after the object pass. */
+void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement);
 
 #endif
