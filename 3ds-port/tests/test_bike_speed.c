@@ -32,7 +32,7 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    for (mode = 0; mode < 2u; ++mode) {
+    for (mode = 0; mode < 3u; ++mode) {
         for (phase = 0; phase < 4u; ++phase) {
             for (whole = 0; whole < 256u; ++whole) {
                 for (fraction = 0; fraction < 256u; ++fraction) {
