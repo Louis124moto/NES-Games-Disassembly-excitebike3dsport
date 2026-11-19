@@ -478,6 +478,65 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             state->menu_action_x = 0u;
             state->menu_selection_changed = 0u;
         }
+    } else if (state->menu_asm_state == 9u) {
+        /*
+         * ofs_000_C97C_09: original editor frame. Keep the full 2 KiB CPU RAM
+         * persistent across calls; C5C2 initialized the object/course state.
+         * PPUSTATUS bit 6 is acknowledged at frame granularity by the adapter.
+         */
+        uint8_t held = 0u;
+        if (heldKeys & KEY_A) held |= 0x80u;
+        if (heldKeys & KEY_B) held |= 0x40u;
+        if (heldKeys & KEY_SELECT) held |= 0x20u;
+        if (heldKeys & KEY_START) held |= 0x10u;
+        if (heldKeys & KEY_UP) held |= 0x08u;
+        if (heldKeys & KEY_DOWN) held |= 0x04u;
+        if (heldKeys & KEY_LEFT) held |= 0x02u;
+        if (heldKeys & KEY_RIGHT) held |= 0x01u;
+        state->menu_cpu_ram[0x0014u] = held;
+        state->menu_cpu_ram[0x0015u] = nesButtons;
+        state->menu_cpu_ram[0x0041u] = state->menu_asm_state;
+        state->menu_cpu_ram[0x0042u] = state->menu_selection;
+        state->menu_cpu_ram[0x0040u] = state->menu_ram0040;
+        state->menu_cpu_ram[0x0043u] = state->menu_ram0043;
+        state->menu_cpu_ram[0x0044u] = state->menu_ram0044;
+        state->menu_cpu_ram[0x0045u] = state->menu_ram0045;
+        state->menu_cpu_ram[0x0046u] = state->menu_ram0046;
+        state->menu_cpu_ram[0x0048u] = state->menu_ram0048;
+        state->menu_cpu_ram[0x0049u] = state->menu_repeat_guard;
+        state->menu_cpu_ram[0x004Bu] = state->menu_ram004B;
+        state->menu_cpu_ram[0x00FBu] = state->menu_ram00FB;
+        memcpy(&state->menu_cpu_ram[0x0200u], state->menu_oam, sizeof(state->menu_oam));
+        memcpy(&state->menu_cpu_ram[0x0300u], state->menu_ram0300, sizeof(state->menu_ram0300));
+        memcpy(&state->menu_cpu_ram[0x05A0u], state->menu_ram05A0, sizeof(state->menu_ram05A0));
+        memcpy(&state->menu_cpu_ram[0x05C3u], state->menu_ram05C3, sizeof(state->menu_ram05C3));
+        memcpy(&state->menu_cpu_ram[0x05E0u], state->menu_ram05E0, sizeof(state->menu_ram05E0));
+        memcpy(&state->menu_cpu_ram[0x06E0u], state->menu_ram06E0, sizeof(state->menu_ram06E0));
+        if (nesMenuCpuEditorFrame(state->menu_cpu_ram, held, nesButtons,
+                                  state->menu_ppu_nametables, state->menu_ppu_palette,
+                                  &state->menu_ppu_ctrl, &state->menu_ppu_mask,
+                                  &state->menu_scroll_x, &state->menu_scroll_y)) {
+            state->menu_asm_state = state->menu_cpu_ram[0x0041u];
+            state->menu_selection = state->menu_cpu_ram[0x0042u];
+            state->menu_ram0040 = state->menu_cpu_ram[0x0040u];
+            state->menu_ram0043 = state->menu_cpu_ram[0x0043u];
+            state->menu_ram0044 = state->menu_cpu_ram[0x0044u];
+            state->menu_ram0045 = state->menu_cpu_ram[0x0045u];
+            state->menu_ram0046 = state->menu_cpu_ram[0x0046u];
+            state->menu_ram0048 = state->menu_cpu_ram[0x0048u];
+            state->menu_repeat_guard = state->menu_cpu_ram[0x0049u];
+            state->menu_ram004B = state->menu_cpu_ram[0x004Bu];
+            state->menu_ram00FB = state->menu_cpu_ram[0x00FBu];
+            memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u], sizeof(state->menu_oam));
+            memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u], sizeof(state->menu_ram0300));
+            memcpy(state->menu_ram05A0, &state->menu_cpu_ram[0x05A0u], sizeof(state->menu_ram05A0));
+            memcpy(state->menu_ram05C3, &state->menu_cpu_ram[0x05C3u], sizeof(state->menu_ram05C3));
+            memcpy(state->menu_ram05E0, &state->menu_cpu_ram[0x05E0u], sizeof(state->menu_ram05E0));
+            memcpy(state->menu_ram06E0, &state->menu_cpu_ram[0x06E0u], sizeof(state->menu_ram06E0));
+            state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
+        }
+        state->menu_action_x = 0u;
+        state->menu_selection_changed = 0u;
     } else if (state->menu_asm_state == 4u || state->menu_asm_state == 7u) {
         /*
          * ofs_000_C465_04 / ofs_000_C465_07. This handler is not a race-frame
