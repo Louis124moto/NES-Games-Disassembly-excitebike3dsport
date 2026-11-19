@@ -173,6 +173,43 @@ static int testSprites(void)
         if (nesPpuRenderSprites(chr, TILES, oam, pal, 0x10u, 0x1Au, opaque, rgb, NES_PPU_RGB_BYTES, &drawn) != NES_PPU_RENDER_OK) { free(opaque); rc = 141; goto done; }
         if (pixelUntouched(rgb, 21u, 11u) || !pixelUntouched(rgb, 22u, 11u) || pixelUntouched(rgb, 23u, 11u)) { free(opaque); rc = 142; goto done; }
         if (drawn != 7u + 7u * 2u) { free(opaque); rc = 143; goto done; } /* row 0 loses one pixel to the background */
+        /* Pixel-derived sprite-0 hit: first opaque overlap is row 1, column 0. */
+        memset(opaque, 0, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT);
+        oam[0] = 10u; oam[1] = 5u; oam[2] = 0u; oam[3] = 20u;
+        opaque[12u * NES_PPU_WIDTH + 20u] = 1u;
+        {
+            unsigned long hitCycle = ~0UL;
+            const unsigned long expected = (341UL + 12UL * 341UL + 21UL) / 3UL;
+            if (!nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x10u, 0x1Eu,
+                                           opaque, &hitCycle) || hitCycle != expected) {
+                free(opaque); rc = 144; goto done;
+            }
+        }
+        /* A background pixel under a transparent sprite pixel cannot trigger hit. */
+        memset(opaque, 0, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT);
+        opaque[12u * NES_PPU_WIDTH + 21u] = 1u;
+        if (nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x10u, 0x1Eu,
+                                      opaque, NULL)) { free(opaque); rc = 145; goto done; }
+        /* Sprite 0 hit is suppressed at x=255 and when either left-edge layer is clipped. */
+        oam[3] = 255u;
+        opaque[12u * NES_PPU_WIDTH + 255u] = 1u;
+        if (nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x10u, 0x1Eu,
+                                      opaque, NULL)) { free(opaque); rc = 146; goto done; }
+        oam[3] = 4u;
+        memset(opaque, 0, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT);
+        opaque[12u * NES_PPU_WIDTH + 4u] = 1u;
+        if (nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x10u, 0x1Cu,
+                                      opaque, NULL) ||
+            !nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x10u, 0x1Eu,
+                                       opaque, NULL)) { free(opaque); rc = 147; goto done; }
+        /* 8x16 sprite-0 hit uses the tile pair and the sprite's Y+1 origin. */
+        memset(chr + 6u * 64u, 1, 64u);
+        memset(chr + 7u * 64u, 2, 64u);
+        oam[0] = 30u; oam[1] = 6u; oam[2] = 0u; oam[3] = 50u;
+        memset(opaque, 0, (size_t)NES_PPU_WIDTH * NES_PPU_HEIGHT);
+        opaque[31u * NES_PPU_WIDTH + 50u] = 1u;
+        if (!nesPpuFindSprite0HitCycle(chr, TILES, oam, 0x30u, 0x1Eu,
+                                       opaque, NULL)) { free(opaque); rc = 148; goto done; }
         free(opaque);
         oam[2] = 0u;
     }
