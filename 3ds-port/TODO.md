@@ -126,8 +126,8 @@ Goal: reproduce the original title, selector, design/options menu, course editor
 - [x] Translate/test libctru-to-game input mapping for all 256 controller-byte combinations.
 - [ ] Finish every remaining menu transition branch and setup-list side effect as semantic native state changes.
 - [ ] Translate shared transition phases 1 and 2 into semantic native menu state and renderer events; see the 2026-11-19 source trace in `STAGE2_TRACE.md`. Do not reproduce the dynamic PPU command buffer or OAM algorithm in the game runtime.
-  - [x] Add an isolated native phase-1 timing/payload translation and 64 deterministic ASM-oracle differential vectors (not integrated; payload meaning still needs caller/state classification).
-  - [ ] Resolve the seven-byte payload's contextual meaning before native rendering integration.
+  - [x] Add an isolated native phase-1 timing/state translation and 64 deterministic ASM-oracle differential vectors (not integrated; seven-byte visual payload intentionally not rendered or guessed).
+  - [ ] Trace and translate the seven-byte dynamic visual payload into a native scene update from its actual producer/caller context.
   - [x] Expand the source trace for phase-2 timer/input branches, the three table-driven sprite records, and the shared sprite-layout routine; see the 2026-11-19 refinement in STAGE2_TRACE.md. This is trace-only, not native implementation.
   - [x] Trace sub_DD6F's fixed-point object update and return-value path used by phase 2; see STAGE2_TRACE.md.
   - [ ] Trace the initialization and semantic meaning of the object fields consumed by sub_DD6F, and identify the source graphics/visible meaning of phase-2 sprite groups.
