@@ -48,7 +48,7 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 
 | Subsystem | Native C currently present | Remaining work |
 |---|---|---|
-| Menu logic | `native_menu.c`: selection (`sub_C7DE`), title/selector/design state branches, timer bank (`sub_D310`), shared transition phase 0 (`CB3B`), timer-expired `C465` branch. Differential tests pass. | Remaining `CB2C` phases, nonzero `C465` path, setup lists, complete editor/save/load flow, app integration and faithful graphics. |
+| Menu logic | `native_menu.c`: selection (`sub_C7DE`), title/selector/design state branches, timer bank (`sub_D310`), shared transition phase 0 (`CB3B`), timer-expired `C465` branch. Differential tests pass. `input.c` now maps all eight libctru buttons to NES controller bits and has exhaustive 256-combination coverage. | Remaining `CB2C` phases, nonzero `C465` path, setup lists, complete editor/save/load flow, app integration and faithful graphics. |
 | Bike physics | `bike_physics.c`: acceleration/deceleration, terrain gate, player speed branch, temperature/overheat, fixed-point movement deltas, player scroll and opponent-relative movement. | Full frame update order, braking/posture/jump/landing/crash/collision logic, opponent AI and integration into a playable race. |
 | Menu/game rendering | Native CHR decoder, asset exporter and static asset compositor for the extractor. | Separate asset-preview rendering from the game renderer; implement native menu/course/bike/sprite rendering from verified assets. |
 | Track | `track.c` has module stubs only. | Source-derived course geometry, ramps, obstacles and native rendering. |
@@ -57,7 +57,7 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 | Race setup | `nes_race_setup.c` contains some source-derived setup translations and tests, but uses a RAM-shaped helper structure and is not integrated into a native playable game. | Convert verified setup results into semantic native game data; avoid NES RAM images as live game state. |
 | Runtime | `game.c` still launches the asset inspector; menu/physics modules are not the playable game loop. | Wire native menus and gameplay into a native game flow; keep extractor available as a separate diagnostic mode/tool. |
 
-**Verified latest code commit:** `7972ed9fad04c3963fb41a031a44537ffeae3853` — host differential workflow [44584137040](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137040) and New 3DS build [44584137025](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137025) both passed. These tests prove only the translated slices, not a complete game.
+**Verified latest code commit:** `91f3cc6432a796cdeae017323963da07180b6c65` — host differential workflow [44584803153](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584803153) and New 3DS build [44584803163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584803163) both passed. The new input test exhausts all 256 NES controller combinations. These tests prove only the translated slices, not a complete game.
 
 ### Native subsystem acceptance checklist
 
