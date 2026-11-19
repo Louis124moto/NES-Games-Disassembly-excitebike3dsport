@@ -213,6 +213,80 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("PASS: %lu native title/selector/design and timer vectors match original ASM.\n", vectors);
+
+    /* Shared transition dispatcher phase 0 (sub_CB2C -> ofs_CB3B_00). */
+    {
+        static const uint8_t state_values[] = { 0u, 1u, 2u, 3u, 6u, 7u, 8u, 9u, 0x0Bu, 0x0Cu, 0x0Du, 0xFFu };
+        static const uint8_t gate_values[] = { 0u, 1u, 3u, 4u, 5u, 0xFFu };
+        static const uint8_t flag_values[] = { 0u, 1u };
+        static const uint8_t course_values[] = { 0u, 1u, 3u, 4u, 5u, 0xFFu };
+        static const uint8_t blink_values[] = { 0u, 1u, 2u, 3u, 0xFEu, 0xFFu };
+        unsigned st, gate, flag, course, blink, counter;
+        for (st = 0; st < sizeof(state_values); ++st) {
+            for (gate = 0; gate < sizeof(gate_values); ++gate) {
+                for (flag = 0; flag < sizeof(flag_values); ++flag) {
+                    for (course = 0; course < sizeof(course_values); ++course) {
+                        for (blink = 0; blink < sizeof(blink_values); ++blink) {
+                            for (counter = 0; counter < sizeof(blink_values); ++counter) {
+                                NativeMenuState native_menu;
+                                int rc;
+                                memset(&native_menu, 0, sizeof(native_menu));
+                                native_menu.source_state = state_values[st];
+                                native_menu.selected_mode = (uint8_t)(0xA0u + course);
+                                native_menu.input.selection = 0x55u;
+                                native_menu.selected_course = course_values[course];
+                                native_menu.transition_gate_0053 = gate_values[gate];
+                                native_menu.transition_flag_0046 = flag_values[flag];
+                                native_menu.transition_flag_004B = 0xA5u;
+                                native_menu.transition_counter_03F8 = blink_values[counter];
+                                native_menu.title_flag_03F3 = blink_values[blink];
+                                native_menu.transition_phase = 0xFEu;
+                                native_menu.timer_values[18] = 0xA7u;
+
+                                memset(reference.ram, 0, sizeof(reference.ram));
+                                reference.ram[0x0041u] = native_menu.source_state;
+                                reference.ram[0x0042u] = native_menu.input.selection;
+                                reference.ram[0x0043u] = native_menu.selected_course;
+                                reference.ram[0x0046u] = native_menu.transition_flag_0046;
+                                reference.ram[0x004Bu] = native_menu.transition_flag_004B;
+                                reference.ram[0x0053u] = native_menu.transition_gate_0053;
+                                reference.ram[0x03F2u] = native_menu.selected_mode;
+                                reference.ram[0x03F3u] = native_menu.title_flag_03F3;
+                                reference.ram[0x03F8u] = native_menu.transition_counter_03F8;
+                                reference.ram[0x0033u] = native_menu.timer_values[18];
+                                reference.ram[0x0044u] = native_menu.transition_phase;
+                                prepare_cpu(&reference);
+                                rc = cpu6502_call(&reference, 0xCB3Bu, 256u);
+                                if (rc != 0) {
+                                    printf("FAIL: original CB3B returned %d state=%02X gate=%02X flag=%u course=%02X blink=%02X counter=%02X\n",
+                                           rc, state_values[st], gate_values[gate], flag_values[flag],
+                                           course_values[course], blink_values[blink], blink_values[counter]);
+                                    return 1;
+                                }
+
+                                nativeMenuTransitionPhase0(&native_menu);
+                                if (native_menu.input.selection != reference.ram[0x0042u] ||
+                                    native_menu.selected_course != reference.ram[0x0043u] ||
+                                    native_menu.transition_flag_0046 != reference.ram[0x0046u] ||
+                                    native_menu.transition_flag_004B != reference.ram[0x004Bu] ||
+                                    native_menu.title_flag_03F3 != reference.ram[0x03F3u] ||
+                                    native_menu.transition_counter_03F8 != reference.ram[0x03F8u] ||
+                                    native_menu.timer_values[18] != reference.ram[0x0033u] ||
+                                    native_menu.transition_phase != reference.ram[0x0044u]) {
+                                    printf("FAIL: CB3B state=%02X gate=%02X flag=%u course=%02X blink=%02X counter=%02X\n",
+                                           state_values[st], gate_values[gate], flag_values[flag],
+                                           course_values[course], blink_values[blink], blink_values[counter]);
+                                    return 1;
+                                }
+                                ++vectors;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    printf("PASS: %lu native menu selection, state, timer and transition vectors match original ASM.\n", vectors);
     return 0;
 }
