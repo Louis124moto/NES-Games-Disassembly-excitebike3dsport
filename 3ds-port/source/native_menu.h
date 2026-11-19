@@ -37,11 +37,14 @@ typedef struct NativeMenuState {
     uint8_t title_flag_03F0;
     uint8_t title_flag_03F3;
     uint8_t title_flag_03F7;
+    uint8_t frame_timer;       /* ram_0020 */
+    uint8_t timer_values[29]; /* ram_0021-$003D */
 } NativeMenuState;
 
 /* Native state transitions for the original title, course selector and
  * design menu handlers (source states 0, 1 and 8). */
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
+void nativeMenuTickTimers(NativeMenuState *menu);
 
 void nativeMenuRenderStatus(const GameState *state);
 
