@@ -287,6 +287,54 @@ int main(int argc, char **argv)
         }
     }
 
+
+    /* Timer-expired C465 branch: sub_C3AF followed by the $08 state clamp. */
+    {
+        unsigned state_value, setup, phase;
+        for (state_value = 0; state_value < 256u; ++state_value) {
+            for (setup = 0; setup < 8u; ++setup) {
+                for (phase = 0; phase < 8u; ++phase) {
+                    NativeMenuState native_menu;
+                    int rc;
+                    memset(&native_menu, 0, sizeof(native_menu));
+                    native_menu.source_state = (uint8_t)state_value;
+                    native_menu.setup_command = (uint8_t)(0xF8u + setup);
+                    native_menu.transition_phase = (uint8_t)(0xF8u + phase);
+                    native_menu.timer_values[19] = 0u; /* $0034 */
+
+                    memset(reference.ram, 0, sizeof(reference.ram));
+                    reference.ram[0x0041u] = native_menu.source_state;
+                    reference.ram[0x0040u] = native_menu.setup_command;
+                    reference.ram[0x0044u] = native_menu.transition_phase;
+                    reference.ram[0x0034u] = 0u;
+                    prepare_cpu(&reference);
+                    rc = cpu6502_call(&reference, 0xC477u, 64u);
+                    if (rc != 0) {
+                        printf("FAIL: original C465 timer-zero branch returned %d state=%02X setup=%02X phase=%02X\n",
+                               rc, state_value, native_menu.setup_command,
+                               native_menu.transition_phase);
+                        return 1;
+                    }
+
+                    nativeMenuCompleteTimedTransition(&native_menu);
+                    if (native_menu.source_state != reference.ram[0x0041u] ||
+                        native_menu.setup_command != reference.ram[0x0040u] ||
+                        native_menu.transition_phase != reference.ram[0x0044u]) {
+                        printf("FAIL: C465 timer-zero state=%02X setup=%02X phase=%02X native=%02X/%02X/%02X ASM=%02X/%02X/%02X\n",
+                               state_value, native_menu.setup_command,
+                               native_menu.transition_phase,
+                               native_menu.source_state, native_menu.setup_command,
+                               native_menu.transition_phase,
+                               reference.ram[0x0041u], reference.ram[0x0040u],
+                               reference.ram[0x0044u]);
+                        return 1;
+                    }
+                    ++vectors;
+                }
+            }
+        }
+    }
+
     printf("PASS: %lu native menu selection, state, timer and transition vectors match original ASM.\n", vectors);
     return 0;
 }
