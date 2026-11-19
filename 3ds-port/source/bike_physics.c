@@ -354,6 +354,22 @@ void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement)
     }
 }
 
+
+/* Source: sub_DCDE ($DCDE-$DCF1), called once for each bike after DCF2. */
+void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement)
+{
+    int index;
+    if (movement == 0) return;
+    for (index = 3; index >= 0; --index) {
+        uint8_t *timer = &movement->object_lock_timer[index];
+        if (*timer == 0u) continue;
+        *timer = (uint8_t)(*timer - 1u);
+        if ((movement->movement_flags[index] & 0xC0u) != 0u) {
+            *timer = 0u;
+        }
+    }
+}
+
 /* Source: sub_DA58 ($DA58-$DA69), all four bike slots. */
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement)
 {
