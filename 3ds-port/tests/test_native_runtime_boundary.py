@@ -23,7 +23,7 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
 
     def test_emulator_runtime_objects_are_excluded_from_3ds_build(self):
         makefile = (PORT / "Makefile").read_text(encoding="utf-8")
-        match = re.search(r"EXCLUDED_RUNTIME_C\s*:=([\s\\\S]*?)\nCFILES\s*:=", makefile)
+        match = re.search(r"EXCLUDED_RUNTIME_C\s*:=([\s\S]*?)\nCFILES\s*:=", makefile)
         self.assertIsNotNone(match, "Makefile must declare the runtime exclusion list")
         excluded = set(re.findall(r"[A-Za-z0-9_]+\.c", match.group(1)))
         required = {
