@@ -298,6 +298,7 @@ int main(void)
 
     /* The host renderer is not linked into this ROM-only test; seed a known source hit. */
     s.menu_sprite0_hit_found = 1u;
+    s.menu_sprite0_hit_last_frame = 1u;
     s.menu_sprite0_hit_cycle = 0u;
     s.menu_ppu_cycle_phase = 0u;
     /* One original C97C frame must return through the emulated sprite-hit wait. */
