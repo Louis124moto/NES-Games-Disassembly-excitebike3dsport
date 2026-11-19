@@ -228,10 +228,13 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     bus.nametables = nametables; bus.palette = palette;
     bus.ctrl = ppuCtrl; bus.mask = ppuMask;
     bus.scrollX = scrollX; bus.scrollY = scrollY;
-    bus.spriteHitCycle = ~0UL; /* keep bit 6 clear throughout D14E */
+    bus.spriteHitCycle = ~0UL; /* keep bit 6 clear throughout D0AB/D14E */
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
+    /* vec_C23B_NMI runs the per-object vertical-band update before the raster split. */
+    result = nesCall(&machine, 0xD0ABu, 100000L);
+    if (result != 0) return 0;
     result = nesCall(&machine, 0xD14Eu, 100000L);
     if (result != 0) return 0;
     memcpy(cpuRam, machine.ram, sizeof(machine.ram));
