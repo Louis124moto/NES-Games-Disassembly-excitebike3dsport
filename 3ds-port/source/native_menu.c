@@ -28,7 +28,8 @@ uint8_t nativeMenuUpdateSelection(NativeMenuSelectionState *menu,
     if ((pressed & 0x20u) != 0u) {
         selection = (uint8_t)(selection + 1u);
         if (selection >= entry_count) {
-            selection = 1u;
+            /* Source falls through from LDY #1 into DEY at $C811. */
+            selection = 0u;
         }
         menu->selection_dirty = 1u;
     } else if ((pressed & 0x04u) != 0u) {
