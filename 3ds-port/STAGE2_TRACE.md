@@ -232,7 +232,7 @@ This completes the B3 source-backed two-page composition implementation and its 
 - The second half of `sub_D14E` writes `ram_for_2000 | ram_004D_base_nametable`, then `ram_scroll_X` and `ram_scroll_Y`. This is a mid-frame split, not a single static scroll value.
 - The menu prelude explicitly zeroes both scroll pairs. `ram_0047` is raised in race setup (`ofs_001_C875_02_06`), **in the state-9 design-editor setup** (`ofs_001_C5C2_05_06`, `INC ram_0047` at `$C617`), and in gameplay object logic (`$EBAE`). It is cleared on menu/editor-return paths (`$CA33`, `$CAA7`, and the state-9 B-button exit via `sub_EB17`). The raster path is therefore required by the Stage 2 design-editor path, not just the race; B4 is a blocking Stage 2 task.
 
-B4 is **traced, not implemented**. The current menu state model does not yet reproduce the two-phase `ram_0047` raster/OAM update. Do not replace it with `menu_scroll_x/y` alone.
+B4 is **partially integrated**. When `ram_0047` is set, the host adapter executes the original PRG routine `sub_D14E`, including its source delay loop, PPUCTRL and two-phase scroll writes. The host bus still models sprite-0 hit at a frame/cycle boundary; it does not derive the hit from rendered pixels, and the preceding `sub_D0AB` NMI work is not yet integrated. Exact scanline/OAM timing and physical New 3DS comparison remain open. Do not replace this path with `menu_scroll_x/y` alone.
 
 ## Ordered completion plan — work one item at a time
 
@@ -243,14 +243,14 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [x] A2. Identify title, selector, design, save/load, race-entry, and shared transition paths from the state handlers.
 - [x] A3. Trace every branch and return from `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, and `ofs_CC6B_03`; record exact conditions and state writes (see the transition-dispatcher trace below).
 - [x] A4. Classify state-$09 as the interactive course-design/editor loop, distinct from race states `$02/$05/$0A`; trace its entry, per-frame path and B-button return to state `$08`. Its setup list 5/editor implementation remains a separate C3 handoff dependency.
-- [ ] A5. Finish transitive traces for all reachable setup commands. List 5's six commands are inventoried and now have a PRG-backed recompiler path; full state-9 frame-loop and list-3 dependencies remain.
+- [ ] A5. Finish transitive traces for all reachable setup commands. List 5's six commands and list 3's five commands now have PRG-backed recompiler paths; the full state-9 frame loop and other reachable-list dependencies remain.
 - [ ] A6. Audit reset/cold-start, return-to-title, cancel/back, and all menu-to-race handoffs against the actual ASM call order.
 
 ### B. PPU, OAM, and visual reconstruction
 - [x] B1 (selection trace) — Map the static `$01-$19`, palette `$12-$18`, dynamic `$00`, and zero-page `$1A` sources and verify NROM/PPUCTRL pattern-table selection. The renderer fidelity portion remains open under B3-B7.
 - [x] B2. Verified all 18 static PPU streams and all 7 palette streams, dynamic `$0300` upload, zero-page `$00A1` tape-load path, malformed records, bounds, terminators and palette mirroring with host tests. See validation checkpoint below.
 - [x] B3. Implemented mapper-0 vertical address mirroring plus two-page composition using PPUCTRL base nametable bits and `$2005` scroll; host regressions cover A/B selection and horizontal scroll across the page boundary. Hardware/reference comparison remains D2/D3.
-- [ ] B4. Source scroll/raster path traced (`sub_D0AB`, `sub_D14E`, `sub_D1B3`); implement the two-phase `$0047` NMI update and validate its scanline/OAM timing.
+- [ ] B4. `sub_D14E` now runs from the original PRG when `$0047` is set, including the two scroll phases; integrate the preceding `sub_D0AB`, replace the frame-boundary sprite-hit approximation with PPU-derived collision, and validate scanline/OAM timing.
 - [ ] B5. Trace every menu OAM writer and all cursor/decoration sprites, sprite priority, flips, size, scanline limits, and visibility; render all supported source attributes.
 - [ ] B6. Reconstruct authentic title, selector, design, save/load, and transition artwork from actual CHR + PPU writes; remove diagnostic text/placeholder rendering from the normal menu path.
 - [ ] B7. Verify menu palettes and palette transitions using the actual PPU palette RAM writes; account for palette mirroring and PPUMASK grayscale/emphasis if used.
@@ -258,16 +258,16 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 ### C. Menu input and transitions
 - [x] C1. `sub_C7DE` input semantics are now executed from the statically recompiled 6502 code at runtime when a supported mapper-0, 16 KiB `rom.nes` is beside the 3DSX. `nesMenuCpuInit()` loads the original PRG; `nesMenuCpuInput()` seeds the relevant NES RAM and calls `$C7DE` through `nesCall()`. Title (count 3), course selector (count 5), and design menu (count 6) all use this path. The source-derived C helper remains a fallback for raw-CHR-only installations. The routine is already included in the differential `region_list.h` test set. This integration has not yet received a fresh CI run or physical New 3DS validation.
 - [x] C2. Title entries 0/1 -> state 1, title entry 2 -> state 8, selector navigation and confirmation -> state 2 are implemented and covered by the menu frame-model tests. The destination race runtime remains Stage 3.
-- [ ] C3. Complete all six design-menu choices: implement list 5/state-9 setup handoff and B-button return to state 8; preserve state-10 race handoff for Stage 3; finish save/load and return-to-title paths.
-- [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
+- [ ] C3. List 5/state-9 setup and the original guarded EB17 B-return branch now execute through the PRG recompiler; a ROM-backed test exercises the return branch with explicit gate-state preconditions. Still verify the natural in-game route, all editor object interactions, state-10 handoff (Stage 3), save/load, and return-to-title paths.
+- [ ] C4. List 3 and the shared CB2C dispatcher are now connected to source PRG execution for states 3/6/0B; C465 already runs from the PRG for states 4/7. Add vectors for every dispatcher phase, state variant, and timer branch before treating the sequencers as complete.
 - [ ] C5. Complete save/load error, retry, header mismatch, missing file, corrupt file, and successful return behavior; clearly document differences from the original recorder hardware.
 
 ### D. Validation and acceptance
-- [ ] D1. Add host regressions for every menu state, setup list, input edge case, transition, PPU/OAM write, and tape backend branch.
+- [ ] D1. ROM-backed regressions now cover list-3 setup/first dispatch phase, C465 transitions 4→5 and 7→2, all six list-5 setup commands, one C97C editor frame, and the guarded EB17 B-return branch. Add coverage for remaining states, input edges, PPU/OAM writes, and every tape backend branch.
 - [ ] D2. Create deterministic NES reference captures for each menu screen and transition (ROM identity/hash, emulator/version, frame, PPU/OAM state, and screenshot).
 - [ ] D3. Compare native frame output and PPU/OAM state against those references; fix all visible/source-state mismatches.
-- [ ] D4. Run full host test suite and exact-commit devkitARM/New 3DS build; retain CI links and commit SHA.
-- [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
+- [x] D4. Host workflow and exact-commit New 3DS build passed on `a547c0f2a341fc2bb17d23570aaca798aa452f39` (2026-11-19): [host tests](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) · [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084). A later RAM-reset cleanup is being revalidated.
+- [ ] D5. Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence. No physical-console verification is claimed.
 - [ ] D6. Accept Stage 2 only after A–D pass. Keep Stage 3 blocked until then.
 
 ### Setup list 3: source-level command trace (`$C052-$C05A`)
@@ -507,7 +507,7 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] Added $C465 to the adapter's audited entry-point allowlist.
 - [x] Fixed the host menu workflow to link nes_menu_cpu.c, nes_call.c, and nes_gen_code.c; previously the menu test compile omitted the implementation of the newly called adapter functions. The workflow now triggers when the adapter source/header changes.
 - [ ] A dedicated ROM-backed frame-vector test for both timer branches is still needed. Until that exists, this is an integration step, not a claim of full state-4/7 correctness.
-- [ ] The full state-09 editor loop, B-button return, PPU raster/vblank timing, menu artwork, sound, and hardware comparison remain open.
+- [ ] The full state-09 editor loop, natural B-button return route, pixel-accurate PPU raster/vblank timing, menu artwork, sound, and hardware comparison remain open.
 
 
 ### 2026-11-19 — original state-09 editor frame dispatch
@@ -533,4 +533,14 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - [x] CI now wraps the exact 16 KiB PRG emitted from `Excitebike/bank_FF.asm` in a temporary iNES header, loads it through `nesMenuCpuInit`, and exercises the actual recompiled menu code.
 - [x] The integration test verifies C465 timer-zero transitions `4 -> 5` and `7 -> 2`, all six state-9 list-5 setup commands, C5C2's object/course-page side effects, and one C97C frame receiving LEFT as NES controller bit `$02`.
 - [x] The complete host workflow and New 3DS build both pass on commit `bc035d9` (2026-11-19).
-- [ ] This smoke test does not yet vector-test the guarded B-button exit, every editor object interaction, or pixel-accurate PPU timing; those remain open.
+- [ ] The guarded B-button exit now has a source-PRG-backed branch vector with seeded preconditions; natural route coverage, every editor object interaction, and pixel-accurate PPU timing remain open.
+
+
+### 2026-11-19 — source-PRG-backed list-3 and shared-transition integration
+
+- [x] Setup list 3 now executes its five original entries in order: $C55E, $C56A, $C455, $C5A7, and $C485.
+- [x] States 3, 6, and 11 now dispatch through the original $CB2C pointer table using persistent 2 KiB CPU RAM; OAM and dynamic PPU command-buffer effects are synchronized back to GameState.
+- [x] The runtime uses the original $D310 timer routine when a supported PRG is loaded, preserving the complete $0021-$003D timer bank instead of decrementing only the projected menu timers.
+- [x] The ROM-backed integration workflow passes list-3 setup and the first state-3 dispatcher phase, alongside the C465, list-5, C97C, and guarded B-return vectors.
+- [x] The exact-commit New 3DS build and host workflow pass on $a547c0f2a341fc2bb17d23570aaca798aa452f39.
+- [ ] Add ROM-backed vectors for state 6 and 11, all remaining CB2C phases, and timer/input edge cases. Pixel-accurate PPU behavior and physical New 3DS validation remain acceptance blockers.
