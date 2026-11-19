@@ -125,6 +125,8 @@ Goal: reproduce the original title, selector, design/options menu, course editor
 - [x] Translate/test menu selection, title/selector/design state slices, timer bank and some shared transition phases.
 - [x] Translate/test libctru-to-game input mapping for all 256 controller-byte combinations.
 - [ ] Finish every remaining menu transition branch and setup-list side effect as semantic native state changes.
+  - [x] Translate the title, selector and design setup-list commands in lists 0, 1 and 6 (C2BD/C514/C55E/C3F3/C575) into semantic native state, including cursor sprite fields and source visual-asset keys; differential checks pass on the host.
+  - [ ] Extend setup-command translation to the remaining transition, editor, save and load lists; integrate the sequencer into the real application loop.
 - [ ] Translate shared transition phases 1 and 2 into semantic native menu state and renderer events; see the 2026-11-19 source trace in `STAGE2_TRACE.md`. Do not reproduce the dynamic PPU command buffer or OAM algorithm in the game runtime.
   - [x] Add an isolated native phase-1 timing/state translation and 64 deterministic ASM-oracle differential vectors (not integrated; seven-byte visual payload intentionally not rendered or guessed).
   - [ ] Trace and translate the seven-byte dynamic visual payload into a native scene update from its actual producer/caller context.
