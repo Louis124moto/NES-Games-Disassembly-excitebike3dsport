@@ -105,8 +105,8 @@ int nesPpuCompositeRasterSplit(const uint8_t *topRgb, const uint8_t *topOpaque,
         rgbCapacity < NES_PPU_RGB_BYTES || opaqueCapacity < pixels)
         return 0;
 
-    memcpy(outRgb, topRgb, NES_PPU_RGB_BYTES);
-    memcpy(outOpaque, topOpaque, pixels);
+    if (outRgb != topRgb) memcpy(outRgb, topRgb, NES_PPU_RGB_BYTES);
+    if (outOpaque != topOpaque) memcpy(outOpaque, topOpaque, pixels);
     if (splitScanline >= NES_PPU_HEIGHT) return 1;
     splitX = splitDot > 0u ? (unsigned int)splitDot - 1u : 0u;
     if (splitX > NES_PPU_WIDTH) splitX = NES_PPU_WIDTH;
