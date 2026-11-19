@@ -436,3 +436,161 @@ void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement)
     }
 }
 
+
+
+/* Source: sub_DC1A ($DC1A-$DC96), including its DC97/DC9A vertical delta.
+ * Tables are copied byte-for-byte from tbl_D86C/D87C in bank_FF.asm. */
+void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t object_index)
+{
+    static const uint8_t minimum_approach[16] = {
+        0x03u, 0x02u, 0x03u, 0x02u, 0x09u, 0x06u, 0x08u, 0x0Fu,
+        0x03u, 0x02u, 0x02u, 0x02u, 0x08u, 0x05u, 0x07u, 0x0Fu
+    };
+    static const uint8_t maximum_approach[16] = {
+        0x0Cu, 0x09u, 0x0Au, 0x07u, 0x0Cu, 0x0Cu, 0x0Cu, 0x00u,
+        0x0Cu, 0x0Au, 0x0Bu, 0x08u, 0x0Cu, 0x0Cu, 0x0Cu, 0x06u
+    };
+    uint8_t vertical_delta;
+    uint8_t table_index;
+    uint8_t target;
+
+    if (movement == 0 || object_index >= 4u ||
+        movement->object_status[object_index] == 0u) {
+        return;
+    }
+
+    /* SEC / SBC $00BC,X / SBC object-Y: all arithmetic wraps at 8 bits. */
+    vertical_delta = (uint8_t)(movement->global_vertical_reference -
+                               movement->vertical_reference[object_index]);
+    vertical_delta = (uint8_t)(vertical_delta - movement->object_y[object_index]);
+
+    if (vertical_delta >= movement->y_low[object_index] ||
+        movement->y_low[object_index] >= 0xA8u ||
+        movement->rider_state[object_index] == 0u) {
+        return;
+    }
+
+    if (object_index == 0u) {
+        movement->player_event = 0x02u;
+    }
+    movement->object_status[object_index] = 0u;
+    movement->rider_state[object_index] = 0u;
+
+    if (movement->collision_state[object_index] != 0u) {
+        movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+        return;
+    }
+
+    if (movement->track_finished != 0u) {
+        if (movement->brake_state[object_index] == 0u) {
+            movement->approach[object_index] = 0x06u;
+        }
+        return;
+    }
+
+    target = movement->movement_mode[object_index];
+    movement->movement_mode[object_index] = 0u;
+    if (target != 0u) {
+        movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+        return;
+    }
+
+    target = movement->brake_state[object_index];
+    if (movement->speed_whole[object_index] < 0x02u) {
+        target = (uint8_t)(target + 0x08u);
+    }
+    table_index = target;
+    if (movement->approach[object_index] < minimum_approach[table_index] ||
+        movement->approach[object_index] >= maximum_approach[table_index]) {
+        movement->collision_state[object_index] = 0xFFu;
+        return;
+    }
+
+    if (movement->animation_state[object_index] != movement->approach[object_index] &&
+        (uint8_t)(movement->brake_state[object_index] |
+                  movement->lateral_state[object_index]) == 0u) {
+        movement->object_lock_timer[object_index] = 0x04u;
+        movement->movement_mode[object_index] = 0x02u;
+        movement->object_status[object_index] = 0x01u;
+    }
+
+    movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+}
+
+/* Source: sub_DCF2 ($DCF2-$DD37), with DD38/DD6F translated inline.
+ * carry is explicitly modelled because the original ADC/SBC chain consumes
+ * carry left by the preceding branch and by the DD38 setup routine. */
+void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index)
+{
+    static const uint8_t direction_delta[4] = { 0x34u, 0x34u, 0x18u, 0x34u };
+    uint8_t carry = 0u;
+    uint8_t temp_y;
+    uint16_t sum;
+    uint8_t mode;
+
+    if (movement == 0 || object_index >= 4u) return;
+    mode = movement->object_status[object_index];
+    if (mode == 0u) return;
+
+    if (mode == 0x02u) {
+        carry = (uint8_t)(movement->movement_flags[object_index] & 0x01u);
+        if (carry != 0u && movement->frame_phase == 0u) return;
+    } else {
+        /* CMP #$02 before the DCFA branch leaves carry set for B0 >= 2. */
+        carry = (uint8_t)(mode >= 0x02u);
+        /* DD38 initializes a new movement arc. */
+        movement->object_status[object_index] = 0x02u;
+        movement->motion_fraction[object_index] = 0x0Fu;
+        sum = (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
+        movement->motion_fraction_start[object_index] = (uint8_t)sum;
+        movement->motion_whole_start[object_index] =
+            (uint8_t)(movement->speed_whole[object_index] + (sum > 0xFFu ? 1u : 0u));
+
+        if (movement->movement_mode[object_index] == 0x02u) {
+            const uint8_t high = movement->motion_whole_start[object_index];
+            const uint8_t low = movement->motion_fraction_start[object_index];
+            movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
+            movement->motion_fraction_start[object_index] =
+                (uint8_t)((low >> 1) | ((high & 1u) << 7));
+            carry = (uint8_t)(low & 1u);
+        } else {
+            carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
+        }
+
+        if (object_index == 0u) {
+            uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
+            event ^= 0x30u;
+            movement->player_event = event == 0u ? 0x08u : event;
+            /* Four ASL instructions leave original speed bit 4 in carry. */
+            carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
+        }
+    }
+
+    temp_y = (uint8_t)(movement->movement_flags[object_index] & 0x03u);
+    movement->motion_delta[object_index] = direction_delta[temp_y];
+    temp_y = movement->y_low[object_index];
+
+    /* DD6F: ADC 038C, ADC #0, SBC 037C, ADC 0384. */
+    sum = (uint16_t)movement->motion_fraction[object_index] +
+          movement->motion_delta[object_index] + carry;
+    movement->motion_fraction[object_index] = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    sum = (uint16_t)movement->motion_whole[object_index] + carry;
+    movement->motion_whole[object_index] = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    {
+        const unsigned subtrahend =
+            (unsigned)movement->motion_whole_start[object_index] +
+            (carry != 0u ? 0u : 1u);
+        const uint8_t difference = (uint8_t)(temp_y - subtrahend);
+        carry = (uint8_t)((unsigned)temp_y >= subtrahend);
+        sum = (uint16_t)difference + movement->motion_whole[object_index] + carry;
+        movement->y_low[object_index] = (uint8_t)sum;
+    }
+
+    if (movement->lateral_state[object_index] == 0u) {
+        movement->rider_state[object_index] = 0x01u;
+    }
+}
