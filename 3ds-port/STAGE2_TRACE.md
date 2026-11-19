@@ -626,7 +626,7 @@ This proves that the bytes are reused as visual/layout data in more than one sou
 - Added `nativeMenuTransitionPhase1`: it waits for timer slot `$0033` to reach zero, records the seven-byte payload as a native scene patch at layer 1 / tile coordinate (15,6), selects duration `$20` or `$31` from `ram_004B`, loads duration + 3, and advances phase 1 to phase 2.
 - Added unit coverage for the timer wait, payload copy, destination metadata, both durations, and ignoring non-phase-1 calls in `test_native_menu_state.c`.
 
-**Important limitation:** the phase-1 destination is derived from source address `$24CF` under the documented vertical mirroring map, but the seven-byte payload's visual interpretation remains open. The test added here is a native unit test, not yet a differential test against the ASM oracle. The function is not called by the app loop and does not make the menu integrated or visually complete.
+**Important limitation:** the phase-1 destination is derived from source address `$24CF` under the documented vertical mirroring map, but the seven-byte payload's visual interpretation remains open. The test suite now includes both native unit cases and a 64-vector differential check against the host-only ASM oracle (two transition-flag values × 32 deterministic payloads). The differential check compares phase advancement, `$03AD` duration, `$0033` timer and all seven payload bytes. The function is not called by the app loop and does not make the menu integrated or visually complete.
 
 ### Updated next gate
 
