@@ -59,24 +59,27 @@ The previous owner-decision acceptance was premature. The current native menu is
 
 - [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
-- [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
+- [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. The list-5/editor handoff now has a PRG-backed runtime path.
 - [x] A5 — All six state-9 list-5 commands ($C551/$C869/$C820/$C5A3/$C562/$C5C2) have a PRG-backed recompiler path. $C820 captures the three D13F/ECE4/D3C1 PPU uploads; $C5C2 executes E1A3/D1C7 and EC25/EC47 against persistent CPU RAM/OAM.
 - [x] A6 — The state-9 per-frame entry $C97C is now dispatched through the recompiler with persistent CPU RAM, controller input, OAM, course pages, and PPU register/nametable/palette writeback. The original EB17 B-button branch is included.
-- [ ] A7 — vec_C23B_NMI now executes the original sub_D14E raster split when ram_0047 is set, including its 6431-cycle delay and scroll/PPU writes; the following C97C frame sees sprite-hit bit $40. Pixel-level sprite collision is still approximated, not a full PPU pipeline. ROM-backed frame vectors, exact PPU timing, hardware B-return, graphics comparison, and sound remain open.
-- [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
+- [ ] A7 — vec_C23B_NMI's host adapter executes original sub_D14E when ram_0047 is set, including its source delay and two-phase scroll/PPU writes. The host bus still approximates sprite-0 hit at frame/cycle boundaries; sub_D0AB integration, pixel-derived collision, exact PPU timing, physical B-return, graphics comparison, and sound remain open.
+- [ ] A6b — Audit cold reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
-- [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
-- [ ] B5 — `sub_D1C7` now executes through the original `$C5C2 -> $E1A3 -> $D1C7` recompiled path using persistent NES RAM; shared transition OAM (`$CCEF/$CD15`) and visual/hardware verification remain open.
+- [x] B3 — Physical two-nametable storage, mapper-0 horizontal/vertical mirroring, $3000 mirroring and base-nametable selection are implemented and host-tested.
+- [ ] B4 — sub_D14E now runs through the PRG-backed adapter for the $0047 split; integrate sub_D0AB, derive sprite-0 hit from PPU pixels, and compare exact scanline/OAM timing on hardware.
+- [ ] B5 — `sub_D1C7` executes through the original `$C5C2 -> $E1A3 -> $D1C7` path, and shared transition states now run the original `$CB2C` OAM writers through persistent NES RAM. Full sprite coverage, priority/visibility and visual/hardware verification remain open.
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [x] C1 — Active title/selector/design-menu input now prefers the generated 6502 `sub_C7DE` via `nesMenuCpuInput()` when a supported mapper-0 16 KiB `rom.nes` is beside the 3DSX; the source-C helper remains a fallback. The routine is included in the existing differential region list. Adapter commits `98e4eec`, `59341af`, `64f3fa8`, `ca5b086`; fresh CI and physical New 3DS validation are pending.
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
-- [x] C3 — Six-choice mapping, save/load and title-return branches are host-tested; all six list-5 setup commands and the state-$09 per-frame handler now have a recompiled path. The editor's B-button return uses the original $EB17 logic.
-- [ ] C3 validation — PPUSTATUS/raster behavior is only approximated at frame granularity; ROM-backed editor vectors, hardware validation and authentic artwork/sound remain open. State-10 race runtime is Stage 3.
-- [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
-- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch. Added `testEditorSetupPrelude` for the no-ROM fallback and intentional hold at `$C820`; execution is pending. Add a PRG-backed test for `$C820` PPU writes and `$C5C2` OAM output.
+- [x] C3 — Six-choice mapping and save/load/title-return branches are host-tested; all six list-5 setup commands and the state-$09 per-frame handler run through the recompiler. The guarded EB17 B-return branch now has a ROM-backed test vector with explicit gate-state preconditions.
+- [ ] C3 validation — The guarded B-return branch is ROM-tested, but natural in-game entry conditions, all editor object interactions, PPUSTATUS/raster timing, physical hardware, and authentic artwork/sound remain open. State-10 race runtime is Stage 3.
+- [ ] C4 — List 3 and the shared CB2C dispatcher are connected to original PRG execution for states 3/6/0B; C465 is PRG-backed for states 4/7. Add vectors for every phase, state variant, and timer branch.
+- [ ] C5 — Finish save/load error, retry, header mismatch, missing-file, corrupt-file and successful-return behavior.
+- [ ] D1 — ROM-backed regressions now cover list-3 setup/first state-3 phase, C465 transitions 4→5 and 7→2, all six list-5 setup commands, one C97C editor frame, and guarded EB17 B-return. Remaining states, input edges, PPU/OAM writes, and tape backend branches still need vectors.
 - [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
-- [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
+- [x] D4 — Host workflow and exact-commit New 3DS build passed on `a547c0f2a341fc2bb17d23570aaca798aa452f39`: [host tests](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) · [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084). A later RAM-reset cleanup is being revalidated.
+- [ ] D5 — Verify cold boot, every menu route, save/load and return on a physical New Nintendo 3DS; record evidence.
 - [ ] D6 — Accept Stage 2 only after all menu routes are integrated and fidelity-checked. Stage 3 remains blocked.
 
 #### Stage 3 — First course / first race (BLOCKED until Stage 2 acceptance; source-trace work already exists but must not advance)
@@ -167,9 +170,9 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
 | Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
 | Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
-| Latest host routine test execution | **Passed** in [CI run 39577668191](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668191) (revision `601e7e3`), including the new CBA3 regression vector and the existing menu routine suite. |
-| Latest completed 3DS build | **Passed** in [CI run 39577668163](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/39577668163) (revision `601e7e3`). Note: `nes_routines.c` remains excluded from the active runtime target, so this verifies the homebrew scaffold/build, not gameplay integration. |
-| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Stage 1 and Stage 2 were accepted by owner decision with explicit verification debt; Stage 3 is active. No playable race or full-game fidelity is claimed. |
+| Latest host routine test execution | **Passed** in [CI run 44510600117](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) (revision `a547c0f2`), including PRG-backed list-3, list-5, C465, C97C and guarded B-return vectors. |
+| Latest completed 3DS build | **Passed** in [CI run 44510600084](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084) (revision `a547c0f2`), with the source-recompiled menu paths linked into the active runtime. |
+| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Stage 1 is owner-accepted; Stage 2 remains in progress and blocks Stage 3. No playable race or full-game fidelity is claimed. |
 | End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
