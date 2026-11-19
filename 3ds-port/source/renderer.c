@@ -3,7 +3,7 @@
 #include <3ds.h>
 #include "renderer.h"
 #include "asset_extractor.h"
-#include "menus.h"
+#include "native_menu.h"
 #include "nes_active_stream.h"
 #include "nes_ppu_render.h"
 #include "nes_ppu_commands.h"
@@ -702,7 +702,7 @@ void rendererDraw(const GameState *state)
                 consoleClear();
                 /* menusRender writes the console directly; invalidate the cache. */
                 rendererStoreConsoleText("");
-                menusRender(state);
+                nativeMenuRenderStatus(state);
                 if (s_bgRenderReason == 3) {
                     printf("PPU BG unavailable: PPUCTRL selects $1000 but CHR has only %lu tiles.\n",
                            (unsigned long)s_bgChrTileCount);
