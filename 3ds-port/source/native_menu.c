@@ -73,6 +73,9 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
         return;
     }
 
+    menu->timer_values[15] = menu->input.start_timer;
+    menu->timer_values[16] = menu->input.input_timer;
+
     switch (menu->source_state) {
     case 0u: /* ofs_000_C346_00 — title */
         if (menu->input.input_timer == 0u) {
@@ -132,6 +135,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
                 menu->input.selection_dirty = 0u;
                 menu->input.input_timer = 0u;
                 menu->input.start_timer = 0u;
+                memset(menu->timer_values, 0, sizeof(menu->timer_values));
                 menu->setup_command = 0u;
                 menu->transition_phase = 0u;
                 menu->cursor_state = 0u;
@@ -148,6 +152,9 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
         /* Race/editor/tape states are implemented by their own native modules. */
         break;
     }
+
+    menu->timer_values[15] = menu->input.start_timer;
+    menu->timer_values[16] = menu->input.input_timer;
 }
 
 
