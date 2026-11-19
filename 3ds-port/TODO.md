@@ -148,6 +148,27 @@ This file is the active project checklist. The original NES disassembly is the r
 
 **Overall status:** not yet a playable faithful port. The application scaffold exists; routine translations are in progress. A translated routine is not automatically tested, build-verified, integrated, or fidelity-verified.
 
+## Faithful full-system path — 2026-11-19 (control section for Stages 2-4 engineering)
+
+**Decision of implementation, recorded for the owner.** Hand-translating the ~2600-instruction race loop and re-implementing the menu in C was replaced, for everything the original program does, by running the ORIGINAL program itself: `tools/asm2c.py` statically recompiles every instruction of `bank_FF.asm` (5570 instructions, 286 label regions) into `source/nes_gen_code.c` straight from the opcode bytes, and `source/nes_system.c` supplies the NES hardware around it (CPU context with NMI injection, PPU registers/VRAM/OAM/OAM-DMA, scanline compositor with scroll splits, 8x8/8x16 sprites, sprite-0 hit, controller port, APU model in `source/nes_apu.c`). Nothing of the game logic is re-written: title, selector, design menu, race setup, race loop, bike physics, opponents, collisions, overheating, timer, results and sound all execute the original code. The earlier hand ports (`menus.c`, `nes_race_setup.c`) stay in the tree as the previous Stage-2 evidence/fallback.
+
+Evidence (host, reproducible, run in CI `Verify NES routine translations`):
+- [x] Reference 6502 core (`tests/oracle/cpu6502.c`) validated against `py65` on 8000 random programs + per-opcode tests.
+- [x] Every one of the 286 ASM regions is executed from random machine states on the reference 6502 (PRG rebuilt from the ASM bytes by `tools/asm_to_prg.py`) and on the recompiled C; RAM, A/X/Y, C/Z/N/V, stack pointer and the hardware-register write log must match (`tests/test_gen_code.c`; 11 regions are polling loops that never end from random states and are excluded from that comparison - they are exercised by the system test instead). Mutation check: replacing ADC by SBC in the generated code is detected.
+- [x] `tests/test_nes_system.c`: cold boot reaches the title (state 0), Start -> selector (state 1) -> Start -> race (state 2) exactly as in ASM, controller shift order, ROM/PRG-CRC validation, per-frame audio sample count, audible race audio, bit-exact determinism.
+- [x] `tests/test_nes_apu.c`: register semantics, length counters/halt, mute rules, timestamped writes.
+- [x] The generated code is regenerated in CI and diffed (`nes_gen_code.c`, `nes_prg_crc.h` cannot drift from the ASM).
+- Host frames were inspected by eye (title, selector, race with scrolling track, ramps, opponents, HUD and timer); no automated NES reference capture exists.
+
+Runtime: put the player's own `rom.nes` (mapper 0, 16 KiB PRG whose CRC matches the disassembly, 8 KiB CHR) beside the 3DSX; on the diagnostics screen press SELECT to boot the original program. D-pad/A/B/SELECT/START are the NES pad. Hold L+R for one second to leave (port-only escape). Audio needs `dspfirm.cdc`.
+
+Open / not claimed:
+- [ ] No physical New 3DS run of this path (performance is only estimated: ~0.5 ms/frame on a PC), no photographed hardware evidence, no side-by-side capture against a real NES or an accepted reference emulator (D2/D3).
+- [ ] PPU model is scanline-granular: mid-scanline writes take effect from the next scanline; sprite overflow flag, colour emphasis, odd-frame skip and exact $2002/$2007 read timing are not modelled; NTSC only.
+- [ ] APU: point-sampled mixer, no DMC sample playback (the game only writes the DMC level register $4011), no IRQ.
+- [ ] Data-recorder (tape) save/load in the design menu is not emulated (the original waits for a recorder exactly like the NES without one); the older file-backed tape stand-in applies only to the legacy hybrid menu path.
+- [ ] Stage acceptance (menu routes, first race, physics comparisons) still needs the owner's hardware and reference evidence; the staged gates above are NOT marked accepted by this section.
+
 ## Use of AI assistance
 
 AI tools have been used to assist with repository analysis, technical documentation, assembly-to-C translation work, and test planning. AI-generated output is treated as a proposal, not as proof of correctness. Verify translations against the original NES instructions and record test execution, build success, gameplay integration, and fidelity comparisons only when supported by reproducible evidence. AI use does not mean a routine or feature is complete or validated; human review remains required.

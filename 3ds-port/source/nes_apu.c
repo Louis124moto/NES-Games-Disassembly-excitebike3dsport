@@ -126,22 +126,20 @@ unsigned nesApuRunFrame(NesApu *a, unsigned long cycles, int16_t *out, unsigned 
                 a->nTimer = a->nPeriod; a->nShift = (uint16_t)((a->nShift >> 1) | (fb << 14));
             } else --a->nTimer;
         }
-        {
-            const unsigned p1 = pulseOut(&a->p[0], 0u), p2 = pulseOut(&a->p[1], 1u);
-            const unsigned tri = kTri[a->triSeq];
-            const unsigned noi = (a->nLength && !(a->nShift & 1u)) ? (a->nConst ? a->nVol : a->nEnvDecay) : 0u;
-            double pulse = (p1 + p2) ? 95.88 / (8128.0 / (double)(p1 + p2) + 100.0) : 0.0;
-            double tnd = 0.0;
-            const double sum = tri / 8227.0 + noi / 12241.0 + a->dmcLevel / 22638.0;
-            if (sum > 0.0) tnd = 159.79 / (1.0 / sum + 100.0);
-            a->acc += pulse + tnd; ++a->accN;
-        }
         if ((double)(c + 1u) >= (double)(n + 1u) * cyclesPerSample && n < cap) {
-            const double x = (a->acc / (double)a->accN) * 40000.0;
+            double x;
+            {
+                const unsigned p1 = pulseOut(&a->p[0], 0u), p2 = pulseOut(&a->p[1], 1u);
+                const unsigned tri = kTri[a->triSeq];
+                const unsigned noi = (a->nLength && !(a->nShift & 1u)) ? (a->nConst ? a->nVol : a->nEnvDecay) : 0u;
+                const double pulse = (p1 + p2) ? 95.88 / (8128.0 / (double)(p1 + p2) + 100.0) : 0.0;
+                const double sum = tri / 8227.0 + noi / 12241.0 + a->dmcLevel / 22638.0;
+                const double tnd = sum > 0.0 ? 159.79 / (1.0 / sum + 100.0) : 0.0;
+                x = (pulse + tnd) * 40000.0;   /* point-sampled once per output sample */
+            }
             const double y = x - a->hpIn + 0.995 * a->hpOut;
             a->hpIn = x; a->hpOut = y;
             out[n++] = (int16_t)(y > 32767.0 ? 32767.0 : (y < -32768.0 ? -32768.0 : y));
-            a->acc = 0.0; a->accN = 0u;
         }
     }
     /* writes scheduled after this chunk stay queued for the next one */
