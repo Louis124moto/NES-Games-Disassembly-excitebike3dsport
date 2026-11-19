@@ -185,8 +185,11 @@ void nativeMenuTransitionPhase0(NativeMenuState *menu)
         return;
     }
 
-    if (menu->source_state < 0x08u && menu->transition_gate_0053 < 0x04u) {
+    if (menu->source_state < 0x08u) {
         menu->input.selection = menu->selected_mode;
+    }
+
+    if (menu->source_state < 0x08u && menu->transition_gate_0053 < 0x04u) {
         if (menu->transition_flag_0046 != 0u) {
             course = menu->selected_course;
             if (course == 0x04u) {
