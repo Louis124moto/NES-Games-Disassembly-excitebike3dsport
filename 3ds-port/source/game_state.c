@@ -48,6 +48,7 @@ void gameStateReset(GameState *state)
     state->menu_ram03F8 = 0u;
     state->menu_ram0045 = 0u;
     state->menu_ram00FB = 0u;
+    state->menu_ram00FF = 0u;
     state->menu_scroll_x = 0u;
     state->menu_scroll_y = 0u;
     state->menu_ppu_ctrl = 0u;
