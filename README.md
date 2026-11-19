@@ -60,10 +60,10 @@ The original NES disassembly is the behavioral reference. Its source files must 
 |---|---|
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
-| Stage 2 — original menu | IN PROGRESS (2026-11-19); PRG-backed title/selector/design input, list-3/shared transitions, C465, list-5/editor, file-backed save/load, full NMI raster prefix, split-aware PPU composition and pixel-derived sprite-0 hit are integrated. Original-NES frame comparison, remaining editor interactions, exact PPU calibration, sound and physical New 3DS validation remain open. Stage 3 blocked. |
+| Stage 2 — native menus/front-end | NOT YET IMPLEMENTED as the required native architecture. Existing menu/PPU/recompiler work is historical reference material only. Stage 3 blocked. |
 | Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
 | Latest code batch | Historical emulator/recompiler experiment only; it is not the final runtime architecture. Native C/C++ menu and gameplay reimplementation is the active direction. |
-| Latest host test / 3DS build | **Passed** on exact code commit `19304fbc5293ebcd79e81a1afcf4bf760e9b0c9b`: [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711483) · [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711481). Later commits in this documentation pass do not change runtime code. |
+| Latest host test / 3DS build | Historical emulator-oriented runtime validation only; it does not validate the newly approved native-port architecture. A fresh native-runtime baseline is required. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
 A function definition, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
