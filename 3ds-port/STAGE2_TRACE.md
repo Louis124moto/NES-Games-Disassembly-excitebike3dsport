@@ -1,3 +1,5 @@
+<!-- NATIVE-PORT STATUS NOTICE (2026-11-19): This file is retained as source-trace/history evidence. Any old menu implementation described as PRG-backed, recompiled, PPU/NMI-driven, RAM-backed or emulator-dependent is retired and MUST NOT be restored to the 3DS runtime. Reimplement the documented observable menu behavior in semantic native C state, native rendering and native input. The current controlling plan is TODO.md; architecture is NATIVE_PORT_ARCHITECTURE.md. Historical tests/vectors may be reused only after confirming they test game behavior rather than NES hardware emulation. -->
+
 ## Native C translation progress — 2026-11-19
 
 The former 6502 recompiler / NES-system runtime is not the target and has been deleted from the active game source tree. The functions below are native C reimplementations; the original PRG/ASM is executed only by the host-side differential oracle.
