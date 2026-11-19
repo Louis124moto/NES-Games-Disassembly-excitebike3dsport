@@ -256,7 +256,7 @@ The boxes below are the complete known Stage 2 work queue. A box is checked only
 - [ ] B7. Verify menu palettes and palette transitions using the actual PPU palette RAM writes; account for palette mirroring and PPUMASK grayscale/emphasis if used.
 
 ### C. Menu input and transitions
-- [x] C1. `sub_C7DE` input semantics and RAM side effects are translated/tested: repeat guard, `$0030/$0031` timers, Select/Down/Up priority, wrap rules, and `$00FF` write only on cursor movement.
+- [x] C1. `sub_C7DE` input semantics are now executed from the statically recompiled 6502 code at runtime when a supported mapper-0, 16 KiB `rom.nes` is beside the 3DSX. `nesMenuCpuInit()` loads the original PRG; `nesMenuCpuInput()` seeds the relevant NES RAM and calls `$C7DE` through `nesCall()`. Title (count 3), course selector (count 5), and design menu (count 6) all use this path. The source-derived C helper remains a fallback for raw-CHR-only installations. The routine is already included in the differential `region_list.h` test set. This integration has not yet received a fresh CI run or physical New 3DS validation.
 - [x] C2. Title entries 0/1 -> state 1, title entry 2 -> state 8, selector navigation and confirmation -> state 2 are implemented and covered by the menu frame-model tests. The destination race runtime remains Stage 3.
 - [ ] C3. Complete all six design-menu choices: implement list 5/state-9 setup handoff and B-button return to state 8; preserve state-10 race handoff for Stage 3; finish save/load and return-to-title paths.
 - [ ] C4. Complete the shared state-3/6/0B and state-4/7 transition sequencers with correct frame/timer behavior.
@@ -467,3 +467,16 @@ Additional effects in the transition's timed phase:
 ## Acceptance gate
 
 Stage 2 is complete only when every menu screen and transition in scope is source-traced, integrated into the actual 3DS runtime, covered by host regressions, built for 3DS on the same commit, and compared against the original NES behavior. A successful menu launch or controller response alone is insufficient.
+
+
+## Source-recompiler runtime integration — 2026-11-19
+
+The new static recompiler is now used by the active Stage-2 menu input path rather than remaining only a host-side experiment:
+
+- `source/nes_menu_cpu.c` loads the 16 KiB PRG from `rom.nes` beside the launched 3DSX, accepting only the verified iNES mapper-0 / one-PRG-bank layout (with optional trainer offset).
+- It invokes the generated `nesRunCode()` through `nesCall()` at the original routine address `$C7DE`.
+- The runtime seeds and copies back the exact RAM bytes used by `sub_C7DE`: `$0015`, `$0030`, `$0031`, `$0042`, `$0049`, and `$00FF`; the 6502 X return value is used as the action result.
+- Title, course-selector, and design-menu input dispatch now prefer this recompiled routine. If a supported full ROM is not available (for example, a raw CHR-only setup), the existing tested native projection remains the fallback.
+- `nes_gen_code.c` is already part of the source wildcard in the 3DS Makefile, so the generated CPU implementation and this adapter are linked by the ordinary build.
+
+**Validation boundary:** `$C7DE` is present in `3ds-port/tests/oracle/region_list.h`, so the existing differential suite includes the source routine. However, no CI status for the new adapter commits has been confirmed yet, and the new runtime ROM-loading path has not been exercised on a physical New 3DS. This closes only the menu input helper integration; setup lists 3 and 5, transition rendering, PPU/OAM completion, and original-screen comparisons remain open.
