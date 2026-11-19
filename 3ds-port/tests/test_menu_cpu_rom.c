@@ -1,7 +1,7 @@
 /*
  * ROM-backed integration smoke test for the state-09 editor path.
- * The workflow copies the checked-in iNES image to ./rom.nes, which is the
- * runtime filename expected beside the executable.
+ * The workflow wraps the exact 16 KiB PRG emitted by asm_to_prg.py in a
+ * temporary iNES header and writes ./rom.nes beside this test executable.
  */
 #include <stdio.h>
 #include "game_state.h"
