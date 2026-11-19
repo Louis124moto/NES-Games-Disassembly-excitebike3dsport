@@ -95,7 +95,8 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
 static int test_native_menu_setup_commands(Cpu6502 *reference)
 {
     static const struct {
-        uint8_t state, command, address;
+        uint8_t state, command;
+        uint16_t address;
     } cases[] = {
         {0u, 0u, 0xC2BDu}, {0u, 1u, 0xC514u},
         {1u, 0u, 0xC55Eu}, {1u, 1u, 0xC3F3u}, {1u, 2u, 0xC514u},
