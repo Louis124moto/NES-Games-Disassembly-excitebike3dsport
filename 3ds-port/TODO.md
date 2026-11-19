@@ -60,18 +60,18 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] A1/A2 — Inventory all 14 state handlers, all nine setup lists and classify title/selector/design/tape/race/shared-transition paths. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A3 — Trace the shared state-$03/$06/$0B dispatcher (`$CB2C-$CC7C`) and its four indexed branches, timers, PPU buffer and state writes. Evidence: `3ds-port/STAGE2_TRACE.md`.
 - [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
-- [ ] A5 — List 5's first two commands ($C551/$C869) now execute through the generated 6502 recompiler; the sequencer deliberately stops before $C820 until D13F/ECE4/D3C1 dynamic PPU uploads are integrated. Commands $C5A3/$C562/$C5C2, D1C7 OAM emission, EC25/EC47 and remaining list-3 dependencies remain open.
+- [ ] A5 — All six state-9 list-5 commands ($C551/$C869/$C820/$C5A3/$C562/$C5C2) now have a PRG-backed recompiler path. $C820 captures the three D13F/ECE4/D3C1 PPU uploads; $C5C2 executes E1A3/D1C7 and EC25/EC47 against persistent CPU RAM/OAM. Full editor frame loop $C97C, PPU-status/raster timing, EB17 return, PRG-backed adapter tests and hardware verification remain open.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
 - [ ] B3/B4 — Model selected nametable, mirroring, scroll and split/raster timing from source writes.
-- [ ] B5 — `sub_D1C7` now has an isolated, host-tested OAM-grid helper; integrate it with `sub_E1A3` in list 5, then implement shared transition OAM (`$CCEF/$CD15`) and direct editor sprites (`sub_EC25`, `loc_EC47`).
+- [ ] B5 — `sub_D1C7` now executes through the original `$C5C2 -> $E1A3 -> $D1C7` recompiled path using persistent NES RAM; shared transition OAM (`$CCEF/$CD15`) and visual/hardware verification remain open.
 - [ ] B6/B7 — Reconstruct title/selector/design/save/load artwork and palettes from verified CHR/PPU data; remove diagnostic placeholder rendering from normal menu mode.
 - [x] C1 — Active title/selector/design-menu input now prefers the generated 6502 `sub_C7DE` via `nesMenuCpuInput()` when a supported mapper-0 16 KiB `rom.nes` is beside the 3DSX; the source-C helper remains a fallback. The routine is included in the existing differential region list. Adapter commits `98e4eec`, `59341af`, `64f3fa8`, `ca5b086`; fresh CI and physical New 3DS validation are pending.
 - [x] C2 — Title entries 0/1/2, selector navigation/wrap and selector-to-state-2 handoff are integrated and host-tested; see `STAGE2_TRACE.md`.
-- [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; list-5 commands $C551/$C869 are now recompiled in the runtime, but setup stops at $C820. Finish the remaining state-9 setup and B-button return. State-10 race runtime is Stage 3.
+- [ ] C3 — Six-choice mapping, save/load and title-return branches are host-tested; all six list-5 setup commands now have a recompiled path. Finish the state-$09 per-frame editor handler and B-button return via $EB17. State-10 race runtime is Stage 3.
 - [ ] C4/C5 — Complete shared transition sequencers and save/load edge cases.
-- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch. Added `testEditorSetupPrelude` for the bounded state-9 `$C551/$C869` setup and intentional `$C820` stop; execution is pending.
+- [ ] D1 — Add host regressions for every menu state/list/input/transition/PPU/OAM/tape branch. Added `testEditorSetupPrelude` for the no-ROM fallback and intentional hold at `$C820`; execution is pending. Add a PRG-backed test for `$C820` PPU writes and `$C5C2` OAM output.
 - [ ] D2/D3 — Capture and compare deterministic original-NES reference frames and PPU/OAM state.
 - [ ] D4/D5 — Run host suite, exact-commit 3DS build and physical New 3DS verification; record evidence.
 - [ ] D6 — Accept Stage 2 only after all menu routes are integrated and fidelity-checked. Stage 3 remains blocked.
