@@ -342,7 +342,8 @@ void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement)
         }
     }
 
-    sum = (uint16_t)accumulator + movement->secondary_scroll_fraction + carry;
+    /* CLC in the source explicitly discards the final ROR carry. */
+    sum = (uint16_t)accumulator + movement->secondary_scroll_fraction;
     movement->secondary_scroll_fraction = (uint8_t)sum;
     carry = (uint8_t)(sum > 0xFFu);
 
