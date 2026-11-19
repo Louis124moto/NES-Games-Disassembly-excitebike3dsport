@@ -662,10 +662,22 @@ void rendererDraw(const GameState *state)
         static uint8_t s_lastCtrl = 0u;
         static uint8_t s_lastScrollX = 0u;
         static uint8_t s_lastScrollY = 0u;
+        static uint8_t s_lastSplitValid = 0u;
+        static uint8_t s_lastSplitScanline = 0u;
+        static uint16_t s_lastSplitDot = 0u;
+        static uint8_t s_lastTopCtrl = 0u;
+        static uint8_t s_lastTopScrollX = 0u;
+        static uint8_t s_lastTopScrollY = 0u;
         static uint8_t s_lastOam[256];
         if (s_menuDrawn == 0 ||
             state->menu_ppu_mask != s_lastMask || state->menu_ppu_ctrl != s_lastCtrl ||
             state->menu_scroll_x != s_lastScrollX || state->menu_scroll_y != s_lastScrollY ||
+            state->menu_ppu_split_valid != s_lastSplitValid ||
+            state->menu_ppu_split_scanline != s_lastSplitScanline ||
+            state->menu_ppu_split_dot != s_lastSplitDot ||
+            state->menu_ppu_top_ctrl != s_lastTopCtrl ||
+            state->menu_ppu_top_scroll_x != s_lastTopScrollX ||
+            state->menu_ppu_top_scroll_y != s_lastTopScrollY ||
             memcmp(s_lastOam, state->menu_oam, sizeof(s_lastOam)) != 0 || state->menu_asm_state != s_lastAsmState ||
             state->menu_selection != s_lastSelection ||
             state->menu_ram0045 != s_lastRam0045 ||
@@ -681,6 +693,12 @@ void rendererDraw(const GameState *state)
             s_lastCtrl = state->menu_ppu_ctrl;
             s_lastScrollX = state->menu_scroll_x;
             s_lastScrollY = state->menu_scroll_y;
+            s_lastSplitValid = state->menu_ppu_split_valid;
+            s_lastSplitScanline = state->menu_ppu_split_scanline;
+            s_lastSplitDot = state->menu_ppu_split_dot;
+            s_lastTopCtrl = state->menu_ppu_top_ctrl;
+            s_lastTopScrollX = state->menu_ppu_top_scroll_x;
+            s_lastTopScrollY = state->menu_ppu_top_scroll_y;
             memcpy(s_lastOam, state->menu_oam, sizeof(s_lastOam));
             if (state->menu_ppu_background_ready == 0u && rendererDrawBackdrop(state)) {
                 /* $2001 is off during setup: show the source PPU backdrop, not debug text. */
