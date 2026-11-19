@@ -1,3 +1,47 @@
+## User-approved native-port specification — 2026-11-19 (HIGHEST PRIORITY)
+
+This section supersedes any older roadmap, architecture note, or checklist item that conflicts with it.
+
+### Product definition
+
+- [x] **Main branch is the faithful native port.** Reimplement Excitebike in native C/C++ for Nintendo 3DS. The shipped game must not boot or execute the NES ROM, run a 6502 CPU, emulate NES hardware, or depend on an emulator/system layer.
+- [x] **Faithful baseline first.** Reproduce the original game's observable behavior as closely as possible: menus and transitions, course data, bike handling and physics, opponents, collisions, overheating/cooling, race flow, scoring/results, graphics, sound, and controls.
+- [x] **Reimplementation, not runtime emulation.** Read and trace the original 6502 disassembly, then implement the corresponding algorithms and state transitions as maintainable native C/C++ modules. Do not make a generated 6502-to-C interpreter/recompiler, CPU core, PPU, APU, or NES bus part of the final game's runtime.
+- [x] **Differential verification is mandatory.** Native implementations must be tested against the original ASM's behavior using deterministic input/state vectors and an independent reference harness. For physics in particular, compare per-frame speed, temperature, position, posture, jump/landing/crash state, opponent state, and all relevant outputs. The oracle/emulator may be used offline in tests only; it must never be linked into or required by the final 3DS game.
+- [x] **Original assets are allowed and preferred.** Extract and reuse original graphics, palettes, sound data, tables, and course data where their meaning is verified. Decode/import assets into native formats; do not emulate PPU/APU hardware to display or play them.
+- [x] **Keep source authority intact.** Never modify the original NES disassembly in `Excitebike/`. Record source address/range, data dependencies, state inputs/outputs, and unknowns for every translated subsystem.
+- [x] **No speculative substitutes.** Do not invent approximate physics, placeholder artwork, generic AI, or guessed sound behavior. If the original behavior is not understood, trace it before implementing it.
+- [x] **Architecture target.** Native ARM11/libctru application, C as the default implementation language, C++ only where it provides a concrete benefit; use native 3DS input, graphics, audio, filesystem, and timing APIs. Keep gameplay logic independent from platform backends so it can be tested on the host.
+- [x] **Enhanced version comes later.** Do not create or develop an `enhanced` branch yet. Finish and accept the faithful port on `main` first. Only then create `enhanced` from the accepted faithful commit; all optional improvements belong there, with the faithful branch preserved unchanged.
+
+### What happens to the emulator/recompiler work
+
+- [ ] Remove emulator/recompiler execution from the active game runtime and from the final build dependencies.
+- [ ] Remove or quarantine the generated 6502 C output, NES CPU/system/PPU/APU runtime, ROM-boot path, emulator controls, and emulator-only assets once native replacements are ready. Do not delete useful ASM traces, test vectors, or reference tools that support offline differential verification.
+- [ ] Retain the reference 6502/oracle only as a host-side test tool if it is needed to prove equivalence. Explicitly verify that no oracle/emulator source is linked into the 3DSX.
+- [ ] Audit the Makefile, source wildcards, startup flow, controls, README instructions, and CI workflows so the final executable is a native game and does not require `rom.nes` or `dspfirm.cdc`.
+- [ ] Replace emulator-specific completion claims and acceptance gates with native subsystem gates. PPU scanline accuracy, NES register emulation, cycle-level bus behavior, and APU hardware emulation are not goals for the final runtime; only the original game's visible/audible behavior is.
+
+### New controlling milestone order
+
+1. **Stage 1 — asset/data extraction:** keep the already owner-accepted extractor, but finish any relevant verification debt. Produce source-derived native assets/data.
+2. **Stage 2 — native menus and front-end:** implement the title, course selector, design menu, save/load flow, transitions, and original navigation in native code. Use extracted art and native 3DS rendering. No NES PPU or 6502 runtime.
+3. **Stage 3 — first playable race:** implement Course 1 end-to-end in native code, including source-faithful track, player bike, opponents, physics, collisions, heat, race timing, finish and results. This is the critical differential-test milestone.
+4. **Stage 4 — remaining original game:** port the remaining courses, modes, editor, save/load and full game flow in original order.
+5. **Stage 5 — faithful release validation:** test complete sessions on New 3DS (and original 3DS where supported), compare against original NES reference scenarios, verify frame pacing/audio/input, and publish the faithful `.3dsx`.
+6. **After faithful acceptance — enhanced branch:** create `enhanced` from the accepted `main` commit. Decide its feature scope separately; never mix enhancements into the faithful baseline.
+
+### Native subsystem acceptance checklist
+
+- [ ] Menus: pixel/reference comparison, navigation, confirmation/cancel, transitions, save/load and all original branches.
+- [ ] Graphics: native renderer reproduces original screen composition from verified assets, tile maps, palettes, sprite data, animation and scrolling; no runtime PPU.
+- [ ] Physics: deterministic frame-by-frame vectors against original ASM for acceleration, braking, gear/speed behavior, heat/cooling, ramps, jumping, posture, landing, crashes and recovery.
+- [ ] Opponents/AI: source-derived update order, decisions, movement and collision behavior validated against reference scenarios.
+- [ ] Track/course: source-derived geometry, ramps, course layouts and object placement; compare deterministic course captures.
+- [ ] Audio: native 3DS audio playback/mixer using verified original sound/music data; compare events, pitch, duration and timing without emulating APU registers.
+- [ ] Game flow: title-to-results and return/menu/save/load flows complete and repeatable.
+- [ ] Platform: no ROM required; no 6502/PPU/APU/system emulator linked; host tests and exact-commit 3DS build pass; New 3DS hardware run recorded.
+
 # Excitebike 3DS — roadmap and task tracker
 
 ## User-approved specification and strict stage gates — 2026-10-21
@@ -27,7 +71,7 @@ This is the controlling project specification. If older checklist items conflict
 
 ### Mandatory sequential roadmap
 
-**No later stage may begin until the current stage is fully tested and accepted.** Work on `main` only; do not create a branch for this workflow. The original disassembly remains unchanged.
+**No later stage may begin until the current stage is fully tested and accepted.** Work on `main` for the faithful native port. Do not create `enhanced` until the faithful port is fully accepted; then branch from the accepted `main` commit. The original disassembly remains unchanged.
 
 #### Stage 1 — Native extractor (ACCEPTED BY OWNER DECISION 2026-11-17; see note below)
 
@@ -148,26 +192,12 @@ This file is the active project checklist. The original NES disassembly is the r
 
 **Overall status:** not yet a playable faithful port. The application scaffold exists; routine translations are in progress. A translated routine is not automatically tested, build-verified, integrated, or fidelity-verified.
 
-## Faithful full-system path — 2026-11-19 (control section for Stages 2-4 engineering)
+## Retired approach — 2026-11-19
 
-**Decision of implementation, recorded for the owner.** Hand-translating the ~2600-instruction race loop and re-implementing the menu in C was replaced, for everything the original program does, by running the ORIGINAL program itself: `tools/asm2c.py` statically recompiles every instruction of `bank_FF.asm` (5570 instructions, 286 label regions) into `source/nes_gen_code.c` straight from the opcode bytes, and `source/nes_system.c` supplies the NES hardware around it (CPU context with NMI injection, PPU registers/VRAM/OAM/OAM-DMA, scanline compositor with scroll splits, 8x8/8x16 sprites, sprite-0 hit, controller port, APU model in `source/nes_apu.c`). Nothing of the game logic is re-written: title, selector, design menu, race setup, race loop, bike physics, opponents, collisions, overheating, timer, results and sound all execute the original code. The earlier hand ports (`menus.c`, `nes_race_setup.c`) stay in the tree as the previous Stage-2 evidence/fallback.
+The previous "Faithful full-system path" plan (static 6502 recompilation plus software NES CPU/PPU/APU) is **rejected as the final-game architecture by the owner**. It is not an accepted port and must not be treated as the roadmap for Stages 2–4. Its historical tests and traces may remain useful as offline references, but the generated CPU and NES hardware system are not to be shipped or required by the native game.
 
-Evidence (host, reproducible, run in CI `Verify NES routine translations`):
-- [x] Reference 6502 core (`tests/oracle/cpu6502.c`) validated against `py65` on 8000 random programs + per-opcode tests.
-- [x] Every one of the 286 ASM regions is executed from random machine states on the reference 6502 (PRG rebuilt from the ASM bytes by `tools/asm_to_prg.py`) and on the recompiled C; RAM, A/X/Y, C/Z/N/V, stack pointer and the hardware-register write log must match (`tests/test_gen_code.c`; 11 regions are polling loops that never end from random states and are excluded from that comparison - they are exercised by the system test instead). Mutation check: replacing ADC by SBC in the generated code is detected.
-- [x] `tests/test_nes_system.c`: cold boot reaches the title (state 0), Start -> selector (state 1) -> Start -> race (state 2) exactly as in ASM, controller shift order, ROM/PRG-CRC validation, per-frame audio sample count, audible race audio, bit-exact determinism.
-- [x] `tests/test_nes_apu.c`: register semantics, length counters/halt, mute rules, timestamped writes.
-- [x] The generated code is regenerated in CI and diffed (`nes_gen_code.c`, `nes_prg_crc.h` cannot drift from the ASM).
-- Host frames were inspected by eye (title, selector, race with scrolling track, ramps, opponents, HUD and timer); no automated NES reference capture exists.
+The source-recompiler integration notes below this heading in older history are historical records only. Their existence does not authorize emulator execution in the final runtime. Follow the "User-approved native-port specification" at the top of this file.
 
-Runtime: put the player's own `rom.nes` (mapper 0, 16 KiB PRG whose CRC matches the disassembly, 8 KiB CHR) beside the 3DSX; on the diagnostics screen press SELECT to boot the original program. D-pad/A/B/SELECT/START are the NES pad. Hold L+R for one second to leave (port-only escape). Audio needs `dspfirm.cdc`.
-
-Open / not claimed:
-- [ ] No physical New 3DS run of this path (performance is only estimated: ~0.5 ms/frame on a PC), no photographed hardware evidence, no side-by-side capture against a real NES or an accepted reference emulator (D2/D3).
-- [ ] PPU model is scanline-granular: mid-scanline writes take effect from the next scanline; sprite overflow flag, colour emphasis, odd-frame skip and exact $2002/$2007 read timing are not modelled; NTSC only.
-- [ ] APU: point-sampled mixer, no DMC sample playback (the game only writes the DMC level register $4011), no IRQ.
-- [ ] Data-recorder (tape) save/load in the design menu is not emulated (the original waits for a recorder exactly like the NES without one); the older file-backed tape stand-in applies only to the legacy hybrid menu path.
-- [ ] Stage acceptance (menu routes, first race, physics comparisons) still needs the owner's hardware and reference evidence; the staged gates above are NOT marked accepted by this section.
 
 ## Use of AI assistance
 
