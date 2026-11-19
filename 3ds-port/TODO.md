@@ -229,3 +229,8 @@ The exact Stage 4 sub-stages must be derived from the disassembly after Stage 3 
 - First-race source trace and native physics evidence: [STAGE3_TRACE.md](STAGE3_TRACE.md).
 
 Historical trace entries may describe old emulator/recompiler experiments. Treat those as source-analysis/history only; never treat them as permission to restore NES execution or hardware emulation to the final runtime.
+
+
+### First-course execution scope — 2026-11-19
+
+The next playable milestone is restricted to course 1. See [FIRST_COURSE_TODO.md](FIRST_COURSE_TODO.md) for the source-backed implementation order and acceptance gate. In particular, setup list `$12` (`_off_000_D3D6_12`) is the first course's palette setup, not its geometry. Course geometry must be traced independently before any native track data or rendering is authored.
