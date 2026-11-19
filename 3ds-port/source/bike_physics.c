@@ -331,9 +331,9 @@ void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement)
             }
             movement->x_low[i] = relative_low;
             movement->x_high[i] = moved_high;
+            movement->previous_x[i] =
+                (uint8_t)(movement->previous_x[i] - movement->movement_delta[0]);
         }
-        movement->previous_x[i] =
-            (uint8_t)(movement->previous_x[i] - movement->movement_delta[0]);
     }
 }
 
