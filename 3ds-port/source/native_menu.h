@@ -40,6 +40,13 @@ typedef struct NativeMenuState {
     uint8_t transition_flag_0046;
     uint8_t transition_flag_004B;
     uint8_t transition_counter_03F8;
+    uint8_t transition_duration; /* source ram_03AD */
+    uint8_t transition_payload[7]; /* semantic source data captured before phase 1 */
+    uint8_t transition_patch[7]; /* native tile patch, never a PPU command buffer */
+    uint8_t transition_patch_valid;
+    uint8_t transition_patch_layer; /* physical nametable B = native layer 1 */
+    uint8_t transition_patch_x;
+    uint8_t transition_patch_y;
     uint8_t frame_timer;       /* ram_0020 */
     uint8_t timer_values[29]; /* ram_0021-$003D */
 } NativeMenuState;
@@ -50,6 +57,8 @@ void nativeMenuInit(NativeMenuState *menu);
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
 void nativeMenuTickTimers(NativeMenuState *menu);
 void nativeMenuTransitionPhase0(NativeMenuState *menu);
+/* Phase 1: emits a semantic seven-tile native scene patch at layer 1, (15,6). */
+void nativeMenuTransitionPhase1(NativeMenuState *menu);
 
 /* Exact timer-expired branch of ofs_000_C465_04 / _07 (sub_C3AF). */
 void nativeMenuCompleteTimedTransition(NativeMenuState *menu);
