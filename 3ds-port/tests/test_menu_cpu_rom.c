@@ -167,7 +167,8 @@ static int testRasterSplitD0AB(void)
         ok = nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
                                    &scrollX, &scrollY, 0u, &split);
         noHitElapsed = split.elapsedCycles;
-        if (!ok || split.elapsedCycles == 0u || split.ctrlWrites != 2u ||
+        if (!ok || split.elapsedCycles == 0u || split.splitWriteCycle == 0u ||
+            split.splitWriteCycle >= split.elapsedCycles || split.ctrlWrites != 2u ||
             split.scrollPairs != 2u ||
             split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
             split.topScrollY != 0x30u || split.bottomCtrl != 0x12u ||
