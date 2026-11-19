@@ -62,7 +62,7 @@ The previous owner-decision acceptance was premature. The current native menu is
 - [x] A4 — Classify state $09 as the interactive course-design/editor loop and trace its state-$08 entry and B-button return; see `STAGE2_TRACE.md`. List 5/editor handoff is still a C3 implementation dependency.
 - [x] A5 — All six state-9 list-5 commands ($C551/$C869/$C820/$C5A3/$C562/$C5C2) have a PRG-backed recompiler path. $C820 captures the three D13F/ECE4/D3C1 PPU uploads; $C5C2 executes E1A3/D1C7 and EC25/EC47 against persistent CPU RAM/OAM.
 - [x] A6 — The state-9 per-frame entry $C97C is now dispatched through the recompiler with persistent CPU RAM, controller input, OAM, course pages, and PPU register/nametable/palette writeback. The original EB17 B-button branch is included.
-- [ ] A7 — PPUSTATUS bit $40 is acknowledged once per host call to let sub_D19B progress. This is not a real sprite-0/raster simulation. ROM-backed frame vectors, exact PPU timing, hardware B-return, graphics comparison, and sound remain open.
+- [ ] A7 — PPUSTATUS bit $40 is synthesized from the traced 6431-CPU-cycle editor delay so sub_D14E/sub_D19B can progress. This is still not a pixel-accurate sprite-0/raster simulation. ROM-backed frame vectors, exact PPU timing, hardware B-return, graphics comparison, and sound remain open.
 - [ ] A6 — Audit reset, return-to-title, cancel/back and menu-to-race handoffs.
 - [x] B1 — Map all static/palette/dynamic/zero-page `ram_0045` targets and verify the NROM/PPUCTRL pattern-table selection; see `STAGE2_TRACE.md`.
 - [x] B2 — All 18 static PPU streams, 7 palette streams, dynamic `$0300`, zero-page `$1A`, malformed records, bounds/terminators and palette mirroring are host-tested; see `STAGE2_TRACE.md`.
