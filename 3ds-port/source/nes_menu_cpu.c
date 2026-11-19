@@ -267,15 +267,15 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     if (result != 0) return 0;
     result = nesCall(&machine, 0xD14Eu, 100000L);
     if (result != 0) return 0;
-    if (split == NULL || bus.ctrlWriteCount < 2u || bus.scrollPairCount < 2u)
-        return 0;
-    memcpy(cpuRam, machine.ram, sizeof(machine.ram));
+    if (split == NULL) return 0;
     split->topCtrl = bus.topCtrl;
     split->topScrollX = bus.topScrollX;
     split->topScrollY = bus.topScrollY;
     split->bottomCtrl = bus.bottomCtrl;
     split->bottomScrollX = bus.bottomScrollX;
     split->bottomScrollY = bus.bottomScrollY;
+    split->ctrlWrites = bus.ctrlWriteCount;
+    split->scrollPairs = bus.scrollPairCount;
     split->elapsedCycles = machine.cyc > UINT32_MAX ? UINT32_MAX : (uint32_t)machine.cyc;
     {
         const uint32_t phase = split->elapsedCycles > NES_NMI_TO_PRERENDER_CPU_CYCLES
@@ -286,6 +286,8 @@ int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
         split->splitScanline = (uint8_t)scanline;
         split->splitDot = (uint16_t)(dots % 341u);
     }
+    if (bus.ctrlWriteCount < 2u || bus.scrollPairCount < 2u) return 0;
+    memcpy(cpuRam, machine.ram, sizeof(machine.ram));
     return 1;
 }
 
