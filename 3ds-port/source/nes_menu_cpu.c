@@ -74,3 +74,36 @@ int nesMenuCpuInput(uint8_t buttonPress, uint8_t count,
     *actionX = machine.x;
     return 1;
 }
+
+/*
+ * Execute a source setup-list routine against the original 6502 PRG.
+ * This deliberately exposes only the RAM bytes currently represented by
+ * GameState; callers must not use it for routines with unmodelled side effects.
+ */
+int nesMenuCpuSetupCommand(uint16_t routineAddress, uint8_t asmState,
+                           uint8_t course, uint8_t *ram0045,
+                           uint8_t ram004D_EF[0xA3])
+{
+    NesMachine machine;
+    unsigned int i;
+    int result;
+    if (!s_ready || ram0045 == NULL || ram004D_EF == NULL) return 0;
+    if (routineAddress != 0xC551u && routineAddress != 0xC869u) return 0;
+
+    memset(&machine, 0, sizeof(machine));
+    machine.prg = s_prg;
+    machine.sp = 0xFDu;
+    machine.ram[0x0041u] = asmState;
+    machine.ram[0x0043u] = course;
+    machine.ram[0x0045u] = *ram0045;
+    for (i = 0u; i < 0xA3u; ++i)
+        machine.ram[0x004Du + i] = ram004D_EF[i];
+
+    result = nesCall(&machine, routineAddress, 8192L);
+    if (result != 0) return 0;
+
+    *ram0045 = machine.ram[0x0045u];
+    for (i = 0u; i < 0xA3u; ++i)
+        ram004D_EF[i] = machine.ram[0x004Du + i];
+    return 1;
+}
