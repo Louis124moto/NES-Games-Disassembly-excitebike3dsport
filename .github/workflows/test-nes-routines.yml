@@ -17,6 +17,8 @@ on:
       - "3ds-port/include/nes_active_stream.h"
       - "3ds-port/source/asset_extractor.c"
       - "3ds-port/include/asset_extractor.h"
+      - "3ds-port/source/bike_physics.c"
+      - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/game.c"
       - "3ds-port/source/menus.c"
       - "3ds-port/source/nes_menu_cpu.c"
@@ -71,6 +73,8 @@ on:
       - "3ds-port/include/nes_ppu_render.h"
       - "3ds-port/source/asset_extractor.c"
       - "3ds-port/include/asset_extractor.h"
+      - "3ds-port/source/bike_physics.c"
+      - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/game.c"
       - "3ds-port/source/menus.c"
       - "3ds-port/source/nes_menu_cpu.c"
@@ -161,6 +165,12 @@ jobs:
           python3 tools/asm_to_prg.py ../Excitebike/bank_FF.asm /tmp/prg.bin
           gcc -std=c11 -O1 -Wall -Wextra -Werror -Iinclude -Itests/oracle tests/oracle/*.c source/nes_gen_code.c source/nes_call.c tests/test_gen_code.c -o /tmp/test_gen_code
           /tmp/test_gen_code /tmp/prg.bin 100
+
+      - name: Differentially test native player acceleration against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/oracle.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
+          /tmp/test_bike_speed /tmp/prg.bin
 
       - name: Check PRG CRC header is up to date
         run: |
