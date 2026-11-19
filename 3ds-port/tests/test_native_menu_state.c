@@ -33,6 +33,10 @@ static void seed_menu_ram(Cpu6502 *cpu, uint8_t state, uint8_t selection,
     cpu->ram[0x03F3u] = 0xA3u;
     cpu->ram[0x03F7u] = 0xA7u;
     cpu->ram[0x0015u] = pressed;
+    cpu->ram[0x0200u] = 0xF8u;
+    cpu->ram[0x0201u] = 0xF8u;
+    cpu->ram[0x0202u] = 0xF8u;
+    cpu->ram[0x0203u] = 0xF8u;
 }
 
 static void seed_native(NativeMenuState *menu, uint8_t state, uint8_t selection,
@@ -55,6 +59,10 @@ static void seed_native(NativeMenuState *menu, uint8_t state, uint8_t selection,
     menu->title_flag_03F0 = 0xA0u;
     menu->title_flag_03F3 = 0xA3u;
     menu->title_flag_03F7 = 0xA7u;
+    menu->cursor_sprite_y = 0xF8u;
+    menu->cursor_sprite_tile = 0xF8u;
+    menu->cursor_sprite_attribute = 0xF8u;
+    menu->cursor_sprite_x = 0xF8u;
 }
 
 static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
@@ -79,6 +87,10 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
     CHECK_FIELD(native->selected_mode, cpu->ram[0x03F2u]);
     CHECK_FIELD(native->title_flag_03F3, cpu->ram[0x03F3u]);
     CHECK_FIELD(native->title_flag_03F7, cpu->ram[0x03F7u]);
+    CHECK_FIELD(native->cursor_sprite_y, cpu->ram[0x0200u]);
+    CHECK_FIELD(native->cursor_sprite_tile, cpu->ram[0x0201u]);
+    CHECK_FIELD(native->cursor_sprite_attribute, cpu->ram[0x0202u]);
+    CHECK_FIELD(native->cursor_sprite_x, cpu->ram[0x0203u]);
     CHECK_FIELD(native->frame_timer, cpu->ram[0x0020u]);
     { unsigned ti; for (ti = 0; ti < 29u; ++ti) {
         if (native->timer_values[ti] != cpu->ram[0x0021u + ti]) {
