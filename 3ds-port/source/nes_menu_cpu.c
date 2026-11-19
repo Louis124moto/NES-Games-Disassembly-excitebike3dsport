@@ -114,7 +114,7 @@ typedef struct {
     uint8_t addressHigh, addressLatch, scrollLatch, paletteWritten;
     unsigned long spriteHitCycle;
     unsigned long spriteHitClearCycle;
-    uint8_t captureRasterSplit, ctrlWriteCount, scrollPairCount;
+    uint8_t captureRasterSplit, timingOnly, ctrlWriteCount, scrollPairCount;
     uint8_t topCtrl, topScrollX, topScrollY;
     uint8_t bottomCtrl, bottomScrollX, bottomScrollY;
 } NesMenuPpuBus;
@@ -180,16 +180,21 @@ static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
         }
     } else if (address == 0x2007u) {
         uint16_t target = (uint16_t)(bus->address & 0x3FFFu);
-        if (target >= 0x3000u && target < 0x3F00u)
-            target = (uint16_t)(target - 0x1000u);
-        if (target >= 0x2000u && target < 0x3000u)
-            bus->nametables[(target - 0x2000u) & 0x07FFu] = value;
-        else if (target >= 0x3F00u) {
-            bus->palette[nesMenuPaletteIndex(target)] = value;
-            bus->paletteWritten = 1u;
+        if (!bus->timingOnly) {
+            if (target >= 0x3000u && target < 0x3F00u)
+                target = (uint16_t)(target - 0x1000u);
+            if (target >= 0x2000u && target < 0x3000u)
+                bus->nametables[(target - 0x2000u) & 0x07FFu] = value;
+            else if (target >= 0x3F00u) {
+                bus->palette[nesMenuPaletteIndex(target)] = value;
+                bus->paletteWritten = 1u;
+            }
         }
         bus->address = (uint16_t)(bus->address +
             (((*bus->ctrl & 0x04u) != 0u) ? 32u : 1u));
+    } else if (address == 0x4014u) {
+        /* OAM DMA stalls the 6502 for 513 or 514 cycles depending on parity. */
+        machine->cyc += 513UL + (machine->cyc & 1UL);
     }
 }
 
