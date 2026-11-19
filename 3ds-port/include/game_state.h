@@ -44,6 +44,9 @@ typedef struct {
     uint8_t menu_sprite0_hit_last_frame;
     uint32_t menu_sprite0_hit_cycle;       /* CPU cycles from pre-render to first sprite-0 hit */
     uint32_t menu_ppu_cycle_phase;         /* PPU phase at the C97C handler after D14E */
+    uint8_t menu_ppu_split_valid;
+    uint8_t menu_ppu_split_scanline;
+    uint8_t menu_ppu_top_ctrl, menu_ppu_top_scroll_x, menu_ppu_top_scroll_y;
     /* PPU palette RAM $3F00-$3F1F (BG 0-15, sprite 16-31; $10/$14/$18/$1C mirror $00/$04/$08/$0C). */
     uint8_t menu_ppu_palette[32];
     uint8_t menu_ram_for_2001;        /* ram_for_2001: written only by the NMI model */
