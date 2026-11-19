@@ -138,14 +138,16 @@ int main(int argc, char **argv)
             memcmp(native.approach, expected.approach, sizeof(native.approach)) ||
             memcmp(native.object_lock_timer, expected.object_lock_timer, sizeof(native.object_lock_timer)) ||
             native.y_low[slot] != expected.y_low[slot] || native.player_event != expected.player_event) {
-            printf("FAIL DC1A vector=%u slot=%u y=%02X/%02X B0=%02X/%02X rider=%02X/%02X event=%02X/%02X global=%02X BC=%02X B8=%02X cpu01=%02X cpu8C=%02X cpu8F=%02X track=%02X\\n",
+            printf("FAIL DC1A v=%u x=%u y=%02X/%02X B0=%u rider=%u collision=%u mode=%u brake=%u approach=%u anim=%u lateral=%u lock=%u global=%02X BC=%02X B8=%02X delta=%02X temp=%02X cpu8F=%02X track=%u\\n",
                    v, slot, native.y_low[slot], expected.y_low[slot],
-                   native.object_status[slot], expected.object_status[slot],
-                   native.rider_state[slot], expected.rider_state[slot],
-                   native.player_event, expected.player_event,
-                   native.global_vertical_reference, native.vertical_reference[slot],
-                   native.object_y[slot], cpu.ram[0x0001u],
-                   cpu.ram[0x008Cu+slot], cpu.ram[0x008Fu], cpu.ram[0x0052u]);
+                   native.object_status[slot], native.rider_state[slot],
+                   native.collision_state[slot], native.movement_mode[slot],
+                   native.brake_state[slot], native.approach[slot],
+                   native.animation_state[slot], native.lateral_state[slot],
+                   native.object_lock_timer[slot], native.global_vertical_reference,
+                   native.vertical_reference[slot], native.object_y[slot],
+                   (uint8_t)(native.global_vertical_reference - native.vertical_reference[slot] - native.object_y[slot]),
+                   cpu.ram[1], cpu.ram[0x008Fu], native.track_finished);
             return 1;
         }
     }
