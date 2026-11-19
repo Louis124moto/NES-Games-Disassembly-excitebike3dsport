@@ -122,15 +122,12 @@ The live `ram_0045` reader is the NMI path `vec_C23B_NMI → sub_C27F → sub_D3
 
 A first-pass source census now records the buffer initializers and append paths around `C5B5`, `C8ED`, `C935-C978`, `CB77`, `CC32-CC67`, `D11F-D2F7`, and the per-object command setup at `F5F8/F5FD/F602` and `F6E0/F6E5/F6EA`. This is not yet a frame-accurate replay: mapping each path to its caller/game state and proving which structures reach the `$00` table entry remain open. The source disassembly is unchanged.
 
-## Stage 2 (original menu) — PRG-backed menu and PPU integration, 2026-11-19
+## Historical implementation note — emulator-oriented menu prototype
 
-Press START on the extractor screen (once CHR is loaded) to enter the source-derived menu path. When a supported mapper-0, 16 KiB PRG is available beside the 3DSX, menu setup commands and audited handlers execute through the static 6502 recompiler against persistent 2 KiB NES CPU RAM. The runtime includes all five list-3 commands, the shared $CB2C dispatcher for states 3/6/11, $C465 transitions for states 4/7, all six list-5 editor setup commands, the $C97C editor frame, the guarded $EB17 B-return, and the original $D310 timer routine.
+The following previous implementation was built around a static 6502 recompiler, persistent NES CPU RAM, a software PPU timing model, and PPU/OAM composition. It is **not the accepted native menu implementation** and must not be used as the final game's runtime architecture. Its source traces, menu branch vectors, asset mappings, and screenshots may be mined as offline references while rewriting the menu in native C/C++.
 
-The editor NMI timing adapter executes the source order $C32F → conditional $2001 update → OAM DMA → $C27F → $D0AB → $D14E against a timing-only PPU bus. The native PPU command interpreter applies the PPU data writes; the timing pass captures both PPUCTRL/scroll pairs and timestamps the second $2005 write. The renderer composes both mirrored nametables, decoded CHR, palette RAM, OAM sprites and the D14E top/bottom split at the captured scanline/dot. Sprite-0 hit is derived from decoded sprite/background pixels, OAM, PPUMASK and the split-composited opacity map; C97C receives the resulting CPU-cycle threshold.
+The native Stage 2 menu must draw through the 3DS renderer, consume verified extracted assets, implement the original menu state machine directly, and compare its visible behavior and input transitions against the original NES. It must not require `rom.nes`, a 6502 runtime, or PPU register emulation.
 
-ROM-backed regressions cover list-3/CB2C transitions, C465, list-5/editor setup, C97C, guarded B-return, the full NMI timing prefix, both scroll phases, previous-hit pre-render wait and pixel-derived sprite-0 overlap. Host workflow and exact-commit New 3DS build passed on `19304fbc5293ebcd79e81a1afcf4bf760e9b0c9b`: [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711483) · [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44520711481).
-
-This is still not a complete replica. Exact PPU NMI/pre-render calibration (including odd-frame behavior), every editor object interaction, original-NES frame comparison, sound and physical New 3DS verification remain open. Stage 3 stays blocked until the Stage 2 acceptance gate in `TODO.md` and `STAGE2_TRACE.md` is satisfied.
 
 ### New Nintendo 3DS menu display
 
