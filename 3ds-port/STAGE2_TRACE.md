@@ -484,15 +484,17 @@ The new static recompiler is now used by the active Stage-2 menu input path rath
 
 ## Source-recompiled editor setup prelude — 2026-11-19
 
-The state-$09 setup list 5 now executes its first two original routines through the generated 6502 recompiler when a supported `rom.nes` is loaded:
+The state-$09 setup list 5 now has a recompiled runtime path for all six original commands when a supported `rom.nes` is loaded:
 
-- Command 0 calls `nesCall($C551)`. The original code loads `$12`, checks `ram_0041`, adds `ram_0043` only for states below 8, then stores the result in `ram_0045`. For the editor state 9, this posts `$12`.
-- Command 1 calls `nesCall($C869)`. The original loop clears CPU RAM `$004D-$00EF` inclusive; the adapter copies that exact represented range into and out of `NesMachine.ram`.
-- Both routine entry points are already in `tests/oracle/region_list.h`, so the existing instruction-level differential suite compares their generated implementations against the original PRG. This does not by itself test the GameState-to-6502 adapter.
-- The adapter intentionally whitelists only `$C551` and `$C869`, seeds only the RAM bytes those routines require, and retains source-equivalent C fallbacks when no supported PRG is loaded.
+- Command 0 executes `$C551` and posts `$12` for editor state 9.
+- Command 1 executes `$C869` and clears `$004D-$00EF`.
+- Command 2 executes `$C820`, including all three `$ECE4` builders, their dynamic `$D3C1` PPU uploads, the `$0340-$03EF` clear, the `$0400-$057F` setup and sprite-0 initialization. The adapter captures `$2006/$2007` writes into the existing vertical-mirroring nametable and palette model; it does not fake the stream contents.
+- Commands 3 and 4 execute `$C5A3` and `$C562` (`ram_0045=$17/$05`).
+- Command 5 executes `$C5C2`, including `$C621`, `$E1A3/$E1F9/$D1C7`, `$EC25` and `$EC47`, using persistent 2 KiB NES CPU RAM. This connects the existing D1C7 OAM implementation through the original instruction stream rather than manually approximating its output.
+- The adapter only whitelists these audited entry points. `$C820` and `$C5C2` require the supported PRG image; if it is unavailable or execution stops, the sequencer rolls back to that command instead of silently skipping it. `$C551/$C869/$C5A3/$C562` retain their source-equivalent C fallbacks.
 
-After command 1 the sequencer holds at command index 2. It does **not** skip command 2 (`$C820`): that command invokes `sub_D13F/sub_ECE4` and requires the dynamic PPU upload path at `sub_D3C1`. Commands 3–5 (`$C5A3`, `$C562`, `$C5C2`) therefore remain unreachable until command 2 is integrated. The editor is not yet a working handoff.
+**Important boundary:** completing the six setup commands is not the same as completing the editor. The per-frame state-$09 handler `$C97C` calls a large object/update/render chain and ends at the `$D19B` PPU-status wait; its real-time PPU/NMI/raster behavior and B-button return via `$EB17` are still not integrated. Shared transition list 3, artwork reconstruction and reference-frame comparison also remain open.
 
-**Regression added:** `tests/test_menus.c::testEditorSetupPrelude` checks the state-9 prelude, both setup effects, and the fact that the sequencer remains parked at command index 2. The host frame-model test exercises the C fallback path; the generated instruction implementations for `$C551/$C869` are also listed in the existing differential oracle suite.
+**Regression:** `tests/test_menus.c::testEditorSetupPrelude` still checks the no-ROM fallback and verifies that the sequencer stays at `$C820` rather than advancing without a PRG. It does not yet exercise the full PRG-backed adapter.
 
-**Validation boundary:** the regression source is committed, but no fresh host differential run, exact-commit New 3DS build, or physical-hardware test has been confirmed for this batch.
+**Validation boundary:** no fresh host test run, exact-commit New 3DS build or physical-hardware test has been confirmed for this batch.
