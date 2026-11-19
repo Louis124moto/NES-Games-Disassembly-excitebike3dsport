@@ -155,9 +155,10 @@ static void nesMenuIoWrite(NesMachine *machine, uint16_t address, uint8_t value)
             target = (uint16_t)(target - 0x1000u);
         if (target >= 0x2000u && target < 0x3000u)
             bus->nametables[(target - 0x2000u) & 0x07FFu] = value;
-        else if (target >= 0x3F00u)
+        else if (target >= 0x3F00u) {
             bus->palette[nesMenuPaletteIndex(target)] = value;
             bus->paletteWritten = 1u;
+        }
         bus->address = (uint16_t)(bus->address +
             (((*bus->ctrl & 0x04u) != 0u) ? 32u : 1u));
     }
