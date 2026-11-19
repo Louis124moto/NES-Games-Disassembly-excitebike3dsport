@@ -16,8 +16,8 @@ typedef struct BikeSpeedState {
  * Exact native translation of sub_CE29 for player object X=0.
  * frame_phase is ram_004C, derived by the original game from ram_003F & 3.
  * The player speed routine only updates when frame_phase == 0.
- * acceleration_mode is Y: 0 for the A-button path, 1 for the B-button path
- * as selected by the original sub_CD59 bit/shift logic.
+ * acceleration_mode is Y: 0 for controller bit 7, 1 for bit 6 alone,
+ * or 2 for the post-finish speed limit path selected by sub_CD59.
  */
 void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
                                  uint8_t frame_phase,
