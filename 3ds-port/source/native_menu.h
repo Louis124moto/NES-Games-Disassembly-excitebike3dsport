@@ -2,7 +2,6 @@
 #define EXCITEBIKE_NATIVE_MENU_H
 
 #include <stdint.h>
-#include "game_state.h"
 
 /*
  * Native menu presentation hook.
@@ -43,9 +42,8 @@ typedef struct NativeMenuState {
 
 /* Native state transitions for the original title, course selector and
  * design menu handlers (source states 0, 1 and 8). */
+void nativeMenuInit(NativeMenuState *menu);
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
 void nativeMenuTickTimers(NativeMenuState *menu);
-
-void nativeMenuRenderStatus(const GameState *state);
 
 #endif
