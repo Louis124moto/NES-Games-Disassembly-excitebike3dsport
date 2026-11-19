@@ -188,6 +188,92 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("PASS: %lu native player speed and terrain-gate vectors match original ASM.\n", vectors);
+    /* Differentially test the complete player speed branch sub_CD59. */
+    {
+        uint32_t random_state = 0x4D595DF4u;
+        unsigned controller, phase3, status3, finished;
+        for (controller = 0; controller < 256u; ++controller) {
+            for (phase3 = 0; phase3 < 4u; ++phase3) {
+                for (status3 = 0; status3 < 4u; ++status3) {
+                    for (finished = 0; finished < 2u; ++finished) {
+                        BikePlayerSpeedContext native_player;
+                        uint8_t *ram = reference.ram;
+                        int rc;
+#define NEXT_BYTE() (random_state = random_state * 1664525u + 1013904223u, (uint8_t)(random_state >> 24))
+                        native_player.controller = (uint8_t)controller;
+                        native_player.frame_phase = (uint8_t)phase3;
+                        native_player.object_status_00B0 = (uint8_t)status3;
+                        native_player.race_finished = (uint8_t)finished;
+                        native_player.object_lock_0374 = (uint8_t)(NEXT_BYTE() & 1u);
+                        native_player.collision_lock_0098 = (uint8_t)(NEXT_BYTE() & 1u);
+                        {
+                            const uint8_t states[] = { 0u, 5u, 2u };
+                            native_player.movement_state_009C = states[NEXT_BYTE() % 3u];
+                        }
+                        native_player.speed.fraction = NEXT_BYTE();
+                        native_player.speed.whole = NEXT_BYTE();
+                        native_player.terrain.object_class = (NEXT_BYTE() & 1u) ? 0xE4u : 0u;
+                        native_player.terrain.surface = (NEXT_BYTE() & 1u) ? 3u : 0u;
+                        native_player.terrain.surface_state = NEXT_BYTE();
+                        native_player.terrain.vertical_position = NEXT_BYTE();
+                        native_player.terrain.posture_state = (uint8_t)(NEXT_BYTE() & 3u);
+                        native_player.terrain.player_event_flag = 0xA5u;
+
+                        memset(ram, 0, sizeof(reference.ram));
+                        ram[0x004Cu] = native_player.frame_phase;
+                        ram[0x005Cu] = native_player.controller;
+                        ram[0x0052u] = native_player.race_finished;
+                        ram[0x0374u] = native_player.object_lock_0374;
+                        ram[0x0098u] = native_player.collision_lock_0098;
+                        ram[0x009Cu] = native_player.movement_state_009C;
+                        ram[0x00B0u] = native_player.object_status_00B0;
+                        ram[0x0090u] = native_player.speed.fraction;
+                        ram[0x0094u] = native_player.speed.whole;
+                        ram[0x00C0u] = native_player.terrain.object_class;
+                        ram[0x00A4u] = native_player.terrain.surface;
+                        ram[0x0070u] = native_player.terrain.surface_state;
+                        ram[0x00B8u] = native_player.terrain.vertical_position;
+                        ram[0x036Cu] = native_player.terrain.posture_state;
+                        ram[0x00FDu] = native_player.terrain.player_event_flag;
+                        ram[0x0058u] = 0u;
+                        ram[0x0026u] = 1u; /* keep the later steering timer path inert */
+                        ram[0x0368u] = 0x55u;
+                        ram[0x00ACu] = 0x55u;
+
+                        reference.a = 0u;
+                        reference.x = 0u;
+                        reference.y = 0u;
+                        reference.sp = 0xFDu;
+                        reference.p = 0x24u;
+                        reference.cycles = 0u;
+                        reference.bad_opcode = -1;
+                        rc = cpu6502_call(&reference, 0xCD59u, 256u);
+                        if (rc != 0) {
+                            printf("FAIL: original sub_CD59 returned %d at controller=%02X phase=%u status=%u finished=%u\n",
+                                   rc, controller, phase3, status3, finished);
+                            return 1;
+                        }
+
+                        bikePhysicsUpdatePlayerSpeed(&native_player);
+                        if (native_player.speed.fraction != ram[0x0090u] ||
+                            native_player.speed.whole != ram[0x0094u] ||
+                            native_player.terrain.posture_state != ram[0x036Cu] ||
+                            native_player.terrain.player_event_flag != ram[0x00FDu]) {
+                            printf("FAIL: sub_CD59 controller=%02X phase=%u status=%u finish=%u native speed=%02X:%02X posture=%02X fd=%02X ASM speed=%02X:%02X posture=%02X fd=%02X\n",
+                                   controller, phase3, status3, finished,
+                                   native_player.speed.whole, native_player.speed.fraction,
+                                   native_player.terrain.posture_state, native_player.terrain.player_event_flag,
+                                   ram[0x0094u], ram[0x0090u], ram[0x036Cu], ram[0x00FDu]);
+                            return 1;
+                        }
+                        ++vectors;
+#undef NEXT_BYTE
+                    }
+                }
+            }
+        }
+    }
+
+    printf("PASS: %lu native player speed-control and terrain vectors match original ASM.\n", vectors);
     return 0;
 }
