@@ -480,3 +480,17 @@ The new static recompiler is now used by the active Stage-2 menu input path rath
 - `nes_gen_code.c` is already part of the source wildcard in the 3DS Makefile, so the generated CPU implementation and this adapter are linked by the ordinary build.
 
 **Validation boundary:** `$C7DE` is present in `3ds-port/tests/oracle/region_list.h`, so the existing differential suite includes the source routine. However, no CI status for the new adapter commits has been confirmed yet, and the new runtime ROM-loading path has not been exercised on a physical New 3DS. This closes only the menu input helper integration; setup lists 3 and 5, transition rendering, PPU/OAM completion, and original-screen comparisons remain open.
+
+
+## Source-recompiled editor setup prelude — 2026-11-19
+
+The state-$09 setup list 5 now executes its first two original routines through the generated 6502 recompiler when a supported `rom.nes` is loaded:
+
+- Command 0 calls `nesCall($C551)`. The original code loads `$12`, checks `ram_0041`, adds `ram_0043` only for states below 8, then stores the result in `ram_0045`. For the editor state 9, this posts `$12`.
+- Command 1 calls `nesCall($C869)`. The original loop clears CPU RAM `$004D-$00EF` inclusive; the adapter copies that exact represented range into and out of `NesMachine.ram`.
+- Both routine entry points are already in `tests/oracle/region_list.h`, so the existing instruction-level differential suite compares their generated implementations against the original PRG. This does not by itself test the GameState-to-6502 adapter.
+- The adapter intentionally whitelists only `$C551` and `$C869`, seeds only the RAM bytes those routines require, and retains source-equivalent C fallbacks when no supported PRG is loaded.
+
+After command 1 the sequencer holds at command index 2. It does **not** skip command 2 (`$C820`): that command invokes `sub_D13F/sub_ECE4` and requires the dynamic PPU upload path at `sub_D3C1`. Commands 3–5 (`$C5A3`, `$C562`, `$C5C2`) therefore remain unreachable until command 2 is integrated. The editor is not yet a working handoff.
+
+**Validation boundary:** the code changes are committed, but no fresh host differential run, exact-commit New 3DS build, or physical-hardware test has been confirmed for this batch.
