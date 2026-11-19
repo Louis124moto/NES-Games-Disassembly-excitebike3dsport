@@ -174,6 +174,44 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
 }
 
 
+/* Source: ofs_CB3B_00 ($CB3B-$CB75), phase 0 of sub_CB2C.
+ * Shared by source states $03, $06 and $0B. */
+void nativeMenuTransitionPhase0(NativeMenuState *menu)
+{
+    uint8_t course;
+
+    if (menu == 0) {
+        return;
+    }
+
+    if (menu->source_state < 0x08u && menu->transition_gate_0053 < 0x04u) {
+        menu->input.selection = menu->selected_mode;
+        if (menu->transition_flag_0046 != 0u) {
+            course = menu->selected_course;
+            if (course == 0x04u) {
+                menu->title_flag_03F3 =
+                    (uint8_t)(menu->title_flag_03F3 + 1u);
+                if ((menu->title_flag_03F3 & 1u) == 0u) {
+                    menu->transition_counter_03F8 =
+                        (uint8_t)(menu->transition_counter_03F8 >> 1);
+                    if (menu->transition_counter_03F8 == 0u) {
+                        menu->selected_course =
+                            (uint8_t)(menu->selected_course + 1u);
+                    }
+                }
+            } else if (course < 0x04u) {
+                menu->selected_course = (uint8_t)(course + 1u);
+            }
+        }
+        menu->transition_flag_0046 = 1u;
+        menu->transition_flag_004B = 1u;
+    }
+
+    menu->timer_values[18] = 0x04u; /* ram_0033_timer */
+    menu->transition_phase = (uint8_t)(menu->transition_phase + 1u);
+}
+
+
 /* Source: sub_D310 ($D310-$D325). Timers $21-$2F tick every frame;
  * timers $30-$3D tick only when the 11-frame divider underflows. */
 void nativeMenuTickTimers(NativeMenuState *menu)
