@@ -37,6 +37,64 @@ static int testC465StateAdvance(uint8_t initialState, uint8_t expectedState)
     return 1;
 }
 
+static int testRasterSplitD0AB(void)
+{
+    uint8_t cpuRam[0x800];
+    uint8_t nametables[2048];
+    uint8_t palette[32];
+    uint8_t ctrl = 0u, mask = 0u, scrollX = 0u, scrollY = 0u;
+    unsigned int i;
+
+    memset(cpuRam, 0, sizeof(cpuRam));
+    memset(nametables, 0, sizeof(nametables));
+    memset(palette, 0, sizeof(palette));
+    cpuRam[0x0041u] = 9u;       /* editor: D14E must not blanket-hide OAM */
+    cpuRam[0x0010u] = 0x10u;    /* source PPUCTRL baseline */
+    cpuRam[0x004Eu] = 0x01u;    /* first raster half: nametable B */
+    cpuRam[0x004Du] = 0x02u;    /* second raster half: nametable A + vertical bit */
+    cpuRam[0x0050u] = 0x20u;
+    cpuRam[0x0051u] = 0x30u;
+    cpuRam[0x0012u] = 0x40u;
+    cpuRam[0x0013u] = 0x50u;
+    cpuRam[0x003Fu] = 0x2Bu;
+    cpuRam[0x00B8u] = 0x10u;
+    cpuRam[0x00B9u] = 0x18u;
+    cpuRam[0x00BAu] = 0x20u;
+    cpuRam[0x00BBu] = 0x30u;
+    for (i = 0u; i < 256u; ++i) cpuRam[0x0200u + i] = (uint8_t)(i ^ 0x5Au);
+
+    if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
+                               &scrollX, &scrollY)) {
+        fputs("ROM menu test: D0AB/D14E raster adapter failed\n", stderr);
+        return 0;
+    }
+    if (cpuRam[0x0360u] != 4u || cpuRam[0x0361u] != 3u ||
+        cpuRam[0x0362u] != 2u || cpuRam[0x0363u] != 0u) {
+        fprintf(stderr, "ROM menu test: D0AB vertical bands mismatch %u,%u,%u,%u\n",
+                cpuRam[0x0360u], cpuRam[0x0361u],
+                cpuRam[0x0362u], cpuRam[0x0363u]);
+        return 0;
+    }
+    if (cpuRam[0x004Cu] != 3u || ctrl != 0x12u ||
+        scrollX != 0x40u || scrollY != 0x50u) {
+        fprintf(stderr, "ROM menu test: D14E split mismatch ctrl=%02X scroll=%02X/%02X phase=%u\n",
+                ctrl, scrollX, scrollY, cpuRam[0x004Cu]);
+        return 0;
+    }
+    if (cpuRam[0x0300u] != 0x11u || cpuRam[0x0301u] != 0x23u ||
+        cpuRam[0x0302u] != 0xA0u || cpuRam[0x0312u] != 0u) {
+        fputs("ROM menu test: D14E dynamic OAM/PPU preparation mismatch\n", stderr);
+        return 0;
+    }
+    for (i = 0u; i < 256u; ++i) {
+        if (cpuRam[0x0200u + i] != (uint8_t)(i ^ 0x5Au)) {
+            fputs("ROM menu test: editor D14E unexpectedly hid OAM\n", stderr);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int testSharedTransitionList3(void)
 {
     GameState s;
@@ -80,6 +138,8 @@ int main(void)
         return 1;
     }
     if (!testC465StateAdvance(4u, 5u) || !testC465StateAdvance(7u, 2u))
+        return 1;
+    if (!testRasterSplitD0AB())
         return 1;
     if (!testSharedTransitionList3())
         return 1;
