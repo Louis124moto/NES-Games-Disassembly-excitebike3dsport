@@ -33,6 +33,49 @@ void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
     }
 }
 
+
+/* Source: tbl_C0C1 ($C0C1), tbl_C0CC ($C0CC), sub_CE58/sub_CE5C ($CE58-$CE82). */
+static const uint8_t kDecelerationAmount[7] = {
+    0x38u, 0x0Cu, 0x00u, 0x3Cu, 0x1Cu, 0xC0u, 0x7Fu
+};
+static const uint8_t kZeroWholeThreshold[2] = { 0x01u, 0xB0u };
+
+void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
+                                 uint8_t frame_phase,
+                                 uint8_t deceleration_mode,
+                                 uint8_t object_status)
+{
+    uint8_t old_fraction;
+    uint8_t amount;
+    uint8_t profile;
+
+    if (speed == 0 || frame_phase != 0u ||
+        deceleration_mode >= 7u ||
+        (object_status != 0u && object_status != 2u)) {
+        return;
+    }
+
+    profile = (uint8_t)(object_status >> 1);
+    if (speed->whole == 0u &&
+        speed->fraction < kZeroWholeThreshold[profile]) {
+        return;
+    }
+
+    old_fraction = speed->fraction;
+    amount = kDecelerationAmount[deceleration_mode];
+    speed->fraction = (uint8_t)(old_fraction - amount);
+
+    /* 6502 SBC sets carry iff no borrow; a borrow lowers the whole byte.
+     * If the whole byte is already zero, the source clamps the fraction to 0. */
+    if (old_fraction < amount) {
+        if (speed->whole != 0u) {
+            speed->whole = (uint8_t)(speed->whole - 1u);
+        } else {
+            speed->fraction = 0u;
+        }
+    }
+}
+
 void bikePhysicsUpdate(BikeState *bike, const InputState *input)
 {
     (void)bike;
