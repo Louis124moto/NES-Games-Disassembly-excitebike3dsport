@@ -66,6 +66,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 - [x] Host-only 6502 reference CPU is retained under `tests/oracle/`, outside the 3DS source glob.
 - [x] The normal game path now loads the existing exported EBPX CHR pack and source scene snapshots without opening or requiring rom.nes.
 - [x] The title/selector/design front-end is wired to the native menu state and setup sequencer; its tilemap and cursor are drawn directly to the 3DS framebuffer by native code.
+- [x] The native asset loader now reads source snapshots for editor state 9 and tape save/load states 12/13, and loads all seven palette presets 12–18. Renderer support is static-background-only; it is not editor/save/load functionality.
 - [ ] The diagnostic asset inspector and its static PPU preview/compositor helpers still need a strict utility-only boundary from the final game renderer.
 - [ ] The application is now a native front-end prototype, not yet a complete playable Excitebike game; editor/save/load and several transitions remain incomplete.
 - [ ] Native menu and physics modules must be integrated into a real game loop; isolated helper coverage is not gameplay completion.
@@ -81,7 +82,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Track | Module/interface scaffolding. | Verified course geometry, ramps, obstacles, scrolling and native rendering. |
 | Opponents | Some movement primitives only. | Full initialization, AI/state decisions, collision and race behavior. |
 | Collision | No faithful complete implementation. | Trace and implement all original collision paths. |
-| Graphics | CHR extraction/decoding, exported EBPX/snapshots, and a direct-framebuffer native renderer for title/selector/design scenes plus cursor sprite. | Validate scene completeness/palette mapping against reference captures; finish remaining menu/editor/game sprites and animations. |
+| Graphics | CHR extraction/decoding, exported EBPX/snapshots, and direct-framebuffer native rendering for title/selector/design plus static editor/save/load source-snapshot backgrounds. | Validate all scenes/palettes against reference captures; implement editor objects/cursor, save/load UI, transition sprites and animations. |
 | Audio | Interface/scaffolding only. | Source-derived sound/music import, native playback/mixing and event timing. |
 | Runtime/game flow | Native app scaffold currently launches asset inspection. | Native title-to-results game loop and all transitions. |
 
@@ -137,9 +138,10 @@ Goal: reproduce the original title, selector, design/options menu, course editor
   - [ ] Trace the initialization and semantic meaning of the object fields consumed by sub_DD6F, and identify the source graphics/visible meaning of phase-2 sprite groups.
   - [ ] Translate phase-2 timing and branch decisions to semantic native state, with differential tests for every branch.
   - [ ] Implement the corresponding native transition sprite events and integrate them into the renderer.
-- [ ] Implement native title, selector, design/options and editor entry/return screens from verified assets.
+- [x] Load the source-derived editor, tape-save and tape-load background snapshots and palette presets into the native renderer.
+- [ ] Implement native title, selector, design/options and editor entry/return screens from verified assets; current editor/save/load support is only static background rendering.
 - [ ] Implement all cursor/selection movement, confirmation, cancel/back and state transitions.
-- [ ] Implement native save/load format and UI. Preserve original user-visible behavior where possible; document unavoidable platform differences instead of pretending they are identical.
+- [ ] Implement the 3DS SD-card save/load format and interactive UI, using the source-defined 256-byte course payload and header/metadata. Static tape-screen snapshots are not a working save/load backend. Preserve original user-visible behavior where possible; document unavoidable platform differences instead of pretending they are identical.
 - [ ] Implement menu animation, scrolling and sprite composition in the native renderer; no PPU/OAM/nametable emulation.
 - [ ] Implement source-confirmed menu sounds using native audio.
 - [x] Integrate title/selector/design state handling and setup-command sequencing into the actual app loop; keep the asset extractor optional and open it with X.
