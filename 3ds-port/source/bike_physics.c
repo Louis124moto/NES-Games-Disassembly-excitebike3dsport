@@ -38,8 +38,6 @@ void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
 static const uint8_t kDecelerationAmount[7] = {
     0x38u, 0x0Cu, 0x00u, 0x3Cu, 0x1Cu, 0xC0u, 0x7Fu
 };
-static const uint8_t kZeroWholeThreshold[2] = { 0x01u, 0xB0u };
-
 void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
                                  uint8_t frame_phase,
                                  uint8_t deceleration_mode,
