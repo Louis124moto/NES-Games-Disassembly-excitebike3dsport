@@ -66,7 +66,8 @@ static int testSharedTransitionDispatcherPhases(void)
             (states[i] >= 8u && ram[0x0042u] != 0xA5u)) {
             fprintf(stderr, "ROM menu test: CB2C phase 0 selection rule failed for state %u\n",
                     (unsigned int)states[i]);
-            return 0;
+                return 0;
+            }
         }
     }
 
