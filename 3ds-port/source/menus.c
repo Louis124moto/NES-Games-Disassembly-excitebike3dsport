@@ -627,6 +627,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
          * PPUSTATUS bit 6 is acknowledged at frame granularity by the adapter.
          */
         uint8_t held = 0u;
+        uint32_t spriteHitCycle = UINT32_MAX;
         if (heldKeys & KEY_A) held |= 0x80u;
         if (heldKeys & KEY_B) held |= 0x40u;
         if (heldKeys & KEY_SELECT) held |= 0x20u;
@@ -654,10 +655,16 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         memcpy(&state->menu_cpu_ram[0x05C3u], state->menu_ram05C3, sizeof(state->menu_ram05C3));
         memcpy(&state->menu_cpu_ram[0x05E0u], state->menu_ram05E0, sizeof(state->menu_ram05E0));
         memcpy(&state->menu_cpu_ram[0x06E0u], state->menu_ram06E0, sizeof(state->menu_ram06E0));
+        state->menu_sprite0_hit_last_frame = state->menu_sprite0_hit_found;
+        if (state->menu_sprite0_hit_found) {
+            spriteHitCycle = state->menu_sprite0_hit_cycle > state->menu_ppu_cycle_phase
+                ? state->menu_sprite0_hit_cycle - state->menu_ppu_cycle_phase : 0u;
+        }
         if (nesMenuCpuEditorFrame(state->menu_cpu_ram, held, nesButtons,
                                   state->menu_ppu_nametables, state->menu_ppu_palette,
                                   &state->menu_ppu_ctrl, &state->menu_ppu_mask,
-                                  &state->menu_scroll_x, &state->menu_scroll_y)) {
+                                  &state->menu_scroll_x, &state->menu_scroll_y,
+                                  spriteHitCycle)) {
             state->menu_asm_state = state->menu_cpu_ram[0x0041u];
             state->menu_selection = state->menu_cpu_ram[0x0042u];
             state->menu_ram0040 = state->menu_cpu_ram[0x0040u];
@@ -677,6 +684,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             memcpy(state->menu_ram06E0, &state->menu_cpu_ram[0x06E0u], sizeof(state->menu_ram06E0));
             state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
         }
+        if (state->menu_asm_state != 9u) state->menu_sprite0_hit_last_frame = 0u;
         state->menu_action_x = 0u;
         state->menu_selection_changed = 0u;
     } else if (state->menu_asm_state == 3u || state->menu_asm_state == 6u ||
@@ -849,6 +857,7 @@ void menusNmiUpload(GameState *state)
     int wroteMask = 0;
     int isPalette = 0;
     NesNmiUploadResult result;
+    uint32_t rasterCycles = 0u;
 
     if (state == 0) return;
     /* vec_C23B_NMI: $2001 is only (re)written when ram_0045 is zero. */
@@ -879,7 +888,9 @@ void menusNmiUpload(GameState *state)
         nesMenuCpuRasterSplit(state->menu_cpu_ram, state->menu_ppu_nametables,
                               state->menu_ppu_palette, &state->menu_ppu_ctrl,
                               &state->menu_ppu_mask, &state->menu_scroll_x,
-                              &state->menu_scroll_y)) {
+                              &state->menu_scroll_y, state->menu_sprite0_hit_last_frame,
+                              &rasterCycles)) {
+        state->menu_ppu_cycle_phase = rasterCycles > 2273u ? rasterCycles - 2273u : 0u;
         memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u],
                sizeof(state->menu_ram0300));
         memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u], sizeof(state->menu_oam));
