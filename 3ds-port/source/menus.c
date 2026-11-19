@@ -857,12 +857,17 @@ void menusNmiUpload(GameState *state)
     int isPalette = 0;
     NesNmiUploadResult result;
     NesMenuRasterSplit rasterSplit;
+    uint8_t timingRam[0x800];
 
     if (state == 0) return;
     /* vec_C23B_NMI: $2001 is only (re)written when ram_0045 is zero. */
     state->menu_ram_for_2001 = nesExcitebikeNmiRamFor2001(state->menu_ram0045,
                                                           state->menu_ram_for_2001, &wroteMask);
     if (wroteMask) state->menu_ppu_mask = state->menu_ram_for_2001;
+
+    /* Snapshot mapped NES RAM before the native PPU parser consumes its command list. */
+    menusCopyStateToCpuRam(state);
+    memcpy(timingRam, state->menu_cpu_ram, sizeof(timingRam));
 
     /* sub_C27F: ram_0045 selects the list; index 0 is the dynamic buffer at $0301. */
     if (state->menu_ram0045 != 0u && nesExcitebikeActiveStream(state->menu_ram0045, &info)) {
@@ -882,14 +887,16 @@ void menusNmiUpload(GameState *state)
         if (isPalette) state->menu_ppu_palette_loaded = 1u;
         state->menu_ppu_revision = (uint8_t)(state->menu_ppu_revision + 1u);
     }
-    /* vec_C23B_NMI: after OAM DMA and sub_C27F, ram_0047 enables D0AB/D14E. */
+    /* The timing-only PRG pass executes C32F/C27F/OAM-DMA/D0AB/D14E in source order. */
     state->menu_ppu_split_valid = 0u;
-    if (state->menu_cpu_ram[0x0047u] != 0u &&
-        nesMenuCpuRasterSplit(state->menu_cpu_ram, state->menu_ppu_nametables,
+    if (timingRam[0x0047u] != 0u &&
+        nesMenuCpuRasterSplit(timingRam, state->menu_ppu_nametables,
                               state->menu_ppu_palette, &state->menu_ppu_ctrl,
                               &state->menu_ppu_mask, &state->menu_scroll_x,
                               &state->menu_scroll_y, state->menu_sprite0_hit_last_frame,
                               &rasterSplit)) {
+        memcpy(state->menu_cpu_ram, timingRam, sizeof(state->menu_cpu_ram));
+        menusCopyCpuRamToState(state);
         state->menu_ppu_cycle_phase =
             rasterSplit.elapsedCycles > 2273u ? rasterSplit.elapsedCycles - 2273u : 0u;
         state->menu_ppu_split_valid = 1u;
@@ -898,9 +905,9 @@ void menusNmiUpload(GameState *state)
         state->menu_ppu_top_ctrl = rasterSplit.topCtrl;
         state->menu_ppu_top_scroll_x = rasterSplit.topScrollX;
         state->menu_ppu_top_scroll_y = rasterSplit.topScrollY;
-        memcpy(state->menu_ram0300, &state->menu_cpu_ram[0x0300u],
-               sizeof(state->menu_ram0300));
-        memcpy(state->menu_oam, &state->menu_cpu_ram[0x0200u], sizeof(state->menu_oam));
+    } else {
+        /* Keep persistent CPU RAM synchronized with the native PPU command consumption. */
+        menusCopyStateToCpuRam(state);
     }
     menusRefreshDrawable(state);
 }
