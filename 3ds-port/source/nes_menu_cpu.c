@@ -194,14 +194,14 @@ int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
     return 1;
 }
 
-/* Execute only setup-list routines whose full transitive effects are RAM/OAM-only. */
+/* Execute only audited menu routines whose transitive effects stay in CPU RAM/OAM/PPU command buffers. */
 int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800])
 {
     NesMachine machine;
     int result;
     if (!s_ready || cpuRam == NULL) return 0;
     if (routineAddress != 0xC5A3u && routineAddress != 0xC562u &&
-        routineAddress != 0xC5C2u) return 0;
+        routineAddress != 0xC5C2u && routineAddress != 0xC465u) return 0;
     memset(&machine, 0, sizeof(machine));
     memcpy(machine.ram, cpuRam, sizeof(machine.ram));
     machine.prg = s_prg;
