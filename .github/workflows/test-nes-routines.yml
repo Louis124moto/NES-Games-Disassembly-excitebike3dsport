@@ -155,3 +155,9 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu.c -o /tmp/test_native_menu
           /tmp/test_native_menu /tmp/prg.bin
 
+
+      - name: Differentially test native title and menu state transitions against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu_state.c -o /tmp/test_native_menu_state
+          /tmp/test_native_menu_state /tmp/prg.bin
