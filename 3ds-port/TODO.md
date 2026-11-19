@@ -128,7 +128,10 @@ Goal: reproduce the original title, selector, design/options menu, course editor
 - [ ] Translate shared transition phases 1 and 2 into semantic native menu state and renderer events; see the 2026-11-19 source trace in `STAGE2_TRACE.md`. Do not reproduce the dynamic PPU command buffer or OAM algorithm in the game runtime.
   - [x] Add an isolated native phase-1 timing/payload translation and 64 deterministic ASM-oracle differential vectors (not integrated; payload meaning still needs caller/state classification).
   - [ ] Resolve the seven-byte payload's contextual meaning before native rendering integration.
-  - [ ] Trace and translate phase-2 timer/input branches, three transition records, and their native visual events.
+  - [x] Expand the source trace for phase-2 timer/input branches, the three table-driven sprite records, and the shared sprite-layout routine; see the 2026-11-19 refinement in STAGE2_TRACE.md. This is trace-only, not native implementation.
+  - [ ] Trace the remaining dynamic inputs and identify the source graphics/visible meaning of phase-2 sprite groups.
+  - [ ] Translate phase-2 timing and branch decisions to semantic native state, with differential tests for every branch.
+  - [ ] Implement the corresponding native transition sprite events and integrate them into the renderer.
 - [ ] Implement native title, selector, design/options and editor entry/return screens from verified assets.
 - [ ] Implement all cursor/selection movement, confirmation, cancel/back and state transitions.
 - [ ] Implement native save/load format and UI. Preserve original user-visible behavior where possible; document unavoidable platform differences instead of pretending they are identical.
