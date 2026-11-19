@@ -362,6 +362,7 @@ static int confirmFrom(unsigned int selection, GameState **out)
 static int testDesignConfirm(void)
 {
     GameState *s = NULL;
+    unsigned int i;
     if (confirmFrom(0u, &s)) return 1;
     CHECK(s->menu_asm_state == 10u && s->menu_ram03F2 == 0u && s->menu_ram0040 == 0u && s->menu_ram0044 == 0u, 100);
     free(s);
