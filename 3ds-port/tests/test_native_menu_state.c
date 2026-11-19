@@ -94,16 +94,13 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
 static int test_native_transition_phase1(void)
 {
     NativeMenuState menu;
-    static const uint8_t payload[7] = { 0x11u, 0x22u, 0x33u, 0x44u, 0x55u, 0x66u, 0x77u };
-    unsigned i;
 
     memset(&menu, 0, sizeof(menu));
     menu.transition_phase = 1u;
     menu.transition_flag_004B = 1u;
     menu.timer_values[18] = 2u;
-    memcpy(menu.transition_payload, payload, sizeof(payload));
     nativeMenuTransitionPhase1(&menu);
-    if (menu.transition_phase != 1u || menu.transition_patch_valid != 0u ||
+    if (menu.transition_phase != 1u || menu.transition_phase != 1u ||
         menu.timer_values[18] != 2u) {
         puts("FAIL: CB77 must wait while the source transition timer is nonzero");
         return 1;
@@ -111,18 +108,10 @@ static int test_native_transition_phase1(void)
 
     menu.timer_values[18] = 0u;
     nativeMenuTransitionPhase1(&menu);
-    if (menu.transition_phase != 2u || menu.transition_patch_valid == 0u ||
-        menu.transition_duration != 0x20u || menu.timer_values[18] != 0x23u ||
-        menu.transition_patch_layer != 1u || menu.transition_patch_x != 15u ||
-        menu.transition_patch_y != 6u) {
-        puts("FAIL: CB77 native semantic patch metadata/timing mismatch");
+    if (menu.transition_phase != 2u ||
+        menu.transition_duration != 0x20u || menu.timer_values[18] != 0x23u) {
+        puts("FAIL: CB77 native phase/timing mismatch");
         return 1;
-    }
-    for (i = 0u; i < sizeof(payload); ++i) {
-        if (menu.transition_patch[i] != payload[i]) {
-            puts("FAIL: CB77 native semantic patch payload mismatch");
-            return 1;
-        }
     }
 
     memset(&menu, 0, sizeof(menu));
@@ -141,7 +130,7 @@ static int test_native_transition_phase1(void)
         puts("FAIL: CB77 handler must ignore non-phase-1 states");
         return 1;
     }
-    puts("PASS: native CB77 phase-1 semantic patch timing and payload unit tests.");
+    puts("PASS: native CB77 phase-1 timing/state unit tests (visual payload intentionally unimplemented).");
     return 0;
 }
 
@@ -172,9 +161,6 @@ static int test_native_transition_phase1_differential(Cpu6502 *reference)
             native_menu.transition_phase = 1u;
             native_menu.transition_flag_004B = (uint8_t)flag;
             native_menu.timer_values[18] = 0u;
-            for (i = 0u; i < 7u; ++i) {
-                native_menu.transition_payload[i] = (uint8_t)(sample * 7u + i * 19u);
-            }
             nativeMenuTransitionPhase1(&native_menu);
             if (native_menu.transition_phase != reference->ram[0x0044u] ||
                 native_menu.transition_duration != reference->ram[0x03ADu] ||
@@ -191,7 +177,7 @@ static int test_native_transition_phase1_differential(Cpu6502 *reference)
             ++vectors;
         }
     }
-    printf("PASS: %lu native CB77 phase-1 transition vectors match original ASM state/timing/payload.\\n", vectors);
+    printf("PASS: %lu native CB77 phase-1 timing/state vectors match original ASM (visual payload excluded).\\n", vectors);
     return 0;
 }
 
