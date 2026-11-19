@@ -179,6 +179,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
 void nativeMenuTransitionPhase0(NativeMenuState *menu)
 {
     uint8_t course;
+    uint8_t shifted_counter;
 
     if (menu == 0) {
         return;
@@ -192,9 +193,12 @@ void nativeMenuTransitionPhase0(NativeMenuState *menu)
                 menu->title_flag_03F3 =
                     (uint8_t)(menu->title_flag_03F3 + 1u);
                 if ((menu->title_flag_03F3 & 1u) == 0u) {
-                    menu->transition_counter_03F8 =
+                    shifted_counter =
                         (uint8_t)(menu->transition_counter_03F8 >> 1);
-                    /* The following SEC/BCS always skips the course INC. */
+                    if (shifted_counter != 0u) {
+                        menu->transition_counter_03F8 = shifted_counter;
+                        /* SEC/BCS skips the course INC. */
+                    }
                 }
             } else if (course < 0x04u) {
                 menu->selected_course = (uint8_t)(course + 1u);
