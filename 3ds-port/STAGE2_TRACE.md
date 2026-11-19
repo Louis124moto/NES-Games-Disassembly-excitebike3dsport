@@ -493,4 +493,6 @@ The state-$09 setup list 5 now executes its first two original routines through 
 
 After command 1 the sequencer holds at command index 2. It does **not** skip command 2 (`$C820`): that command invokes `sub_D13F/sub_ECE4` and requires the dynamic PPU upload path at `sub_D3C1`. Commands 3–5 (`$C5A3`, `$C562`, `$C5C2`) therefore remain unreachable until command 2 is integrated. The editor is not yet a working handoff.
 
-**Validation boundary:** the code changes are committed, but no fresh host differential run, exact-commit New 3DS build, or physical-hardware test has been confirmed for this batch.
+**Regression added:** `tests/test_menus.c::testEditorSetupPrelude` checks the state-9 prelude, both setup effects, and the fact that the sequencer remains parked at command index 2. The host frame-model test exercises the C fallback path; the generated instruction implementations for `$C551/$C869` are also listed in the existing differential oracle suite.
+
+**Validation boundary:** the regression source is committed, but no fresh host differential run, exact-commit New 3DS build, or physical-hardware test has been confirmed for this batch.
