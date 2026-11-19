@@ -20,16 +20,18 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 - [x] Removed the generated 6502 recompiler, CPU call glue, NES system/APU/game wrappers, old emulator menu, tape-menu bridge, emulator-only tests, and their generators from the active source tree.
 - [x] The 3DS Makefile now compiles the native C source glob directly; no emulator exclusion list is needed.
 - [x] The host-only 6502 reference CPU remains under `tests/oracle/` for deterministic differential tests and is not in the 3DS source glob.
-- [x] Added native `sub_CE29` acceleration and `sub_CE58/sub_CE5C` deceleration helpers. Exact-commit host tests passed 667,648 deterministic vectors against the original ASM; the same commit built for New 3DS. See `STAGE3_TRACE.md`.
-- [ ] Separate the asset inspector and its PPU preview helpers from the final game runtime. The current executable is still an asset inspector, not a playable native game.
-- [ ] Implement native menus, then complete player physics and all remaining gameplay systems.
+- [x] Added native acceleration/deceleration, terrain-gate, player speed-control, temperature/overheat, movement-delta, player-scroll and opponent-position helpers. Exact-commit host tests compare implemented slices against original ASM (including 1,224,704 speed/terrain/temperature vectors and 574,288 movement vectors); see `STAGE3_TRACE.md` and differential CI.
+- [ ] Separate the asset inspector and its static PPU asset-preview/compositor code from the final game runtime. The current executable is still an asset inspector, not a playable native game.
+- [x] Added native C menu-selection/state/timer code for title, course-selector and design-menu states, plus shared transition phase 0 and timer-expired transition completion. These functions are isolated and not yet wired into the active application loop.
+- [ ] Implement remaining native menu transition phases, setup-list commands, rendering and save/load paths; integrate the native menu into the real application loop.
+- [ ] Complete player-physics integration and all remaining gameplay systems.
 
 
 ### What happens to the emulator/recompiler work
 
-- [x] Disconnect emulator/recompiler execution from the active game loop and exclude the 6502/PPU/APU runtime objects from the 3DS build. Evidence: `source/game.c`, `Makefile`, `source/native_menu.c`, `tests/test_native_runtime_boundary.py`; exact-commit CI still being checked.
+- [x] Disconnect emulator/recompiler execution from the active game loop and delete the old 6502/PPU/APU gameplay runtime. Evidence: `source/game.c`, `Makefile`, `tests/test_native_runtime_boundary.py`; host and New 3DS CI pass on native-code revisions.
 - [x] Delete the generated 6502 C recompiler, NES system/APU runtime, PRG menu bridge, ROM boot path, old menu emulator, emulator-only tests, and recompiler generators. Preserve the original ASM and the host-only 6502 reference core used by native differential tests.
-- [ ] Retain the reference 6502/oracle only as a host-side test tool if it is needed to prove equivalence. Explicitly verify that no oracle/emulator source is linked into the 3DSX.
+- [x] Retain the reference 6502/oracle only as a host-side test tool. `tests/oracle/` is outside the 3DS source glob; host differential CI passes and the New 3DS build succeeds.
 - [ ] Finish separating the asset inspector and its PPU preview helpers from the final game runtime. The current app is still an asset inspector; it is not yet the native game and may read source ROM/CHR files for extraction.
 - [ ] Replace emulator-specific completion claims and acceptance gates with native subsystem gates. PPU scanline accuracy, NES register emulation, cycle-level bus behavior, and APU hardware emulation are not goals for the final runtime; only the original game's visible/audible behavior is.
 
@@ -41,6 +43,21 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 4. **Stage 4 — remaining original game:** port the remaining courses, modes, editor, save/load and full game flow in original order.
 5. **Stage 5 — faithful release validation:** test complete sessions on New 3DS (and original 3DS where supported), compare against original NES reference scenarios, verify frame pacing/audio/input, and publish the faithful `.3dsx`.
 6. **After faithful acceptance — enhanced branch:** create `enhanced` from the accepted `main` commit. Decide its feature scope separately; never mix enhancements into the faithful baseline.
+
+### Current native code inventory — 2026-11-19
+
+| Subsystem | Native C currently present | Remaining work |
+|---|---|---|
+| Menu logic | `native_menu.c`: selection (`sub_C7DE`), title/selector/design state branches, timer bank (`sub_D310`), shared transition phase 0 (`CB3B`), timer-expired `C465` branch. Differential tests pass. | Remaining `CB2C` phases, nonzero `C465` path, setup lists, complete editor/save/load flow, app integration and faithful graphics. |
+| Bike physics | `bike_physics.c`: acceleration/deceleration, terrain gate, player speed branch, temperature/overheat, fixed-point movement deltas, player scroll and opponent-relative movement. | Full frame update order, braking/posture/jump/landing/crash/collision logic, opponent AI and integration into a playable race. |
+| Menu/game rendering | Native CHR decoder, asset exporter and static asset compositor for the extractor. | Separate asset-preview rendering from the game renderer; implement native menu/course/bike/sprite rendering from verified assets. |
+| Track | `track.c` has module stubs only. | Source-derived course geometry, ramps, obstacles and native rendering. |
+| Collision | `collision.c` is intentionally a no-op. | Trace and implement original collision paths. |
+| Audio | `audio.c` has interface stubs only. | Import verified sound/music data and implement native 3DS playback/mixing and timing. |
+| Race setup | `nes_race_setup.c` contains some source-derived setup translations and tests, but uses a RAM-shaped helper structure and is not integrated into a native playable game. | Convert verified setup results into semantic native game data; avoid NES RAM images as live game state. |
+| Runtime | `game.c` still launches the asset inspector; menu/physics modules are not the playable game loop. | Wire native menus and gameplay into a native game flow; keep extractor available as a separate diagnostic mode/tool. |
+
+**Verified latest code commit:** `7972ed9fad04c3963fb41a031a44537ffeae3853` — host differential workflow [44584137040](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137040) and New 3DS build [44584137025](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44584137025) both passed. These tests prove only the translated slices, not a complete game.
 
 ### Native subsystem acceptance checklist
 
