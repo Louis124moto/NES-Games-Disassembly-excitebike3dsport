@@ -33,6 +33,7 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
     def test_makefile_has_no_emulator_exclusion_workaround(self):
         makefile = (PORT / "Makefile").read_text(encoding="utf-8")
         self.assertNotIn("EXCLUDED_RUNTIME_C", makefile)
+        self.assertIn("CFILES := $(foreach dir,$(SOURCES)", makefile)
         self.assertIn("native_menu.c", (PORT / "source/native_menu.c").read_text(encoding="utf-8"))
         self.assertIn("nativeMenuRenderStatus(state)", (PORT / "source/renderer.c").read_text(encoding="utf-8"))
 
