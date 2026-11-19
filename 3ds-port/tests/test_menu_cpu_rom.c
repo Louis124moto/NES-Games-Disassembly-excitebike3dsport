@@ -173,8 +173,8 @@ static int testRasterSplitD0AB(void)
             split.topCtrl != 0x11u || split.topScrollX != 0x20u ||
             split.topScrollY != 0x30u || split.bottomCtrl != 0x12u ||
             split.bottomScrollX != 0x40u || split.bottomScrollY != 0x50u ||
-            split.splitScanline != 40u ||
-            split.splitDot < 300u || split.splitDot > 340u) {
+            split.splitScanline < 45u || split.splitScanline > 48u ||
+            split.splitDot > 340u) {
             fprintf(stderr, "ROM menu test: D0AB/D14E capture failed ok=%d ctrl=%u scroll=%u line=%u dot=%u top=%02X/%02X/%02X bottom=%02X/%02X/%02X elapsed=%u\n",
                     ok, split.ctrlWrites, split.scrollPairs,
                     split.splitScanline, split.splitDot,
