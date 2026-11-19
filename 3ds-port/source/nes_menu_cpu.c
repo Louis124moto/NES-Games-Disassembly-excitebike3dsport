@@ -112,6 +112,7 @@ typedef struct {
     uint8_t *nametables, *palette, *ctrl, *mask, *scrollX, *scrollY;
     uint16_t address;
     uint8_t addressHigh, addressLatch, scrollLatch, paletteWritten;
+    unsigned long spriteHitCycle;
 } NesMenuPpuBus;
 
 static uint8_t nesMenuPaletteIndex(uint16_t address)
@@ -128,9 +129,9 @@ static uint8_t nesMenuIoRead(NesMachine *machine, uint16_t address)
     if (address == 0x2002u) {
         bus->addressLatch = 0u;
         bus->scrollLatch = 0u;
-        /* The editor's D19B waits for the sprite-0-hit flag. This frame-level
-         * adapter acknowledges the wait; it does not emulate pixel/raster timing. */
-        return 0x40u;
+        /* Approximate the editor's sprite-0 hit at the source-derived CPU-cycle
+         * delay boundary. This is not a pixel-accurate PPU pipeline. */
+        return machine->cyc >= bus->spriteHitCycle ? 0x40u : 0u;
     }
     return 0u;
 }
@@ -224,6 +225,7 @@ int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
     bus.nametables = nametables; bus.palette = palette;
     bus.ctrl = ppuCtrl; bus.mask = ppuMask;
     bus.scrollX = scrollX; bus.scrollY = scrollY;
+    bus.spriteHitCycle = 6431UL;
     machine.user = &bus;
     machine.io_read = nesMenuIoRead;
     machine.io_write = nesMenuIoWrite;
