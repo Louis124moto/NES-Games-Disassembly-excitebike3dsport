@@ -126,6 +126,27 @@ typedef struct BikeMovementState {
     uint8_t secondary_base_nametable;   /* ram_004E */
     uint8_t object_lock_timer[4];       /* ram_0374_obj */
     uint8_t movement_flags[4];          /* ram_005C_obj */
+    /* State consumed by sub_DC1A/sub_DCF2 and their DD38/DD6F dependencies. */
+    uint8_t object_status[4];            /* ram_00B0_obj */
+    uint8_t vertical_reference[4];       /* ram_00BC_obj */
+    uint8_t object_y[4];                 /* ram_obj_pos_Y_lo */
+    uint8_t rider_state[4];              /* ram_0364_obj */
+    uint8_t collision_state[4];           /* ram_0098_obj */
+    uint8_t movement_mode[4];              /* ram_0388_obj */
+    uint8_t brake_state[4];               /* ram_00D4_obj */
+    uint8_t approach[4];                  /* ram_00AC_obj */
+    uint8_t animation_state[4];            /* ram_0368_obj */
+    uint8_t lateral_state[4];              /* ram_00CC_obj */
+    uint8_t motion_fraction[4];            /* ram_0380_obj */
+    uint8_t motion_whole[4];               /* ram_0384_obj */
+    uint8_t motion_fraction_start[4];      /* ram_0378_obj */
+    uint8_t motion_whole_start[4];         /* ram_037C_obj */
+    uint8_t motion_delta[4];               /* ram_038C_obj */
+    uint8_t track_finished;                /* ram_0052 */
+    uint8_t global_vertical_reference;     /* ram_03F1 */
+    uint8_t frame_phase;                   /* ram_004C */
+    uint8_t player_event;                   /* ram_00FF */
+
 } BikeMovementState;
 
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement);
@@ -135,5 +156,8 @@ void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement);
 void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement);
 /* sub_DCDE: update the four per-bike lock timers after the object pass. */
 void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement);
+/* sub_DC1A/sub_DCF2: source-derived vertical recovery and per-bike movement. */
+void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t object_index);
+void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index);
 
 #endif
