@@ -27,6 +27,9 @@ static const NativeMenuSceneAssets *sceneForState(const NativeMenuAssets *assets
     if (state == 0u) return &assets->scenes[0];
     if (state == 1u) return &assets->scenes[1];
     if (state == 8u) return &assets->scenes[2];
+    if (state == 9u) return &assets->scenes[3];
+    if (state == 12u) return &assets->scenes[4];
+    if (state == 13u) return &assets->scenes[5];
     return NULL;
 }
 
@@ -46,7 +49,7 @@ static void putPixel(uint8_t *framebuffer, unsigned int x, unsigned int y,
 }
 
 static void drawBackground(uint8_t *framebuffer, const NativeMenuAssets *assets,
-                           const NativeMenuSceneAssets *scene)
+                           const NativeMenuSceneAssets *scene, unsigned paletteSet)
 {
     unsigned int tileY, tileX, pixelY, pixelX;
     for (tileY = 0u; tileY < 30u; ++tileY) {
@@ -66,8 +69,8 @@ static void drawBackground(uint8_t *framebuffer, const NativeMenuAssets *assets,
                     const size_t paletteIndex = value == 0u ? 0u : (size_t)subpalette * 4u + value;
                     const unsigned int screenX = 72u + tileX * 8u + pixelX;
                     const unsigned int screenY = tileY * 8u + pixelY;
-                    if (assets->palette_written[paletteIndex] != 0u) {
-                        putPixel(framebuffer, screenX, screenY, assets->palette[paletteIndex]);
+                    if (assets->palette_written[paletteSet][paletteIndex] != 0u) {
+                        putPixel(framebuffer, screenX, screenY, assets->palettes[paletteSet][paletteIndex]);
                     }
                 }
             }
@@ -76,7 +79,7 @@ static void drawBackground(uint8_t *framebuffer, const NativeMenuAssets *assets,
 }
 
 static void drawCursor(uint8_t *framebuffer, const NativeMenuAssets *assets,
-                       const NativeMenuState *menu)
+                       const NativeMenuState *menu, unsigned paletteSet)
 {
     unsigned int x, y;
     const unsigned int left = menu->cursor_sprite_x;
@@ -93,8 +96,8 @@ static void drawCursor(uint8_t *framebuffer, const NativeMenuAssets *assets,
             const unsigned int sourceX = (attributes & 0x40u) != 0u ? 7u - x : x;
             const uint8_t value = (uint8_t)(pixels[sourceY * 8u + sourceX] & 3u);
             const size_t paletteIndex = paletteBase + value;
-            if (value == 0u || assets->palette_written[paletteIndex] == 0u) continue;
-            putPixel(framebuffer, 72u + left + x, top + y, assets->palette[paletteIndex]);
+            if (value == 0u || assets->palette_written[paletteSet][paletteIndex] == 0u) continue;
+            putPixel(framebuffer, 72u + left + x, top + y, assets->palettes[paletteSet][paletteIndex]);
         }
     }
 }
@@ -104,6 +107,7 @@ int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     u16 width = 0u, height = 0u;
     uint8_t *framebuffer;
     const NativeMenuSceneAssets *scene;
+    unsigned paletteSet;
     if (menu == NULL) return 0;
     framebuffer = (uint8_t *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &width, &height);
     if (framebuffer == NULL || width != 240u || height != 400u) return 0;
@@ -112,7 +116,9 @@ int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
         assets->chr_pixels == NULL || assets->chr_tile_count == 0u) return 0;
     scene = sceneForState(assets, menu->source_state);
     if (scene == NULL) return 0;
-    drawBackground(framebuffer, assets, scene);
-    drawCursor(framebuffer, assets, menu);
+    paletteSet = menu->source_state == 9u && menu->selected_course < 5u
+        ? (unsigned)menu->selected_course : 6u;
+    drawBackground(framebuffer, assets, scene, paletteSet);
+    drawCursor(framebuffer, assets, menu, paletteSet);
     return 1;
 }
