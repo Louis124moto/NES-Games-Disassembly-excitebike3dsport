@@ -8,7 +8,10 @@ int nesMenuCpuSetupCommand(uint16_t routineAddress, uint8_t asmState,
                            uint8_t ram004D_EF[0xA3]);
 /* Audited RAM/buffer-only routines: C465, C5A3, C562 and C5C2. */
 int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800]);
-/* Execute one source-recompiled state-09 editor frame; PPU hit timing is frame-level. */
+/* Execute the NMI raster split (D14E) and one state-09 editor frame (C97C). */
+int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
+                          uint8_t palette[32], uint8_t *ppuCtrl,
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY);
 int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
                           uint8_t pressedButtons, uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
