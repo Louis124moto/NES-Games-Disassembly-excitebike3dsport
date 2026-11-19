@@ -4,6 +4,7 @@
 #include "nes_active_stream.h"
 #include "menus.h"
 #include "nes_routines.h"
+#include "nes_menu_cpu.h"
 
 /*
  * Source-derived subset of sub_C2A9's command sequencer. The command-list
@@ -230,6 +231,24 @@ static int menusRunSetupSequence(GameState *state)
  * ($C346). Selection meanings and original title artwork are deliberately
  * not guessed. The menu receives per-frame press edges to match ram_btn_press; state/reset side effects follow bank_FF.asm.
  */
+
+/* Prefer the original, statically recompiled 6502 input routine. The native helper is a
+ * deliberately retained fallback for raw-CHR-only installations without a supported ROM. */
+static uint8_t menusRunInput(uint8_t buttons, uint8_t count, GameState *state, uint8_t *changed)
+{
+    uint8_t before = state->menu_selection;
+    uint8_t action = 0u;
+    if (nesMenuCpuInput(buttons, count, &state->menu_selection,
+                        &state->menu_repeat_guard, &state->menu_timer30,
+                        &state->menu_timer31, &state->menu_ram00FF, &action)) {
+        *changed = (uint8_t)(before != state->menu_selection);
+        return action;
+    }
+    return nesSubC7DEMenuInput(buttons, count, &state->menu_selection,
+                               &state->menu_repeat_guard, &state->menu_timer30,
+                               &state->menu_timer31, changed, &state->menu_ram00FF);
+}
+
 void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKeys)
 {
     uint8_t nesButtons = 0u;
@@ -293,10 +312,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         }
 
         /* ofs_000_C346_00: the actual three-entry title menu. */
-        state->menu_action_x = nesSubC7DEMenuInput(
-            nesButtons, 3u, &state->menu_selection,
-            &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed, &state->menu_ram00FF);
+        state->menu_action_x = menusRunInput(nesButtons, 3u, state, &changed);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorY[3] = {0x80u, 0x90u, 0xA0u};
@@ -319,10 +335,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         /* ofs_000_C395_01 remaps LEFT/RIGHT onto the vertical selector. */
         uint8_t selectorButtons = (uint8_t)((nesButtons & 0xF3u) |
                                            ((nesButtons & 0x03u) << 2));
-        state->menu_action_x = nesSubC7DEMenuInput(
-            selectorButtons, 5u, &state->menu_selection,
-            &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed, &state->menu_ram00FF);
+        state->menu_action_x = menusRunInput(selectorButtons, 5u, state, &changed);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             static const uint8_t cursorX[5] = {0x48u, 0x60u, 0x78u, 0x90u, 0xA8u};
@@ -336,10 +349,7 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
             nesSubC3B1ResetFrameFlags(&state->menu_ram0040, &state->menu_ram0044);
         }
     } else if (state->menu_asm_state == 8u) {
-        state->menu_action_x = nesSubC7DEMenuInput(
-            nesButtons, 6u, &state->menu_selection,
-            &state->menu_repeat_guard, &state->menu_timer30,
-            &state->menu_timer31, &changed, &state->menu_ram00FF);
+        state->menu_action_x = menusRunInput(nesButtons, 6u, state, &changed);
         state->menu_selection_changed = changed;
         if (state->menu_action_x == 0u) {
             /* tbl_C08B_spr_Y indexed by ram_0042, exactly as bra_C3EA. */
