@@ -57,8 +57,16 @@ int main(int argc, char **argv)
                         return 1;
                     }
 
-                    nativeMenuUpdateSelection(&native_state, (uint8_t)pressed,
-                                              entry_counts[count_index]);
+                    {
+                        const uint8_t confirmed = nativeMenuUpdateSelection(&native_state, (uint8_t)pressed,
+                                                                             entry_counts[count_index]);
+                        if (reference.x != (confirmed != 0u ? 4u : 0u)) {
+                            printf("FAIL: sub_C7DE confirm output count=%u selection=%u debounce=%u pressed=%02X native=%u ASM_X=%u\\n",
+                                   entry_counts[count_index], selection, debounce, pressed,
+                                   confirmed, reference.x);
+                            return 1;
+                        }
+                    }
                     if (native_state.selection != reference.ram[0x0042u] ||
                         native_state.debounce != reference.ram[0x0049u] ||
                         native_state.selection_dirty != reference.ram[0x00FFu] ||
