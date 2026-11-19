@@ -16,22 +16,21 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 
 ### Runtime cutover progress — 2026-11-19
 
-- [x] `game.c` no longer initializes or steps `nesGame`, `nesSystem`, the PRG-backed menu recompiler, or the APU output. The live loop is currently the source-asset inspector only; this is an intentional honest intermediate state, not a playable game.
-- [x] The 3DS Makefile excludes `menus.c`, generated 6502 code, CPU-call/machine glue, PRG menu recompiler, NES system layer, APU model and NES audio output from the final link.
-- [x] Renderer no longer calls the old ASM/PPU menu model; a separate native-menu presentation boundary is in place.
-- [x] CI has a static guard test that rejects reintroduction of emulator boot calls or emulator runtime objects into the 3DS build.
-- [ ] Move or remove emulator implementation files from `source/` and quarantine only the minimum offline reference oracle needed for ASM differential testing. Do not link those files into the 3DSX.
-- [ ] Replace the asset-inspector-only startup with the native menu implementation. Until this is done, START/gameplay is intentionally unavailable.
-- [ ] Run and pass the exact-commit New 3DS build and native-runtime boundary CI after the cutover; record the resulting run IDs.
+- [x] The live game loop no longer initializes or steps an NES CPU/system/APU or PRG-backed menu recompiler.
+- [x] Removed the generated 6502 recompiler, CPU call glue, NES system/APU/game wrappers, old emulator menu, tape-menu bridge, emulator-only tests, and their generators from the active source tree.
+- [x] The 3DS Makefile now compiles the native C source glob directly; no emulator exclusion list is needed.
+- [x] The host-only 6502 reference CPU remains under `tests/oracle/` for deterministic differential tests and is not in the 3DS source glob.
+- [x] Added a native `sub_CE29` player-speed helper with an exhaustive 524,288-vector comparison against the original ASM. CI verification is pending.
+- [ ] Separate the asset inspector and its PPU preview helpers from the final game runtime. The current executable is still an asset inspector, not a playable native game.
+- [ ] Implement native menus, then complete player physics and all remaining gameplay systems.
 
-**Important:** the old emulator/recompiler files still exist in the repository for historical/offline test work. They are excluded from the 3DS executable, not yet physically removed from the source tree. No native gameplay implementation is claimed by this cutover.
 
 ### What happens to the emulator/recompiler work
 
 - [x] Disconnect emulator/recompiler execution from the active game loop and exclude the 6502/PPU/APU runtime objects from the 3DS build. Evidence: `source/game.c`, `Makefile`, `source/native_menu.c`, `tests/test_native_runtime_boundary.py`; exact-commit CI still being checked.
-- [ ] Remove or quarantine the generated 6502 C output, NES CPU/system/PPU/APU runtime, ROM-boot path, emulator controls, and emulator-only assets once native replacements are ready. Do not delete useful ASM traces, test vectors, or reference tools that support offline differential verification.
+- [x] Delete the generated 6502 C recompiler, NES system/APU runtime, PRG menu bridge, ROM boot path, old menu emulator, emulator-only tests, and recompiler generators. Preserve the original ASM and the host-only 6502 reference core used by native differential tests.
 - [ ] Retain the reference 6502/oracle only as a host-side test tool if it is needed to prove equivalence. Explicitly verify that no oracle/emulator source is linked into the 3DSX.
-- [ ] Audit the Makefile, source wildcards, startup flow, controls, README instructions, and CI workflows so the final executable is a native game and does not require `rom.nes` or `dspfirm.cdc`.
+- [ ] Finish separating the asset inspector and its PPU preview helpers from the final game runtime. The current app is still an asset inspector; it is not yet the native game and may read source ROM/CHR files for extraction.
 - [ ] Replace emulator-specific completion claims and acceptance gates with native subsystem gates. PPU scanline accuracy, NES register emulation, cycle-level bus behavior, and APU hardware emulation are not goals for the final runtime; only the original game's visible/audible behavior is.
 
 ### New controlling milestone order
