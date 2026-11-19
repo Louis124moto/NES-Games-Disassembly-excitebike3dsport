@@ -87,6 +87,12 @@ int nesPpuFindSprite0HitCycle(const uint8_t *chrPixels, size_t tileCount,
                               const uint8_t *oam, uint8_t ppuCtrl,
                               uint8_t ppuMask, const uint8_t *bgOpaque,
                               unsigned long *cpuCycleFromPrerender);
+/* Composite top/bottom PPU frames at the D14E scanline/dot split. */
+int nesPpuCompositeRasterSplit(const uint8_t *topRgb, const uint8_t *topOpaque,
+                               const uint8_t *bottomRgb, const uint8_t *bottomOpaque,
+                               uint8_t splitScanline, uint16_t splitDot,
+                               uint8_t *outRgb, size_t rgbCapacity,
+                               uint8_t *outOpaque, size_t opaqueCapacity);
 
 int nesPpuRenderNametableOpaque(const uint8_t *chrPixels, size_t tileCount,
                                 const uint8_t *nametable, const uint8_t *attributes,
