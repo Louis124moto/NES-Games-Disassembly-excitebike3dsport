@@ -1,9 +1,16 @@
 #include <string.h>
 #include "native_menu.h"
 
-static const uint8_t s_titleCursorY[3] = { 0x80u, 0x90u, 0xA0u };
-static const uint8_t s_selectorCursorX[5] = { 0x48u, 0x60u, 0x78u, 0x90u, 0xA8u };
-static const uint8_t s_designCursorY[6] = { 0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u };
+/* Contiguous ROM bytes preserve even out-of-range table reads in regression tests. */
+static const uint8_t s_titleCursorY[8] = {
+    0x80u, 0x90u, 0xA0u, 0x48u, 0x60u, 0x78u, 0x90u, 0xA8u
+};
+static const uint8_t s_selectorCursorX[8] = {
+    0x48u, 0x60u, 0x78u, 0x90u, 0xA8u, 0x50u, 0x48u, 0x4Cu
+};
+static const uint8_t s_designCursorY[8] = {
+    0x30u, 0x48u, 0x78u, 0x90u, 0xA8u, 0xC0u, 0x01u, 0x10u
+};
 
 
 /* Source: sub_C7DE ($C7DE-$C81F). */
@@ -218,7 +225,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
         } else {
             /* TXA=0 path: C346 loads tbl_C080_spr_Y,Y into OAM sprite 0 Y. */
             menu->selected_mode = 0u;
-            if (menu->input.selection < 3u) {
+            if (menu->input.selection < 8u) {
                 menu->cursor_sprite_y = s_titleCursorY[menu->input.selection];
             }
         }
@@ -234,7 +241,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
             menu->selected_course = menu->input.selection;
             menu->source_state = 2u;
             nativeMenuResetSetupSequence(menu);
-        } else if (menu->input.selection < 5u) {
+        } else if (menu->input.selection < 8u) {
             /* C3B8 -> C411 updates only cursor X, attribute and ram_0046. */
             menu->cursor_sprite_x = s_selectorCursorX[menu->input.selection];
             menu->cursor_sprite_attribute = 0u;
@@ -245,7 +252,7 @@ void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
 
     case 8u: /* ofs_000_C3BD_08 — design/options */
         confirmed = nativeMenuUpdateSelection(&menu->input, pressed, 6u);
-        if (confirmed == 0u && menu->input.selection < 6u) {
+        if (confirmed == 0u && menu->input.selection < 8u) {
             /* C3EA -> C3EF updates the design-menu cursor Y. */
             menu->cursor_sprite_y = s_designCursorY[menu->input.selection];
         }
