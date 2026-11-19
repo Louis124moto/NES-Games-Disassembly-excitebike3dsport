@@ -43,21 +43,19 @@ static const uint8_t kZeroWholeThreshold[2] = { 0x01u, 0xB0u };
 void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
                                  uint8_t frame_phase,
                                  uint8_t deceleration_mode,
-                                 uint8_t object_status)
+                                 uint8_t zero_whole_threshold)
 {
     uint8_t old_fraction;
     uint8_t amount;
-    uint8_t profile;
 
     if (speed == 0 || frame_phase != 0u ||
         deceleration_mode >= 7u ||
-        (object_status != 0u && object_status != 2u)) {
+        (zero_whole_threshold != 0x01u && zero_whole_threshold != 0xB0u)) {
         return;
     }
 
-    profile = (uint8_t)(object_status >> 1);
     if (speed->whole == 0u &&
-        speed->fraction < kZeroWholeThreshold[profile]) {
+        speed->fraction < zero_whole_threshold) {
         return;
     }
 
