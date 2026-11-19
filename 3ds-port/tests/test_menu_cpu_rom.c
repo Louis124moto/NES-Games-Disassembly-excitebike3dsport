@@ -155,10 +155,14 @@ static int testRasterSplitD0AB(void)
     cpuRam[0x00BBu] = 0x30u;
     for (i = 0u; i < 256u; ++i) cpuRam[0x0200u + i] = (uint8_t)(i ^ 0x5Au);
 
-    if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
-                               &scrollX, &scrollY)) {
-        fputs("ROM menu test: D0AB/D14E raster adapter failed\n", stderr);
-        return 0;
+    {
+        uint32_t elapsedCycles = 0u;
+        if (!nesMenuCpuRasterSplit(cpuRam, nametables, palette, &ctrl, &mask,
+                                   &scrollX, &scrollY, 0u, &elapsedCycles) ||
+            elapsedCycles == 0u) {
+            fputs("ROM menu test: D0AB/D14E raster adapter failed\n", stderr);
+            return 0;
+        }
     }
     if (cpuRam[0x0360u] != 4u || cpuRam[0x0361u] != 3u ||
         cpuRam[0x0362u] != 2u || cpuRam[0x0363u] != 0u) {
@@ -252,6 +256,10 @@ int main(void)
     if (s.menu_ram05E0[0] != 1u)
         return fail("C5C2 course page was not copied into GameState", frame, &s);
 
+    /* The host renderer is not linked into this ROM-only test; seed a known source hit. */
+    s.menu_sprite0_hit_found = 1u;
+    s.menu_sprite0_hit_cycle = 0u;
+    s.menu_ppu_cycle_phase = 0u;
     /* One original C97C frame must return through the emulated sprite-hit wait. */
     menusNmiFrame(&s, KEY_LEFT, KEY_LEFT);
     if (s.menu_asm_state != 9u)
