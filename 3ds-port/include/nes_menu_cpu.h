@@ -11,11 +11,13 @@ int nesMenuCpuRunRamRoutine(uint16_t routineAddress, uint8_t cpuRam[0x800]);
 /* Execute the NMI raster split (D14E) and one state-09 editor frame (C97C). */
 int nesMenuCpuRasterSplit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
-                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY);
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY,
+                          uint8_t previousFrameHadSprite0Hit, uint32_t *elapsedCycles);
 int nesMenuCpuEditorFrame(uint8_t cpuRam[0x800], uint8_t heldButtons,
                           uint8_t pressedButtons, uint8_t nametables[2048],
                           uint8_t palette[32], uint8_t *ppuCtrl,
-                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY);
+                          uint8_t *ppuMask, uint8_t *scrollX, uint8_t *scrollY,
+                          uint32_t sprite0HitCycleFromCallStart);
 int nesMenuCpuEditorInit(uint8_t cpuRam[0x800], uint8_t nametables[2048],
                          uint8_t palette[32], uint8_t *ppuCtrl,
                          uint8_t *ppuMask, uint8_t *scrollX,
