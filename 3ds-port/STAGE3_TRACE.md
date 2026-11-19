@@ -1,3 +1,5 @@
+<!-- NATIVE-PORT STATUS NOTICE (2026-11-19): This file is retained as source-trace and differential-test evidence. Native C physics/movement slices documented below are reusable, but any NES CPU/PPU/APU execution, RAM-backed runtime, or emulator/recompiler integration is forbidden in the final 3DS game. Continue by translating game behavior into semantic native state and integrate it into the native race loop. This file does not claim a complete playable race. See TODO.md and NATIVE_PORT_ARCHITECTURE.md. -->
+
 # Stage 3 trace — first course entry (started 2026-11-18)
 
 Status: **partial native physics slices implemented and host-differential-tested; no playable race yet.** The trace below is read from `Excitebike/bank_FF.asm`; nothing is inferred from slot numbers or generic physics.
