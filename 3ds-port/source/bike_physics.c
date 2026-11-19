@@ -460,9 +460,15 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
     }
 
     /* SEC / SBC $00BC,X / SBC object-Y: all arithmetic wraps at 8 bits. */
-    vertical_delta = (uint8_t)(movement->global_vertical_reference -
-                               movement->vertical_reference[object_index]);
-    vertical_delta = (uint8_t)(vertical_delta - movement->object_y[object_index]);
+    {
+        const uint8_t first = (uint8_t)(movement->global_vertical_reference -
+                                        movement->vertical_reference[object_index]);
+        const uint8_t first_borrow =
+            movement->global_vertical_reference < movement->vertical_reference[object_index]
+                ? 1u : 0u;
+        vertical_delta = (uint8_t)(first - movement->object_y[object_index] -
+                                   first_borrow);
+    }
 
     if (vertical_delta >= movement->y_low[object_index] ||
         movement->y_low[object_index] >= 0xA8u ||
@@ -496,7 +502,9 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
     }
 
     target = movement->brake_state[object_index];
-    if (movement->speed_whole[object_index] < 0x02u) {
+    /* CPY #$02 / BPL: the source adds eight for Y in [$02,$81]. */
+    if (movement->speed_whole[object_index] >= 0x02u &&
+        movement->speed_whole[object_index] < 0x82u) {
         target = (uint8_t)(target + 0x08u);
     }
     table_index = target;
