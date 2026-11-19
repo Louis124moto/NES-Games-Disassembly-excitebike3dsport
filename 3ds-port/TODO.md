@@ -231,13 +231,14 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 
 | Measure | Current status |
 |---|---|
-| ASM inventory | 177 labels beginning with `sub_` are listed in `ASM_FUNCTION_INVENTORY.md`; some may be aliases, helpers, or non-standalone labels. |
-| Latest documented batch | 20 entry translations added to `nes_routines.c` and `nes_routines.h` on 2026-10-21. |
-| Latest batch test wiring | A dedicated regression group is present in `tests/test_nes_routines.c`. |
-| Latest host routine test execution | **Passed** in [CI run 44510600117](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) (revision `a547c0f2`), including PRG-backed list-3, list-5, C465, C97C and guarded B-return vectors. |
-| Latest completed 3DS build | **Passed** in [CI run 44510600084](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084) (revision `a547c0f2`), with the source-recompiled menu paths linked into the active runtime. |
-| Latest batch gameplay integration | Not demonstrated. |\n| Current milestone order | Stage 1 is owner-accepted; Stage 2 remains in progress and blocks Stage 3. No playable race or full-game fidelity is claimed. |
-| End-to-end game fidelity | Not achieved; no complete scenario comparison is documented. |
+| ASM inventory | 177 labels beginning with sub_ are listed in ASM_FUNCTION_INVENTORY.md; some are aliases/helpers rather than standalone routines. |
+| Runtime cleanup | Legacy generated 6502 recompiler, NES system/APU runtime, PRG menu bridge, emulator menu, and their tests/generators deleted from active source tree. Host-only 6502 reference CPU retained. |
+| Stage 1 — extractor | Owner-accepted, with remaining source/hardware verification debt. It is still the current app startup. |
+| Stage 2 — native menus/front-end | NOT IMPLEMENTED. Native title/selector/design menu and native renderer remain the next major milestone. |
+| Stage 3 — first race | BLOCKED until Stage 2 is accepted. One isolated sub_CE29 acceleration step is translated; complete physics and playable race are not implemented. |
+| Native speed test | 524,288 deterministic vectors compare the native player acceleration step against the original ASM via the host-only 6502 reference CPU. CI result pending. |
+| Latest 3DS build | PASSED after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22: [CI run 44572700892](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892). |
+| Full-game fidelity | Not achieved; no complete native race or end-to-end comparison is documented. |
 
 A project-wide total for translated/tested/integrated/fidelity-verified routines is **not published yet** because the routine inventory, helper definitions, state models, test history, and gameplay integration are not reconciled into one evidence-backed count. Do not calculate a completion percentage from C function counts or label-name matches.
 
