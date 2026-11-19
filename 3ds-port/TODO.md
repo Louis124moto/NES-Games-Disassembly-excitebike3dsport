@@ -76,7 +76,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Area | Present native code/evidence | Not yet proven or implemented |
 |---|---|---|
 | Input | `inputMapNesButtons` maps libctru buttons to semantic/original input bits; all 256 combinations tested. | Full game action handling/integration. |
-| Menu logic | `nativeMenuUpdateSelection` (`sub_C7DE`), title/selector/design state logic, timer bank (`sub_D310`), transition phase 0 (`CB3B`), phase 3 (`CC6B`) and timer-expired `C465` branch have source-derived tests. | Remaining transition phases/branches, setup command semantics, complete editor/save/load, native visual/audio presentation, app integration and reference capture comparison. |
+| Menu logic | Owner-accepted development baseline: native title/selector/design state and direct-framebuffer presentation are integrated in the app loop. | Optional editor/tape save-load screens are deferred; race-entry transition and visual/hardware acceptance remain open. |
 | Bike speed/physics | Native four-slot speed-control prefix (sub_CD59) and active-bike dispatch (sub_CD1F), plus acceleration/deceleration/terrain gate and temperature/overheat slices. New all-slot tests compare 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame vectors against the ASM oracle. | Remaining sub_CD59 steering/posture side effects, heat state integration, jump/landing, crash/recovery, opponents and complete frame ordering. |
 | Movement | Native fixed-point movement deltas, player scroll and opponent-relative position slices. | Full object update, collision, track event and race-frame integration. |
 | Track | Module/interface scaffolding. | Verified course geometry, ramps, obstacles, scrolling and native rendering. |
@@ -84,7 +84,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Collision | No faithful complete implementation. | Trace and implement all original collision paths. |
 | Graphics | CHR extraction/decoding, exported EBPX/snapshots, and direct-framebuffer native rendering for title/selector/design plus static editor/save/load source-snapshot backgrounds. | Validate all scenes/palettes against reference captures; implement editor objects/cursor, save/load UI, transition sprites and animations. |
 | Audio | Interface/scaffolding only. | Source-derived sound/music import, native playback/mixing and event timing. |
-| Runtime/game flow | Native app scaffold currently launches asset inspection. | Native title-to-results game loop and all transitions. |
+| Runtime/game flow | Native title/selector/design front-end runs without loading the ROM; X opens the separate extractor. The native race speed dispatcher now exists as a tested subsystem. | Wire race entry and the complete state-2 game loop; finish track, object, collision, rendering, audio and results integration. |
 
 ### Existing differential evidence
 
