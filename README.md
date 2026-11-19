@@ -63,8 +63,8 @@ The original NES disassembly is the behavioral reference. Its source files must 
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
 | Stage 2 — native menus/front-end | NOT YET IMPLEMENTED as the required native architecture. Existing menu/PPU/recompiler work is historical reference material only. Stage 3 blocked. |
-| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. One isolated native speed-acceleration helper (sub_CE29) has been translated; full physics and playable race are not implemented. |
-| Latest code batch | Emulator/recompiler game runtime deleted. Native sub_CE29 player acceleration helper added with an exhaustive ASM differential test; CI result pending. |
+| Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Native acceleration/deceleration helpers (sub_CE29 and sub_CE58/sub_CE5C) are translated and validated against 667,648 ASM reference vectors; full physics and playable race are not implemented. |
+| Latest code batch | Emulator/recompiler game runtime deleted. Native player speed helpers added; 667,648 ASM differential vectors and the New 3DS build passed on commit 1007cc9c. |
 | Latest host test / 3DS build | 3DS build passed after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22 ([CI run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892)). Native physics differential CI is pending. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
