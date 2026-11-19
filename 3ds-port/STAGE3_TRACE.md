@@ -13,8 +13,33 @@ Status: **source trace only. No gameplay code is ported yet.** Everything below 
   6. `ofs_001_C875_02_06`: `INC ram_0047, INC ram_0040`, `ram_0034_timer` default 5, `E8=$34, E9=$14`, `03F1=$A0`, `03B4=03B0=$80`, `03BD=$FF`, `0370=1`, `03BE=2`, then per-object init loop from `tbl_C0B4/C0B0/C0B8` (X=3, or 0 when `ram_03F2==0`) — remainder not yet read.
 - Race frame handler `ofs_000_C99A` (states 2/5/0A): `sub_CA08` (4× `sub_DCA0`+`sub_DFB2`, pause logic, `ram_005C = ram_btn_hold`), then unless paused: `sub_D918, sub_DD8D, sub_E733, sub_E927`, finish test `ram_0052`, then `sub_DA9F/DBC4/DEBB` (when `ram_03F2≠0`), `sub_DF30, sub_EAC5, sub_DFD5, sub_E09F`, `sub_DDD1, sub_CD1F, sub_E96C, sub_DE31, sub_E836, sub_EA44, sub_F4FF, sub_E4C8, sub_DEE2, sub_E359, sub_E17F, sub_E456, sub_DA26, sub_E70B, sub_D19B, sub_CED0, loc_E42B`.
 
+## Native bike-speed translation — first source-verified slice (2026-11-19)
+
+This is a narrow native implementation, not a complete physics port.
+
+### Confirmed source behavior
+
+- `sub_CA08` updates four object/control slots through `sub_DCA0` and `sub_DFB2`, then stores the controller's held byte from `ram_btn_hold` at `ram_005C_obj` (zero-page address `$005C`, object slot 0).
+- `sub_CD1F` iterates object slots X=3 down to X=0 and calls `sub_CD59`. The X=0 path is the player-controlled path; it receives the controller byte stored at `$005C`.
+- `sub_D14E` sets `ram_004C = ram_003F & $03`. Therefore `ram_004C` is a four-phase update selector, **not** the player object index. The player speed step at X=0 is eligible only on phase 0.
+- The player's fixed-point speed is stored as low/fraction byte `ram_0090_obj` and whole byte `ram_0094_obj` (X=0 means `$0090/$0094`). `sub_DA58` later transfers the whole speed byte into the per-frame movement accumulator and folds the fraction into `ram_0394_obj`.
+- `sub_CD59` selects the acceleration-table index from the two upper controller bits: bit 7 takes the no-increment path after ASL (Y=0); bit 6 alone increments the saved index (Y=1). If both are held, bit 7 wins. This records the exact bit-path; the control labels are not inferred from game feel.
+- `sub_CE29` first compares X with `ram_004C`; on the matching phase it adds `tbl_C0BC[Y]` to the fractional byte, increments the whole byte on carry, and for X=0 clamps against `tbl_C0CE[Y]` and `tbl_C0D1[Y]`.
+- Source table values used by the player path: increments `$18/$3F` (`$C0BC/$C0BD`), fractional caps `$20/$40` (`$C0CE/$C0CF`), whole caps `$03/$03` (`$C0D1/$C0D2`).
+
+### Native implementation
+
+- `source/bike_physics.c::bikePhysicsAcceleratePlayer` translates only `sub_CE29` for X=0, preserving byte wraparound and the original phase gate.
+- `tests/test_bike_speed.c` executes the original `$CE29` routine directly on the host-only 6502 reference CPU and compares the two speed bytes with the native C result. It covers all 2 modes × 4 phases × 256 whole-byte values × 256 fractional-byte values = **524,288 vectors**.
+- The test consumes a PRG rebuilt from the unmodified `Excitebike/bank_FF.asm`. No generated recompiler, NES system, PPU, or APU is used by this differential test.
+- `bikePhysicsUpdate` remains deliberately empty. This one helper does not implement throttle selection conditions, braking/coasting, temperature, jumps, posture, collisions, AI, or per-frame integration.
+
+### Still required before this is accepted as player physics
+
+Trace and port the complete caller/update path around `sub_CD59`, including `sub_CE5C` deceleration, `sub_CDEE` terrain gating, `ram_004C` phase generation, player initialization, speed movement, heat accumulation/cooling, posture/jump/landing/crash state, and all relevant timers. Add state-vector tests for each branch and compare after each original game frame. The current exhaustive test proves only the isolated `sub_CE29` helper.
+
 ## Not yet traced (required before any gameplay is accepted)
-Player-slot establishment (commands 6/`sub_E1A3`/`sub_EC25`/`loc_EC47`, RAM writers of the player object, input via `ram_005C`), every subroutine in the frame handler above, PPU lists $01/$12–$17 contents, `sub_D14E` raster-split wait (sprite-0 hit), track data decoding, opponents, timers, scoring, crashes/collisions.
+Complete player-slot initialization (commands 6/`sub_E1A3`/`sub_EC25`/`loc_EC47`, all RAM writers), the full `ram_005C` input-to-speed path beyond `sub_CE29`, every subroutine in the frame handler above, PPU lists $01/$12–$17 contents, `sub_D14E` raster-split wait (sprite-0 hit), track data decoding, opponents, timers, scoring, crashes/collisions.
 
 ## Ported so far (2026-11-18) — `source/nes_race_setup.c`, test `tests/test_nes_race_setup.c`
 Earlier helpers were translated line by line and host-tested with hand-derived expectations (including mutation checks on zero-page wrap). The newly added ECE4 helper has regression vectors wired, but project CI execution is still pending:
