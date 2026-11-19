@@ -45,6 +45,8 @@ static void seed_native(NativeMenuState *menu, uint8_t state, uint8_t selection,
     menu->input.selection_dirty = 0xA5u;
     menu->input.input_timer = idle_timer;
     menu->input.start_timer = 0x33u;
+    menu->timer_values[15] = 0x33u;
+    menu->timer_values[16] = idle_timer;
     menu->selected_course = 0xA3u;
     menu->selected_mode = 0xA2u;
     menu->setup_command = 0xB4u;
@@ -77,6 +79,14 @@ static int compare_menu(const NativeMenuState *native, const Cpu6502 *cpu,
     CHECK_FIELD(native->selected_mode, cpu->ram[0x03F2u]);
     CHECK_FIELD(native->title_flag_03F3, cpu->ram[0x03F3u]);
     CHECK_FIELD(native->title_flag_03F7, cpu->ram[0x03F7u]);
+    CHECK_FIELD(native->frame_timer, cpu->ram[0x0020u]);
+    { unsigned ti; for (ti = 0; ti < 29u; ++ti) {
+        if (native->timer_values[ti] != cpu->ram[0x0021u + ti]) {
+            printf("FAIL: %s timer %02X native=%02X ASM=%02X\\n", case_name,
+                   0x21u + ti, native->timer_values[ti], cpu->ram[0x0021u + ti]);
+            return 1;
+        }
+    } }
 #undef CHECK_FIELD
     return 0;
 }
