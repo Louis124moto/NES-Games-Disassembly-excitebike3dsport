@@ -59,11 +59,11 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CC15` | `sub_CC15` | Pending | — |
 | `$CC6B` | `sub_CC6B` | Pending | — |
 | `$CCCA` | `sub_CCCA` | Pending | — |
-| `$CD1F` | `sub_CD1F` | Pending | — |
-| `$CD59` | `sub_CD59` | Pending | — |
-| `$CDEE` | `sub_CDEE` | Pending | — |
-| `$CE29` | `sub_CE29` | Pending | — |
-| `$CE58` | `sub_CE58` | Pending | — |
+| `$CD1F` | `sub_CD1F` | Native active-object dispatch translated and differentially tested for 12,000 deterministic vectors; speed-control loop only, separate race-start handshake not included | Calls native `bikePhysicsUpdateRaceSpeeds`; exact active-slot order 3..0 and controller suppression are verified |
+| `$CD59` | `sub_CD59` | Native speed/terrain prefix through `$CDBD` translated and differentially tested for 120,000 vectors across X=0..3 | Remaining steering, posture and animation side effects after `$CDBD` are not yet translated |
+| `$CDEE` | `sub_CDEE` | Native object-index-aware terrain gate translated; included in the 120,000 four-slot `$CD59` vectors | Player-only `$00FD` event side effect preserved; full surrounding posture/animation flow remains incomplete |
+| `$CE29` | `sub_CE29` | Native object-index-aware acceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
+| `$CE58` | `sub_CE58` | Native object-index-aware deceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE5C` | `sub_CE5C` | Pending | — |
 | `$CED0` | `sub_CED0` | Pending | — |
 | `$CF0C` | `sub_CF0C` | Pending | calls: sub_CF96, sub_CFDB |
