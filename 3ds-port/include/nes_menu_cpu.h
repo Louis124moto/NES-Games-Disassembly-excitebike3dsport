@@ -12,6 +12,7 @@ typedef struct {
     uint8_t topCtrl, topScrollX, topScrollY;
     uint8_t bottomCtrl, bottomScrollX, bottomScrollY;
     uint8_t splitScanline;
+    uint16_t splitDot;
     uint32_t elapsedCycles;
 } NesMenuRasterSplit;
 
