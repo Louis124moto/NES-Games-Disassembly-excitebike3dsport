@@ -236,7 +236,7 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Stage 1 — extractor | Owner-accepted, with remaining source/hardware verification debt. It is still the current app startup. |
 | Stage 2 — native menus/front-end | NOT IMPLEMENTED. Native title/selector/design menu and native renderer remain the next major milestone. |
 | Stage 3 — first race | BLOCKED until Stage 2 is accepted. One isolated sub_CE29 acceleration step is translated; complete physics and playable race are not implemented. |
-| Native speed test | 1,224,704 vectors for acceleration, deceleration, terrain gating, player speed control and temperature/overheat state match the original ASM. [Host CI 44575918494](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918494). |
+| Native speed test | 1,224,704 vectors for speed control and temperature plus 574,288 movement vectors (1,798,992 total) match the original ASM. [Host speed CI 44575918494](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44575918494) · [movement CI 44577215677](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44577215677). |
 | Latest 3DS build | PASSED after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22: [CI run 44572700892](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892). |
 | Full-game fidelity | Not achieved; no complete native race or end-to-end comparison is documented. |
 
