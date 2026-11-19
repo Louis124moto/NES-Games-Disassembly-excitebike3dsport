@@ -194,10 +194,7 @@ void nativeMenuTransitionPhase0(NativeMenuState *menu)
                 if ((menu->title_flag_03F3 & 1u) == 0u) {
                     menu->transition_counter_03F8 =
                         (uint8_t)(menu->transition_counter_03F8 >> 1);
-                    if (menu->transition_counter_03F8 == 0u) {
-                        menu->selected_course =
-                            (uint8_t)(menu->selected_course + 1u);
-                    }
+                    /* The following SEC/BCS always skips the course INC. */
                 }
             } else if (course < 0x04u) {
                 menu->selected_course = (uint8_t)(course + 1u);
