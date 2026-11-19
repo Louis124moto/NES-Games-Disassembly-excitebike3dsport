@@ -205,6 +205,72 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
     }
 }
 
+
+/* Source: sub_E359 ($E359-$E3F3), tbl_D8F7 ($D8F7-$D8FA),
+ * tbl_D8FB ($D8FB-$D8FE). This translates gameplay meter/overheat state;
+ * the final 12-sprite OAM loop remains in the native renderer. */
+uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
+                                     uint8_t controller,
+                                     uint8_t race_started,
+                                     uint8_t race_finished)
+{
+    static const uint8_t heat_increment[4] = { 0x3Fu, 0x0Fu, 0x07u, 0x07u };
+    static const uint8_t heat_threshold[4] = { 0x08u, 0x20u, 0x11u, 0x11u };
+    uint8_t mode = 0u;
+
+    if (temperature == 0) {
+        return 0xFEu;
+    }
+
+    if (race_finished != 0u) {
+        return 0xFEu;
+    }
+
+    if (temperature->overheat_state != 0u) {
+        return (temperature->overheat_timer & 1u) != 0u ? 0xFEu : 0xFCu;
+    }
+
+    if ((controller & 0xC0u) != 0u) {
+        const uint8_t throttle = race_started != 0u
+            ? (uint8_t)(controller & 0xC0u)
+            : 0x80u;
+        if (throttle == 0x40u) {
+            mode = 1u;
+        } else if (throttle == 0x80u) {
+            mode = 2u;
+        } else {
+            mode = 3u;
+        }
+    }
+
+    if (temperature->whole < heat_threshold[mode]) {
+        const uint16_t sum = (uint16_t)temperature->fraction + heat_increment[mode];
+        temperature->fraction = (uint8_t)sum;
+        if (sum > 0xFFu) {
+            temperature->whole = (uint8_t)(temperature->whole + 1u);
+        }
+    } else if (temperature->whole > heat_threshold[mode]) {
+        const uint8_t old_fraction = temperature->fraction;
+        temperature->fraction = (uint8_t)(old_fraction - 0x0Bu);
+        if (old_fraction < 0x0Bu && temperature->whole != 0u) {
+            temperature->whole = (uint8_t)(temperature->whole - 1u);
+        }
+    }
+
+    if (temperature->whole >= 0x20u) {
+        temperature->overheat_timer = temperature->whole;
+        temperature->overheat_state = temperature->whole;
+    }
+
+    if (temperature->whole >= 0x1Au) {
+        if (mode == 1u) {
+            temperature->sound_flags = (uint8_t)(temperature->sound_flags | 0xB0u);
+        }
+    }
+
+    return 0xFEu;
+}
+
 void bikePhysicsUpdate(BikeState *bike, const InputState *input)
 {
     (void)bike;
