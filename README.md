@@ -58,10 +58,10 @@ The original NES disassembly is the behavioral reference. Its source files must 
 |---|---|
 | Original ASM inventory | 177 labels beginning with `sub_` are listed in `3ds-port/ASM_FUNCTION_INVENTORY.md`; this includes aliases/helpers and is not a count of standalone routines. |
 | Stage 1 — extractor | Accepted by owner decision on 2026-11-17; source/hardware verification debt remains in `3ds-port/TODO.md`. |
-| Stage 2 — original menu | IN PROGRESS (2026-11-19); PRG-backed list-3/shared-transition, list-5/editor, C465, C97C and guarded B-return paths are integrated and host-tested. Authentic artwork, full PPU timing, remaining menu routes and physical comparison remain open. Stage 3 blocked. |
+| Stage 2 — original menu | IN PROGRESS (2026-11-19); PRG-backed title/selector/design input, list-3/shared transitions, C465, list-5/editor, file-backed save/load, full NMI raster prefix, split-aware PPU composition and pixel-derived sprite-0 hit are integrated. Original-NES frame comparison, remaining editor interactions, exact PPU calibration, sound and physical New 3DS validation remain open. Stage 3 blocked. |
 | Stage 3 — first race | BLOCKED until Stage 2 is fully accepted. Existing state-2 trace/helpers are parked; no playable race or player physics implementation is claimed. |
-| Latest code batch | The static recompiler executes `$C7DE`, all five list-3 setup commands, the shared `$CB2C` dispatcher for states 3/6/11, `$C465` for states 4/7, list 5, and the state-9 editor frame/guarded B-return. The original `$D310` timer routine is also used when a supported PRG is loaded. |
-| Latest host test / 3DS build | **Passed** on `a547c0f2` in [host CI](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600117) and [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44510600084). A subsequent CPU-RAM reset cleanup is being revalidated. |
+| Latest code batch | The static recompiler executes `$C7DE`, list-3 and list-5 setup, shared `$CB2C` transitions, `$C465`, `$C97C` editor frames, guarded `$EB17` return, `$D310` timers, and the timing-only NMI chain `$C32F → $C27F → DMA → $D0AB → $D14E`. PPU split scroll and sprite-0 hit are connected to the renderer/editor wait. |
+| Latest host test / 3DS build | Latest exact-commit validation is pending after the NMI timing and raster-split integration. Earlier source-menu, renderer and 3DS build checks passed; see `3ds-port/TODO.md` for the current CI evidence. |
 | Full-game fidelity | Not achieved; no end-to-end race comparison is documented. |
 
 A function definition, passing unit test, successful build, gameplay integration, and fidelity verification are separate states. Never infer one from another.
@@ -73,7 +73,7 @@ A function definition, matching name/address, passing unit test, successful buil
 ### Extractor and original menu
 
 - Stage 1 was accepted by owner decision on 2026-11-17. Its remaining source-audit, edge-case, export, and reproducibility items remain follow-up debt; this is not a claim that every extractor criterion has been independently verified.
-- Stage 2 remains reopened at the owner's request. The PRG-backed menu integration now covers list 3/shared transitions, list 5/editor setup, C465 transitions, one C97C frame and the guarded EB17 B-return branch. Original title/menu artwork, natural route coverage, full editor interactions, pixel-accurate PPU timing, save/load edge cases and physical New 3DS comparison are still incomplete. See `3ds-port/STAGE2_TRACE.md`; Stage 3 remains blocked.
+- Stage 2 remains reopened at the owner's request. The runtime now connects the source PRG menu handlers, editor/save-load paths, full timing-only NMI prefix, both D14E scroll phases, split-aware PPU rendering and pixel-derived sprite-0 hit timing. Original-NES frame-by-frame comparison, remaining editor object interactions, pre-render/odd-frame calibration, sound and physical New 3DS verification remain incomplete. See `3ds-port/STAGE2_TRACE.md`; Stage 3 remains blocked.
 - Commit `2bc8d15` added a centered 4:3 viewport and full OAM/scroll redraw tracking. Commit `8707ef5` added explicit PPU render-failure diagnostics. The viewport/diagnostic changes still need a fresh hardware retest and a title-menu capture comparison.
 - Do not replace missing source-confirmed menu art with invented rectangles, labels, or placeholder graphics.
 
