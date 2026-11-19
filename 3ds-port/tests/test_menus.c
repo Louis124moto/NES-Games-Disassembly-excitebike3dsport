@@ -43,6 +43,39 @@ static void tap(GameState *s, unsigned int key)
 
 #define CHECK(cond, code) do { if (!(cond)) { fprintf(stderr, "test_menus: check %d failed (line %d)\n", (code), __LINE__); free(s); return (code); } } while (0)
 
+static int testColdResetClearsMenuRam(void)
+{
+    GameState *s = (GameState *)malloc(sizeof(GameState));
+    unsigned int i;
+    if (s == NULL) return 1;
+    memset(s, 0xA5, sizeof(*s));
+    gameStateReset(s);
+    if (s->menu_ram00FF != 0u || s->menu_asm_state != 0u ||
+        s->menu_ram0040 != 0u || s->menu_ram0044 != 0u ||
+        s->menu_ram0045 != 0u || s->menu_repeat_guard != 0u ||
+        s->menu_nmi_enabled != 1u || s->menu_ppu_mask != 0u) {
+        fputs("test_menus: cold reset left menu state dirty\n", stderr);
+        free(s);
+        return 2;
+    }
+    for (i = 0u; i < sizeof(s->menu_cpu_ram); ++i) {
+        if (s->menu_cpu_ram[i] != 0u) {
+            fprintf(stderr, "test_menus: cold reset left CPU RAM byte %04X dirty\n", i);
+            free(s);
+            return 3;
+        }
+    }
+    for (i = 0u; i < sizeof(s->menu_oam); ++i) {
+        if (s->menu_oam[i] != 0xF8u) {
+            fprintf(stderr, "test_menus: cold reset OAM byte %02X not hidden\n", i);
+            free(s);
+            return 4;
+        }
+    }
+    free(s);
+    return 0;
+}
+
 static int testBootSequence(void)
 {
     GameState *s = newState();
@@ -486,6 +519,7 @@ static int testTapeFileBackend(void)
 int main(void)
 {
     int rc;
+    if ((rc = testColdResetClearsMenuRam()) != 0) return rc;
     if ((rc = testBootSequence()) != 0) return rc;
     if ((rc = testTitleNavigation()) != 0) return rc;
     if ((rc = testSelectionToTrackScreen()) != 0) return rc;
