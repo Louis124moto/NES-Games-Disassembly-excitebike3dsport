@@ -700,9 +700,8 @@ void rendererDraw(const GameState *state)
             } else if (!rendererDrawPpuBackground(state)) {
                 consoleSelect(&s_bottomConsole);
                 consoleClear();
-                /* menusRender writes the console directly; invalidate the cache. */
+                /* No native menu status overlay exists yet; invalidate the console cache. */
                 rendererStoreConsoleText("");
-                nativeMenuRenderStatus(state);
                 if (s_bgRenderReason == 3) {
                     printf("PPU BG unavailable: PPUCTRL selects $1000 but CHR has only %lu tiles.\n",
                            (unsigned long)s_bgChrTileCount);
