@@ -655,7 +655,6 @@ void menusUpdate(GameState *state, unsigned int heldKeys, unsigned int pressedKe
         memcpy(&state->menu_cpu_ram[0x05C3u], state->menu_ram05C3, sizeof(state->menu_ram05C3));
         memcpy(&state->menu_cpu_ram[0x05E0u], state->menu_ram05E0, sizeof(state->menu_ram05E0));
         memcpy(&state->menu_cpu_ram[0x06E0u], state->menu_ram06E0, sizeof(state->menu_ram06E0));
-        state->menu_sprite0_hit_last_frame = state->menu_sprite0_hit_found;
         if (state->menu_sprite0_hit_found) {
             spriteHitCycle = state->menu_sprite0_hit_cycle > state->menu_ppu_cycle_phase
                 ? state->menu_sprite0_hit_cycle - state->menu_ppu_cycle_phase : 0u;
