@@ -97,7 +97,9 @@ This is the controlling project specification. If older checklist items conflict
 - [ ] Test on physical New Nintendo 3DS: startup, extractor UI, all controls, exports, diagnostic accuracy, stability, and representative ROM/data cases.
 - [ ] Record a requirement-by-requirement acceptance report with reproducible evidence. Do not start Stage 2 until every applicable Stage 1 criterion is passed.
 
-#### Stage 2 — Original NES menu (REOPENED 2026-11-18; IN PROGRESS; blocks Stage 3)
+> **Scope correction (2026-11-19):** the checklist items in the older Stage 2/Stage 3 history below were written for an emulator/PPU-backed approach. Treat their source-analysis results and test vectors as reusable evidence only. PPU/NMI/register emulation, NES CPU RAM as the live game state, and PRG-backed recompiler dispatch are not requirements for the native port and must not remain in the final runtime. Rewrite each outstanding Stage 2 item as a native menu/rendering/state-machine task under the controlling specification above. Stage 3 work must be native bike/track/opponent/gameplay code, with offline differential tests against the original ASM.
+
+#### Historical Stage 2 trace — original menu behavior (native reimplementation still required)
 
 The previous owner-decision acceptance was premature. The current native menu is an input/state trace with partial PPU rendering, not a fully reconstructed original menu. The owner has now explicitly requested that Stage 2 be completed before any Stage 3 work continues. The source audit and current gaps are tracked in `3ds-port/STAGE2_TRACE.md`. No hardware/reference-capture acceptance is claimed.
 
