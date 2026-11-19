@@ -216,6 +216,23 @@ void nativeMenuTransitionPhase0(NativeMenuState *menu)
 }
 
 
+/* Source: timer-expired branch of ofs_000_C465_04 / ofs_000_C465_07.
+ * Executes sub_C3AF followed by the state clamp at $C477-$C484. */
+void nativeMenuCompleteTimedTransition(NativeMenuState *menu)
+{
+    if (menu == 0) {
+        return;
+    }
+
+    menu->source_state = (uint8_t)(menu->source_state + 1u);
+    menu->setup_command = 0u;
+    menu->transition_phase = 0u;
+    if (menu->source_state >= 0x08u) {
+        menu->source_state = 0x02u;
+    }
+}
+
+
 /* Source: sub_D310 ($D310-$D325). Timers $21-$2F tick every frame;
  * timers $30-$3D tick only when the 11-frame divider underflows. */
 void nativeMenuTickTimers(NativeMenuState *menu)
