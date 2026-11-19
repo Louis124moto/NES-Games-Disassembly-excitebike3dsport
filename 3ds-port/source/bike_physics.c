@@ -502,9 +502,10 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
     }
 
     target = movement->brake_state[object_index];
-    /* CPY #$02 / BPL: the source adds eight for Y in [$02,$81]. */
-    if (movement->speed_whole[object_index] >= 0x02u &&
-        movement->speed_whole[object_index] < 0x82u) {
+    /* CPY #$02 / BPL falls through to ADC #$08 when the signed
+     * subtraction is negative: speed 0..1 or $82..$FF. */
+    if (movement->speed_whole[object_index] < 0x02u ||
+        movement->speed_whole[object_index] >= 0x82u) {
         target = (uint8_t)(target + 0x08u);
     }
     table_index = target;
