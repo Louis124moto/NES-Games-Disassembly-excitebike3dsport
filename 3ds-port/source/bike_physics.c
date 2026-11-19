@@ -319,6 +319,41 @@ uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
 }
 
 
+
+/* Source: sub_DBFE ($DBFE-$DC19). The first four shifts preserve the
+ * 6502 carry chain; the final ADC consumes the carry from the fraction sum. */
+void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement)
+{
+    uint8_t accumulator;
+    uint8_t carry;
+    uint16_t sum;
+
+    if (movement == 0) return;
+
+    accumulator = movement->movement_delta[0];
+    carry = (uint8_t)(accumulator & 0x01u);
+    accumulator >>= 1;
+    {
+        unsigned int shift;
+        for (shift = 0u; shift < 3u; ++shift) {
+            const uint8_t next_carry = (uint8_t)(accumulator & 0x01u);
+            accumulator = (uint8_t)((accumulator >> 1) | (uint8_t)(carry << 7));
+            carry = next_carry;
+        }
+    }
+
+    sum = (uint16_t)accumulator + movement->secondary_scroll_fraction + carry;
+    movement->secondary_scroll_fraction = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    sum = (uint16_t)movement->movement_delta[0] +
+          movement->secondary_scroll_x + carry;
+    movement->secondary_scroll_x = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->secondary_base_nametable ^= 0x01u;
+    }
+}
+
 /* Source: sub_DA58 ($DA58-$DA69), all four bike slots. */
 void bikePhysicsBuildMovementDeltas(BikeMovementState *movement)
 {
