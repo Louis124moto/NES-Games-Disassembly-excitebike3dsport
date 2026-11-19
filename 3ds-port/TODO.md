@@ -20,7 +20,7 @@ This section supersedes any older roadmap, architecture note, or checklist item 
 - [x] Removed the generated 6502 recompiler, CPU call glue, NES system/APU/game wrappers, old emulator menu, tape-menu bridge, emulator-only tests, and their generators from the active source tree.
 - [x] The 3DS Makefile now compiles the native C source glob directly; no emulator exclusion list is needed.
 - [x] The host-only 6502 reference CPU remains under `tests/oracle/` for deterministic differential tests and is not in the 3DS source glob.
-- [x] Added a native `sub_CE29` player-speed helper with an exhaustive 524,288-vector comparison against the original ASM. CI verification is pending.
+- [x] Added native `sub_CE29` acceleration and `sub_CE58/sub_CE5C` deceleration helpers. Exact-commit host tests passed 667,648 deterministic vectors against the original ASM; the same commit built for New 3DS. See `STAGE3_TRACE.md`.
 - [ ] Separate the asset inspector and its PPU preview helpers from the final game runtime. The current executable is still an asset inspector, not a playable native game.
 - [ ] Implement native menus, then complete player physics and all remaining gameplay systems.
 
@@ -236,7 +236,7 @@ Do not promote a task to a later state without evidence. Keep the relevant CI ru
 | Stage 1 — extractor | Owner-accepted, with remaining source/hardware verification debt. It is still the current app startup. |
 | Stage 2 — native menus/front-end | NOT IMPLEMENTED. Native title/selector/design menu and native renderer remain the next major milestone. |
 | Stage 3 — first race | BLOCKED until Stage 2 is accepted. One isolated sub_CE29 acceleration step is translated; complete physics and playable race are not implemented. |
-| Native speed test | 524,288 deterministic vectors compare the native player acceleration step against the original ASM via the host-only 6502 reference CPU. CI result pending. |
+| Native speed test | 667,648 deterministic vectors for acceleration/deceleration match the original ASM. [Host CI 44573570008](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44573570008). |
 | Latest 3DS build | PASSED after runtime cleanup on 6c08ba403558eb309a78780b8b21480705424f22: [CI run 44572700892](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44572700892). |
 | Full-game fidelity | Not achieved; no complete native race or end-to-end comparison is documented. |
 
