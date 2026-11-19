@@ -64,6 +64,7 @@ typedef struct BikePlayerSpeedContext {
     uint8_t race_finished;
     uint8_t object_lock_0374;
     uint8_t collision_lock_0098;
+    uint8_t overheat_lock_03E0;
     uint8_t movement_state_009C;
     uint8_t object_status_00B0;
 } BikePlayerSpeedContext;
@@ -74,6 +75,20 @@ typedef BikePlayerSpeedContext BikeObjectSpeedContext;
 void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object);
 /* Compatibility entry for the player slot (object_index is forced to zero). */
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player);
+
+/* Four-bike speed-control pass from sub_CD1F. This models the active-object
+ * loop and the speed-control prefix of sub_CD59; other per-frame systems
+ * (steering, posture animation, collision, etc.) remain separate. */
+typedef struct BikeRaceSpeedState {
+    BikeObjectSpeedContext bikes[4];
+    uint8_t active[4];
+    uint8_t frame_phase;
+    uint8_t race_started;
+    uint8_t race_finished;
+} BikeRaceSpeedState;
+
+void bikePhysicsUpdateRaceSpeeds(BikeRaceSpeedState *race);
+
 
 /* Player temperature/overheat meter state from ram_03B5/$03B6,
  * ram_03E0, ram_003C and ram_00FC. */
