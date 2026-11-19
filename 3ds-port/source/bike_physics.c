@@ -190,8 +190,8 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
         return;
     }
 
-    /* CD9A performs this cap check before calling CE29; do not clamp an
-     * already-over-cap speed here, because the original caller simply skips. */
+    /* CD9A accelerates below the cap, does nothing at the exact cap, and
+     * increments Y then calls CE58 to decelerate when above the cap. */
     {
         const int cap_order = playerSpeedCompareCap(&player->speed, acceleration_mode);
         if (cap_order < 0) {
