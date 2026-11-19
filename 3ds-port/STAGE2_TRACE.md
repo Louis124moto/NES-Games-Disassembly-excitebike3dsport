@@ -20,15 +20,15 @@ This document is based on the unmodified `Excitebike/bank_FF.asm`. The native me
 | `$00` | `ofs_000_C346_00` title menu | 0 | Input/cursor state and list 0 partially translated |
 | `$01` | `ofs_000_C395_01` selector | 1 | Input/cursor state and list 1 partially translated |
 | `$02` | `ofs_000_C99A_02` race | 2 | Not a menu completion target; Stage 3, blocked |
-| `$03` | `ofs_000_CB2C_03` | 3 | Not fully classified; trace required |
+| `$03` | `ofs_000_CB2C_03` | 3 | Shared transition dispatcher; PRG-backed setup and all four phases have ROM vectors |
 | `$04` | `ofs_000_C465_04` | 4 | Partial transition/timer and setup-list support |
 | `$05` | `ofs_000_C99A_05` race | 2 | Stage 3, blocked |
-| `$06` | `ofs_000_CB2C_06` | 3 | Not fully classified; trace required |
+| `$06` | `ofs_000_CB2C_06` | 3 | Same shared transition dispatcher; state-6 phase-0/phase-3 vectors added |
 | `$07` | `ofs_000_C465_07` | 4 | Partial transition/timer and setup-list support |
 | `$08` | `ofs_000_C3BD_08` design menu | 6 | Input/cursor/confirm branches and list 6 partially translated |
-| `$09` | `ofs_000_C97C_09` | 5 | Not fully classified; trace required |
+| `$09` | `ofs_000_C97C_09` | 5 | Course-design/editor frame; list-5 setup, C97C frame and guarded B-return are PRG-backed |
 | `$0A` | `ofs_000_C99A_0A` race | 2 | Stage 3, blocked |
-| `$0B` | `ofs_000_CB2C_0B` | 3 | Not fully classified; trace required |
+| `$0B` | `ofs_000_CB2C_0B` | 3 | Same shared transition dispatcher; state-11 phase-0/phase-3 vectors added |
 | `$0C` | `ofs_000_C43D_0C` tape save | 7 | Host file-backend substitute; native path not equivalent to a physical recorder |
 | `$0D` | `ofs_000_C41C_0D` tape load | 8 | Host file-backend substitute; native path not equivalent to a physical recorder |
 
@@ -75,10 +75,10 @@ Lists 2 and 5 are assigned to the three race states. Lists 3, 4, 7 and 8 are not
 
 - Title state `$00`: `sub_C7DE` returns the selected entry in Y. The three entries branch to state `$01` (course selector) or state `$08` (design menu); the title's idle timer path enters state `$02` (race path). The current C model has a source-derived title/selector/design navigation path, but it does not yet implement every downstream transition.
 - Selector state `$01`: LEFT/RIGHT are remapped to the vertical selector input, and confirmation stores `ram_0042` into `ram_0043`, increments `ram_0041` to state `$02`, then resets the setup sequencer. This is a race-entry transition, not a further menu screen.
-- Design state `$08`: selection values 0/1 advance to state `$09`/related setup path; value 2 remains/returns through the state-3 transition path; value 3 enters save state `$0C`; value 4 enters load state `$0D`; value 5 clears `$0021-$00FF` and returns to title state `$00`. These branches are visible in `$C3C5-$C3E7`; each branch still needs end-to-end validation.
+- Design state `$08`: selections 0/1 set the mode and advance twice to state `$0A` (race handoff, Stage 3); selection 2 advances to state `$09` (course editor); selection 3 enters save state `$0C`; selection 4 enters load state `$0D`; selection 5 clears `$0021-$00FF` and returns to title state `$00`. The reset/return branches now have host vectors; natural in-game route and hardware validation remain.
 - States `$03`, `$06`, `$0B` share the indirect dispatcher at `$CB2C`, selecting `ofs_CB3B_00`, `ofs_CB77_01`, `ofs_CBA4_02`, or `ofs_CC6B_03` by `ram_0044`. They are a shared transition state machine, not three independent screens.
 - States `$04` and `$07` share `$C465): wait on `ram_0034_timer`, update a table tuple through `sub_C92C`, then increment state and normalize to `$02` when the old state is below `$08`; otherwise return to `$08`.
-- State `$09` calls `sub_CA1B`, `sub_EB17`, `sub_DA6A`, `sub_DBFE`, `sub_E70B`, `sub_F4FF`, `sub_F68D`, `sub_F755`, and `sub_C229`, then jumps to `loc_D19B`. It must not be treated as a simple menu state; its exact place in the user-facing flow needs further call-graph tracing.
+- State `$09` is the interactive course-design/editor loop. Its six-command setup list, per-frame `$C97C` handler and guarded `$EB17` B-return now execute through the PRG recompiler with persistent CPU RAM. The `$D19B` PPUSTATUS wait is still frame-boundary approximated, and every editor object interaction has not yet been reference-verified.
 - Save/load states `$0C/$0D` use `ram_0048` as the main-thread transfer handshake. State `$0D` validates the four-byte `tbl_C180` header before reading the 256-byte data block; state `$0C` writes the 64-byte header/data block plus 256-byte payload. The file backend is a deliberate hardware-interface replacement, not an emulation of analog tape signals.
 
 ### Menu `ram_0045` PPU stream selection: verified mapping pass
@@ -119,7 +119,7 @@ The physical mapping is therefore:
 | `$2800-$2BFF` | mirror of A |
 | `$2C00-$2FFF` | mirror of B |
 
-The existing `GameState.menu_ppu_nametables[2048]` and `nes_active_stream.c` scratch PPU memory already reserve the two physical pages A/B. However, `rendererDrawPpuBackground()` currently passes only page A's first 960 tile bytes and its 64 attribute bytes to `nesPpuRenderNametableOpaque()`. It therefore does not render page B when PPUCTRL/scroll selects it, and the PPU command interpreter does not yet normalize `$2800-$2FFF` writes onto A/B. The source mirroring fact is now established; the renderer/address-mirroring implementation remains open under B3.
+The native PPU path now keeps both physical 1 KiB pages and the mapper-0 mirroring mode. `rendererDrawPpuBackground()` passes the full two-page nametable image to `nesPpuRenderMirroredNametablesOpaque()`, which applies PPUCTRL base selection, scroll, vertical/horizontal mirroring and `$3000` aliases. Host regressions cover page A/B, horizontal scroll across the page boundary and the lower logical row. B3 implementation is complete; original-NES frame comparison remains under D2/D3.
 
 ### Screen setup paths observed in the current native model
 
@@ -136,7 +136,7 @@ The existing `GameState.menu_ppu_nametables[2048]` and `nes_active_stream.c` scr
 - The original ROM is mapper 0 / NROM in the checked-in source header, so there is no mapper bank-switch sequence for menu CHR in this project.
 - The setup prelude `sub_C318` writes PPUCTRL `$10`: background pattern table is `$1000` (CHR tile indices 256..511); sprite pattern table bit 3 is clear (`$0000`, tile indices 0..255).
 - `loc_D19B`/ `sub_D1B3` preserve the upper PPUCTRL nibble and combine it with `ram_004E_base_nametable`; this is part of the active scroll/raster path and must be modelled separately from the static menu setup.
-- This verifies stream selection and pattern-table selection, **not** complete menu composition. The native renderer still needs the exact nametable mirroring/base selection, scroll/raster, and all OAM paths before the artwork can be accepted.
+- This verifies stream and pattern-table selection. The native renderer now composes both physical nametables, palette RAM and supported OAM sprites; B4 raster timing and complete sprite coverage remain under validation, and artwork acceptance still requires original-NES reference captures.
 
 ### Mirroring implementation checkpoint (commit `79a3f28136bc`)
 
@@ -151,7 +151,7 @@ Validation on exact commit `79a3f28136bc1507c42527178addb9ec8dab1eea`:
 - Host workflow `Verify NES routine translations`: success (run 44356209040).
 - New 3DS/devkitARM build workflow: success (run 44356209037).
 
-Remaining B3 work: render both physical nametables with the selected base nametable and scroll; this code change fixes PPU write addressing, not the on-screen composition. No physical console screenshot/reference comparison was run.
+B3 implementation is complete: the renderer composes both physical nametables with PPUCTRL base selection and scroll, and host regressions cover vertical/horizontal mirroring plus `$3000` aliases. No physical console screenshot/reference comparison was run; that remains D2/D3.
 
 ### Additional `sub_D14E` timing and OAM preparation facts
 
@@ -493,11 +493,11 @@ The state-$09 setup list 5 now has a recompiled runtime path for all six origina
 - Command 5 executes `$C5C2`, including `$C621`, `$E1A3/$E1F9/$D1C7`, `$EC25` and `$EC47`, using persistent 2 KiB NES CPU RAM. This connects the existing D1C7 OAM implementation through the original instruction stream rather than manually approximating its output.
 - The adapter only whitelists these audited entry points. `$C820` and `$C5C2` require the supported PRG image; if it is unavailable or execution stops, the sequencer rolls back to that command instead of silently skipping it. `$C551/$C869/$C5A3/$C562` retain their source-equivalent C fallbacks.
 
-**Important boundary:** completing the six setup commands is not the same as completing the editor. The per-frame state-$09 handler `$C97C` calls a large object/update/render chain and ends at the `$D19B` PPU-status wait; its real-time PPU/NMI/raster behavior and B-button return via `$EB17` are still not integrated. Shared transition list 3, artwork reconstruction and reference-frame comparison also remain open.
+**Important boundary:** the six setup commands, per-frame state-$09 handler `$C97C`, and guarded B-button return via `$EB17` are now integrated through the PRG recompiler. The live PPUSTATUS/raster timing remains approximate; every object interaction, shared-transition OAM branch, artwork and reference-frame comparison still need verification.
 
-**Regression:** `tests/test_menus.c::testEditorSetupPrelude` still checks the no-ROM fallback and verifies that the sequencer stays at `$C820` rather than advancing without a PRG. It does not yet exercise the full PRG-backed adapter.
+**Regression:** `tests/test_menu_cpu_rom.c` loads the original 16 KiB PRG and verifies all six list-5 setup commands, one C97C editor frame, and the guarded EB17 B-return branch. `testEditorSetupPrelude` separately verifies that the no-ROM fallback remains blocked at `$C820`.
 
-**Validation boundary:** no fresh host test run, exact-commit New 3DS build or physical-hardware test has been confirmed for this batch.
+**Validation boundary:** the host ROM integration workflow and exact-commit New 3DS build passed on the later integration commits recorded below. Physical-hardware and original-NES reference capture comparison remain outstanding.
 
 
 ### 2026-11-19 — state 4/7 transition handler and host-link repair
