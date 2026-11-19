@@ -1,6 +1,6 @@
 # Native porting rules — faithful Excitebike implementation
 
-These rules govern the final game on `main`. The target is a native Nintendo 3DS game, not a NES emulator.
+These rules govern the final game on `main`. The target is a native Nintendo 3DS game, not a NES emulator. The controlling runtime design is documented in [NATIVE_PORT_ARCHITECTURE.md](NATIVE_PORT_ARCHITECTURE.md); the current implementation order and acceptance gates are in [TODO.md](TODO.md).
 
 ## 1. Source of truth and implementation
 
@@ -23,6 +23,8 @@ For every subsystem or routine group, document:
 Do not infer the player slot or player physics from unrelated object routines. Establish identity from initialization, writers, input flow, and update callers.
 
 ## 3. Native module boundaries
+
+The live game state must be semantic native state (bike, track, opponents, menu, race and results), not a 6502 register set or a mirrored NES RAM image. NES addresses and aliases may remain in source-trace documents for provenance only.
 
 Keep gameplay rules independent from 3DS APIs. Prefer small modules with explicit state and deterministic update functions, for example:
 - `bike_physics.c`: acceleration, braking, speed, heat/cooling, jumps, posture, landing and crashes;
