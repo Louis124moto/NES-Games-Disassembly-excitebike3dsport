@@ -41,6 +41,11 @@ typedef struct NativeMenuState {
     uint8_t transition_flag_004B;
     uint8_t transition_counter_03F8;
     uint8_t transition_duration; /* source ram_03AD */
+    uint8_t source_visual_asset; /* source ram_0045: native asset selector, not a PPU address */
+    uint8_t title_animation_counter; /* source ram_03F8 */
+    uint8_t title_animation_flag; /* source ram_00FB */
+    uint8_t cursor_sprite_y, cursor_sprite_tile, cursor_sprite_attribute, cursor_sprite_x;
+    uint8_t transition_timer_0034;
     uint8_t frame_timer;       /* ram_0020 */
     uint8_t timer_values[29]; /* ram_0021-$003D */
 } NativeMenuState;
@@ -49,6 +54,9 @@ typedef struct NativeMenuState {
  * design menu handlers (source states 0, 1 and 8). */
 void nativeMenuInit(NativeMenuState *menu);
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
+/* Executes one verified command from setup lists 0, 1 or 6 per call.
+ * Returns 1 when a source command was translated, 0 when waiting/unsupported. */
+uint8_t nativeMenuStepSetup(NativeMenuState *menu);
 void nativeMenuTickTimers(NativeMenuState *menu);
 void nativeMenuTransitionPhase0(NativeMenuState *menu);
 /* Phase-1 timing/state slice only; opaque visual payload is not yet translated. */
