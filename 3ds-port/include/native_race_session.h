@@ -24,7 +24,8 @@ int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
                                      const NativeRaceSetupInput *input,
                                      const NativeRngState *rng);
 
-/* Separate source-order slices; caller controls the exact frame-call order. */
+/* D918 then DD8D are separate, source-ordered steps. */
+void nativeRaceSessionUpdateBikeStates(NativeRaceSession *session);
 BikeRaceCountdownRenderEvent nativeRaceSessionUpdateCountdown(NativeRaceSession *session);
 uint8_t nativeRaceSessionUpdateVertical(NativeRaceSession *session);
 
