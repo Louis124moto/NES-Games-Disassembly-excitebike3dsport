@@ -33,6 +33,7 @@ int main(void)
     CHECK(out.setup_counter_0040 == 10u && out.setup_counter_0047 == 6u, 2);
     CHECK(out.timer_0034 == 5u && out.global_vertical_reference == 0xA0u, 3);
     CHECK(out.player_slot == 0u && out.player_rider_present == 1u, 4);
+    CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x10u && out.course_setup_parameters[2] == 0x00u, 6);
     CHECK(out.half_lock_slot == 1u, 5);
 
     for (i = 0u; i < 4u; ++i) {
@@ -66,6 +67,9 @@ int main(void)
     CHECK(movement.object_active[3] == 0xA5u && states.y[3] == 0x5Au, 32);
     CHECK(out.bike[2].lock_timer == 0x53u && movement.start_lock_timer[2] == 0x53u, 33);
     CHECK(states.rider_present[0] == 1u, 34);
+    in.transition_flag_0046 = 1u;
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 35);
+    CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x18u && out.course_setup_parameters[2] == 0x00u, 36);
 
     CHECK(nativeRaceSetupFirstCourse(0, &in, &movement, &states) == 0, 40);
     CHECK(nativeRaceSetupFirstCourse(&out, 0, &movement, &states) == 0, 41);
