@@ -34,6 +34,7 @@ int main(void)
     CHECK(out.timer_0034 == 5u && out.global_vertical_reference == 0xA0u, 3);
     CHECK(out.player_slot == 0u && out.player_rider_present == 1u, 4);
     CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x10u && out.course_setup_parameters[2] == 0x00u, 6);
+    CHECK(out.hud_glyphs[0] == 1u && out.hud_glyphs[1] == 0xFBu && out.hud_glyphs[2] == 1u && out.hud_glyphs[3] == 6u && out.hud_glyphs[4] == 0xFBu && out.hud_glyphs[5] == 0u && out.hud_glyphs[6] == 0u, 7);
     CHECK(out.half_lock_slot == 1u, 5);
 
     for (i = 0u; i < 4u; ++i) {
@@ -70,6 +71,10 @@ int main(void)
     in.transition_flag_0046 = 1u;
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 35);
     CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x18u && out.course_setup_parameters[2] == 0x00u, 36);
+    in.transition_flag_0046 = 0u;
+    in.transition_counter_03F8 = 0x16u; /* 2*$16 + $10 = $3C: source subtracts once. */
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 37);
+    CHECK(out.hud_glyphs[0] == 2u && out.hud_glyphs[2] == 0u && out.hud_glyphs[3] == 0u, 38);
 
     CHECK(nativeRaceSetupFirstCourse(0, &in, &movement, &states) == 0, 40);
     CHECK(nativeRaceSetupFirstCourse(&out, 0, &movement, &states) == 0, 41);
