@@ -27,6 +27,7 @@ int main(void)
     CHECK(states.state[0] == 0u && states.rider_present[0] == 0u && states.overheat[0] == 0u, 47);
     CHECK(movement.player_scroll_x == 0xA5u && movement.global_vertical_reference == 0xA5u, 48);
     CHECK(states.global_overheat == 0xA5u && states.controller_hold == 0xA5u, 49);
+    CHECK(states.opponent_spawn_event == 0u, 50);
     rng.bytes[0] = 0x01u;
     rng.bytes[1] = 0x10u;
     rng.bytes[2] = 0x21u;
