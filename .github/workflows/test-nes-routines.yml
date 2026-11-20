@@ -32,6 +32,8 @@ on:
       - "3ds-port/include/track.h"
       - "3ds-port/tests/test_track_first_course.c"
       - "3ds-port/source/race_vertical.c"
+      - "3ds-port/source/race_sprites.c"
+      - "3ds-port/include/race_sprites.h"
       - "3ds-port/include/race_vertical.h"
       - "3ds-port/tests/test_race_vertical.c"
       - "3ds-port/source/native_race_session.c"
