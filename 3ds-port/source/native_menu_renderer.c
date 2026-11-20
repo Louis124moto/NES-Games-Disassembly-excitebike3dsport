@@ -173,7 +173,7 @@ int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     if (framebuffer == NULL) return 0;
 
     scene = &assets->scenes[6];
-    memset(framebuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+    memset(framebuffer, 0, 400u * 240u * 3u);
     drawBackground(framebuffer, assets, scene, 6u); /* palette stream 18 */
     drawCursor(framebuffer, assets, menu, 6u);
     drawRaceHud(framebuffer, assets, scene, session, 6u);
