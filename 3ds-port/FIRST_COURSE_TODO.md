@@ -75,6 +75,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port the first-course CPU track lookup profile from `C820` plus `D0AB/D0C6/E7FC`: six 64-byte pages are `$3B,$3B,$3D,$3D,$3D,$3D`; native code computes each bike's vertical band and four source samples. For these initial values, `E733`'s `$40` gate is never reached, so first-course opponent event dispatch is a no-op.
 - [x] Port the gameplay-field reset performed by `C869` (`$004D-$00EF`) and `C820` (`$0340-$03EF`) into `nativeRaceSetupClearFirstCourseState`; preserve bytes outside those ranges.
 - [x] Port the phase-zero first-course path of `E96C` (`E96E-EA05`): original Y anchors, signed one-pixel drift, `$08/$3A` clamps and state/overheat gates. Initial Y values `$0E,$1A,$26,$32` match the source anchors and therefore keep vertical delta at zero. Nonzero `$00A4` jump phases and the `EA07-EA43` player-input handshake remain separate work.
+- [x] Implement native menu setup list 2 (`C551,C869,C820,C5A3,C566,C875`) and test each command against the original ASM. The host oracle bypasses only `D13F`'s PPU artwork upload when testing `C820`; it executes and checks the CPU track-page fills, scroll values and sprite marker.
 - [ ] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects; retain existing speed-control differential coverage.
 - [ ] Trace and port every state branch reached from `D918/D924` and `D91A` (bike state machine, timers, rider posture, jumps and landings).
 - [x] Port the source-derived first-course `C875` path (`C87F-C8DC`, `C522/CB13`, `C90E/DF7F`, and `C92C/C53E`) into native semantic state; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. `C905` confirms the first-course setup index is `$02`, so the `$08+` `C53A` branch is not taken. Host tests and New 3DS builds passed through commit `bfa160ca3fbc1f70674315e2afeb652532bda6a9`.
@@ -109,8 +110,8 @@ This is the execution order for completing the first playable race. A checked it
 
 ### Immediate next implementation slice
 1. Wire `nativeRngAdvance` into the source-equivalent startup wait loop and connect the exact C875 input values from the native menu/setup state.
-2. Build and test a `NativeRaceSession` that composes C869/C820 clears, C875 setup, the native track profile, DD8D countdown state and E96C vertical phase-zero update.
-3. Integrate that session with the native menu's setup list 2 without invoking NES CPU/PPU code; then add the native first-course renderer.
+2. Integrate the tested `NativeRaceSession` into `game.c` when native menu setup list 2 completes; preserve source setup values and do not start an incomplete frame loop.
+3. Implement the native first-course renderer using the extracted original assets, then wire the session's per-frame calls in the exact source order.
 4. Port the nonzero `$00A4` vertical/jump phases and the `EA07-EA43` player-input handshake; preserve the existing source order around D918/DA26.
 5. Continue with the remaining active first-course handlers, steering, posture, heat, collision, course events and finish/results.
 
