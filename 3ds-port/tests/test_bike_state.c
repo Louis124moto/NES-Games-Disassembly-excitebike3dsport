@@ -96,9 +96,11 @@ int main(int argc, char **argv)
             for(step=0;step<2048u;++step) {
                 uint16_t pc=reference.pc;
                 uint8_t before=reference.ram[0x002Bu];
+                uint8_t state_before=reference.ram[0x009Du];
                 uint8_t opcode=cpu6502_read(&reference,pc);
                 if(step==0u) printf("START PC=%04X opcode=%02X timer1=%02X\\n",pc,opcode,before);
                 cpu6502_step(&reference);
+                if(state_before!=reference.ram[0x009Du]) printf("WRITE state1 pc=%04X op=%02X X=%02X %02X->%02X\\n",pc,opcode,reference.x,state_before,reference.ram[0x009Du]);
                 if(before!=reference.ram[0x002Bu]) {
                     printf("WRITE $002B pc=%04X op=%02X X=%02X Y=%02X state1=%02X target=%02X y=%02X bc=%02X table=%02X/%02X\\n",
                            pc,opcode,reference.x,reference.y,reference.ram[0x009Du],
