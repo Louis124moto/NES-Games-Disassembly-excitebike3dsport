@@ -34,6 +34,9 @@ on:
       - "3ds-port/source/race_vertical.c"
       - "3ds-port/include/race_vertical.h"
       - "3ds-port/tests/test_race_vertical.c"
+      - "3ds-port/source/native_race_session.c"
+      - "3ds-port/include/native_race_session.h"
+      - "3ds-port/tests/test_native_race_session.c"
       - "3ds-port/include/bike_physics.h"
       - "3ds-port/source/input.c"
       - "3ds-port/include/input.h"
@@ -191,6 +194,12 @@ jobs:
 
       - name: Run native first-course vertical test
         run: ./test_race_vertical
+
+      - name: Compile native first-course race session test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_race_session.c 3ds-port/source/native_race_setup.c 3ds-port/source/track.c 3ds-port/source/race_countdown.c 3ds-port/source/race_vertical.c 3ds-port/tests/test_native_race_session.c -o test_native_race_session
+
+      - name: Run native first-course race session test
+        run: ./test_native_race_session
 
       - name: Validate reference 6502 core against py65
         run: |
