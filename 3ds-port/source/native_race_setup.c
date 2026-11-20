@@ -105,6 +105,7 @@ void nativeRaceSetupClearFirstCourseState(BikeMovementState *movement,
     CLEAR_FIELD(states, vertical_state);
     CLEAR_FIELD(states, vertical_offset);
     CLEAR_FIELD(states, overheat);
+    states->opponent_spawn_event = 0u;
     CLEAR_FIELD(states, vertical_collision_ref);
 #undef CLEAR_FIELD
 }
