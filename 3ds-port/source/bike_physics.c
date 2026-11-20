@@ -631,6 +631,10 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
 
 /* Shared DD1A/DD6F step. The incoming carry is source-visible state left
  * by the preceding DD38/DCF2 branch and must not be normalized. */
+static void initialize_vertical_arc(BikeMovementState *movement,
+                                    uint8_t object_index,
+                                    uint8_t initial_whole);
+
 static void advance_vertical_arc(BikeMovementState *movement,
                                  unsigned int object_index,
                                  uint8_t carry)
@@ -683,52 +687,23 @@ void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object
         if (carry != 0u && movement->frame_phase == 0u) return;
     } else {
         /* DCFA loads zero into 0384 before the DCF2 DD38 initialization. */
-        movement->object_status[object_index] = 0x02u;
-        movement->motion_whole[object_index] = 0u;
-        movement->motion_fraction[object_index] = 0x0Fu;
-        {
-            const uint16_t sum =
-                (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
-            movement->motion_fraction_start[object_index] = (uint8_t)sum;
-            movement->motion_whole_start[object_index] =
-                (uint8_t)(movement->speed_whole[object_index] +
-                          (sum > 0xFFu ? 1u : 0u));
-        }
-
-        if (movement->movement_mode[object_index] == 0x02u) {
-            const uint8_t high = movement->motion_whole_start[object_index];
-            const uint8_t low = movement->motion_fraction_start[object_index];
-            movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
-            movement->motion_fraction_start[object_index] =
-                (uint8_t)((low >> 1) | ((high & 1u) << 7));
-            carry = (uint8_t)(low & 1u);
-        } else {
-            carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
-        }
-
-        if (object_index == 0u) {
-            uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
-            event ^= 0x30u;
-            movement->player_event = event == 0u ? 0x08u : event;
-            carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
-        }
+        initialize_vertical_arc(movement, object_index, 0u);
+        return;
     }
 
     advance_vertical_arc(movement, object_index, carry);
 }
 
-/* Source: sub_DD06. Unlike DCF2's DCFA path, DD06 first copies speed whole
- * into 0384, then invokes DD38 and immediately executes DD1A/DD6F. */
-void bikePhysicsInitializeVerticalJump(BikeMovementState *movement,
-                                       uint8_t object_index)
+/* DD08 entry: A seeds ram_0384, then DD38 and DD1A/DD6F run. DD06 passes the
+ * speed whole byte; loc_DCFA passes zero. */
+static void initialize_vertical_arc(BikeMovementState *movement,
+                                    uint8_t object_index,
+                                    uint8_t initial_whole)
 {
     uint8_t carry;
     uint16_t sum;
 
-    if (movement == 0 || object_index >= 4u) return;
-
-    movement->motion_whole[object_index] =
-        movement->speed_whole[object_index];
+    movement->motion_whole[object_index] = initial_whole;
     movement->object_status[object_index] = 0x02u;
     movement->motion_fraction[object_index] = 0x0Fu;
 
@@ -757,6 +732,24 @@ void bikePhysicsInitializeVerticalJump(BikeMovementState *movement,
     }
 
     advance_vertical_arc(movement, object_index, carry);
+}
+
+/* Source: sub_DD06. Unlike DCF2's DCFA path, DD06 first copies speed whole
+ * into 0384, then invokes DD38 and immediately executes DD1A/DD6F. */
+void bikePhysicsInitializeVerticalJump(BikeMovementState *movement,
+                                       uint8_t object_index)
+{
+    if (movement == 0 || object_index >= 4u) return;
+    initialize_vertical_arc(movement, object_index,
+                            movement->speed_whole[object_index]);
+}
+
+/* Source: loc_DCFA -> DD08 with A = 0. */
+void bikePhysicsInitializeVerticalFall(BikeMovementState *movement,
+                                       uint8_t object_index)
+{
+    if (movement == 0 || object_index >= 4u) return;
+    initialize_vertical_arc(movement, object_index, 0u);
 }
 
 /* Source: sub_DA26 ($DA26-$DA43), complete movement/camera portion.

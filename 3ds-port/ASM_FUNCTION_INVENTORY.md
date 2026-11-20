@@ -165,9 +165,9 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E4C8` | `sub_E4C8` | Host regression and 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
 | `$E52C` | `sub_E52C` | Translated in C; audit/test coverage recorded separately | — |
 | `$E70B` | `sub_E70B` | Translated in C; audit/test coverage recorded separately | — |
-| `$E733` | `sub_E733` | Pending | — |
-| `$E73B` | `sub_E73B` | Pending | — |
-| `$E794` | `sub_E794` | Pending | — |
+| `$E733` | `sub_E733` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E73B` | `sub_E73B` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E794` | `sub_E794` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E7FC` | `sub_E7FC` | Translated in C; audit/test coverage recorded separately | — |
 | `$E7FF` | `sub_E7FF` | Translated in C; audit/test coverage recorded separately | — |
 | `$E803` | `sub_E803` | Translated in C; audit/test coverage recorded separately | calls: sub_E80D_prepare_pointers |
@@ -176,7 +176,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E84F` | `sub_E84F` | Pending | — |
 | `$E86F` | `sub_E86F` | Pending | — |
 | `$E893` | `sub_E893` | Pending | ; in |
-| `$E927` | `sub_E927` | Pending | — |
+| `$E927` | `sub_E927` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
 | `$EA44` | `sub_EA44` | Host regression and 3DS build passed | Special wheel tile and fallback wheel rendering |
 | `$EAC5` | `sub_EAC5` | Pending | — |

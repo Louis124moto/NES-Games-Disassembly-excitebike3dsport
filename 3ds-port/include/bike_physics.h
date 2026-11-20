@@ -203,6 +203,8 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
 void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index);
 /* sub_DD06: initialize a native jump arc and execute its first DD1A/DD6F step. */
 void bikePhysicsInitializeVerticalJump(BikeMovementState *movement, uint8_t object_index);
+/* loc_DCFA: same arc initialization with ram_0384 seeded to zero. */
+void bikePhysicsInitializeVerticalFall(BikeMovementState *movement, uint8_t object_index);
 /* Complete source-order movement/camera pass from sub_DA26 (timer path). */
 void bikePhysicsUpdateRaceMovementPass(BikeMovementState *movement, uint8_t race_started);
 

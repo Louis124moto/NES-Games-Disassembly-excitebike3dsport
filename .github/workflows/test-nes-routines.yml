@@ -274,6 +274,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
           /tmp/test_race_frame /tmp/prg.bin
 
+      - name: Differentially test native opponent script interpreter (E733, E927, handlers) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_script.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_script.c -o /tmp/test_race_script
+          /tmp/test_race_script /tmp/prg.bin
+
       - name: Differentially test native vertical recovery and motion against original ASM
         run: |
           cd 3ds-port
