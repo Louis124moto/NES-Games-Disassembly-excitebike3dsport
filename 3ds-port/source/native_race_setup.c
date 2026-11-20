@@ -5,6 +5,11 @@
 static const uint8_t s_object_class[4] = { 0x09u, 0x0Bu, 0x0Du, 0x0Fu };
 static const uint8_t s_start_y[4] = { 0x0Eu, 0x1Au, 0x26u, 0x32u };
 static const uint8_t s_start_x[4] = { 0x38u, 0x48u, 0x58u, 0x68u };
+/* tbl_C091 at offsets 0 and $10: sub_CB13 for course index zero. */
+static const uint8_t s_course0_parameters[2][3] = {
+    { 0x01u, 0x10u, 0x00u },
+    { 0x01u, 0x18u, 0x00u }
+};
 
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
@@ -25,6 +30,9 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->global_vertical_reference = 0xA0u;
     out->player_slot = 0u;
     out->player_rider_present = 1u;
+    memcpy(out->course_setup_parameters,
+           s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
+           sizeof(out->course_setup_parameters));
 
     /* C8A5 selects X=3..0 when ram_03F2 != 0, otherwise only X=0. */
     last = in->multiplayer_flag != 0u ? 3u : 0u;
