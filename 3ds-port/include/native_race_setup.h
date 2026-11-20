@@ -11,6 +11,7 @@ typedef struct NativeRaceSetupInput {
     uint8_t object_param_0019[4];   /* ram_0019,X */
     uint8_t wrapped_param_0018;     /* ram_0019,$FF wraps to $0018 */
     uint8_t timer_0034;
+    uint8_t transition_counter_03F8; /* ram_03F8 consumed by C90E */
     uint8_t setup_counter_0040;
     uint8_t setup_counter_0047;
 } NativeRaceSetupInput;
@@ -37,6 +38,7 @@ typedef struct NativeRaceSetupState {
     uint8_t player_rider_present;
     uint8_t half_lock_slot;
     uint8_t course_setup_parameters[3]; /* sub_C522: tbl_C091 + course/transition offset */
+    uint8_t hud_glyphs[7]; /* semantic digit/sentinel bytes produced by DF7F/C935 */
 } NativeRaceSetupState;
 
 /*
