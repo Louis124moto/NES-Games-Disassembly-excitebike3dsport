@@ -85,5 +85,28 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
         }
     }
 
+    /* EA07-EA43: native player vertical-input handshake after all four
+     * per-bike vertical updates. This is deliberately kept in the same
+     * routine because the original calls it as the tail of E96C. */
+    if (states->race_started != 0u &&
+        (uint8_t)(movement->collision_state[0] |
+                  states->overheat[0] |
+                  states->global_overheat) == 0u) {
+        if (movement->object_status[0] != 0u) {
+            if (movement->movement_mode[0] != 0x02u) return unsupported_mask;
+            movement->movement_mode[0] = (uint8_t)(movement->movement_mode[0] + 1u);
+        }
+
+        if (states->state[0] == 0u || states->state[0] == 0x05u) {
+            const uint8_t vertical_buttons =
+                (uint8_t)(states->controller_hold & 0x0Cu);
+            if (vertical_buttons != 0u) {
+                states->vertical_delta[0] =
+                    (vertical_buttons & 0x04u) != 0u ? 0xFFu : 0x01u;
+                states->player_event = (uint8_t)(states->player_event | 0x04u);
+            }
+        }
+    }
+
     return unsupported_mask;
 }
