@@ -5,6 +5,7 @@
 #include "native_race_setup.h"
 #include "race_countdown.h"
 #include "race_vertical.h"
+#include "race_sprites.h"
 #include "track.h"
 
 typedef struct NativeRaceSession {
@@ -14,8 +15,10 @@ typedef struct NativeRaceSession {
     BikeStateMachineState states;
     BikeRaceCountdownState countdown;
     NativeTrackState track;
+    NativeOamState oam;
     BikeRaceCountdownRenderEvent countdown_render_event;
     uint8_t vertical_unsupported_mask;
+    uint8_t sprite_unsupported_mask;
     uint8_t initialized;
 } NativeRaceSession;
 
@@ -28,5 +31,7 @@ int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
 void nativeRaceSessionUpdateBikeStates(NativeRaceSession *session);
 BikeRaceCountdownRenderEvent nativeRaceSessionUpdateCountdown(NativeRaceSession *session);
 uint8_t nativeRaceSessionUpdateVertical(NativeRaceSession *session);
+/* E836 + E17F/E456 native sprite preparation, after the caller's frame steps. */
+uint8_t nativeRaceSessionUpdateSprites(NativeRaceSession *session);
 
 #endif
