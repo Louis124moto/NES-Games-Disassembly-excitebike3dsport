@@ -164,7 +164,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Translated + regression-tested; 3DS build passed | Literal loop writes three Y bytes at offsets 0,4,8 |
 | `$E4C8` | `sub_E4C8` | Host regression and 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
 | `$E52C` | `sub_E52C` | Translated in C; audit/test coverage recorded separately | — |
-| `$E70B` | `sub_E70B` | Translated in C; audit/test coverage recorded separately | — |
+| `$E70B` | `sub_E70B` | Differential-tested (200k vectors, 3 mutants killed) | `raceScriptAdvanceOrigins` in `source/race_script.c`; not yet wired into the app race loop |
 | `$E733` | `sub_E733` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E73B` | `sub_E73B` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E794` | `sub_E794` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |

@@ -272,3 +272,22 @@ void raceScriptDispatchLateral(RaceScriptState *s)
         }
     }
 }
+
+void raceScriptAdvanceOrigins(RaceScriptState *s)
+{
+    int x;
+    if (s == 0) return;
+    for (x = 3; x >= 0; --x) {
+        const uint8_t delta = M->movement_delta[x];
+        if (delta != 0u) {
+            const uint8_t diff = (uint8_t)(M->object_origin_x[x] - delta);
+            if (diff != 0u && diff < 0x80u) {
+                M->object_origin_x[x] = diff;
+            } else {
+                M->object_origin_x[x] = (uint8_t)(diff + 8u);
+                M->object_class[x] = (uint8_t)((M->object_class[x] + 1u) & 0x3Fu);
+            }
+        }
+        s->slot_00D8[x] = 0u;
+    }
+}
