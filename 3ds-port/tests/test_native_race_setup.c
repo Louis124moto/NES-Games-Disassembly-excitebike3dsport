@@ -20,6 +20,7 @@ int main(void)
     memset(&movement, 0, sizeof(movement));
     memset(&states, 0, sizeof(states));
     in.multiplayer_flag = 1u;
+    in.setup_index_0041 = 2u;
     in.object_param_0019[0] = 0x10u;
     in.object_param_0019[1] = 0x21u;
     in.object_param_0019[2] = 0x32u;
@@ -64,6 +65,7 @@ int main(void)
     states.y[3] = 0x5Au;
     memset(&in, 0, sizeof(in));
     in.wrapped_param_0018 = 0u; /* zero selects slot 2, per C8D3-C8DC */
+    in.setup_index_0041 = 2u;
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 30);
     CHECK(out.bike[0].active == 1u && out.bike[1].active == 0u, 31);
     CHECK(movement.object_active[3] == 0xA5u && states.y[3] == 0x5Au, 32);
@@ -82,6 +84,8 @@ int main(void)
     CHECK(nativeRaceSetupFirstCourse(&out, 0, &movement, &states) == 0, 41);
     CHECK(nativeRaceSetupFirstCourse(&out, &in, 0, &states) == 0, 42);
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, 0) == 0, 43);
+    in.setup_index_0041 = 8u;
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states) == 0, 44);
 
     puts("PASS: native C875 first-course semantic setup.");
     return 0;
