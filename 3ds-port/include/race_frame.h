@@ -143,4 +143,16 @@ typedef struct RaceOffscreenSpriteState {
 void raceHideOffscreenOpponentSprites(RaceOffscreenSpriteState *state,
                                       RaceSpawnState *opponents);
 
+/* Source: sub_E70B ($E70B-$E732). Smooth four per-bike X targets and clear
+ * the transient D8 field. Values are semantic per-bike state, not NES RAM.
+ */
+typedef struct RacePositionSmoothingState {
+    uint8_t movement_delta[4]; /* ram_0060 */
+    uint8_t target_x[4];        /* ram_0064 */
+    uint8_t phase[4];           /* ram_00E0_obj */
+    uint8_t transient[4];       /* ram_00D8_obj */
+} RacePositionSmoothingState;
+
+void raceSmoothBikePositions(RacePositionSmoothingState *state);
+
 #endif
