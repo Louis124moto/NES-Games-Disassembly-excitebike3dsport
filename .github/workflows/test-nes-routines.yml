@@ -24,6 +24,8 @@ on:
       - "3ds-port/source/bike_state.c"
       - "3ds-port/source/native_race_setup.c"
       - "3ds-port/include/native_race_setup.h"
+      - "3ds-port/source/race_countdown.c"
+      - "3ds-port/include/race_countdown.h"
       - "3ds-port/source/input.c"
       - "3ds-port/include/input.h"
       - "3ds-port/tests/test_input_mapping.c"
@@ -156,6 +158,12 @@ jobs:
 
       - name: Run native semantic C875 setup test
         run: ./test_native_race_setup
+
+      - name: Compile native DD8D countdown test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/race_countdown.c 3ds-port/tests/test_race_countdown.c -o test_race_countdown
+
+      - name: Run native DD8D countdown test
+        run: ./test_race_countdown
 
       - name: Validate reference 6502 core against py65
         run: |
