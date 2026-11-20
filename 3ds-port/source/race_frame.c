@@ -400,3 +400,74 @@ void raceElapsedTimeUpdate(RaceElapsedTimeState *s)
 
     raceElapsedTimeBuildDigits(s);
 }
+
+/* sub_E091 / sub_E098: add `k` unless the value is already >= $E7. */
+static uint8_t addBelowE7(uint8_t a, uint8_t k) { return a >= 0xE7u ? a : (uint8_t)(a + k); }
+
+void raceBikeContacts(RaceBikeContactState *s)
+{
+    unsigned x, y;
+    if (s == 0) return;
+    for (x = 0u; x < 3u; ++x) {
+        if (s->active[x] == 0u) continue;
+        for (y = x + 1u; y < 4u; ++y) {
+            uint8_t ax, ay;
+            int hit_x = 0, hit_both = 0;
+            if (s->active[y] == 0u) continue;
+            if ((s->x_high[x] & 1u) == 0u) break;
+            if ((s->x_high[y] & 1u) == 0u) continue;
+            if (s->position[x] == 0u) break;
+            if (s->position[x] != s->position[y]) continue;
+            if ((s->collision_state[x] | s->overheat_03E0[x]) != 0u) break;
+            if (s->collision_state[y] != 0u) continue;
+            if (s->object_status[x] != 0u || s->object_status[y] != 0u) {
+                ax = s->y_low[x]; ay = s->y_low[y];
+                if (ax >= ay) {
+                    if (addBelowE7(ay, 0x0Cu) < ax) continue;
+                } else {
+                    if (addBelowE7(ax, 0x0Cu) < ay) continue;
+                }
+            }
+            ax = s->x_low[x]; ay = s->x_low[y];
+            if (ax >= ay) {
+                if (addBelowE7(ay, 2u) >= ax) hit_both = 1;
+                else if (addBelowE7(ay, 0x0Cu) >= ax) hit_x = 0, hit_both = 2;
+                else continue;
+            } else {
+                if (addBelowE7(ax, 2u) >= ay) hit_both = 1;
+                else if (addBelowE7(ax, 0x0Cu) >= ay) hit_x = 1;
+                else continue;
+            }
+            if (hit_x == 1) { /* bra_E05B */
+                s->collision_state[x] = 0xFFu;
+            } else {
+                if (hit_both == 1) s->collision_state[x] = 0xFFu; /* bra_E061 */
+                if (x == 0u && y == 3u) s->timer_003B = 0x10u;     /* bra_E065 */
+                s->collision_state[y] = 0xFFu;
+            }
+            if (x == 0u) s->sound_request_00FD = 1u;
+        }
+    }
+}
+
+void raceObstacleHit(RaceObstacleHitState *s)
+{
+    uint8_t a;
+    if (s == 0) return;
+    if (s->movement_state[0] != 0u) return;
+    if ((s->x_high_slot3 & 1u) == 0u) return;
+    if (s->rider_present_0373 == 0u) return;
+    a = (uint8_t)(s->object_y_player - 3u);
+    if (a >= s->obstacle_y_006F) return;
+    if ((uint8_t)(a + 7u) < s->obstacle_y_006F) return;
+    if (s->x_low_player >= s->obstacle_x_0393) return;
+    if ((uint8_t)(s->x_low_player + 0x12u) < s->obstacle_x_0393) return;
+    /* sub_DC97: the second SBC consumes the first one's borrow. */
+    a = screenY(s->global_vertical_reference_03F1, s->vertical_reference_player, s->object_y_player);
+    if ((uint8_t)(a - 8u) >= s->y_low_player) return;
+    s->collision_player = 0xFFu;
+    s->lane_delta_slot3 = 0u;
+    s->movement_state[3] = 1u;
+    s->sound_request_00FD = 1u;
+    s->state_039B = 2u;
+}

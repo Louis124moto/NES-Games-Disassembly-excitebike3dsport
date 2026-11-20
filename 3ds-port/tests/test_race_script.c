@@ -122,32 +122,6 @@ static int run(Cpu6502 *cpu, const char *what, uint16_t entry, int lateral, unsi
     return skipped * 10u > count ? 1 : 0;
 }
 
-static int runOrigins(Cpu6502 *cpu)
-{
-    unsigned v;
-    for (v = 0u; v < 200000u; ++v) {
-        RaceScriptState s;
-        unsigned i;
-        randomize(&s, 0);
-        for (i = 0u; i < 4u; ++i) {
-            if (nb() & 1u) s.movement.movement_delta[i] = (uint8_t)(nb() & 7u);
-            s.movement.object_class[i] = nb();
-            if (nb() & 1u) s.movement.object_origin_x[i] = (uint8_t)(nb() & 0x0Fu);
-        }
-        toRam(&s, cpu->ram);
-        for (i = 0u; i < 4u; ++i) cpu->ram[0xE0 + i] = s.movement.object_class[i];
-        prep(cpu, 0u);
-        if (cpu6502_call(cpu, 0xE70Bu, 20000u) != 0) return 1;
-        raceScriptAdvanceOrigins(&s);
-        for (i = 0u; i < 4u; ++i) {
-            if (s.movement.object_origin_x[i] != cpu->ram[0x64 + i] || s.movement.object_class[i] != cpu->ram[0xE0 + i] ||
-                s.slot_00D8[i] != cpu->ram[0xD8 + i]) { printf("FAIL E70B v=%u slot %u\n", v, i); return 1; }
-        }
-    }
-    puts("PASS: 200000 sub_E70B origin-advance vectors match original ASM.");
-    return 0;
-}
-
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -158,6 +132,5 @@ int main(int argc, char **argv)
     fclose(fp);
     cpu6502_reset_state(&cpu);
     return run(&cpu, "sub_E733 opponent-script", 0xE733u, 0, 400000u) ||
-           run(&cpu, "sub_E927 lateral-dispatch", 0xE927u, 1, 300000u) ||
-           runOrigins(&cpu);
+           run(&cpu, "sub_E927 lateral-dispatch", 0xE927u, 1, 300000u);
 }

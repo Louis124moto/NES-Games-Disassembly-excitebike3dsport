@@ -433,6 +433,73 @@ static int test_df30(Cpu6502 *cpu)
     return 0;
 }
 
+static int test_dfd5(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    unsigned long contacts = 0u;
+    for (v = 0u; v < 400000u; ++v) {
+        RaceBikeContactState s;
+        uint8_t *r = cpu->ram;
+        const uint8_t base = nb(), xb = nb();
+        memset(&s, 0, sizeof(s));
+        for (i = 0u; i < 4u; ++i) {
+            s.active[i] = (nb() & 7u) ? 1u : 0u;
+            s.x_high[i] = (nb() & 7u) ? 1u : (uint8_t)(nb() & 3u);
+            s.position[i] = (nb() & 7u) ? 2u : (uint8_t)(nb() % 4u);
+            s.collision_state[i] = (nb() & 7u) ? 0u : nb();
+            s.overheat_03E0[i] = (nb() & 7u) ? 0u : nb();
+            s.object_status[i] = (nb() & 1u) ? 0u : (uint8_t)(nb() & 3u);
+            s.y_low[i] = (nb() & 3u) ? (uint8_t)(base + (nb() & 0x1Fu) - 0x0Fu) : nb();
+            s.x_low[i] = (nb() & 3u) ? (uint8_t)(xb + (nb() & 0x1Fu) - 0x0Fu) : ((nb() & 1u) ? (uint8_t)(0xE0u + (nb() & 0x1Fu)) : nb());
+        }
+        s.timer_003B = nb(); s.sound_request_00FD = nb();
+        memset(r, 0, sizeof(cpu->ram));
+        MAP4(active, 0xA8); MAP4(x_high, 0x84); MAP4(position, 0x70); MAP4(collision_state, 0x98);
+        MAP4(overheat_03E0, 0x3E0); MAP4(object_status, 0xB0); MAP4(y_low, 0x8C); MAP4(x_low, 0x80);
+        r[0x3B] = s.timer_003B; r[0xFD] = s.sound_request_00FD;
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xDFD5u, 50000u) != 0) return 1;
+        raceBikeContacts(&s);
+        for (i = 0u; i < 4u; ++i) if (s.collision_state[i] != r[0x98 + i]) { printf("FAIL DFD5 v=%u collision[%u] native=%02X ASM=%02X\n", v, i, s.collision_state[i], r[0x98 + i]); return 1; }
+        if (s.timer_003B != r[0x3B] || s.sound_request_00FD != r[0xFD]) { printf("FAIL DFD5 v=%u timer/sound\n", v); return 1; }
+        contacts += (r[0xFD] == 1u);
+    }
+    printf("PASS: 400000 sub_DFD5 bike-contact vectors match original ASM (%lu contacts).\n", contacts);
+    return 0;
+}
+
+static int test_e09f(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    unsigned long hits = 0u;
+    for (v = 0u; v < 400000u; ++v) {
+        RaceObstacleHitState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        for (i = 0u; i < 4u; ++i) s.movement_state[i] = (nb() & 3u) ? 0u : nb();
+        s.x_high_slot3 = (nb() & 3u) ? 1u : nb(); s.rider_present_0373 = (nb() & 7u) ? 1u : 0u;
+        s.object_y_player = nb(); s.obstacle_y_006F = (nb() & 1u) ? (uint8_t)(s.object_y_player + (nb() & 0x0Fu) - 4u) : nb();
+        s.x_low_player = nb(); s.obstacle_x_0393 = (nb() & 1u) ? (uint8_t)(s.x_low_player + (nb() & 0x1Fu) - 4u) : nb();
+        s.global_vertical_reference_03F1 = nb(); s.vertical_reference_player = (nb() & 1u) ? 0u : nb();
+        s.y_low_player = nb(); s.collision_player = nb(); s.lane_delta_slot3 = nb(); s.sound_request_00FD = nb(); s.state_039B = nb();
+        memset(r, 0, sizeof(cpu->ram));
+        MAP4(movement_state, 0x9C);
+        r[0x87] = s.x_high_slot3; r[0x373] = s.rider_present_0373; r[0xB8] = s.object_y_player; r[0x6F] = s.obstacle_y_006F;
+        r[0x80] = s.x_low_player; r[0x393] = s.obstacle_x_0393; r[0x3F1] = s.global_vertical_reference_03F1;
+        r[0xBC] = s.vertical_reference_player; r[0x8C] = s.y_low_player; r[0x98] = s.collision_player; r[0xDF] = s.lane_delta_slot3;
+        r[0xFD] = s.sound_request_00FD; r[0x39B] = s.state_039B;
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xE09Fu, 20000u) != 0) return 1;
+        raceObstacleHit(&s);
+        for (i = 0u; i < 4u; ++i) if (s.movement_state[i] != r[0x9C + i]) { printf("FAIL E09F v=%u movement_state[%u]\n", v, i); return 1; }
+        if (s.collision_player != r[0x98] || s.lane_delta_slot3 != r[0xDF] || s.sound_request_00FD != r[0xFD] || s.state_039B != r[0x39B]) {
+            printf("FAIL E09F v=%u outputs\n", v); return 1; }
+        hits += (r[0x39B] == 2u);
+    }
+    printf("PASS: 400000 sub_E09F obstacle-hit vectors match original ASM (%lu hits).\n", hits);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -442,5 +509,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_df30(&cpu) || test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
+    return test_df30(&cpu) || test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu) || test_dfd5(&cpu) || test_e09f(&cpu);
 }

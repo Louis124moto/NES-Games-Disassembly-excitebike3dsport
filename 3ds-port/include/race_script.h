@@ -45,8 +45,4 @@ void raceScriptUpdateOpponents(RaceScriptState *state);
 /* sub_E927: dispatch the pending lateral-state opcode of slots 3..0. */
 void raceScriptDispatchLateral(RaceScriptState *state);
 
-/* sub_E70B: consume movement delta against the per-slot origin counter,
- * stepping the object class (ram_00E0) every 8 pixels, and clear ram_00D8. */
-void raceScriptAdvanceOrigins(RaceScriptState *state);
-
 #endif

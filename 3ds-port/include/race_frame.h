@@ -172,4 +172,41 @@ typedef struct RaceElapsedTimeState {
 
 void raceElapsedTimeUpdate(RaceElapsedTimeState *state);
 
+/* Source: sub_DFD5 ($DFD5-$E097) with sub_E091/sub_E098 — bike-to-bike contact
+ * resolution for slot pairs (X, Y > X). */
+typedef struct RaceBikeContactState {
+    uint8_t active[4];            /* ram_00A8_obj */
+    uint8_t x_high[4];            /* ram_0084_obj */
+    uint8_t position[4];          /* ram_0070_obj */
+    uint8_t collision_state[4];   /* ram_0098_obj */
+    uint8_t overheat_03E0[4];     /* ram_03E0_obj */
+    uint8_t object_status[4];     /* ram_00B0_obj */
+    uint8_t y_low[4];             /* ram_008C */
+    uint8_t x_low[4];             /* ram_0080_obj */
+    uint8_t timer_003B;           /* ram_003B_timer */
+    uint8_t sound_request_00FD;   /* ram_00FD */
+} RaceBikeContactState;
+
+void raceBikeContacts(RaceBikeContactState *state);
+
+/* Source: sub_E09F ($E09F-$E0E5) — player hitting the slot-3 obstacle. */
+typedef struct RaceObstacleHitState {
+    uint8_t movement_state[4];    /* ram_009C_obj */
+    uint8_t x_high_slot3;         /* ram_0084_obj + $03 */
+    uint8_t rider_present_0373;   /* ram_0370_obj + $03 */
+    uint8_t object_y_player;      /* ram_obj_pos_Y_lo */
+    uint8_t obstacle_y_006F;      /* ram_006C_obj + $03 */
+    uint8_t x_low_player;         /* ram_0080_obj */
+    uint8_t obstacle_x_0393;      /* ram_0390_obj + $03 */
+    uint8_t global_vertical_reference_03F1; /* ram_03F1 */
+    uint8_t vertical_reference_player;      /* ram_00BC_obj */
+    uint8_t y_low_player;         /* ram_008C */
+    uint8_t collision_player;     /* ram_0098_obj (output) */
+    uint8_t lane_delta_slot3;     /* ram_00DC_obj + $03 (output) */
+    uint8_t sound_request_00FD;   /* ram_00FD (output) */
+    uint8_t state_039B;           /* ram_0398_obj + $03 (output) */
+} RaceObstacleHitState;
+
+void raceObstacleHit(RaceObstacleHitState *state);
+
 #endif
