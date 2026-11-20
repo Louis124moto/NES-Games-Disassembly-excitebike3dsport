@@ -112,6 +112,8 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
     } cases[] = {
         {0u, 0u, 0xC2BDu}, {0u, 1u, 0xC514u},
         {1u, 0u, 0xC55Eu}, {1u, 1u, 0xC3F3u}, {1u, 2u, 0xC514u},
+        {2u, 0u, 0xC551u}, {2u, 1u, 0xC869u}, {2u, 2u, 0xC820u},
+        {2u, 3u, 0xC5A3u}, {2u, 4u, 0xC566u}, {2u, 5u, 0xC875u},
         {8u, 0u, 0xC55Eu}, {8u, 1u, 0xC575u}, {8u, 2u, 0xC514u}
     };
     unsigned n;
@@ -124,7 +126,15 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         reference->ram[0x0040u] = 0u;
         reference->ram[0x03F0u] = 1u;
         reference->ram[0x00FBu] = 0xA5u;
-        reference->ram[0x03F8u] = 0x77u;
+        reference->ram[0x03F8u] = cases[n].state == 2u ? 0x04u : 0x77u;
+        reference->ram[0x03F2u] = cases[n].state == 2u ? 0x01u : 0xA2u;
+        reference->ram[0x0046u] = 0u;
+        reference->ram[0x004Bu] = cases[n].state == 2u ? 0xB6u : 0xB5u;
+        reference->ram[0x0034u] = cases[n].state == 2u ? 0x2Du : 0u;
+        if (cases[n].state == 2u) {
+            static const uint8_t prior_assets[6] = {0x00u,0x12u,0x12u,0x01u,0x17u,0x0Eu};
+            reference->ram[0x0045u] = prior_assets[cases[n].command];
+        }
         reference->ram[0x0200u] = 0xF8u;
         reference->ram[0x0201u] = 0xF8u;
         reference->ram[0x0202u] = 0xF8u;
@@ -142,7 +152,15 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         native.setup_command = 0u;
         native.title_animation_index = 1u;
         native.title_animation_flag = 0xA5u;
-        native.title_animation_counter = 0x77u;
+        native.title_animation_counter = cases[n].state == 2u ? 0x04u : 0x77u;
+        native.transition_counter_03F8 = cases[n].state == 2u ? 0x04u : 0u;
+        native.transition_flag_004B = cases[n].state == 2u ? 0xB6u : 0u;
+        native.transition_timer_0034 = cases[n].state == 2u ? 0x2Du : 0u;
+        native.selected_mode = cases[n].state == 2u ? 0x01u : 0xA2u;
+        if (cases[n].state == 2u) {
+            static const uint8_t prior_assets[6] = {0x00u,0x12u,0x12u,0x01u,0x17u,0x0Eu};
+            native.source_visual_asset = prior_assets[cases[n].command];
+        }
         native.cursor_sprite_y = 0xF8u;
         native.cursor_sprite_tile = 0xF8u;
         native.cursor_sprite_attribute = 0xF8u;
@@ -173,6 +191,14 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         SETUP_CHECK(native.transition_phase, 0x0044u, setup_index);
         SETUP_CHECK(native.input.input_timer, 0x0031u, idle_timer);
         SETUP_CHECK(native.transition_timer_0034, 0x0034u, timer_0034);
+        SETUP_CHECK(native.transition_flag_004B, 0x004Bu, flag_004B);
+        SETUP_CHECK(native.title_animation_counter, 0x03F8u, title_counter);
+        if (cases[n].state == 2u && cases[n].command == 5u && native.race_setup_complete != 1u) {
+            puts("FAIL: first-course setup list did not signal completion"); return 1;
+        }
+        if ((cases[n].state != 2u || cases[n].command != 5u) && native.race_setup_complete != 0u) {
+            puts("FAIL: race setup completion signaled too early"); return 1;
+        }
 #undef SETUP_CHECK
     }
     puts("PASS: title, selector and design setup commands match the original ASM.");
