@@ -73,7 +73,7 @@ static uint8_t selectPose(const BikeMovementState *movement,
 
     if (movement->track_finished == 1u && approach == 0x0Au) {
         *temp = 0x02u;
-        return 0x02u;
+        return approach; /* LDY/STY changes temp, A still holds $0A. */
     }
 
     if ((uint8_t)(movement->collision_state[bike] |
