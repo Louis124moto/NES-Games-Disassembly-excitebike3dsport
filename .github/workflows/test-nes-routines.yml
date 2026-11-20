@@ -22,6 +22,8 @@ on:
       - "3ds-port/include/asset_extractor.h"
       - "3ds-port/source/bike_physics.c"
       - "3ds-port/source/bike_state.c"
+      - "3ds-port/source/native_race_setup.c"
+      - "3ds-port/include/native_race_setup.h"
       - "3ds-port/source/input.c"
       - "3ds-port/include/input.h"
       - "3ds-port/tests/test_input_mapping.c"
@@ -37,6 +39,8 @@ on:
       - "3ds-port/source/native_menu_renderer.c"
       - "3ds-port/source/native_menu_renderer.h"
       - "3ds-port/include/bike_physics.h"
+      - "3ds-port/source/native_race_setup.c"
+      - "3ds-port/include/native_race_setup.h"
       - "3ds-port/source/game.c"
       - "3ds-port/source/game_state.c"
       - "3ds-port/include/game_state.h"
@@ -146,6 +150,12 @@ jobs:
 
       - name: Run race setup test
         run: ./test_nes_race_setup
+
+      - name: Compile native semantic C875 setup test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_race_setup.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
+
+      - name: Run native semantic C875 setup test
+        run: ./test_native_race_setup
 
       - name: Validate reference 6502 core against py65
         run: |
