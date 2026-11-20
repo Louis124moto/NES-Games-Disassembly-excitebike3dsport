@@ -379,6 +379,60 @@ static int test_e70b(Cpu6502 *cpu)
     return 0;
 }
 
+
+static int test_df30(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    for (v = 0u; v < 120000u; ++v) {
+        RaceElapsedTimeState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        s.race_started = (uint8_t)(nb() & 1u);
+        s.track_finished = nb();
+        s.minutes = (uint8_t)(nb() % 9u);
+        s.seconds = (uint8_t)(nb() % 60u);
+        s.hundredths = (uint8_t)(nb() % 100u);
+        s.frame_fraction = (uint8_t)(nb() % 10u);
+        for (i = 0u; i < 7u; ++i) {
+            s.decimal_work[i] = nb();
+            s.display[i] = nb();
+        }
+
+        memset(r, 0, sizeof(cpu->ram));
+        r[0x4F] = s.race_started; r[0x52] = s.track_finished;
+        r[0x68] = s.minutes; r[0x69] = s.seconds;
+        r[0x6A] = s.hundredths; r[0x6B] = s.frame_fraction;
+        for (i = 0u; i < 7u; ++i) {
+            r[0x3D1u + i] = s.decimal_work[i];
+            r[0x3D9u + i] = s.display[i];
+        }
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xDF30u, 20000u) != 0) {
+            printf("FAIL DF30 oracle v=%u\\n", v); return 1;
+        }
+        raceElapsedTimeUpdate(&s);
+        if (s.track_finished != r[0x52] || s.minutes != r[0x68] ||
+            s.seconds != r[0x69] || s.hundredths != r[0x6A] ||
+            s.frame_fraction != r[0x6B]) {
+            printf("FAIL DF30 v=%u timer native=%02X/%02X/%02X/%02X finish=%02X ASM=%02X/%02X/%02X/%02X finish=%02X\\n",
+                   v, s.minutes, s.seconds, s.hundredths, s.frame_fraction, s.track_finished,
+                   r[0x68], r[0x69], r[0x6A], r[0x6B], r[0x52]);
+            return 1;
+        }
+        for (i = 0u; i < 7u; ++i) {
+            if (s.decimal_work[i] != r[0x3D1u + i] ||
+                s.display[i] != r[0x3D9u + i]) {
+                printf("FAIL DF30 v=%u glyph[%u] work=%02X/%02X display=%02X/%02X\\n",
+                       v, i, s.decimal_work[i], r[0x3D1u+i],
+                       s.display[i], r[0x3D9u+i]);
+                return 1;
+            }
+        }
+    }
+    puts("PASS: 120000 sub_DF30 elapsed-time vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -388,5 +442,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
+    return test_df30(&cpu) || test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
 }
