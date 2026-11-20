@@ -28,6 +28,9 @@ on:
       - "3ds-port/include/race_countdown.h"
       - "3ds-port/source/native_rng.c"
       - "3ds-port/include/native_rng.h"
+      - "3ds-port/source/track.c"
+      - "3ds-port/include/track.h"
+      - "3ds-port/tests/test_track_first_course.c"
       - "3ds-port/source/input.c"
       - "3ds-port/include/input.h"
       - "3ds-port/tests/test_input_mapping.c"
@@ -172,6 +175,12 @@ jobs:
 
       - name: Run native D326 RNG test
         run: ./test_native_rng
+
+      - name: Compile native first-course track test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/track.c 3ds-port/tests/test_track_first_course.c -o test_track_first_course
+
+      - name: Run native first-course track test
+        run: ./test_track_first_course
 
       - name: Validate reference 6502 core against py65
         run: |
