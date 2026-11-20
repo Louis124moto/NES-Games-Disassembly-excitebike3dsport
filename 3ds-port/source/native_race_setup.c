@@ -49,6 +49,66 @@ static void build_first_course_hud_glyphs(NativeRaceSetupState *out,
     out->hud_glyphs[6] = remainder;
 }
 
+void nativeRaceSetupClearFirstCourseState(BikeMovementState *movement,
+                                          BikeStateMachineState *states)
+{
+    if (movement == 0 || states == 0) return;
+
+    /* C869 clears $004D-$00EF; C820 clears $0340-$03EF. */
+#define CLEAR_FIELD(object, field) memset((object)->field, 0, sizeof((object)->field))
+    CLEAR_FIELD(movement, speed_whole);
+    CLEAR_FIELD(movement, speed_fraction);
+    CLEAR_FIELD(movement, fraction_accumulator);
+    CLEAR_FIELD(movement, movement_delta);
+    CLEAR_FIELD(movement, object_active);
+    CLEAR_FIELD(movement, object_action_state);
+    CLEAR_FIELD(movement, vertical_phase);
+    CLEAR_FIELD(movement, object_class);
+    CLEAR_FIELD(movement, object_origin_x);
+    CLEAR_FIELD(movement, setup_parameter);
+    CLEAR_FIELD(movement, x_low);
+    CLEAR_FIELD(movement, x_high);
+    CLEAR_FIELD(movement, previous_x);
+    movement->base_nametable = 0u;
+    movement->secondary_scroll_fraction = 0u;
+    movement->secondary_scroll_x = 0u;
+    movement->secondary_base_nametable = 0u;
+    CLEAR_FIELD(movement, object_lock_timer);
+    CLEAR_FIELD(movement, start_lock_timer);
+    CLEAR_FIELD(movement, movement_flags);
+    CLEAR_FIELD(movement, object_status);
+    CLEAR_FIELD(movement, vertical_reference);
+    CLEAR_FIELD(movement, object_y);
+    CLEAR_FIELD(movement, y_low);
+    CLEAR_FIELD(movement, rider_state);
+    CLEAR_FIELD(movement, collision_state);
+    CLEAR_FIELD(movement, movement_mode);
+    CLEAR_FIELD(movement, brake_state);
+    CLEAR_FIELD(movement, approach);
+    CLEAR_FIELD(movement, animation_state);
+    CLEAR_FIELD(movement, lateral_state);
+    CLEAR_FIELD(movement, motion_fraction);
+    CLEAR_FIELD(movement, motion_whole);
+    CLEAR_FIELD(movement, motion_fraction_start);
+    CLEAR_FIELD(movement, motion_whole_start);
+    CLEAR_FIELD(movement, motion_delta);
+    movement->track_finished = 0u;
+
+    CLEAR_FIELD(states, state);
+    CLEAR_FIELD(states, rider_present);
+    CLEAR_FIELD(states, x);
+    CLEAR_FIELD(states, previous_x);
+    CLEAR_FIELD(states, target_index);
+    CLEAR_FIELD(states, y);
+    CLEAR_FIELD(states, vertical_delta);
+    CLEAR_FIELD(states, speed_whole);
+    CLEAR_FIELD(states, vertical_state);
+    CLEAR_FIELD(states, vertical_offset);
+    CLEAR_FIELD(states, overheat);
+    CLEAR_FIELD(states, vertical_collision_ref);
+#undef CLEAR_FIELD
+}
+
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
                                const NativeRngState *rng,
