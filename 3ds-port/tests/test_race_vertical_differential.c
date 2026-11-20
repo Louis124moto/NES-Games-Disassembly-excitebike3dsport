@@ -41,12 +41,26 @@ int main(int argc, char **argv)
         BikeMovementState movement;
         BikeStateMachineState states;
         uint8_t expected_y[4], expected_delta[4];
+        uint8_t expected_player_event, expected_movement_mode;
         int rc;
 
         memset(&movement, 0, sizeof(movement));
         memset(&states, 0, sizeof(states));
         memset(cpu.ram, 0, sizeof(cpu.ram));
-        cpu.ram[0x004Fu] = 0u; /* isolate the E96C vertical pass from EA07 input */
+        states.race_started = (uint8_t)(next_byte() & 1u);
+        states.controller_hold = next_byte();
+        states.player_event = next_byte();
+        movement.collision_state[0] = (uint8_t)(next_byte() & 1u);
+        movement.object_status[0] = (uint8_t)(next_byte() & 1u);
+        movement.movement_mode[0] = (uint8_t)(next_byte() & 3u);
+        states.global_overheat = (uint8_t)(next_byte() & 1u);
+        cpu.ram[0x004Fu] = states.race_started;
+        cpu.ram[0x0014u] = states.controller_hold;
+        cpu.ram[0x00FDu] = states.player_event;
+        cpu.ram[0x0098u] = movement.collision_state[0];
+        cpu.ram[0x00B0u] = movement.object_status[0];
+        cpu.ram[0x0388u] = movement.movement_mode[0];
+        cpu.ram[0x03F7u] = states.global_overheat;
         for (i = 0u; i < 4u; ++i) {
             movement.vertical_phase[i] = 0u; /* first-course phase-zero path */
             movement.object_action_state[i] = next_byte();
@@ -74,9 +88,18 @@ int main(int argc, char **argv)
             expected_y[i] = cpu.ram[0x00B8u + i];
             expected_delta[i] = cpu.ram[0x00DCu + i];
         }
+        expected_player_event = cpu.ram[0x00FDu];
+        expected_movement_mode = cpu.ram[0x0388u];
 
         if (bikePhysicsUpdateFirstCourseVertical(&movement, &states) != 0u) {
             printf("FAIL native E96C rejected phase-zero vector=%u\n", vector);
+            return 1;
+        }
+        if (states.player_event != expected_player_event ||
+            movement.movement_mode[0] != expected_movement_mode) {
+            printf("FAIL EA07 vector=%u event=%02X/%02X movement_mode=%02X/%02X\n",
+                   vector, states.player_event, expected_player_event,
+                   movement.movement_mode[0], expected_movement_mode);
             return 1;
         }
         for (i = 0u; i < 4u; ++i) {
@@ -93,6 +116,6 @@ int main(int argc, char **argv)
         }
     }
 
-    puts("PASS: 50000 four-bike E96C phase-zero frames match original ASM.");
+    puts("PASS: 50000 four-bike E96C phase-zero + EA07 input frames match original ASM.");
     return 0;
 }
