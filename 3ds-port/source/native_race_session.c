@@ -31,6 +31,12 @@ int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
     return 1;
 }
 
+void nativeRaceSessionUpdateBikeStates(NativeRaceSession *session)
+{
+    if (session == 0 || session->initialized == 0u) return;
+    bikePhysicsUpdateBikeStates(&session->states);
+}
+
 BikeRaceCountdownRenderEvent nativeRaceSessionUpdateCountdown(NativeRaceSession *session)
 {
     if (session == 0 || session->initialized == 0u)
