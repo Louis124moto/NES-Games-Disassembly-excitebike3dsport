@@ -43,6 +43,20 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
         uint8_t delta = states->vertical_delta[i];
         uint8_t update_direction = 0u;
 
+        /* E96E-E97D: action states $14/$15 suppress the Y+delta addition. */
+        if (movement->object_action_state[i] != 0x14u &&
+            movement->object_action_state[i] != 0x15u) {
+            y = (uint8_t)(y + delta);
+        }
+
+        /* E981-E986: all four indexed source anchors stop vertical motion. */
+        if (is_vertical_anchor(y) != 0u) {
+            states->vertical_delta[i] = 0u;
+            movement->object_y[i] = y;
+            states->y[i] = y;
+            continue;
+        }
+
         /* E96C phase dispatch. Phase 1 can start a jump via DD06; phases
          * other than 1/3 move Y toward $20 while it is at/above that value. */
         if (movement->vertical_phase[i] == 0x01u) {
