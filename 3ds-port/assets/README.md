@@ -77,3 +77,16 @@ The normal game startup does not open `rom.nes`. It reads the existing exported 
 - `ppu_palette_18.bin` and `ppu_palette_18_mask.bin` — palette selected by C514
 
 Press **X** in the native front-end to open the optional asset extractor. It can generate/update these files from a source ROM/CHR file. Closing the inspector returns to the native front-end, which reloads the exported pack. The renderer uses native framebuffer pixel composition and a semantic cursor sprite; it does not run the PPU command interpreter, OAM builder or NES scanline renderer.
+
+## Native first-course race scene
+
+The first-course setup list 2 selects the source PPU snapshots in this order:
+
+- `ppu_snapshot_18.bin` — `C551`, course palette/setup selection
+- `ppu_snapshot_01.bin` — `C820`, track/background data upload (`D13F`)
+- `ppu_snapshot_17.bin` — `C5A3`
+- `ppu_snapshot_14.bin` — `C566`
+
+The native loader merges these into scene 6. These files are optional for the front-end; if any are missing, the menu still loads but the first-course scene reports that extraction must be rerun. The extractor exports the full source snapshot set, so generate a fresh pack after updating the project.
+
+`nativeRaceRenderFrame` draws the merged nametable with the original decoded CHR pixels and palette 18 using direct framebuffer composition. It overlays the seven initial HUD glyphs produced by `C875/C935` at the source nametable location. It does not execute the NES PPU command interpreter or OAM renderer. The initial track background/HUD still require screenshot comparison against a real NES capture; bike sprites, camera scrolling and the live race frame loop are not complete yet.
