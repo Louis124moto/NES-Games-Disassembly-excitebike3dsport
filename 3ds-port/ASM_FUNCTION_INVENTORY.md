@@ -179,7 +179,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E927` | `sub_E927` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
 | `$EA44` | `sub_EA44` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$EAC5` | `sub_EAC5` | Pending | — |
+| `$EAC5` | `sub_EAC5` | Differential-tested (200k vectors, 7 mutants killed) | `raceBannerSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$EB17` | `sub_EB17` | Pending | — |
 | `$EC25` | `sub_EC25` | Pending | — |
 | `$EC3B` | `sub_EC3B` | Pending | — |

@@ -209,4 +209,16 @@ typedef struct RaceObstacleHitState {
 
 void raceObstacleHit(RaceObstacleHitState *state);
 
+/* Source: sub_EAC5 ($EAC5-$EB16) — finish/results banner sprites at OAM
+ * $02B4-$02BF and the x/y/attribute bytes of $02C0-$02DF. */
+typedef struct RaceBannerSpriteState {
+    uint8_t track_finished;       /* ram_0052_track_finished_flag */
+    uint8_t timer_003C;           /* ram_003C_timer */
+    uint8_t timer_003A;           /* ram_003A_timer */
+    uint8_t sound_request_00FB;   /* ram_00FB */
+    NativeOamState oam;           /* OAM byte layout used by the native renderer */
+} RaceBannerSpriteState;
+
+void raceBannerSprites(RaceBannerSpriteState *state);
+
 #endif

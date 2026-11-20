@@ -471,3 +471,32 @@ void raceObstacleHit(RaceObstacleHitState *s)
     s->sound_request_00FD = 1u;
     s->state_039B = 2u;
 }
+
+static const uint8_t k_tblE540[4] = { 0x32u, 0xDDu, 0xDCu, 0xDBu };
+static const uint8_t k_tblE543[4] = { 0xDBu, 0x7Cu, 0x74u, 0x6Cu };
+static const uint8_t k_tblE547[7] = { 0x90u, 0x88u, 0x80u, 0x78u, 0x70u, 0x68u, 0x60u };
+
+void raceBannerSprites(RaceBannerSpriteState *s)
+{
+    unsigned k;
+    uint8_t a;
+    if (s == 0) return;
+    if ((s->track_finished | s->timer_003C) != 0u) { s->timer_003A = 0u; return; }
+    a = s->timer_003A;
+    if (a == 0u) return;
+    if (a >= 0x0Du) {
+        if ((a & 1u) == 0u) return;
+        s->sound_request_00FB = 0x40u;
+    }
+    for (k = 0u; k < 3u; ++k) { /* Y = 3, 2, 1 */
+        s->oam.bytes[0xB4u + 4u * k] = 0x42u;
+        s->oam.bytes[0xB5u + 4u * k] = k_tblE540[3u - k];
+        s->oam.bytes[0xB6u + 4u * k] = 0u;
+        s->oam.bytes[0xB7u + 4u * k] = k_tblE543[3u - k];
+    }
+    for (k = 0u; k < 7u; ++k) { /* X = 6..0; tile bytes are left alone */
+        s->oam.bytes[0xC0u + 4u * k] = 0x4Au;
+        s->oam.bytes[0xC2u + 4u * k] = 0u;
+        s->oam.bytes[0xC3u + 4u * k] = k_tblE547[6u - k];
+    }
+}

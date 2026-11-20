@@ -500,6 +500,30 @@ static int test_e09f(Cpu6502 *cpu)
     return 0;
 }
 
+static int test_eac5(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    static const uint8_t timers[] = { 0u, 1u, 2u, 0x0Cu, 0x0Du, 0x0Eu, 0x1Du, 0x1Eu, 0xFFu };
+    for (v = 0u; v < 200000u; ++v) {
+        RaceBannerSpriteState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        s.track_finished = (nb() & 3u) ? 0u : nb(); s.timer_003C = (nb() & 3u) ? 0u : nb();
+        s.timer_003A = (nb() & 1u) ? pick(timers, sizeof(timers)) : nb(); s.sound_request_00FB = nb();
+        for (i = 0u; i < 256u; ++i) s.oam.bytes[i] = nb();
+        memset(r, 0, sizeof(cpu->ram));
+        r[0x52] = s.track_finished; r[0x3C] = s.timer_003C; r[0x3A] = s.timer_003A; r[0xFB] = s.sound_request_00FB;
+        for (i = 0u; i < 256u; ++i) r[0x200 + i] = s.oam.bytes[i];
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xEAC5u, 20000u) != 0) return 1;
+        raceBannerSprites(&s);
+        if (s.timer_003A != r[0x3A] || s.sound_request_00FB != r[0xFB]) { printf("FAIL EAC5 v=%u scalars\n", v); return 1; }
+        for (i = 0u; i < 256u; ++i) if (s.oam.bytes[i] != r[0x200 + i]) { printf("FAIL EAC5 v=%u oam[%u]\n", v, i); return 1; }
+    }
+    puts("PASS: 200000 sub_EAC5 banner-sprite vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -509,5 +533,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_df30(&cpu) || test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu) || test_dfd5(&cpu) || test_e09f(&cpu);
+    return test_df30(&cpu) || test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu) || test_dfd5(&cpu) || test_e09f(&cpu) || test_eac5(&cpu);
 }
