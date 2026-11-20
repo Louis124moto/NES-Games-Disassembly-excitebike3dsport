@@ -2,6 +2,7 @@
 #include <string.h>
 #include "race_frame.h"
 #include "cpu6502.h"
+#include "race_spawn.h"
 
 static uint32_t rng = 0xD0D1D2D3u;
 static uint8_t nb(void) { rng = rng * 1664525u + 1013904223u; return (uint8_t)(rng >> 24); }
@@ -266,6 +267,77 @@ static int test_e42b(Cpu6502 *cpu)
     return 0;
 }
 
+
+static int test_e456(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    for (v = 0u; v < 200000u; ++v) {
+        RaceOffscreenSpriteState s;
+        RaceSpawnState opponents;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        memset(&opponents, 0, sizeof(opponents));
+        s.opponent_cleared_03A6 = nb();
+        for (i = 0u; i < 4u; ++i) {
+            s.slot_object_index[i] = (uint8_t)(nb() % 4u);
+            opponents.x_high[i] = (uint8_t)(nb() & 3u);
+            opponents.x_low[i] = nb();
+            opponents.active[i] = nb(); opponents.y_low[i] = nb();
+            opponents.vertical_reference[i] = nb(); opponents.slot_00A0[i] = nb();
+            opponents.vertical_phase[i] = nb(); opponents.action_state[i] = nb();
+            opponents.lateral_state[i] = nb(); opponents.dust_flags[i] = nb();
+            opponents.speed_fraction[i] = nb(); opponents.speed_whole[i] = nb();
+            opponents.collision_state[i] = nb(); opponents.movement_state[i] = nb();
+            opponents.object_status[i] = nb(); opponents.brake_state[i] = nb();
+            opponents.movement_mode[i] = nb(); opponents.script_x_high[i] = nb();
+            opponents.block_039C[i] = nb(); opponents.lane_delta[i] = nb();
+            opponents.position_0070[i] = nb(); opponents.rider_present[i] = nb();
+        }
+        for (i = 0u; i < 256u; ++i) s.oam.bytes[i] = nb();
+
+        memset(r, 0, sizeof(cpu->ram));
+        for (i = 0u; i < 4u; ++i) {
+            r[0x88u + i] = s.slot_object_index[i];
+            r[0x84u + i] = opponents.x_high[i];
+            r[0x80u + i] = opponents.x_low[i];
+#define MAP_OPP(F, B) r[(B) + i] = opponents.F[i]
+            MAP_OPP(active, 0xA8); MAP_OPP(y_low, 0xB8); MAP_OPP(vertical_reference, 0xBC);
+            MAP_OPP(slot_00A0, 0xA0); MAP_OPP(vertical_phase, 0xA4); MAP_OPP(action_state, 0x58);
+            MAP_OPP(lateral_state, 0xCC); MAP_OPP(dust_flags, 0x36C); MAP_OPP(speed_fraction, 0x90);
+            MAP_OPP(speed_whole, 0x94); MAP_OPP(collision_state, 0x98); MAP_OPP(movement_state, 0x9C);
+            MAP_OPP(object_status, 0xB0); MAP_OPP(brake_state, 0xD4); MAP_OPP(movement_mode, 0x388);
+            MAP_OPP(script_x_high, 0xC0); MAP_OPP(block_039C, 0x39C); MAP_OPP(lane_delta, 0xDC);
+            MAP_OPP(position_0070, 0x70); MAP_OPP(rider_present, 0x370);
+#undef MAP_OPP
+        }
+        r[0x3A6] = s.opponent_cleared_03A6;
+        for (i = 0u; i < 256u; ++i) r[0x200u + i] = s.oam.bytes[i];
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xE456u, 30000u) != 0) {
+            printf("FAIL E456 oracle v=%u\\n", v); return 1;
+        }
+        raceHideOffscreenOpponentSprites(&s, &opponents);
+        if (s.opponent_cleared_03A6 != r[0x3A6]) {
+            printf("FAIL E456 v=%u 03A6 native=%02X ASM=%02X\\n", v, s.opponent_cleared_03A6, r[0x3A6]); return 1;
+        }
+        for (i = 0u; i < 256u; ++i) if (s.oam.bytes[i] != r[0x200u + i]) {
+            printf("FAIL E456 v=%u OAM[%u] native=%02X ASM=%02X\\n", v, i, s.oam.bytes[i], r[0x200u + i]); return 1;
+        }
+#define CHECK_OPP(F, B) for (i = 0u; i < 4u; ++i) if (opponents.F[i] != r[(B) + i]) { \
+    printf("FAIL E456 v=%u " #F "[%u] native=%02X ASM=%02X\\n", v, i, opponents.F[i], r[(B)+i]); return 1; }
+        CHECK_OPP(active, 0xA8); CHECK_OPP(y_low, 0xB8); CHECK_OPP(vertical_reference, 0xBC);
+        CHECK_OPP(slot_00A0, 0xA0); CHECK_OPP(vertical_phase, 0xA4); CHECK_OPP(action_state, 0x58);
+        CHECK_OPP(lateral_state, 0xCC); CHECK_OPP(dust_flags, 0x36C); CHECK_OPP(speed_fraction, 0x90);
+        CHECK_OPP(speed_whole, 0x94); CHECK_OPP(collision_state, 0x98); CHECK_OPP(movement_state, 0x9C);
+        CHECK_OPP(object_status, 0xB0); CHECK_OPP(brake_state, 0xD4); CHECK_OPP(movement_mode, 0x388);
+        CHECK_OPP(script_x_high, 0xC0); CHECK_OPP(block_039C, 0x39C); CHECK_OPP(lane_delta, 0xDC);
+        CHECK_OPP(position_0070, 0x70); CHECK_OPP(rider_present, 0x370);
+#undef CHECK_OPP
+    }
+    puts("PASS: 200000 sub_E456 off-screen sprite/OAM and DB95 clear vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -275,5 +347,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
+    return test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
 }
