@@ -12,7 +12,7 @@ static void writeInitialPose6(uint8_t *oam, unsigned int base,
     unsigned int offset = 1u;
 
     /* D1C7 with shape $33: the mask emits six tile bytes. */
-    for (sprite_index = 3u; sprite_index < 9u; ++sprite_index) {
+    for (sprite_index = 0u; sprite_index < 6u; ++sprite_index) {
         uint8_t output_tile;
         if ((sprite_index & 1u) != 0u) {
             output_tile = tile++;
