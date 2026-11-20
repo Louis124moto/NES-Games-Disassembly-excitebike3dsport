@@ -4,6 +4,13 @@
 #include <3ds.h>
 #include "native_menu_renderer.h"
 
+/* Excitebike is NROM-128/CHR-ROM 8 KiB. The original writes $90 at C1D5
+ * and $10 at C32B-C333 before the first race: PPUCTRL bit 4 selects the
+ * $1000-$1FFF pattern table for background tiles (tile indices 256..511).
+ * Bit 3 stays clear, so 8x8 OAM sprites continue using indices 0..255.
+ */
+#define EXCITEBIKE_BG_CHR_TILE_BASE 256u
+
 /* NTSC RGB lookup for source palette indices; no PPU state or renderer is used. */
 static const uint8_t s_nativeRgb[64][3] = {
  {84,84,84},{0,30,116},{8,16,144},{48,0,136},{68,0,100},{92,0,48},{84,4,0},{60,24,0},
@@ -57,13 +64,14 @@ static void drawBackground(uint8_t *framebuffer, const NativeMenuAssets *assets,
         for (tileX = 0u; tileX < 32u; ++tileX) {
             const size_t mapIndex = (size_t)tileY * 32u + tileX;
             const uint8_t tile = scene->nametable[mapIndex];
+            const size_t chrTile = EXCITEBIKE_BG_CHR_TILE_BASE + (size_t)tile;
             const size_t attributeIndex = 960u + (size_t)(tileY / 4u) * 8u + tileX / 4u;
             const uint8_t attribute = scene->nametable[attributeIndex];
             const unsigned int shift = (unsigned int)(((tileY & 2u) << 1u) | (tileX & 2u));
             const unsigned int subpalette = (attribute >> shift) & 3u;
             const uint8_t *tilePixels;
-            if (tile >= assets->chr_tile_count) continue;
-            tilePixels = assets->chr_pixels + (size_t)tile * 64u;
+            if (chrTile >= assets->chr_tile_count) continue;
+            tilePixels = assets->chr_pixels + chrTile * 64u;
             for (pixelY = 0u; pixelY < 8u; ++pixelY) {
                 for (pixelX = 0u; pixelX < 8u; ++pixelX) {
                     const uint8_t value = (uint8_t)(tilePixels[pixelY * 8u + pixelX] & 3u);
@@ -135,6 +143,7 @@ static void drawRaceHud(uint8_t *framebuffer, const NativeMenuAssets *assets,
     for (i = 0u; i < 7u; ++i) {
         const unsigned int tileX = 3u + i;
         const uint8_t tile = session->setup.hud_glyphs[i];
+        const size_t chrTile = EXCITEBIKE_BG_CHR_TILE_BASE + (size_t)tile;
         const size_t attributeIndex =
             960u + (size_t)(tileY / 4u) * 8u + tileX / 4u;
         const uint8_t attribute = scene->nametable[attributeIndex];
@@ -143,8 +152,8 @@ static void drawRaceHud(uint8_t *framebuffer, const NativeMenuAssets *assets,
         const unsigned int subpalette = (attribute >> shift) & 3u;
         const uint8_t *tilePixels;
 
-        if (tile >= assets->chr_tile_count) continue;
-        tilePixels = assets->chr_pixels + (size_t)tile * 64u;
+        if (chrTile >= assets->chr_tile_count) continue;
+        tilePixels = assets->chr_pixels + chrTile * 64u;
         for (y = 0u; y < 8u; ++y) {
             for (x = 0u; x < 8u; ++x) {
                 const uint8_t value = (uint8_t)(tilePixels[y * 8u + x] & 3u);
