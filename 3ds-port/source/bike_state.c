@@ -56,6 +56,7 @@ static uint8_t update_one_bike_state(BikeStateMachineState *s, unsigned x)
     case 1u:
         if (s->rider_present[x] == 0u) {
             ++s->state[x];
+            if (s->state[x] != 0u) s->timer_state[x] = 0x08u;
             break;
         }
         if ((s->frame_counter & 1u) != 0u) break;
@@ -64,6 +65,7 @@ static uint8_t update_one_bike_state(BikeStateMachineState *s, unsigned x)
         a = (uint8_t)(s->x[x] + s_state1_distance[y]);
         if (a < s->previous_x[x]) {
             ++s->state[x];
+            if (s->state[x] != 0u) s->timer_state[x] = 0x08u;
         }
         break;
 
