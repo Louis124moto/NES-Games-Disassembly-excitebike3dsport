@@ -8,6 +8,7 @@
 #include "native_menu.h"
 #include "native_menu_assets.h"
 #include "native_menu_renderer.h"
+#include "native_race_session.h"
 #include "renderer.h"
 
 static InputState s_input;
@@ -18,6 +19,9 @@ static char s_executablePath[512];
 static int s_extractorInitialized;
 static int s_menuDirty = 1;
 static int s_assetsLoaded;
+static NativeRaceSession s_raceSession;
+static NativeRngState s_raceRng;
+static int s_raceSessionReady;
 
 static void rememberExecutablePath(const char *path)
 {
@@ -54,6 +58,11 @@ void gameInit(const char *executablePath)
     s_input.pressed = 0u;
     gameStateReset(&s_diagnosticState);
     nativeMenuInit(&s_menu);
+    nativeRngReset(&s_raceRng); /* C1CE seed; startup wait-loop advances are still pending. */
+    memset(&s_raceSession, 0, sizeof(s_raceSession));
+    s_raceSessionReady = 0;
+    s_extractorInitialized = 0;
+    s_menuDirty = 1;
     memset(&s_menuAssets, 0, sizeof(s_menuAssets));
     rememberExecutablePath(executablePath);
     rendererInit();
@@ -116,6 +125,32 @@ void gameUpdate(void)
     nativeMenuTickTimers(&s_menu);
     nativeMenuUpdate(&s_menu, inputNesPressed(&s_input));
     (void)nativeMenuStepSetup(&s_menu);
+
+    /* The source setup list 2 completes C551/C869/C820/C5A3/C566/C875.
+     * Compose its native gameplay state once, without starting the still
+     * incomplete per-frame race loop or invoking the NES CPU/PPU. */
+    if (s_menu.race_setup_complete && !s_raceSessionReady) {
+        NativeRaceSetupInput setupInput;
+        memset(&setupInput, 0, sizeof(setupInput));
+        setupInput.multiplayer_flag = s_menu.selected_mode;
+        setupInput.setup_index_0041 = s_menu.source_state;
+        setupInput.transition_flag_0046 = s_menu.transition_flag_0046;
+        setupInput.timer_0034 = s_menu.transition_timer_0034;
+        setupInput.countdown_timer_003C = 0u;
+        setupInput.transition_counter_03F8 = s_menu.transition_counter_03F8;
+        setupInput.setup_counter_0040 = 0u;
+        setupInput.setup_counter_0047 = 0u;
+        if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
+            s_raceSessionReady = 1;
+            rendererPrintBottom("FIRST COURSE — NATIVE SETUP READY\n"
+                                "Race state and track profile initialized.\n"
+                                "Native frame loop and track rendering are next.\n");
+        } else {
+            rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
+                                "Check the first-course setup input state.\n");
+        }
+    }
+
     if (menuVisualStateChanged(&before, &s_menu)) s_menuDirty = 1;
 }
 
@@ -133,6 +168,8 @@ void gameRender(void)
 
 void gameExit(void)
 {
+    s_raceSessionReady = 0;
+    memset(&s_raceSession, 0, sizeof(s_raceSession));
     nativeMenuAssetsUnload(&s_menuAssets);
     rendererExit();
 }
