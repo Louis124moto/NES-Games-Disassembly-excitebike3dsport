@@ -9,6 +9,9 @@
  * Returns a bit mask for bike slots whose nonzero $00A4 phase is not yet
  * translated; those slots are left untouched rather than guessed.
  */
+/* E836/DC97: convert world Y and vertical reference to sprite-screen Y. */
+void bikePhysicsUpdateScreenY(BikeMovementState *movement);
+
 uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
                                              BikeStateMachineState *states);
 
