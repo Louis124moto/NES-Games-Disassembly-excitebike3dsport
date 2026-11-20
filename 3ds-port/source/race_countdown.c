@@ -35,7 +35,7 @@ BikeRaceCountdownRenderEvent bikePhysicsUpdateRaceCountdown(
         } else {
             movement->speed_fraction[0] = 0u;
             states->vertical_delta[0] =
-                states->y[0] == 0x39u ? 0u : 0x01u;
+                states->y[0] == 0x01u ? 0u : 0x01u;
         }
     }
 
