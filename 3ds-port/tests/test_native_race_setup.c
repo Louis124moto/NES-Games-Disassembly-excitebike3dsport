@@ -81,7 +81,7 @@ int main(void)
     CHECK(out.race_object_parameters[0] == 0x01u && out.race_object_parameters[1] == 0x18u && out.race_object_parameters[2] == 0x00u, 39);
     in.transition_flag_0046 = 0u;
     in.transition_counter_03F8 = 0x16u; /* 2*$16 + $10 = $3C: source subtracts once. */
-    CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 37);
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states), 37);
     CHECK(out.hud_glyphs[0] == 2u && out.hud_glyphs[2] == 0u && out.hud_glyphs[3] == 0u, 38);
 
     CHECK(nativeRaceSetupFirstCourse(0, &in, &rng, &movement, &states) == 0, 40);
@@ -89,7 +89,7 @@ int main(void)
     CHECK(nativeRaceSetupFirstCourse(&out, &in, 0, &movement, &states) == 0, 42);
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, 0) == 0, 43);
     in.setup_index_0041 = 8u;
-    CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states) == 0, 44);
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 44);
 
     puts("PASS: native C875 first-course semantic setup.");
     return 0;
