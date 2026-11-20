@@ -116,6 +116,7 @@ typedef struct BikeMovementState {
     uint8_t fraction_accumulator[4]; /* ram_0394_obj */
     uint8_t movement_delta[4];       /* ram_0060_obj */
     uint8_t object_active[4];        /* ram_00A8_obj */
+    uint8_t object_class[4];         /* ram_00E0_obj, assigned by C875 */
     uint8_t x_low[4];                /* ram_0080_obj */
     uint8_t x_high[4];               /* ram_0084_obj */
     uint8_t previous_x[4];           /* ram_0390_obj */
