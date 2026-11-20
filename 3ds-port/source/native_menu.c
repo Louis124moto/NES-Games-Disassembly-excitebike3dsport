@@ -175,6 +175,9 @@ uint8_t nativeMenuStepSetup(NativeMenuState *menu)
         if (command == 2u) {
             menu->source_visual_asset = 0x01u;
             menu->transition_flag_004B = 0u;
+            menu->cursor_sprite_y = 0xBFu;
+            menu->cursor_sprite_tile = 0xFFu;
+            menu->cursor_sprite_x = 0xF7u;
             menu->transition_phase = 3u;
             return 1u;
         }
