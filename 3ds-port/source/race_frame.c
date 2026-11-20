@@ -348,3 +348,55 @@ void raceSmoothBikePositions(RacePositionSmoothingState *s)
         s->transient[x] = 0u;
     }
 }
+
+/* Source: sub_DF30 + the three decimal conversions performed by sub_DF7F.
+ * $006B advances by $10 each frame; every $0A units advances hundredths.
+ */
+static void raceElapsedTimeBuildDigits(RaceElapsedTimeState *s)
+{
+    uint8_t value;
+    if (s == 0) return;
+
+    value = s->hundredths;
+    s->decimal_work[5] = (uint8_t)(value / 10u); /* $03D6 */
+    s->decimal_work[6] = (uint8_t)(value % 10u); /* $03D7 */
+
+    value = s->seconds;
+    s->decimal_work[2] = (uint8_t)(value / 10u); /* $03D3 */
+    s->decimal_work[3] = (uint8_t)(value % 10u); /* $03D4 */
+
+    value = s->minutes;
+    s->decimal_work[0] = (uint8_t)(value % 10u); /* $03D1 */
+
+    /* DF30 copies the seven-byte working buffer after each display update. */
+    {
+        unsigned i;
+        for (i = 0u; i < 7u; ++i) s->display[i] = s->decimal_work[i];
+    }
+}
+
+void raceElapsedTimeUpdate(RaceElapsedTimeState *s)
+{
+    if (s == 0 || s->race_started == 0u) return;
+
+    s->frame_fraction = (uint8_t)(s->frame_fraction + 0x10u);
+    while (s->frame_fraction >= 0x0Au) {
+        s->frame_fraction = (uint8_t)(s->frame_fraction - 0x0Au);
+        s->hundredths = (uint8_t)(s->hundredths + 1u);
+        if (s->hundredths < 0x64u) continue;
+
+        s->hundredths = 0u;
+        s->seconds = (uint8_t)(s->seconds + 1u);
+        if (s->seconds < 0x3Cu) continue;
+
+        s->seconds = 0u;
+        s->minutes = (uint8_t)(s->minutes + 1u);
+        if (s->minutes < 0x09u) continue;
+
+        s->minutes = 0u;
+        s->track_finished = 0x02u;
+        break;
+    }
+
+    raceElapsedTimeBuildDigits(s);
+}
