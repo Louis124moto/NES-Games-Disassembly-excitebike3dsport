@@ -290,6 +290,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_spawn.c tests/oracle/cpu6502.c tests/test_race_spawn.c -o /tmp/test_race_spawn
           /tmp/test_race_spawn /tmp/prg.bin
 
+      - name: Differentially test native opponent AI (CED0, D018, D000, CF0C and helpers) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_ai.c source/race_spawn.c tests/oracle/cpu6502.c tests/test_race_ai.c -o /tmp/test_race_ai
+          /tmp/test_race_ai /tmp/prg.bin
+
       - name: Differentially test native vertical recovery and motion against original ASM
         run: |
           cd 3ds-port

@@ -65,17 +65,17 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CE29` | `sub_CE29` | Native object-index-aware acceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE58` | `sub_CE58` | Native object-index-aware deceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE5C` | `sub_CE5C` | Pending | — |
-| `$CED0` | `sub_CED0` | Pending | — |
-| `$CF0C` | `sub_CF0C` | Pending | calls: sub_CF96, sub_CFDB |
-| `$CF47` | `sub_CF47` | Pending | calls: sub_CF88, sub_CF96 |
-| `$CF6A` | `sub_CF6A` | Pending | calls: sub_CF88, sub_CF96 |
-| `$CF88` | `sub_CF88` | Pending | calls: sub_E7FF; ; out |
-| `$CF8B` | `sub_CF8B` | Pending | ; out |
-| `$CF96` | `sub_CF96` | Pending | — |
-| `$CFCB` | `sub_CFCB` | Pending | — |
-| `$CFDB` | `sub_CFDB` | Pending | — |
+| `$CED0` | `sub_CED0` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF0C` | `sub_CF0C` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF47` | `sub_CF47` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF6A` | `sub_CF6A` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF88` | `sub_CF88` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF8B` | `sub_CF8B` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF96` | `sub_CF96` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CFCB` | `sub_CFCB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CFDB` | `sub_CFDB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$CFE3` | `sub_CFE3` | Translated in C; exhaustive regression wired, execution pending | called by sub_CFEA |
-| `$CFEA` | `sub_CFEA` | Translated in C; exhaustive regression wired, execution pending | calls: sub_CFE3 |
+| `$CFEA` | `sub_CFEA` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 
 ### Menu setup entry translations
 
@@ -87,8 +87,8 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$D000` | `sub_D000` | Translated in C; audit/test coverage recorded separately | — |
-| `$D018` | `sub_D018` | Pending | ; out |
+| `$D000` | `sub_D000` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$D018` | `sub_D018` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$D0AB` | `sub_D0AB` | Translated in C; audit/test coverage recorded separately | — |
 | `$D0C6` | `sub_D0C6` | Pending | — |
 | `$D0F4` | `sub_D0F4` | Pending | — |
