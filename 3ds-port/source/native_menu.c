@@ -114,6 +114,7 @@ uint8_t nativeMenuStepSetup(NativeMenuState *menu)
     case 0u: /* setup list 0: C2BD, C514 */
         if (command == 0u) {
             menu->title_animation_counter = 0x04u;
+            menu->transition_counter_03F8 = 0x04u;
             menu->source_visual_asset = 0x02u;
             nativeMenuSetCursorSprite(menu, 0u);
             if (menu->title_animation_index == 0u) menu->title_animation_flag = 1u;
@@ -160,6 +161,43 @@ uint8_t nativeMenuStepSetup(NativeMenuState *menu)
         }
         break;
 
+    case 2u: /* first-course setup list 2: C551, C869, C820, C5A3, C566, C875 */
+        if (command == 0u) {
+            menu->source_visual_asset = (uint8_t)(0x12u + menu->selected_course);
+            menu->transition_phase = 1u;
+            return 1u;
+        }
+        if (command == 1u) {
+            /* C869 clears $004D-$00EF; nativeRaceSession applies the semantic reset. */
+            menu->transition_phase = 2u;
+            return 1u;
+        }
+        if (command == 2u) {
+            menu->source_visual_asset = 0x01u;
+            menu->transition_flag_004B = 0u;
+            menu->transition_phase = 3u;
+            return 1u;
+        }
+        if (command == 3u) {
+            menu->source_visual_asset = 0x17u;
+            menu->transition_phase = 4u;
+            return 1u;
+        }
+        if (command == 4u) {
+            menu->source_visual_asset = 0x0Eu;
+            menu->transition_phase = 5u;
+            return 1u;
+        }
+        if (command == 5u) {
+            /* C875 increments source $0040/$0047. The native session performs
+             * its state writes after this completion signal is consumed. */
+            menu->race_setup_complete = 1u;
+            menu->setup_command = 1u;
+            menu->transition_phase = 6u;
+            return 1u;
+        }
+        break;
+
     case 8u: /* setup list 6: C55E, C575, C514 */
         if (command == 0u) {
             menu->source_visual_asset = 0x06u;
@@ -191,6 +229,7 @@ static void nativeMenuResetSetupSequence(NativeMenuState *menu)
 {
     menu->setup_command = 0u;
     menu->transition_phase = 0u;
+    menu->race_setup_complete = 0u;
 }
 
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed)
