@@ -15,9 +15,6 @@ static void prepare(Cpu6502 *c)
     for (slot=0; slot<4u; ++slot) { \
         if (native.field[slot] != reference.ram[(address)+slot]) { \
             printf("FAIL %s v=%u slot=%u n=%02X asm=%02X state=%02X/%02X y=%02X/%02X bc=%02X/%02X dc=%02X/%02X rider=%02X/%02X target=%02X/%02X timers=%02X/%02X frame=%02X/%02X\\n", #field, vector, slot, native.field[slot], reference.ram[(address)+slot], native.state[slot], reference.ram[0x009Cu+slot], native.y[slot], reference.ram[0x00B8u+slot], native.vertical_offset[slot], reference.ram[0x00BCu+slot], native.vertical_delta[slot], reference.ram[0x00DCu+slot], native.rider_present[slot], reference.ram[0x0370u+slot], native.target_index[slot], reference.ram[0x03E4u+slot], native.timer_state[slot], reference.ram[0x002Au+slot], native.frame_counter, reference.ram[0x003Fu]); \
-            printf("native state/timer: %02X/%02X %02X/%02X %02X/%02X %02X/%02X\\n",native.state[0],native.timer_state[0],native.state[1],native.timer_state[1],native.state[2],native.timer_state[2],native.state[3],native.timer_state[3]); \
-            printf("CPU regs X=%02X Y=%02X PC=%04X table[D8C8]=%02X\\n",reference.x,reference.y,reference.pc,cpu6502_read(&reference,0xD8C8u)); \
-            printf("ASM state/timer: %02X/%02X %02X/%02X %02X/%02X %02X/%02X\\n",reference.ram[0x009C],reference.ram[0x002A],reference.ram[0x009D],reference.ram[0x002B],reference.ram[0x009E],reference.ram[0x002C],reference.ram[0x009F],reference.ram[0x002D]); \
             return 1; \
         } \
     } \
@@ -87,30 +84,7 @@ int main(int argc, char **argv)
         reference.ram[0x03A8u]=native.opponent_spawn_event;
 
         prepare(&reference);
-        printf("INITIAL timer1 native=%02X ram=%02X\\n",native.timer_state[1],reference.ram[0x002Bu]);
-        reference.ram[0x01FDu]=0xFFu; reference.ram[0x01FCu]=0xFEu;
-        reference.sp=0xFBu; reference.pc=0xD918u;
-        rc=1;
-        {
-            unsigned long step;
-            for(step=0;step<2048u;++step) {
-                uint16_t pc=reference.pc;
-                uint8_t before=reference.ram[0x002Bu];
-                uint8_t state_before=reference.ram[0x009Du];
-                uint8_t opcode=cpu6502_read(&reference,pc);
-                if(step==0u) printf("START PC=%04X opcode=%02X timer1=%02X\\n",pc,opcode,before);
-                cpu6502_step(&reference);
-                if(state_before!=reference.ram[0x009Du]) printf("WRITE state1 pc=%04X op=%02X X=%02X %02X->%02X\\n",pc,opcode,reference.x,state_before,reference.ram[0x009Du]);
-                if(before!=reference.ram[0x002Bu]) {
-                    printf("WRITE $002B pc=%04X op=%02X X=%02X Y=%02X state1=%02X target=%02X y=%02X bc=%02X table=%02X/%02X\\n",
-                           pc,opcode,reference.x,reference.y,reference.ram[0x009Du],
-                           reference.ram[0x03E5u],reference.ram[0x00B9u],reference.ram[0x00BDu],
-                           cpu6502_read(&reference,0xD901u),cpu6502_read(&reference,0xD906u));
-                }
-                if(reference.bad_opcode>=0) { rc=2; break; }
-                if(reference.pc==0xFFFFu && reference.sp==0xFDu) { rc=0; break; }
-            }
-        }
+        rc=cpu6502_call(&reference,0xD918u,2048u);
         if(rc!=0) { printf("FAIL ASM sub_D918 rc=%d vector=%u opcode=%02X\\n",rc,vector,(unsigned)reference.bad_opcode); return 1; }
         bikePhysicsUpdateBikeStates(&native);
 
