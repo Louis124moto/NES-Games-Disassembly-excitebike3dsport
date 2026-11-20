@@ -59,7 +59,9 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
                 }
                 continue; /* E9E3: phase-one path skips E9C4 bounds. */
             }
-        } else if (movement->vertical_phase[i] != 0x03u && y >= 0x20u) {
+        } else if (movement->vertical_phase[i] != 0x00u &&
+                   movement->vertical_phase[i] != 0x03u &&
+                   movement->vertical_phase[i] != 0x01u && y >= 0x20u) {
             y = (uint8_t)(y - 1u);
         }
 
