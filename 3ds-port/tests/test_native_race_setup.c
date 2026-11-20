@@ -18,9 +18,15 @@ int main(void)
 
     memset(&in, 0, sizeof(in));
     memset(&out, 0, sizeof(out));
-    memset(&movement, 0, sizeof(movement));
-    memset(&states, 0, sizeof(states));
+    memset(&movement, 0xA5, sizeof(movement));
+    memset(&states, 0xA5, sizeof(states));
     memset(&rng, 0, sizeof(rng));
+    nativeRaceSetupClearFirstCourseState(&movement, &states);
+    CHECK(movement.speed_whole[0] == 0u && movement.vertical_phase[0] == 0u, 45);
+    CHECK(movement.object_lock_timer[0] == 0u && movement.motion_fraction[0] == 0u, 46);
+    CHECK(states.state[0] == 0u && states.rider_present[0] == 0u && states.overheat[0] == 0u, 47);
+    CHECK(movement.player_scroll_x == 0xA5u && movement.global_vertical_reference == 0xA5u, 48);
+    CHECK(states.global_overheat == 0xA5u && states.controller_hold == 0xA5u, 49);
     rng.bytes[0] = 0x01u;
     rng.bytes[1] = 0x10u;
     rng.bytes[2] = 0x21u;
