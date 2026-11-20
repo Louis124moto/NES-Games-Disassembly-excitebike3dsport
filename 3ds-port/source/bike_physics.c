@@ -531,56 +531,15 @@ void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t obje
     movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
 }
 
-/* Source: sub_DCF2 ($DCF2-$DD37), with DD38/DD6F translated inline.
- * carry is explicitly modelled because the original ADC/SBC chain consumes
- * carry left by the preceding branch and by the DD38 setup routine. */
-void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index)
+/* Shared DD1A/DD6F step. The incoming carry is source-visible state left
+ * by the preceding DD38/DCF2 branch and must not be normalized. */
+static void advance_vertical_arc(BikeMovementState *movement,
+                                 unsigned int object_index,
+                                 uint8_t carry)
 {
     static const uint8_t direction_delta[4] = { 0x34u, 0x34u, 0x18u, 0x34u };
-    uint8_t carry = 0u;
     uint8_t temp_y;
     uint16_t sum;
-    uint8_t mode;
-
-    if (movement == 0 || object_index >= 4u) return;
-    mode = movement->object_status[object_index];
-    if (mode == 0u) return;
-
-    if (mode == 0x02u) {
-        carry = (uint8_t)(movement->movement_flags[object_index] & 0x01u);
-        if (carry != 0u && movement->frame_phase == 0u) return;
-    } else {
-        /* CMP #$02 before the DCFA branch leaves carry set for B0 >= 2. */
-        carry = (uint8_t)(mode >= 0x02u);
-        /* DD38 initializes a new movement arc. */
-        movement->object_status[object_index] = 0x02u;
-        /* DCFA loads zero and DD08 stores it in ram_0384 before DD38. */
-        movement->motion_whole[object_index] = 0u;
-        movement->motion_fraction[object_index] = 0x0Fu;
-        sum = (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
-        movement->motion_fraction_start[object_index] = (uint8_t)sum;
-        movement->motion_whole_start[object_index] =
-            (uint8_t)(movement->speed_whole[object_index] + (sum > 0xFFu ? 1u : 0u));
-
-        if (movement->movement_mode[object_index] == 0x02u) {
-            const uint8_t high = movement->motion_whole_start[object_index];
-            const uint8_t low = movement->motion_fraction_start[object_index];
-            movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
-            movement->motion_fraction_start[object_index] =
-                (uint8_t)((low >> 1) | ((high & 1u) << 7));
-            carry = (uint8_t)(low & 1u);
-        } else {
-            carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
-        }
-
-        if (object_index == 0u) {
-            uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
-            event ^= 0x30u;
-            movement->player_event = event == 0u ? 0x08u : event;
-            /* Four ASL instructions leave original speed bit 4 in carry. */
-            carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
-        }
-    }
 
     temp_y = (uint8_t)(movement->movement_flags[object_index] & 0x03u);
     movement->motion_delta[object_index] = direction_delta[temp_y];
@@ -611,6 +570,96 @@ void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object
     }
 }
 
+/* Source: sub_DCF2 ($DCF2-$DD37), with DD38/DD6F translated natively. */
+void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index)
+{
+    uint8_t carry = 0u;
+    uint8_t mode;
+
+    if (movement == 0 || object_index >= 4u) return;
+    mode = movement->object_status[object_index];
+    if (mode == 0u) return;
+
+    if (mode == 0x02u) {
+        carry = (uint8_t)(movement->movement_flags[object_index] & 0x01u);
+        if (carry != 0u && movement->frame_phase == 0u) return;
+    } else {
+        /* DCFA loads zero into 0384 before the DCF2 DD38 initialization. */
+        movement->object_status[object_index] = 0x02u;
+        movement->motion_whole[object_index] = 0u;
+        movement->motion_fraction[object_index] = 0x0Fu;
+        {
+            const uint16_t sum =
+                (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
+            movement->motion_fraction_start[object_index] = (uint8_t)sum;
+            movement->motion_whole_start[object_index] =
+                (uint8_t)(movement->speed_whole[object_index] +
+                          (sum > 0xFFu ? 1u : 0u));
+        }
+
+        if (movement->movement_mode[object_index] == 0x02u) {
+            const uint8_t high = movement->motion_whole_start[object_index];
+            const uint8_t low = movement->motion_fraction_start[object_index];
+            movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
+            movement->motion_fraction_start[object_index] =
+                (uint8_t)((low >> 1) | ((high & 1u) << 7));
+            carry = (uint8_t)(low & 1u);
+        } else {
+            carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
+        }
+
+        if (object_index == 0u) {
+            uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
+            event ^= 0x30u;
+            movement->player_event = event == 0u ? 0x08u : event;
+            carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
+        }
+    }
+
+    advance_vertical_arc(movement, object_index, carry);
+}
+
+/* Source: sub_DD06. Unlike DCF2's DCFA path, DD06 first copies speed whole
+ * into 0384, then invokes DD38 and immediately executes DD1A/DD6F. */
+void bikePhysicsInitializeVerticalJump(BikeMovementState *movement,
+                                       uint8_t object_index)
+{
+    uint8_t carry;
+    uint16_t sum;
+
+    if (movement == 0 || object_index >= 4u) return;
+
+    movement->motion_whole[object_index] =
+        movement->speed_whole[object_index];
+    movement->object_status[object_index] = 0x02u;
+    movement->motion_fraction[object_index] = 0x0Fu;
+
+    sum = (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
+    movement->motion_fraction_start[object_index] = (uint8_t)sum;
+    movement->motion_whole_start[object_index] =
+        (uint8_t)(movement->speed_whole[object_index] +
+                  (sum > 0xFFu ? 1u : 0u));
+
+    if (movement->movement_mode[object_index] == 0x02u) {
+        const uint8_t high = movement->motion_whole_start[object_index];
+        const uint8_t low = movement->motion_fraction_start[object_index];
+        movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
+        movement->motion_fraction_start[object_index] =
+            (uint8_t)((low >> 1) | ((high & 1u) << 7));
+        carry = (uint8_t)(low & 1u);
+    } else {
+        carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
+    }
+
+    if (object_index == 0u) {
+        uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
+        event ^= 0x30u;
+        movement->player_event = event == 0u ? 0x08u : event;
+        carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
+    }
+
+    advance_vertical_arc(movement, object_index, carry);
+}
 
 /* Source: sub_DA26 ($DA26-$DA43), complete movement/camera portion.
  * The caller supplies the source race-start flag. The timer-selected
