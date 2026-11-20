@@ -49,23 +49,22 @@ int main(void)
     bikePhysicsUpdateScreenY(&m);
     CHECK(m.y_low[0] == 0x55u, 7); /* E836 skips ram_00B0 != 0 */
 
-    /* Source signed one-pixel drift toggles 0 -> +1 -> -1 -> +1. */
+    /* In-range Y ($08..$39) branches directly to E9E3: no direction toggle. */
     reset(&m, &s);
     m.object_y[0] = 0x18u;
+    s.vertical_delta[0] = 1u;
     CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 10);
-    CHECK(m.object_y[0] == 0x18u && s.vertical_delta[0] == 1u, 11);
+    CHECK(m.object_y[0] == 0x19u && s.vertical_delta[0] == 1u, 11);
     CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 12);
-    CHECK(m.object_y[0] == 0x19u && s.vertical_delta[0] == 0xFFu, 13);
-    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 14);
-    CHECK(m.object_y[0] == 0x18u && s.vertical_delta[0] == 1u, 15);
+    CHECK(m.object_y[0] == 0x1Au && s.vertical_delta[0] == 0u, 13);
 
-    /* $14/$15 suppress the position addition but still execute later gates. */
+    /* $14/$15 suppress position addition and leave an in-range delta alone. */
     reset(&m, &s);
     m.object_y[0] = 0x18u;
     m.object_action_state[0] = 0x14u;
     s.vertical_delta[0] = 1u;
     CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 20);
-    CHECK(m.object_y[0] == 0x18u && s.vertical_delta[0] == 0xFFu, 21);
+    CHECK(m.object_y[0] == 0x18u && s.vertical_delta[0] == 1u, 21);
 
     /* Low/high clamps and state/overheat gating. */
     reset(&m, &s);
