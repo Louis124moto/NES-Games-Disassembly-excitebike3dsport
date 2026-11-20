@@ -64,7 +64,7 @@ static uint8_t selectPose(const BikeMovementState *movement,
     *temp = 0u;
     if (state != 0u && state != 0x05u) {
         uint8_t pose = (movement->vertical_reference[bike] != 0u ||
-                        states->rider_present[bike] != 0u) ? 0x02u : 0x06u;
+                        states->rider_present[bike] == 0u) ? 0x02u : 0x06u;
         if (states->timer_recovery[bike] != 0u) {
             pose = (uint8_t)(states->timer_recovery[bike] - 1u);
         }
