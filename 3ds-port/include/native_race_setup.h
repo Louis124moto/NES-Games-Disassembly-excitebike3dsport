@@ -38,6 +38,7 @@ typedef struct NativeRaceSetupState {
     uint8_t player_rider_present;
     uint8_t half_lock_slot;
     uint8_t course_setup_parameters[3]; /* sub_C522: tbl_C091 + course/transition offset */
+    uint8_t race_object_parameters[3]; /* sub_C53E: C1FD-seeded $0580 lookup */
     uint8_t hud_glyphs[7]; /* semantic digit/sentinel bytes produced by DF7F/C935 */
 } NativeRaceSetupState;
 
