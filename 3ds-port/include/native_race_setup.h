@@ -24,8 +24,8 @@ typedef struct NativeRaceBikeSetup {
     uint8_t approach;
     uint8_t lock_timer;
     uint8_t active;
-    uint8_t animation_seed;
-    uint8_t speed_phase;
+    uint8_t object_origin_x;
+    uint8_t setup_parameter;
 } NativeRaceBikeSetup;
 
 typedef struct NativeRaceSetupState {
@@ -37,15 +37,21 @@ typedef struct NativeRaceSetupState {
     uint8_t player_slot;
     uint8_t player_rider_present;
     uint8_t half_lock_slot;
+    uint8_t frame_timer_00E8;       /* ram_00E8 = $34 */
+    uint8_t frame_timer_00E9;       /* ram_00E9 = $14 */
+    uint8_t countdown_x_03B4;       /* ram_03B4 = $80 */
+    uint8_t race_setup_state_03B0;  /* ram_03B0 = $80 */
+    uint8_t countdown_limit_03BD;   /* ram_03BD = $FF */
+    uint8_t countdown_index_03BE;   /* ram_03BE = $02 */
     uint8_t course_setup_parameters[3]; /* sub_C522: tbl_C091 + course/transition offset */
     uint8_t race_object_parameters[3]; /* sub_C53E: C1FD-seeded $0580 lookup */
     uint8_t hud_glyphs[7]; /* semantic digit/sentinel bytes produced by DF7F/C935 */
 } NativeRaceSetupState;
 
 /*
- * Native semantic projection of the C875 entry/setup loop through C8DC.
- * Writes the corresponding fields in the already-native movement/state models.
- * It intentionally does not emulate PPU command construction in C902-C935.
+ * Native semantic projection of the first-course C875 path, including its
+ * source-derived table parameters and HUD glyph values. Writes gameplay fields
+ * into native movement/state models; it does not emulate PPU command buffers.
  */
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
