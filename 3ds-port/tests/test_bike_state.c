@@ -87,7 +87,26 @@ int main(int argc, char **argv)
         reference.ram[0x03A8u]=native.opponent_spawn_event;
 
         prepare(&reference);
-        rc=cpu6502_call(&reference,0xD918u,2048u);
+        reference.ram[0x01FDu]=0xFFu; reference.ram[0x01FCu]=0xFEu;
+        reference.sp=0xFBu; reference.pc=0xD918u;
+        rc=1;
+        {
+            unsigned long step;
+            for(step=0;step<2048u;++step) {
+                uint16_t pc=reference.pc;
+                uint8_t before=reference.ram[0x002Bu];
+                uint8_t opcode=cpu6502_read(&reference,pc);
+                cpu6502_step(&reference);
+                if(before!=reference.ram[0x002Bu]) {
+                    printf("WRITE $002B pc=%04X op=%02X X=%02X Y=%02X state1=%02X target=%02X y=%02X bc=%02X table=%02X/%02X\\n",
+                           pc,opcode,reference.x,reference.y,reference.ram[0x009Du],
+                           reference.ram[0x03E5u],reference.ram[0x00B9u],reference.ram[0x00BDu],
+                           cpu6502_read(&reference,0xD901u),cpu6502_read(&reference,0xD906u));
+                }
+                if(reference.bad_opcode>=0) { rc=2; break; }
+                if(reference.pc==0xFFFFu && reference.sp==0xFDu) { rc=0; break; }
+            }
+        }
         if(rc!=0) { printf("FAIL ASM sub_D918 rc=%d vector=%u opcode=%02X\\n",rc,vector,(unsigned)reference.bad_opcode); return 1; }
         bikePhysicsUpdateBikeStates(&native);
 
