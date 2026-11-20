@@ -28,7 +28,4 @@ int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
 BikeRaceCountdownRenderEvent nativeRaceSessionUpdateCountdown(NativeRaceSession *session);
 uint8_t nativeRaceSessionUpdateVertical(NativeRaceSession *session);
 
-/* D326 is advanced only by the source-equivalent startup wait loop, not every race frame. */
-void nativeRaceSessionAdvanceStartupRng(NativeRaceSession *session);
-
 #endif
