@@ -70,9 +70,11 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Integrate the verified movement pass into the actual native race frame loop; the app currently remains a front-end prototype.
 
 ### 2. Complete player and opponent simulation
+- [x] Native semantic projection of `C875` initial per-bike fields (`C87F-C8DC`) into `BikeMovementState` / `BikeStateMachineState`; `object_class` and `$0078` start-lock timer are separate from the later `$0374` lock timer.
 - [ ] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects; retain existing speed-control differential coverage.
 - [ ] Trace and port every state branch reached from `D918/D924` and `D91A` (bike state machine, timers, rider posture, jumps and landings).
-- [ ] Trace and port opponent initialization and AI: `C875` tail, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
+- [x] Port the source-derived `C875` entry and per-bike initialization loop into a native semantic setup function; preserve the `$0018` zero-page wrap and the selected `$0078` half-lock operation. Host test and New 3DS build passed at commit `54660d0bcf382540f54a76075fe1d4257ca036cd`.
+- [ ] Trace and port the remaining `C875` tail and opponent initialization/AI: `C522/C53A`, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
 - [ ] Port heat/overheat integration and the race-start handshake; the current temperature and speed helpers are isolated slices.
 - [ ] Port collision detection, crash/recovery, obstacle interaction and finish-state transitions from their actual callers.
 - [ ] Build deterministic race-frame fixtures and compare all semantic bike state against the original ASM oracle over long frame sequences.
@@ -101,10 +103,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Add the semantic state needed by `DC1A` and `DCF2`.
-2. Translate `DC1A` and `DCF2` using the exact tables and carry/branch behavior from `bank_FF.asm`.
-3. Differential-test both against the host-only oracle.
-4. Wire the complete four-slot `DA26` object pass and test the combined state.
+1. Trace the rest of the `C875` tail, including `C522`, `C53A`, `C935`, and `C92C/C53E`; separate PPU upload payload generation from semantic race state.
+2. Resolve the first-course setup command's remaining source-derived inputs and build a complete native race-start state without a live NES RAM image.
+3. Differential-test the setup result against the host-only original-ASM oracle.
+4. Integrate the initialized semantic state with the complete `D918` / `DA26` native frame update.
 5. Continue upward through the remaining race-frame calls; do not stop at a helper or a successful build.
 
 
