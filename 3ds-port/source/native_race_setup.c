@@ -11,6 +11,44 @@ static const uint8_t s_course0_parameters[2][3] = {
     { 0x01u, 0x18u, 0x00u }
 };
 
+/* Source sub_DFA2: unsigned 8-bit divide by ten, returning quotient/remainder. */
+static void split_decimal(uint8_t value, uint8_t *quotient, uint8_t *remainder)
+{
+    *quotient = (uint8_t)(value / 10u);
+    *remainder = (uint8_t)(value % 10u);
+}
+
+/* Source C90E-C91D then DF7F: create the seven glyph bytes consumed by C935. */
+static void build_first_course_hud_glyphs(NativeRaceSetupState *out,
+                                          uint8_t transition_counter)
+{
+    uint8_t first = out->course_setup_parameters[0];
+    uint8_t second = (uint8_t)((uint8_t)(transition_counter << 1) +
+                               out->course_setup_parameters[1]);
+    uint8_t third = 0u;
+    uint8_t quotient;
+    uint8_t remainder;
+
+    /* CMP #$3C / SBC #$3C / INC $0005: one source-defined carry step. */
+    if (second >= 0x3Cu) {
+        second = (uint8_t)(second - 0x3Cu);
+        first = (uint8_t)(first + 1u);
+    }
+
+    split_decimal(first, &quotient, &remainder);
+    out->hud_glyphs[0] = remainder; /* DFA2 stores only A for the first value. */
+    out->hud_glyphs[1] = 0xFBu;      /* D13F initialized ram_03D2. */
+
+    split_decimal(second, &quotient, &remainder);
+    out->hud_glyphs[2] = quotient;
+    out->hud_glyphs[3] = remainder;
+    out->hud_glyphs[4] = 0xFBu;      /* D13F initialized ram_03D5. */
+
+    split_decimal(third, &quotient, &remainder);
+    out->hud_glyphs[5] = quotient;
+    out->hud_glyphs[6] = remainder;
+}
+
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
                                BikeMovementState *movement,
@@ -33,6 +71,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     memcpy(out->course_setup_parameters,
            s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
            sizeof(out->course_setup_parameters));
+    build_first_course_hud_glyphs(out, in->transition_counter_03F8);
 
     /* C8A5 selects X=3..0 when ram_03F2 != 0, otherwise only X=0. */
     last = in->multiplayer_flag != 0u ? 3u : 0u;
