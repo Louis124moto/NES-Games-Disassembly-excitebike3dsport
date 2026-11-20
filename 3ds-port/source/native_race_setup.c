@@ -134,8 +134,10 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->global_vertical_reference = 0xA0u;
     out->player_slot = 0u;
     out->player_rider_present = 1u;
-    out->frame_timer_00E8 = 0x34u;
-    out->frame_timer_00E9 = 0x14u;
+    out->camera_scroll_00E8 = 0x34u;
+    out->camera_scroll_00E9 = 0x14u;
+    out->camera_scroll_00EA = 0x25u;
+    out->camera_scroll_00EB = 0x0Au;
     out->countdown_x_03B4 = 0x80u;
     out->race_setup_state_03B0 = 0x80u;
     out->countdown_limit_03BD = 0xFFu;
