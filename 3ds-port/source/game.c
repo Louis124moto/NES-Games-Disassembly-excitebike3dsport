@@ -41,6 +41,7 @@ static int menuVisualStateChanged(const NativeMenuState *before,
            before->source_visual_asset != after->source_visual_asset ||
            before->setup_command != after->setup_command ||
            before->transition_phase != after->transition_phase ||
+           before->race_setup_complete != after->race_setup_complete ||
            before->cursor_sprite_y != after->cursor_sprite_y ||
            before->cursor_sprite_tile != after->cursor_sprite_tile ||
            before->cursor_sprite_attribute != after->cursor_sprite_attribute ||
