@@ -118,6 +118,8 @@ typedef struct BikeMovementState {
     uint8_t object_active[4];        /* ram_00A8_obj */
     uint8_t object_action_state[4];  /* ram_0058_obj */
     uint8_t object_class[4];         /* ram_00E0_obj, assigned by C875 */
+    uint8_t object_origin_x[4];      /* ram_0064, source start coordinate for E733 events */
+    uint8_t setup_parameter[4];      /* ram_0074, initialized from $0019,X >> 1 */
     uint8_t x_low[4];                /* ram_0080_obj */
     uint8_t x_high[4];               /* ram_0084_obj */
     uint8_t previous_x[4];           /* ram_0390_obj */
