@@ -66,7 +66,7 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
 
         /* E9C4-E9D0 / E9E9-E9F9: source vertical bounds. */
         if (y < 0x08u) {
-            update_direction = 1u;
+            update_direction = 2u; /* X=0 takes E9D9 directly, bypassing state gates. */
             if (states->state[i] == 0u) {
                 y = 0x07u;
             } else if (y < 0x02u) {
@@ -83,8 +83,9 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
         /* E9D2-E9E1: direction toggles only after the low/high-bound paths.
          * In-range Y ($08..$39) branches directly to E9E3 and leaves delta
          * unchanged; low/high clamps reach the direction update. */
-        if (update_direction != 0u &&
-            (uint8_t)(states->state[i] | states->overheat[i]) == 0u) {
+        if ((update_direction == 2u && i == 0u) ||
+            (update_direction != 0u &&
+             (uint8_t)(states->state[i] | states->overheat[i]) == 0u)) {
             if (delta == 0u) delta = 0xFFu;
             states->vertical_delta[i] = (uint8_t)(delta ^ 0xFEu);
         }
