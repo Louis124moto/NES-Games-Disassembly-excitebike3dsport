@@ -111,12 +111,16 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Wire `nativeRngAdvance` into the source-equivalent startup wait loop; current game startup uses the exact C1CE seed but does not yet simulate the pre-menu wait loop.
-2. Port the native OAM/bike-sprite builder from `E17F` and its helpers (`E1A3/E1F9/E26A`), differential-test its sprite output, and draw the four bikes with original CHR tiles.
-3. Port camera/scroll updates and compare first-course screenshots on a real New 3DS against the NES reference.
-4. Port the nonzero `$00A4` vertical/jump phases and the `EA07-EA43` player-input handshake; preserve the existing source order around D918/DA26.
-5. Wire the complete frame loop in source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6) before enabling continuous gameplay.
-6. Continue with steering, posture, heat, collision, course events and finish/results.
+1. Correct and differential-test the E17F/E3F4/E1A3/E1F9/D1C7 sprite/OAM translation. The current nine-tile pose table is provisional and must not be treated as source-faithful.
+2. Trace and port camera/scroll updates in the same frame order, then compare first-course screenshots on a real New 3DS against the NES reference.
+3. Port the nonzero `$00A4` vertical/jump phases and the `EA07-EA43` player-input handshake; preserve the existing source order around D918/DA26.
+4. Wire the complete frame loop in source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6) before enabling continuous gameplay.
+5. Continue with steering, posture, heat, collision, course events and finish/results.
+
+### Physics validation update — 2026-11-20
+- `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
+- Added a 50,000-vector differential test that invokes the original `E836` entrypoint in the host-only 6502 oracle and compares all four `$008C` screen-Y bytes with the native C implementation.
+- The sprite builder is **not yet accepted as faithful**: E17F dispatches sorted bike IDs through D8C0/D8C9, E1F9 selects a dynamic pose, and D1C7 generates OAM entries. The current hard-coded pose tile list is provisional and is the next correction target.
 
 
 ## Verified movement milestone — 2026-11-19 21:09 CET
