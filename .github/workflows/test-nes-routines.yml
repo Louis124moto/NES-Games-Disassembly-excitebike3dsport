@@ -33,6 +33,10 @@ on:
       - "3ds-port/tests/test_track_first_course.c"
       - "3ds-port/source/race_vertical.c"
       - "3ds-port/source/race_sprites.c"
+      - "3ds-port/source/race_frame.c"
+      - "3ds-port/include/race_frame.h"
+      - "3ds-port/source/race_spawn.c"
+      - "3ds-port/include/race_spawn.h"
       - "3ds-port/include/race_sprites.h"
       - "3ds-port/include/race_vertical.h"
       - "3ds-port/tests/test_race_vertical.c"
@@ -271,7 +275,7 @@ jobs:
       - name: Differentially test native race-frame helpers (DDD1, DEBB, DEE2, DE31, EA44, E4C8, E42B) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame.c source/race_spawn.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
           /tmp/test_race_frame /tmp/prg.bin
 
       - name: Differentially test native opponent script interpreter (E733, E927, handlers) against original ASM
