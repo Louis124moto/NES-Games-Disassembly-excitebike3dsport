@@ -116,11 +116,11 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DA58` | `sub_DA58` | Translated in C; audit/test coverage recorded separately | — |
 | `$DA6A` | `sub_DA6A` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DA7A` | `sub_DA7A` | Translated + tested; host regression passed, 3DS build status being checked | Exact helper and instruction-level regression test added |
-| `$DA9F` | `sub_DA9F` | Pending | — |
-| `$DAE3` | `sub_DAE3` | Pending | calls: sub_DB95_clear_opponent_bike_data, sub_E7FF; ; in |
-| `$DB50` | `sub_DB50` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
-| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
-| `$DBC4` | `sub_DBC4` | Pending | — |
+| `$DA9F` | `sub_DA9F` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DAE3` | `sub_DAE3` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DB50` | `sub_DB50` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DBC4` | `sub_DBC4` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
 | `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
 | `$DC97` | `sub_DC97` | Translated in C; audit/test coverage recorded separately | — |

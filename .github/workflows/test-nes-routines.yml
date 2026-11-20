@@ -280,6 +280,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_script.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_script.c -o /tmp/test_race_script
           /tmp/test_race_script /tmp/prg.bin
 
+      - name: Differentially test native opponent spawn (DA9F, DAE3, DB50, DB95, DBC4) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_spawn.c tests/oracle/cpu6502.c tests/test_race_spawn.c -o /tmp/test_race_spawn
+          /tmp/test_race_spawn /tmp/prg.bin
+
       - name: Differentially test native vertical recovery and motion against original ASM
         run: |
           cd 3ds-port
