@@ -53,6 +53,10 @@ typedef struct NativeRaceSetupState {
  * source-derived table parameters and HUD glyph values. Writes gameplay fields
  * into native movement/state models; it does not emulate PPU command buffers.
  */
+/* Semantic reset of gameplay fields cleared by C869 and C820. */
+void nativeRaceSetupClearFirstCourseState(BikeMovementState *movement,
+                                          BikeStateMachineState *states);
+
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
                                const NativeRngState *rng,
