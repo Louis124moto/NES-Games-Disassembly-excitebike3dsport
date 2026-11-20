@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "race_sprites.h"
+#include "race_spawn.h"
 
 /*
  * Native translations of race-frame routines called from ofs_000_C99A_02
@@ -128,5 +129,18 @@ typedef struct RaceHideSpritesState {
 } RaceHideSpritesState;
 
 void raceHideCollidedSprites(RaceHideSpritesState *state);
+
+/* Source: sub_E456 ($E456-$E4C7). Hide off-screen opponent sprite groups,
+ * and clear an opponent when it crosses the player transition window.
+ * slot_object_index is the semantic mapping from ram_0088,Y (0 = unused).
+ */
+typedef struct RaceOffscreenSpriteState {
+    uint8_t slot_object_index[4]; /* ram_0088 */
+    uint8_t opponent_cleared_03A6; /* ram_03A6 */
+    NativeOamState oam;
+} RaceOffscreenSpriteState;
+
+void raceHideOffscreenOpponentSprites(RaceOffscreenSpriteState *state,
+                                      RaceSpawnState *opponents);
 
 #endif
