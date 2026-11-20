@@ -113,9 +113,8 @@ This is the execution order for completing the first playable race. A checked it
 ### Immediate next implementation slice
 1. Correct and differential-test the E17F/E3F4/E1A3/E1F9/D1C7 sprite/OAM translation. The current nine-tile pose table is provisional and must not be treated as source-faithful.
 2. Trace and port camera/scroll updates in the same frame order, then compare first-course screenshots on a real New 3DS against the NES reference.
-3. Port the nonzero `$00A4` vertical/jump phases and their `DD06/DD38/DD6F` setup; preserve the existing source order around D918/DA26.
-4. Wire the complete frame loop in source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6) before enabling continuous gameplay.
-5. Continue with steering, posture, heat, collision, course events and finish/results.
+3. Integrate the completed vertical physics functions into the full race-frame scheduler in exact source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6).
+4. Continue with steering, posture, heat, collision, course events and finish/results.
 
 ### Physics validation update — 2026-11-20
 - `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
