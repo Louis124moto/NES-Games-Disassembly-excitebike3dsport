@@ -38,8 +38,10 @@ typedef struct NativeRaceSetupState {
     uint8_t player_slot;
     uint8_t player_rider_present;
     uint8_t half_lock_slot;
-    uint8_t frame_timer_00E8;       /* ram_00E8 = $34 */
-    uint8_t frame_timer_00E9;       /* ram_00E9 = $14 */
+    uint8_t camera_scroll_00E8;     /* ram_00E8 = $34 after C875 */
+    uint8_t camera_scroll_00E9;     /* ram_00E9 = $14 after C875 */
+    uint8_t camera_scroll_00EA;     /* ram_00EA = $25 from C820 */
+    uint8_t camera_scroll_00EB;     /* ram_00EB = $0A from C820 */
     uint8_t countdown_x_03B4;       /* ram_03B4 = $80 */
     uint8_t race_setup_state_03B0;  /* ram_03B0 = $80 */
     uint8_t countdown_limit_03BD;   /* ram_03BD = $FF */
