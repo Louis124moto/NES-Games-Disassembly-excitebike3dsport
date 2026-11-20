@@ -11,6 +11,7 @@ typedef struct NativeRaceSetupInput {
     uint8_t setup_index_0041;        /* C905: first-course path is below $08 */
     uint8_t transition_flag_0046;    /* ram_0046, consumed by sub_C522/sub_CB13 */
     uint8_t timer_0034;
+    uint8_t countdown_timer_003C; /* ram_003C_timer, not cleared by C869/C820 */
     uint8_t transition_counter_03F8; /* ram_03F8 consumed by C90E */
     uint8_t setup_counter_0040;
     uint8_t setup_counter_0047;
