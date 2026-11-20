@@ -2,7 +2,7 @@
 #include <string.h>
 #include "native_race_setup.h"
 
-#define CHECK(c, n) do { if (!(c)) { printf("FAIL %d\\n", n); return n; } } while (0)
+#define CHECK(c, n) do { if (!(c)) { printf("FAIL %d\n", n); return n; } } while (0)
 
 int main(void)
 {
@@ -49,6 +49,7 @@ int main(void)
     }
     CHECK(out.bike[0].lock_timer == 6u && out.bike[1].lock_timer == 3u, 20);
     CHECK(out.bike[2].lock_timer == 6u && out.bike[3].lock_timer == 6u, 21);
+    printf("DEBUG half=%u startlock=%u objectlock=%u\\n", out.half_lock_slot, movement.start_lock_timer[1], movement.object_lock_timer[1]);
     CHECK(movement.start_lock_timer[1] == 3u, 22);
     CHECK(states.rider_present[0] == 1u && states.rider_present[1] == 0u, 23);
     CHECK(movement.global_vertical_reference == 0xA0u, 24);
