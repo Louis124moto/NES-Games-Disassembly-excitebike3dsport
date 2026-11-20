@@ -57,8 +57,8 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
             continue;
         }
 
-        /* E96C phase dispatch. Phase 1 can start a jump via DD06; phases
-         * other than 1/3 move Y toward $20 while it is at/above that value. */
+        /* E96C phase dispatch. Phase 0 is the normal path; phase 1 can start a
+         * jump via DD06; nonzero phases other than 1/3 approach Y=$20. */
         if (movement->vertical_phase[i] == 0x01u) {
             if (y < 0x20u) {
                 movement->vertical_phase[i] = 0x04u;
