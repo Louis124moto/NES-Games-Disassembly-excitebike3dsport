@@ -43,25 +43,24 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
         uint8_t delta = states->vertical_delta[i];
         uint8_t update_direction = 0u;
 
-        /* The first course starts with $00A4=0. Other phase handlers require
-         * DD06 and are deliberately reported to the caller for later porting. */
-        if (movement->vertical_phase[i] != 0u) {
-            unsupported_mask = (uint8_t)(unsupported_mask | (uint8_t)(1u << i));
-            continue;
-        }
-
-        /* E96E-E97D: states $14/$15 suppress the Y+delta operation. */
-        if (movement->object_action_state[i] != 0x14u &&
-            movement->object_action_state[i] != 0x15u) {
-            y = (uint8_t)(y + delta);
-        }
-
-        /* E981-E986: all four indexed source anchors stop vertical drift. */
-        if (is_vertical_anchor(y) != 0u) {
-            states->vertical_delta[i] = 0u;
-            movement->object_y[i] = y;
-            states->y[i] = y;
-            continue;
+        /* E96C phase dispatch. Phase 1 can start a jump via DD06; phases
+         * other than 1/3 move Y toward $20 while it is at/above that value. */
+        if (movement->vertical_phase[i] == 0x01u) {
+            if (y < 0x20u) {
+                movement->vertical_phase[i] = 0x04u;
+                if (movement->object_action_state[i] == 0u ||
+                    movement->object_action_state[i] == 0x12u ||
+                    movement->object_action_state[i] == 0x10u ||
+                    movement->object_action_state[i] == 0x0Du) {
+                    movement->vertical_reference[i] = 0u;
+                    bikePhysicsInitializeVerticalJump(movement, (uint8_t)i);
+                    movement->vertical_phase[i] =
+                        (uint8_t)(movement->vertical_phase[i] - 1u);
+                }
+                continue; /* E9E3: phase-one path skips E9C4 bounds. */
+            }
+        } else if (movement->vertical_phase[i] != 0x03u && y >= 0x20u) {
+            y = (uint8_t)(y - 1u);
         }
 
         /* E9C4-E9D0 / E9E9-E9F9: source vertical bounds. */
