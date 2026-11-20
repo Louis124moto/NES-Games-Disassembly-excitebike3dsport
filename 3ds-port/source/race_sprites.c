@@ -25,6 +25,9 @@ static void writeInitialPose6(uint8_t *oam, unsigned int base,
         oam[base + offset + 1u] = palette;
         offset += 4u;
     }
+    /* E1D7-E1F8: the zero-speed path leaves temp=1, so LSR sets carry
+     * and the source overwrites the sixth tile with the special AE tile. */
+    oam[base + 0x15u] = 0xAEu;
 
     /* D1C7 coordinate pass: three rows in each of three columns. */
     offset = 0u;
