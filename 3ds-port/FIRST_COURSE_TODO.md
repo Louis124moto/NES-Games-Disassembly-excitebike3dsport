@@ -96,8 +96,8 @@ This is the execution order for completing the first playable race. A checked it
 
 ### 4. Make the native race visible and playable
 - [ ] Implement course 1 background/ground/terrain drawing using verified extracted assets and native 3DS rendering; no PPU emulation.
-- [x] Implement and differentially verify the initial bike pose OAM path (`E17F/E3F4/E1A3/E1F9/D1C7`) for all four bike slots.
-- [ ] Extend E1F9 dynamic pose selection, E26A rider/overlay sprites, E456 off-screen hiding, opponent poses, ramps/obstacles, animation and source-derived palette selection.
+- [x] Implement and differentially verify the native E17F sprite path: E3F4 sorting, E1F9 dynamic pose selection, E1A3/D1C7 OAM generation, E1D7 temp overlays and E26A rider overlays for all four bike slots.
+- [ ] Port E456 off-screen sprite hiding and DB95 opponent-bike clearing; add multi-frame OAM transition tests and remaining ramp/obstacle sprites.
 - [ ] Implement camera scroll, HUD, heat meter, countdown, finish/results and native audio events.
 - [ ] Add a race state to the app loop: native menu confirm → race setup → countdown → per-frame simulation → finish/results → return flow.
 - [ ] Bind physical controls to throttle, braking/steering/posture exactly as traced; ensure pause and frame timing are deterministic.
@@ -112,7 +112,7 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Extend the verified initial-pose OAM writer to the dynamic E1F9 pose selectors and E26A overlays; then port E456 sprite hiding and add full differential OAM coverage.
+1. Port E456 off-screen sprite hiding and DB95 opponent-bike clearing, then verify OAM persistence across consecutive frames.
 2. Trace and port camera/scroll updates in the same frame order, then compare first-course screenshots on a real New 3DS against the NES reference.
 3. Integrate the completed vertical physics functions and sprite renderer into the full race-frame scheduler in exact source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6).
 4. Continue with steering, posture, heat, collision, course events and finish/results.
@@ -120,7 +120,7 @@ This is the execution order for completing the first playable race. A checked it
 ### Physics validation update — 2026-11-20
 - `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
 - Added a 50,000-vector differential test that invokes the original `E836` entrypoint in the host-only 6502 oracle and compares all four `$008C` screen-Y bytes with the native C implementation.
-- The initial pose-6 path is now accepted by a 50,000-vector host differential test: native OAM bytes match the original E17F/E3F4/E1A3/E1F9/D1C7 routines for four bikes, including Y sorting, rider-3 sort reference, palette, tile-mask generation and the E1F2 `$AE` overlay. Dynamic E1F9 selectors, E26A overlays and E456 hiding remain unported; the builder intentionally reports those poses unsupported.
+- The native E17F path now passes 50,000 randomized full OAM differential frames across four bikes, including E3F4 sorting, E1F9 state/approach selection, all D892/D8A9 pose-table entries, D1C7 tile/coordinate generation, E1D7 temporary overlays, and E26A rider overlays. E456 off-screen hiding and DB95 opponent-bike clearing remain unported; OAM is still rebuilt from a clean `$F8` baseline, so consecutive-frame persistence must be tested after E456 is integrated.
 
 
 ## Verified movement milestone — 2026-11-19 21:09 CET
