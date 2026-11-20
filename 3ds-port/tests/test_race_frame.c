@@ -211,6 +211,61 @@ static int test_ea44(Cpu6502 *cpu)
     return 0;
 }
 
+static int test_e4c8(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    unsigned long hits = 0u;
+    static const uint8_t lows[] = { 0u, 0xF7u, 0xF8u, 0xFFu, 0x10u };
+    for (v = 0u; v < 400000u; ++v) {
+        RaceCollisionState s;
+        uint8_t *r = cpu->ram;
+        const uint8_t base = nb();
+        memset(&s, 0, sizeof(s));
+        for (i = 0u; i < 4u; ++i) {
+            s.x_high[i] = (nb() & 3u) ? (uint8_t)(nb() & 1u) : (uint8_t)(nb() & 3u);
+            s.x_low[i] = (nb() & 1u) ? pick(lows, sizeof(lows)) : nb();
+            s.y_low[i] = (nb() & 3u) ? (uint8_t)(base + (nb() & 0x1Fu) - 0x10u) : nb();
+            if ((v & 1u) != 0u) { s.x_high[i] = 1u; s.y_low[i] = (uint8_t)(base + ((nb() % 3u) ? (nb() % 0x30u) : (nb() % 0x12u)) - 0x10u); }
+        }
+        s.collision_flag_03A3 = nb();
+        memset(r, 0, sizeof(cpu->ram));
+        MAP4(x_high, 0x84); MAP4(x_low, 0x80); MAP4(y_low, 0x8C);
+        r[0x3A3] = s.collision_flag_03A3;
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xE4C8u, 20000u) != 0) return 1;
+        raceBikeCollision(&s);
+        if (s.collision_flag_03A3 != r[0x3A3]) { printf("FAIL E4C8 v=%u flag native=%u ASM=%u\n", v, s.collision_flag_03A3, r[0x3A3]); return 1; }
+        hits += r[0x3A3];
+    }
+    printf("PASS: 400000 sub_E4C8 collision vectors match original ASM (%lu collisions).\n", hits);
+    return 0;
+}
+
+static int test_e42b(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    for (v = 0u; v < 200000u; ++v) {
+        RaceHideSpritesState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        s.collision_flag_03A3 = (nb() & 1u) ? 0u : nb();
+        for (i = 0u; i < 4u; ++i) s.slot_active_0088[i] = (nb() & 3u) ? (uint8_t)(nb() & 3u) : nb();
+        s.rider_present_0373 = nb() & 1u; s.toggle_03B3 = (uint8_t)(nb() & 7u);
+        for (i = 0u; i < 256u; ++i) s.oam.bytes[i] = nb();
+        memset(r, 0, sizeof(cpu->ram));
+        MAP4(slot_active_0088, 0x88);
+        r[0x3A3] = s.collision_flag_03A3; r[0x373] = s.rider_present_0373; r[0x3B3] = s.toggle_03B3;
+        for (i = 0u; i < 256u; ++i) r[0x200 + i] = s.oam.bytes[i];
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xE42Bu, 20000u) != 0) return 1;
+        raceHideCollidedSprites(&s);
+        if (s.toggle_03B3 != r[0x3B3]) { printf("FAIL E42B v=%u toggle\n", v); return 1; }
+        for (i = 0u; i < 256u; ++i) if (s.oam.bytes[i] != r[0x200 + i]) { printf("FAIL E42B v=%u oam[%u]\n", v, i); return 1; }
+    }
+    puts("PASS: 200000 loc_E42B/sub_E4AD collided-sprite hiding vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -220,5 +275,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu);
+    return test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
 }

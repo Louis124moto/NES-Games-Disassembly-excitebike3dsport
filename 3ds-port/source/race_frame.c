@@ -199,3 +199,66 @@ void raceEffectSprites(RaceEffectSpriteState *s)
         }
     }
 }
+
+/* sub_E52C: nonzero (Z clear) when the vertical difference is in the overlap band. */
+static uint8_t overlapDiff(const RaceCollisionState *s, unsigned x, unsigned y)
+{
+    const uint8_t diff = (uint8_t)(s->y_low[x] - s->y_low[y]);
+    /* The caller tests the Z flag left by the last instruction: CMP #$EC
+     * leaves Z set only for a difference of exactly $EC, and CMP #$12 on the
+     * BCC path never leaves Z set. */
+    if (diff >= 0xECu) return diff == 0xECu ? 0u : 1u;
+    if (diff < 0x12u) return 1u;
+    return 0u;
+}
+
+void raceBikeCollision(RaceCollisionState *s)
+{
+    int x;
+    if (s == 0) return;
+    for (x = 1; x >= 0; --x) {
+        unsigned count = 0u, y, history = 0u;
+        const uint8_t hi = (uint8_t)(s->x_high[x] >> 1);
+        if ((s->x_high[x] & 1u) == 0u) {
+            if (hi != 0u) continue;
+            if (s->x_low[x] < 0xF8u) continue;
+        }
+        for (y = (unsigned)x + 1u; y < 4u; ++y) {
+            int near_edge = (s->x_high[y] & 1u) != 0u;
+            if (!near_edge) {
+                if ((s->x_high[y] >> 1) != 0u) continue;
+                if (s->x_low[x] < 0xF8u) continue;
+            }
+            if (overlapDiff(s, (unsigned)x, y) != 0u) {
+                ++count;
+                history = ((history << 2) | y) & 0xFFu;
+            }
+        }
+        if (count < 2u) continue;
+        if (count == 2u) {
+            if (overlapDiff(s, (history >> 2) & 3u, history & 3u) == 0u) continue;
+        }
+        s->collision_flag_03A3 = 1u;
+        return;
+    }
+    s->collision_flag_03A3 = 0u;
+}
+
+static const uint8_t k_tblD8C0[4] = { 0x04u, 0x28u, 0x4Cu, 0x70u };
+static const uint8_t k_tblD8DC[8] = { 0x00u, 0x0Cu, 0x18u, 0xA0u, 0x40u, 0x40u, 0xEDu, 0x21u };
+
+void raceHideCollidedSprites(RaceHideSpritesState *s)
+{
+    int x;
+    if (s == 0 || s->toggle_03B3 > 7u) return;
+    if (s->collision_flag_03A3 == 0u) return;
+    for (x = 3; x >= 0; --x) {
+        const uint8_t v = s->slot_active_0088[x];
+        unsigned base, k;
+        if (v == 0u) continue;
+        if (v == 3u && s->rider_present_0373 != 0u) continue;
+        base = (unsigned)((k_tblD8C0[x] + k_tblD8DC[s->toggle_03B3]) & 0xFFu);
+        for (k = 0u; k < 0x0Cu; k += 4u) s->oam.bytes[(0x200u + base + k) & 0xFFu] = 0xF8u;
+    }
+    s->toggle_03B3 ^= 2u;
+}

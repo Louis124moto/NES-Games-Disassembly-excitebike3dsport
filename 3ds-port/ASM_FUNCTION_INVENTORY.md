@@ -161,9 +161,9 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
 | `$E456` | `sub_E456` | Translated + regression-tested; host suite and 3DS build passed | Culling, opponent reset, and sprite hiding |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
-| `$E4AD` | `sub_E4AD_hide_4_sprites` | Translated + regression-tested; 3DS build passed | Literal loop writes three Y bytes at offsets 0,4,8 |
-| `$E4C8` | `sub_E4C8` | Host regression and 3DS build passed | Object overlap scan; preserves scratch `$000B` input/output |
-| `$E52C` | `sub_E52C` | Translated in C; audit/test coverage recorded separately | — |
+| `$E4AD` | `sub_E4AD_hide_4_sprites` | Differential-tested via `loc_E42B` | `raceHideCollidedSprites` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$E4C8` | `sub_E4C8` | Differential-tested (400k vectors, 7 mutants killed; includes sub_E52C Z-flag quirk) | `raceBikeCollision` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$E52C` | `sub_E52C` | Differential-tested via `sub_E4C8` | `raceBikeCollision` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E70B` | `sub_E70B` | Differential-tested (200k vectors, 3 mutants killed) | `raceScriptAdvanceOrigins` in `source/race_script.c`; not yet wired into the app race loop |
 | `$E733` | `sub_E733` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E73B` | `sub_E73B` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |

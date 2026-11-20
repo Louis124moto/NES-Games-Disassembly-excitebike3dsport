@@ -2,6 +2,7 @@
 #define EXCITEBIKE_RACE_FRAME_H
 
 #include <stdint.h>
+#include "race_sprites.h"
 
 /*
  * Native translations of race-frame routines called from ofs_000_C99A_02
@@ -103,5 +104,29 @@ typedef struct RaceEffectSpriteState {
 } RaceEffectSpriteState;
 
 void raceEffectSprites(RaceEffectSpriteState *state);
+
+/* Source: sub_E4C8 ($E4C8-$E52B) with sub_E52C — bike-to-bike collision flag.
+ * Source quirks preserved: the Y loop tests ram_0080_obj,X (not Y) for the
+ * off-screen case, and a vertical difference of exactly $EC is "no overlap" (Z flag). */
+typedef struct RaceCollisionState {
+    uint8_t x_high[4];            /* ram_0084_obj */
+    uint8_t x_low[4];             /* ram_0080_obj */
+    uint8_t y_low[4];             /* ram_008C */
+    uint8_t collision_flag_03A3;  /* ram_03A3_flag (output) */
+} RaceCollisionState;
+
+void raceBikeCollision(RaceCollisionState *state);
+
+/* Source: loc_E42B ($E42B-$E455) with sub_E4AD_hide_4_sprites. Domain:
+ * toggle_03B3 in 0..7 (tbl_D8DC length). */
+typedef struct RaceHideSpritesState {
+    uint8_t collision_flag_03A3;  /* ram_03A3_flag */
+    uint8_t slot_active_0088[4];  /* ram_0088 */
+    uint8_t rider_present_0373;   /* ram_0370_obj + 3 */
+    uint8_t toggle_03B3;          /* ram_03B3 */
+    NativeOamState oam;           /* OAM byte layout used by the native renderer */
+} RaceHideSpritesState;
+
+void raceHideCollidedSprites(RaceHideSpritesState *state);
 
 #endif
