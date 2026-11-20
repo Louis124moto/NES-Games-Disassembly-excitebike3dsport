@@ -74,7 +74,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port `sub_D326` as an eight-byte native RNG state (`$0018-$001F`), seeded from `C1CE`; the setup initializer now consumes the native RNG state rather than fabricated per-bike inputs. Its startup-loop call site is not yet wired into the application.
 - [x] Port the first-course CPU track lookup profile from `C820` plus `D0AB/D0C6/E7FC`: six 64-byte pages are `$3B,$3B,$3D,$3D,$3D,$3D`; native code computes each bike's vertical band and four source samples. For these initial values, `E733`'s `$40` gate is never reached, so first-course opponent event dispatch is a no-op.
 - [x] Port the gameplay-field reset performed by `C869` (`$004D-$00EF`) and `C820` (`$0340-$03EF`) into `nativeRaceSetupClearFirstCourseState`; preserve bytes outside those ranges.
-- [x] Port the phase-zero first-course path of `E96C` (`E96E-EA05`): original Y anchors, signed one-pixel drift, `$08/$3A` clamps and state/overheat gates. Initial Y values `$0E,$1A,$26,$32` match the source anchors and therefore keep vertical delta at zero. Nonzero `$00A4` jump phases and the `EA07-EA43` player-input handshake remain separate work.
+- [x] Port the phase-zero first-course path of `E96C` (`E96E-EA05`): exact anchors `$0E,$1A,$26`, `$08/$3A` bounds, and the source-specific direction-update branches (in-range Y does not toggle; player slot 0 has the low-bound bypass). The `EA07-EA43` player vertical-input handshake is also ported and covered by the four-bike differential test. Nonzero `$00A4` jump phases and their `DD06` initialization remain separate work.
 - [x] Implement native menu setup list 2 (`C551,C869,C820,C5A3,C566,C875`) and test each command against the original ASM. The host oracle bypasses only `D13F`'s PPU artwork upload when testing `C820`; it executes and checks the CPU track-page fills, scroll values and sprite marker.
 - [x] Integrate `NativeRaceSession` into `game.c` after setup list 2 completes, using the menu's actual `$0041/$0046/$0034/$03F8` values and the native RNG seed. It initializes gameplay state but deliberately does not run an incomplete frame loop.
 - [x] Add the native first-course background/HUD path: merge extracted snapshots 18, 01, 17 and 14, draw original CHR tiles with palette 18, and overlay the seven C875/C935 HUD glyphs directly into the framebuffer. No PPU/OAM emulator is used at runtime.
@@ -113,7 +113,7 @@ This is the execution order for completing the first playable race. A checked it
 ### Immediate next implementation slice
 1. Correct and differential-test the E17F/E3F4/E1A3/E1F9/D1C7 sprite/OAM translation. The current nine-tile pose table is provisional and must not be treated as source-faithful.
 2. Trace and port camera/scroll updates in the same frame order, then compare first-course screenshots on a real New 3DS against the NES reference.
-3. Port the nonzero `$00A4` vertical/jump phases and the `EA07-EA43` player-input handshake; preserve the existing source order around D918/DA26.
+3. Port the nonzero `$00A4` vertical/jump phases and their `DD06/DD38/DD6F` setup; preserve the existing source order around D918/DA26.
 4. Wire the complete frame loop in source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6) before enabling continuous gameplay.
 5. Continue with steering, posture, heat, collision, course events and finish/results.
 
