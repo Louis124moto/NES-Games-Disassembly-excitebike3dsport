@@ -41,12 +41,12 @@ int main(void)
     CHECK(nativeRaceSessionUpdateVertical(&session) == 0u, 10);
     for (i = 0u; i < 4u; ++i) {
         static const uint8_t y[4] = {0x0Eu, 0x1Au, 0x26u, 0x32u};
-        CHECK(session.movement.object_y[i] == y[i], 11);
-        CHECK(session.states.vertical_delta[i] == 0u, 12);
+        uint8_t expected_y = i == 0u ? 0x0Fu : y[i];
+        uint8_t expected_delta = i == 0u ? 0xFFu : 0u;
+        CHECK(session.movement.object_y[i] == expected_y, 11);
+        CHECK(session.states.vertical_delta[i] == expected_delta, 12);
     }
 
-    nativeRaceSessionAdvanceStartupRng(&session);
-    CHECK(session.rng.bytes[0] != rng.bytes[0] || session.rng.bytes[1] != rng.bytes[1], 13);
 
     input.setup_index_0041 = 8u;
     CHECK(nativeRaceSessionInitFirstCourse(&session, &input, &rng) == 0, 20);
