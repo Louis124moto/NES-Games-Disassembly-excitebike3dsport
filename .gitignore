@@ -27,3 +27,7 @@ CHR_screens.chr
 /3ds-port/*.elf
 /3ds-port/*.smdh
 /3ds-port/*.cia
+
+# Python-generated cache files
+__pycache__/
+*.py[cod]
