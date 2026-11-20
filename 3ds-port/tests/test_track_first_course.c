@@ -35,6 +35,7 @@ int main(void)
     CHECK(track.initialized == 1u, 2);
     trackUpdateFirstCourse(&track, &movement);
 
+    printf("bands: %u %u %u %u\\n", track.vertical_band[0], track.vertical_band[1], track.vertical_band[2], track.vertical_band[3]);
     for (i = 0u; i < 4u; ++i) {
         CHECK(track.vertical_band[i] == expected_band[i], 10);
         CHECK(track.terrain_code[i] == expected_code[i], 11);
