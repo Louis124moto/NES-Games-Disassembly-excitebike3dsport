@@ -37,12 +37,12 @@ static void build_first_course_hud_glyphs(NativeRaceSetupState *out,
 
     split_decimal(first, &quotient, &remainder);
     out->hud_glyphs[0] = remainder; /* DFA2 stores only A for the first value. */
-    out->hud_glyphs[1] = 0xFBu;      /* D13F initialized ram_03D2. */
+    out->hud_glyphs[1] = 0xFBu;      /* C935 overwrites the second copied byte with the $FB marker. */
 
     split_decimal(second, &quotient, &remainder);
     out->hud_glyphs[2] = quotient;
     out->hud_glyphs[3] = remainder;
-    out->hud_glyphs[4] = 0xFBu;      /* D13F initialized ram_03D5. */
+    out->hud_glyphs[4] = 0xFBu;      /* C935 overwrites the fifth copied byte with the $FB marker. */
 
     split_decimal(third, &quotient, &remainder);
     out->hud_glyphs[5] = quotient;
