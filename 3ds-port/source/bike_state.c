@@ -44,7 +44,7 @@ static void source_clear_zero_page_race_state(BikeStateMachineState *s)
     s->player_event = 0u;
 }
 
-static void update_one_bike_state(BikeStateMachineState *s, unsigned x)
+static uint8_t update_one_bike_state(BikeStateMachineState *s, unsigned x)
 {
     uint8_t a;
     uint8_t y;
@@ -129,7 +129,7 @@ static void update_one_bike_state(BikeStateMachineState *s, unsigned x)
             }
             if (s->global_overheat != 0u) {
                 source_clear_zero_page_race_state(s);
-                break;
+                return 1u;
             }
             ++s->state[x];
             break;
@@ -157,6 +157,7 @@ static void update_one_bike_state(BikeStateMachineState *s, unsigned x)
          * reproducing an arbitrary indirect jump. */
         break;
     }
+    return 0u;
 }
 
 void bikePhysicsUpdateBikeStates(BikeStateMachineState *state)
@@ -164,7 +165,8 @@ void bikePhysicsUpdateBikeStates(BikeStateMachineState *state)
     int x;
     if (state == 0) return;
     for (x = 3; x >= 0; --x) {
-        update_one_bike_state(state, (unsigned)x);
-        update_vertical_collision_reference(state, (unsigned)x);
+        if (update_one_bike_state(state, (unsigned)x) == 0u) {
+            update_vertical_collision_reference(state, (unsigned)x);
+        }
     }
 }
