@@ -155,4 +155,21 @@ typedef struct RacePositionSmoothingState {
 
 void raceSmoothBikePositions(RacePositionSmoothingState *state);
 
+
+/* Source: sub_DF30 ($DF30-$DF7D) — elapsed race timer and time-up flag.
+ * Decimal work/display bytes preserve the exact DF7F output layout.
+ */
+typedef struct RaceElapsedTimeState {
+    uint8_t race_started;       /* ram_004F */
+    uint8_t track_finished;     /* ram_0052 */
+    uint8_t minutes;            /* ram_0068 */
+    uint8_t seconds;            /* ram_0069 */
+    uint8_t hundredths;         /* ram_006A */
+    uint8_t frame_fraction;     /* ram_006B */
+    uint8_t decimal_work[7];    /* ram_03D1-$03D7 */
+    uint8_t display[7];         /* ram_03D9-$03DF */
+} RaceElapsedTimeState;
+
+void raceElapsedTimeUpdate(RaceElapsedTimeState *state);
+
 #endif
