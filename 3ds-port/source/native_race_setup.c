@@ -73,6 +73,12 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->global_vertical_reference = 0xA0u;
     out->player_slot = 0u;
     out->player_rider_present = 1u;
+    out->frame_timer_00E8 = 0x34u;
+    out->frame_timer_00E9 = 0x14u;
+    out->countdown_x_03B4 = 0x80u;
+    out->race_setup_state_03B0 = 0x80u;
+    out->countdown_limit_03BD = 0xFFu;
+    out->countdown_index_03BE = 0x02u;
     memcpy(out->course_setup_parameters,
            s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
            sizeof(out->course_setup_parameters));
@@ -93,13 +99,15 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
         out->bike[i].approach = 0x06u;
         out->bike[i].lock_timer = 0x06u;
         out->bike[i].active = 0x01u;
-        out->bike[i].animation_seed = 0x08u;
-        out->bike[i].speed_phase = (uint8_t)(rng->bytes[i + 1u] >> 1);
+        out->bike[i].object_origin_x = 0x08u;
+        out->bike[i].setup_parameter = (uint8_t)(rng->bytes[i + 1u] >> 1);
 
         movement->object_y[i] = s_start_y[i];
         movement->x_low[i] = s_start_x[i];
         movement->x_high[i] = 0x01u;
         movement->object_class[i] = s_object_class[i];
+        movement->object_origin_x[i] = 0x08u;
+        movement->setup_parameter[i] = (uint8_t)(rng->bytes[i + 1u] >> 1);
         movement->approach[i] = 0x06u;
         movement->start_lock_timer[i] = 0x06u;
         movement->object_active[i] = 0x01u;
