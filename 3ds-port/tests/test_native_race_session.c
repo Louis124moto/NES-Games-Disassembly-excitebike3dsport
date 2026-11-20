@@ -36,6 +36,13 @@ int main(void)
     CHECK(session.track.terrain_code[0] == 0x3Du && session.track.terrain_code[3] == 0x3Bu, 6);
     CHECK(session.countdown.timer_003C == 9u && session.countdown.overheat_timer_03B6 == 0u, 7);
 
+    /* Source C9A5 -> D918 -> DD8D -> E96C order. */
+    nativeRaceSessionUpdateBikeStates(&session);
+    CHECK(session.states.vertical_collision_ref[0] == 0x02u, 27);
+    CHECK(session.states.vertical_collision_ref[1] == 0x0Fu, 28);
+    CHECK(session.states.vertical_collision_ref[2] == 0x1Bu, 29);
+    CHECK(session.states.vertical_collision_ref[3] == 0x27u, 30);
+
     CHECK(nativeRaceSessionUpdateCountdown(&session) == BIKE_COUNTDOWN_RENDER_START_OVERLAY, 8);
     CHECK(session.movement.speed_fraction[0] == 0u, 9);
     CHECK(nativeRaceSessionUpdateVertical(&session) == 0u, 10);
