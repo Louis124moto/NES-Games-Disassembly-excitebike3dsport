@@ -21,6 +21,29 @@ static void update_vertical_collision_reference(BikeStateMachineState *s,
     }
 }
 
+static void source_clear_zero_page_race_state(BikeStateMachineState *s)
+{
+    /* loc_CA85 clears $20-$FF, then increments $0049. High-page object
+     * arrays ($03xx) and the controller byte at $0014 are not touched. */
+    unsigned i;
+    for (i = 0u; i < 4u; ++i) {
+        s->state[i] = 0u;
+        s->x[i] = 0u;
+        s->y[i] = 0u;
+        s->vertical_delta[i] = 0u;
+        s->speed_whole[i] = 0u;
+        s->timer_state[i] = 0u;
+        s->timer_recovery[i] = 0u;
+        s->vertical_offset[i] = 0u;
+        s->vertical_collision_ref[i] = 0u;
+    }
+    s->global_timer_0022 = 0u;
+    s->frame_counter = 0u;
+    s->frame_phase = 0u;
+    s->remembered_controller = 1u;
+    s->player_event = 0u;
+}
+
 static void update_one_bike_state(BikeStateMachineState *s, unsigned x)
 {
     uint8_t a;
@@ -104,7 +127,10 @@ static void update_one_bike_state(BikeStateMachineState *s, unsigned x)
                 s->state[x] = 0u;
                 break;
             }
-            if (s->global_overheat != 0u) break;
+            if (s->global_overheat != 0u) {
+                source_clear_zero_page_race_state(s);
+                break;
+            }
             ++s->state[x];
             break;
         }
