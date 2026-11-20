@@ -15,7 +15,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### A. Complete the minimum native race simulation
 - [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
-- [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.
+- [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.\n  - [x] Translate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM. This is a standalone verified routine, not yet integrated into the race-frame scheduler.
 - [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
 - [ ] Complete steering, braking, posture, jump/landing, heat/overheat, collision/crash/recovery and opponent decisions.
 - [ ] Differential-test each routine and deterministic whole-frame scenarios against the host-only original-ASM oracle.
@@ -130,3 +130,12 @@ This is the execution order for completing the first playable race. A checked it
 - Differential tests: 50,000 `DC1A` vectors, 50,000 `DCF2` vectors, and 50,000 complete `DA26` frames.
 - CI: [host differential tests](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749414) and [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749343) passed.
 - Important boundary: this is a verified simulation subsystem, not yet connected to the app's native menu/race state machine. Course data, full frame order, AI, collisions, race rendering and finish/results remain outstanding.
+
+
+### Native routine batch — 2026-11-20 (E70B)
+
+- [x] Add semantic state/API: `RacePositionSmoothingState` / `raceSmoothBikePositions`.
+- [x] Translate the four-slot descending loop exactly: skip target adjustment when movement delta is zero; otherwise subtract in 8-bit arithmetic, advance target by eight and increment the six-bit phase on equality/negative result, and clear each transient byte.
+- [x] Add 200,000 randomized full-entrypoint comparisons against original `sub_E70B`.
+- [ ] Integrate E70B at its exact `C99A` frame-order position and validate long deterministic race sequences.
+- [ ] Continue the remaining five-routine batch with the next source-ordered race-frame dependency; do not mark this helper as gameplay integration.
