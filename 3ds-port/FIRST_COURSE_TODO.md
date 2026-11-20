@@ -70,10 +70,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Integrate the verified movement pass into the actual native race frame loop; the app currently remains a front-end prototype.
 
 ### 2. Complete player and opponent simulation
-- [x] Native semantic projection of `C875` initial per-bike fields (`C87F-C8DC`) into `BikeMovementState` / `BikeStateMachineState`; `object_class` and `$0078` start-lock timer are separate from the later `$0374` lock timer.
+- [x] Native semantic projection of `C875` initial per-bike fields (`C87F-C8DC`) and first-course `C522/CB13` parameters into `BikeMovementState` / `BikeStateMachineState`; `object_class` and `$0078` start-lock timer are separate from the later `$0374` lock timer.
 - [ ] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects; retain existing speed-control differential coverage.
 - [ ] Trace and port every state branch reached from `D918/D924` and `D91A` (bike state machine, timers, rider posture, jumps and landings).
-- [x] Port the source-derived `C875` entry and per-bike initialization loop into a native semantic setup function; preserve the `$0018` zero-page wrap and the selected `$0078` half-lock operation. Host test and New 3DS build passed at commit `54660d0bcf382540f54a76075fe1d4257ca036cd`.
+- [x] Port the source-derived `C875` entry and per-bike initialization loop plus the first-course `C522/CB13` parameter selection into native semantic setup; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. Host test and New 3DS build passed at commit `808021c5a5e82271cd72b0d1ea993e0339e4c409`.
 - [ ] Trace and port the remaining `C875` tail and opponent initialization/AI: `C522/C53A`, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
 - [ ] Port heat/overheat integration and the race-start handshake; the current temperature and speed helpers are isolated slices.
 - [ ] Port collision detection, crash/recovery, obstacle interaction and finish-state transitions from their actual callers.
@@ -103,7 +103,7 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Trace the rest of the `C875` tail, including `C522`, `C53A`, `C935`, and `C92C/C53E`; separate PPU upload payload generation from semantic race state.
+1. Trace the rest of the `C875` tail, especially `C53A`, `C935`, and `C92C/C53E`; separate PPU upload payload generation from semantic race state.
 2. Resolve the first-course setup command's remaining source-derived inputs and build a complete native race-start state without a live NES RAM image.
 3. Differential-test the setup result against the host-only original-ASM oracle.
 4. Integrate the initialized semantic state with the complete `D918` / `DA26` native frame update.
