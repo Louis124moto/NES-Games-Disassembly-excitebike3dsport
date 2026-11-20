@@ -338,6 +338,47 @@ static int test_e456(Cpu6502 *cpu)
     return 0;
 }
 
+
+static int test_e70b(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    for (v = 0u; v < 200000u; ++v) {
+        RacePositionSmoothingState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        for (i = 0u; i < 4u; ++i) {
+            s.movement_delta[i] = nb();
+            s.target_x[i] = nb();
+            s.phase[i] = nb();
+            s.transient[i] = nb();
+        }
+        memset(r, 0, sizeof(cpu->ram));
+        for (i = 0u; i < 4u; ++i) {
+            r[0x60u + i] = s.movement_delta[i];
+            r[0x64u + i] = s.target_x[i];
+            r[0xE0u + i] = s.phase[i];
+            r[0xD8u + i] = s.transient[i];
+        }
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xE70Bu, 4096u) != 0) {
+            printf("FAIL E70B oracle v=%u\\n", v); return 1;
+        }
+        raceSmoothBikePositions(&s);
+        for (i = 0u; i < 4u; ++i) {
+            if (s.target_x[i] != r[0x64u + i] ||
+                s.phase[i] != r[0xE0u + i] ||
+                s.transient[i] != r[0xD8u + i]) {
+                printf("FAIL E70B v=%u slot=%u target=%02X/%02X phase=%02X/%02X transient=%02X/%02X\\n",
+                       v, i, s.target_x[i], r[0x64u+i], s.phase[i], r[0xE0u+i],
+                       s.transient[i], r[0xD8u+i]);
+                return 1;
+            }
+        }
+    }
+    puts("PASS: 200000 sub_E70B four-bike position-smoothing vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -347,5 +388,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
+    return test_e70b(&cpu) || test_e456(&cpu) || test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu) || test_e4c8(&cpu) || test_e42b(&cpu);
 }
