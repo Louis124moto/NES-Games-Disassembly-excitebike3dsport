@@ -1,5 +1,6 @@
 #include "race_frame.h"
 #include "nes_routines.h"
+#include "race_spawn.h"
 
 /* Source: sub_DDD1 ($DDD1-$DE30). X runs 3..0. */
 void raceCrashRecovery(RaceCrashRecoveryState *s)
@@ -261,4 +262,58 @@ void raceHideCollidedSprites(RaceHideSpritesState *s)
         for (k = 0u; k < 0x0Cu; k += 4u) s->oam.bytes[(0x200u + base + k) & 0xFFu] = 0xF8u;
     }
     s->toggle_03B3 ^= 2u;
+}
+
+/* Source: sub_E456 + sub_E49B + sub_E4AD. The three temporary bytes
+ * begin as copies of x_high and receive the original threshold increments.
+ * Each clear low bit hides one four-sprite group at D8C0[slot] + D8DC[group].
+ */
+static const uint8_t k_offscreen_oam_base[4] = { 0x04u, 0x28u, 0x4Cu, 0x70u };
+static const uint8_t k_offscreen_sprite_offset[3] = { 0x00u, 0x0Cu, 0x18u };
+
+void raceHideOffscreenOpponentSprites(RaceOffscreenSpriteState *s,
+                                      RaceSpawnState *opponents)
+{
+    int slot;
+    if (s == 0 || opponents == 0) return;
+
+    for (slot = 3; slot >= 0; --slot) {
+        const uint8_t object = s->slot_object_index[slot];
+        uint8_t hide_mask[3];
+        unsigned int group;
+
+        if (object == 0u) continue;
+        /* The source call sites use opponent slots 1..3. Reject malformed
+         * semantic mappings rather than indexing outside the native arrays.
+         */
+        if (object >= 4u) continue;
+
+        hide_mask[0] = opponents->x_high[object];
+        hide_mask[1] = opponents->x_high[object];
+        hide_mask[2] = opponents->x_high[object];
+
+        if ((hide_mask[0] & 1u) == 0u) {
+            const uint8_t x = opponents->x_low[object];
+
+            if (x >= 0x70u && x < 0x90u) {
+                raceSpawnClearSlot(opponents, object); /* sub_DB95 */
+                s->opponent_cleared_03A6 = 1u;
+                goto hide_groups;
+            }
+            if (x >= 0xF8u) hide_mask[1] = (uint8_t)(hide_mask[1] + 1u);
+            if (x >= 0xF0u) hide_mask[2] = (uint8_t)(hide_mask[2] + 1u);
+        }
+
+hide_groups:
+        for (group = 0u; group < 3u; ++group) {
+            unsigned int sprite;
+            const uint8_t base = (uint8_t)(k_offscreen_oam_base[slot] +
+                                           k_offscreen_sprite_offset[group]);
+            if ((hide_mask[group] & 1u) != 0u) continue;
+            for (sprite = 0u; sprite < 3u; ++sprite) {
+                const uint8_t offset = (uint8_t)(base + sprite * 4u);
+                s->oam.bytes[offset] = 0xF8u;
+            }
+        }
+    }
 }
