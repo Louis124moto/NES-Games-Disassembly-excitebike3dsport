@@ -44,7 +44,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
         movement->x_high[i] = 0x01u;
         movement->object_class[i] = s_object_class[i];
         movement->approach[i] = 0x06u;
-        movement->object_lock_timer[i] = 0x06u;
+        movement->start_lock_timer[i] = 0x06u;
         movement->object_active[i] = 0x01u;
 
         states->y[i] = s_start_y[i];
@@ -55,8 +55,9 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     if (half_lock_slot == 0u)
         half_lock_slot = 2u;
     out->half_lock_slot = (uint8_t)half_lock_slot;
+    out->bike[half_lock_slot].lock_timer = movement->start_lock_timer[half_lock_slot];
     out->bike[half_lock_slot].lock_timer >>= 1;
-    movement->object_lock_timer[half_lock_slot] >>= 1;
+    movement->start_lock_timer[half_lock_slot] >>= 1;
 
     /* C89B-C8A1 writes only the player rider-presence byte ($0370). */
     states->rider_present[0] = 0x01u;
