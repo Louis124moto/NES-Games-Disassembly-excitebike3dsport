@@ -49,7 +49,7 @@ int main(void)
     }
     CHECK(out.bike[0].lock_timer == 6u && out.bike[1].lock_timer == 3u, 20);
     CHECK(out.bike[2].lock_timer == 6u && out.bike[3].lock_timer == 6u, 21);
-    CHECK(movement.object_lock_timer[1] == 3u, 22);
+    CHECK(movement.start_lock_timer[1] == 3u, 22);
     CHECK(states.rider_present[0] == 1u && states.rider_present[1] == 0u, 23);
     CHECK(movement.global_vertical_reference == 0xA0u, 24);
 
@@ -57,13 +57,14 @@ int main(void)
     memset(&movement, 0, sizeof(movement));
     memset(&states, 0, sizeof(states));
     movement.object_active[3] = 0xA5u;
+    movement.start_lock_timer[2] = 0xA6u;
     states.y[3] = 0x5Au;
     memset(&in, 0, sizeof(in));
     in.wrapped_param_0018 = 0u; /* zero selects slot 2, per C8D3-C8DC */
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &movement, &states), 30);
     CHECK(out.bike[0].active == 1u && out.bike[1].active == 0u, 31);
     CHECK(movement.object_active[3] == 0xA5u && states.y[3] == 0x5Au, 32);
-    CHECK(out.bike[2].lock_timer == 3u && movement.object_lock_timer[2] == 3u, 33);
+    CHECK(out.bike[2].lock_timer == 0x53u && movement.start_lock_timer[2] == 0x53u, 33);
     CHECK(states.rider_present[0] == 1u, 34);
 
     CHECK(nativeRaceSetupFirstCourse(0, &in, &movement, &states) == 0, 40);
