@@ -120,6 +120,9 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
     for (n = 0u; n < sizeof(cases) / sizeof(cases[0]); ++n) {
         NativeMenuState native;
         unsigned rc;
+        unsigned long max_steps = 2048u;
+        uint8_t saved_d13f = 0u;
+        uint8_t patched_d13f = 0u;
         memset(reference->ram, 0, sizeof(reference->ram));
         reference->ram[0x0041u] = cases[n].state;
         reference->ram[0x0044u] = (uint8_t)(cases[n].command + 1u);
@@ -140,7 +143,18 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         reference->ram[0x0202u] = 0xF8u;
         reference->ram[0x0203u] = 0xF8u;
         prepare_cpu(reference);
-        rc = (unsigned)cpu6502_call(reference, cases[n].address, 2048u);
+        if (cases[n].address == 0xC820u) {
+            /* C820's first call uploads art through D13F. Skip only that PPU
+             * wrapper in the host oracle; execute and verify its CPU track-data setup. */
+            saved_d13f = reference->prg[0x113Fu];
+            reference->prg[0x113Fu] = 0x60u; /* RTS */
+            patched_d13f = 1u;
+            max_steps = 10000u;
+        } else if (cases[n].address == 0xC875u) {
+            max_steps = 50000u;
+        }
+        rc = (unsigned)cpu6502_call(reference, cases[n].address, max_steps);
+        if (patched_d13f != 0u) reference->prg[0x113Fu] = saved_d13f;
         if (rc != 0u) {
             printf("FAIL: ASM menu setup command %04X returned %u\n", cases[n].address, rc);
             return 1;
