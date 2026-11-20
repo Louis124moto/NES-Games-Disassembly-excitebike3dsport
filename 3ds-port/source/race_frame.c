@@ -323,3 +323,28 @@ hide_groups:
         }
     }
 }
+
+/* Source: sub_E70B ($E70B-$E732). The CMP/branch sequence deliberately
+ * treats both equality and a negative subtraction as the wrap-to-next-step
+ * path. All arithmetic is 8-bit, matching the original byte operations.
+ */
+void raceSmoothBikePositions(RacePositionSmoothingState *s)
+{
+    int x;
+    if (s == 0) return;
+
+    for (x = 3; x >= 0; --x) {
+        if (s->movement_delta[x] != 0u) {
+            const uint8_t before = s->target_x[x];
+            const uint8_t difference = (uint8_t)(before - s->movement_delta[x]);
+
+            if (difference == 0u || (difference & 0x80u) != 0u) {
+                s->target_x[x] = (uint8_t)(difference + 8u);
+                s->phase[x] = (uint8_t)((s->phase[x] + 1u) & 0x3Fu);
+            } else {
+                s->target_x[x] = difference;
+            }
+        }
+        s->transient[x] = 0u;
+    }
+}
