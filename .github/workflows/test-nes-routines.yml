@@ -26,6 +26,8 @@ on:
       - "3ds-port/include/native_race_setup.h"
       - "3ds-port/source/race_countdown.c"
       - "3ds-port/include/race_countdown.h"
+      - "3ds-port/source/native_rng.c"
+      - "3ds-port/include/native_rng.h"
       - "3ds-port/source/input.c"
       - "3ds-port/include/input.h"
       - "3ds-port/tests/test_input_mapping.c"
@@ -164,6 +166,12 @@ jobs:
 
       - name: Run native DD8D countdown test
         run: ./test_race_countdown
+
+      - name: Compile native D326 RNG test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_rng.c 3ds-port/tests/test_native_rng.c -o test_native_rng
+
+      - name: Run native D326 RNG test
+        run: ./test_native_rng
 
       - name: Validate reference 6502 core against py65
         run: |
