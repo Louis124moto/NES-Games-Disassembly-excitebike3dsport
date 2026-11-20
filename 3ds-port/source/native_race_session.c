@@ -54,8 +54,3 @@ uint8_t nativeRaceSessionUpdateVertical(NativeRaceSession *session)
     return session->vertical_unsupported_mask;
 }
 
-void nativeRaceSessionAdvanceStartupRng(NativeRaceSession *session)
-{
-    if (session == 0 || session->initialized == 0u) return;
-    nativeRngAdvance(&session->rng);
-}
