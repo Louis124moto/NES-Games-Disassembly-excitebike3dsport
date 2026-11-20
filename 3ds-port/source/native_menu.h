@@ -40,6 +40,7 @@ typedef struct NativeMenuState {
     uint8_t transition_flag_0046;
     uint8_t transition_flag_004B;
     uint8_t transition_counter_03F8;
+    uint8_t race_setup_complete; /* native completion signal for source setup list 2 */
     uint8_t transition_duration; /* source ram_03AD */
     uint8_t source_visual_asset; /* source ram_0045: native asset selector, not a PPU address */
     uint8_t title_animation_counter; /* source ram_03F8 */
@@ -55,7 +56,7 @@ typedef struct NativeMenuState {
  * design menu handlers (source states 0, 1 and 8). */
 void nativeMenuInit(NativeMenuState *menu);
 void nativeMenuUpdate(NativeMenuState *menu, uint8_t pressed);
-/* Executes one verified command from setup lists 0, 1 or 6 per call.
+/* Executes one verified command from setup lists 0, 1, 2 or 6 per call.
  * Returns 1 when a source command was translated, 0 when waiting/unsupported. */
 uint8_t nativeMenuStepSetup(NativeMenuState *menu);
 void nativeMenuTickTimers(NativeMenuState *menu);
