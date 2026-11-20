@@ -160,7 +160,7 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
     } else {
         memset(&assets->scenes[6], 0, sizeof(assets->scenes[6]));
         assets->race_scene_available = 0u;
-        assets->error[0] = '\\0';
+        assets->error[0] = '\0';
     }
 
     /* The editor setup selects palette 12 + course. Other menu screens use
