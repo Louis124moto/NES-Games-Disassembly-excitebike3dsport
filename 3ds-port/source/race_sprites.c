@@ -123,7 +123,7 @@ static void writeTempOverlay(uint8_t *oam, unsigned int base, uint8_t temp)
     }
 }
 
-static void writeRiderOverlay(uint8_t *oam, unsigned int base,
+static uint8_t writeRiderOverlay(uint8_t *oam, unsigned int base,
                               const BikeMovementState *movement,
                               const BikeStateMachineState *states,
                               unsigned int bike, uint8_t palette)
@@ -134,9 +134,9 @@ static void writeRiderOverlay(uint8_t *oam, unsigned int base,
     const uint8_t vertical_state = states->vertical_state[bike];
 
     /* E26A visibility gates. */
-    if (movement->x_high[bike] == 0x02u) return;
-    if (previous_x >= 0xF8u || previous_x < movement->x_low[bike]) return;
-    if (vertical_state >= 3u) return;
+    if (movement->x_high[bike] == 0x02u) return 0u;
+    if (previous_x >= 0xF8u || previous_x < movement->x_low[bike]) return 0u;
+    if (vertical_state >= 3u) return 1u;
 
     overlay_palette = (uint8_t)(palette |
         (movement->vertical_phase[bike] == 0u ? 0x00u : 0x20u));
@@ -144,6 +144,7 @@ static void writeRiderOverlay(uint8_t *oam, unsigned int base,
     writeD1C7(oam, base, previous_x,
               (uint8_t)(0xA8u - states->vertical_collision_ref[bike]),
               s_overlay_tile[vertical_state], mask, 0x22u, overlay_palette);
+    return 0u;
 }
 
 uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
@@ -207,8 +208,11 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
 
         /* E26A draws the extra rider overlay only for pose $16. */
         if (special_base != 0u) {
-            writeRiderOverlay(oam->bytes, special_base, movement, states,
-                              bike, s_bike_palette[bike]);
+            if (writeRiderOverlay(oam->bytes, special_base, movement, states,
+                                  bike, s_bike_palette[bike]) != 0u) {
+                unsupported_mask = (uint8_t)(unsupported_mask |
+                                               (uint8_t)(1u << bike));
+            }
         }
     }
 
