@@ -37,6 +37,9 @@ int main(void)
     CHECK(out.setup_counter_0040 == 10u && out.setup_counter_0047 == 6u, 2);
     CHECK(out.timer_0034 == 5u && out.global_vertical_reference == 0xA0u, 3);
     CHECK(out.player_slot == 0u && out.player_rider_present == 1u, 4);
+    CHECK(out.frame_timer_00E8 == 0x34u && out.frame_timer_00E9 == 0x14u, 9);
+    CHECK(out.countdown_x_03B4 == 0x80u && out.race_setup_state_03B0 == 0x80u, 25);
+    CHECK(out.countdown_limit_03BD == 0xFFu && out.countdown_index_03BE == 0x02u, 26);
     CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x10u && out.course_setup_parameters[2] == 0x00u, 6);
     CHECK(out.race_object_parameters[0] == 0x01u && out.race_object_parameters[1] == 0x10u && out.race_object_parameters[2] == 0x00u, 8);
     CHECK(out.hud_glyphs[0] == 1u && out.hud_glyphs[1] == 0xFBu && out.hud_glyphs[2] == 2u && out.hud_glyphs[3] == 4u && out.hud_glyphs[4] == 0xFBu && out.hud_glyphs[5] == 0u && out.hud_glyphs[6] == 0u, 7);
@@ -47,11 +50,12 @@ int main(void)
         CHECK(out.bike[i].x_low == expected_x[i] && out.bike[i].x_high == 1u, 11);
         CHECK(out.bike[i].object_class == expected_class[i], 12);
         CHECK(out.bike[i].approach == 6u && out.bike[i].active == 1u, 13);
-        CHECK(out.bike[i].animation_seed == 8u, 14);
-        CHECK(out.bike[i].speed_phase == (uint8_t)(rng.bytes[i + 1u] >> 1), 15);
+        CHECK(out.bike[i].object_origin_x == 8u, 14);
+        CHECK(out.bike[i].setup_parameter == (uint8_t)(rng.bytes[i + 1u] >> 1), 15);
         CHECK(movement.object_y[i] == expected_y[i] && states.y[i] == expected_y[i], 16);
         CHECK(movement.x_low[i] == expected_x[i] && movement.x_high[i] == 1u, 17);
         CHECK(movement.object_class[i] == expected_class[i], 18);
+        CHECK(movement.object_origin_x[i] == 8u && movement.setup_parameter[i] == (uint8_t)(rng.bytes[i + 1u] >> 1), 27);
         CHECK(movement.object_active[i] == 1u && movement.approach[i] == 6u, 19);
     }
     CHECK(out.bike[0].lock_timer == 6u && out.bike[1].lock_timer == 3u, 20);
