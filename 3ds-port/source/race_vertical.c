@@ -25,7 +25,7 @@ void bikePhysicsUpdateScreenY(BikeMovementState *movement)
 
 static uint8_t is_vertical_anchor(uint8_t y)
 {
-    return (uint8_t)(y == 0x0Eu || y == 0x1Au || y == 0x26u || y == 0x32u);
+    return (uint8_t)(y == 0x0Eu || y == 0x1Au || y == 0x26u);
 }
 
 uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
@@ -41,6 +41,7 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
         const unsigned int i = (unsigned int)index;
         uint8_t y = movement->object_y[i];
         uint8_t delta = states->vertical_delta[i];
+        uint8_t update_direction = 0u;
 
         /* The first course starts with $00A4=0. Other phase handlers require
          * DD06 and are deliberately reported to the caller for later porting. */
@@ -65,6 +66,7 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
 
         /* E9C4-E9D0 / E9E9-E9F9: source vertical bounds. */
         if (y < 0x08u) {
+            update_direction = 1u;
             if (states->state[i] == 0u) {
                 y = 0x07u;
             } else if (y < 0x02u) {
@@ -72,14 +74,17 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
             }
         } else if (y >= 0x3Au) {
             y = 0x39u;
+            update_direction = 1u;
         }
 
         movement->object_y[i] = y;
         states->y[i] = y;
 
-        /* E9D2-E9E1: only a bike with no movement state or overheat toggles
-         * the signed one-pixel vertical direction (0 -> 1, 1 <-> $FF). */
-        if ((uint8_t)(states->state[i] | states->overheat[i]) == 0u) {
+        /* E9D2-E9E1: direction toggles only after the low/high-bound paths.
+         * In-range Y ($08..$39) branches directly to E9E3 and leaves delta
+         * unchanged; low/high clamps reach the direction update. */
+        if (update_direction != 0u &&
+            (uint8_t)(states->state[i] | states->overheat[i]) == 0u) {
             if (delta == 0u) delta = 0xFFu;
             states->vertical_delta[i] = (uint8_t)(delta ^ 0xFEu);
         }
