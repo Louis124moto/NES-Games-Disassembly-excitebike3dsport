@@ -146,6 +146,23 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
         !mergeSnapshot(&assets->scenes[5], "ppu_snapshot_17.bin", executablePath,
                        assets->error, sizeof(assets->error))) goto fail;
 
+    /* First-course race background: merge the source setup-list-2 snapshots
+     * in order. These are static source writes; the runtime draws them natively. */
+    if (mergeSnapshot(&assets->scenes[6], "ppu_snapshot_18.bin", executablePath,
+                      assets->error, sizeof(assets->error)) &&
+        mergeSnapshot(&assets->scenes[6], "ppu_snapshot_01.bin", executablePath,
+                      assets->error, sizeof(assets->error)) &&
+        mergeSnapshot(&assets->scenes[6], "ppu_snapshot_17.bin", executablePath,
+                      assets->error, sizeof(assets->error)) &&
+        mergeSnapshot(&assets->scenes[6], "ppu_snapshot_14.bin", executablePath,
+                      assets->error, sizeof(assets->error))) {
+        assets->race_scene_available = 1u;
+    } else {
+        memset(&assets->scenes[6], 0, sizeof(assets->scenes[6]));
+        assets->race_scene_available = 0u;
+        assets->error[0] = '\\0';
+    }
+
     /* The editor setup selects palette 12 + course. Other menu screens use
      * source palette preset 18, as in the existing front-end renderer. */
     {
