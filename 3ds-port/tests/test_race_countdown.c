@@ -56,7 +56,7 @@ int main(void)
 
     reset(&c, &m, &s);
     c.timer_003C = 11u;
-    s.y[0] = 0x39u;
+    s.y[0] = 0x01u;
     CHECK(bikePhysicsUpdateRaceCountdown(&c, &m, &s) == BIKE_COUNTDOWN_RENDER_START_OVERLAY, 12);
     CHECK(m.speed_fraction[0] == 0u && s.vertical_delta[0] == 0u, 13);
 
