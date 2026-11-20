@@ -70,10 +70,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Integrate the verified movement pass into the actual native race frame loop; the app currently remains a front-end prototype.
 
 ### 2. Complete player and opponent simulation
-- [x] Native semantic projection of `C875` initial per-bike fields (`C87F-C8DC`), first-course `C522/CB13` parameters, and `C90E/DF7F` HUD glyph data into native structures; `object_class` and `$0078` start-lock timer are separate from the later `$0374` lock timer. The dynamic PPU command-list wrapper is deliberately not carried into gameplay.
+- [x] Native semantic projection of the first-course `C875` setup path, including the `C522/CB13` and `C53E` parameter lookups plus `C90E/DF7F` HUD glyph bytes. `C905` guards the first-course `$02` path; `object_class` and `$0078` start-lock timer are separate from the later `$0374` lock timer. The `C935` PPU command-list wrapper is deliberately replaced by native HUD data.
 - [ ] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects; retain existing speed-control differential coverage.
 - [ ] Trace and port every state branch reached from `D918/D924` and `D91A` (bike state machine, timers, rider posture, jumps and landings).
-- [x] Port the source-derived `C875` entry and per-bike initialization loop plus the first-course `C522/CB13` parameter selection into native semantic setup; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. Host test and New 3DS build passed at commit `808021c5a5e82271cd72b0d1ea993e0339e4c409`.
+- [x] Port the source-derived first-course `C875` path (`C87F-C8DC`, `C522/CB13`, `C90E/DF7F`, and `C92C/C53E`) into native semantic state; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. `C905` confirms the first-course setup index is `$02`, so the `$08+` `C53A` branch is not taken. Host tests and New 3DS build pass on commits `31e5f8b1dbc4f5c6e3d80b5e3a654a283e482018` and earlier.
 - [ ] Trace and port the remaining `C875` tail and opponent initialization/AI: `C522/C53A`, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
 - [ ] Port heat/overheat integration and the race-start handshake; the current temperature and speed helpers are isolated slices.
 - [ ] Port collision detection, crash/recovery, obstacle interaction and finish-state transitions from their actual callers.
@@ -103,11 +103,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Trace and port the remaining first-course `C875` setup dependencies: `C53A` conditional branch and `C92C/C53E` table lookup. Keep the `C935` PPU command wrapper out of runtime; only its source-derived HUD glyph values are represented natively.
-2. Resolve the first-course setup command's remaining source-derived inputs and build a complete native race-start state without a live NES RAM image.
-3. Differential-test the setup result against the host-only original-ASM oracle.
-4. Integrate the initialized semantic state with the complete `D918` / `DA26` native frame update.
-5. Continue upward through the remaining race-frame calls; do not stop at a helper or a successful build.
+1. Trace any remaining first-course setup inputs that precede `C875` and verify the initial values of `ram_0018/0019`, `ram_03F8`, and the seeded `$0580/$05A3` table on the title-menu path.
+2. Add a host-only ASM differential fixture for the complete first-course setup path, including the source-side state before `C875`.
+3. Connect the native setup result to the native race state and the `D918` / `DA26` update sequence without a live NES RAM image.
+4. Continue through steering, posture, heat, collision, course events and the finish/result path; do not stop at an isolated helper or a successful build.
 
 
 ## Verified movement milestone — 2026-11-19 21:09 CET
