@@ -89,17 +89,54 @@ int main(void)
     CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 36);
     CHECK(m.object_y[0] == 0x18u && s.vertical_delta[0] == 0u, 37);
 
-    /* Nonzero $00A4 is reported and left untouched; no fake DD06 behavior. */
+    /* E96C nonzero phases: phase 2/4 approach Y=$20, phase 3 holds. */
     reset(&m, &s);
-    m.object_y[2] = 0x18u;
-    s.y[2] = 0x18u;
-    s.vertical_delta[2] = 1u;
-    m.vertical_phase[2] = 1u;
-    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0x04u, 40);
-    CHECK(m.object_y[2] == 0x18u && s.vertical_delta[2] == 1u, 41);
+    m.vertical_phase[0] = 2u;
+    m.object_y[0] = 0x25u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 40);
+    CHECK(m.vertical_phase[0] == 2u && m.object_y[0] == 0x24u, 41);
 
-    CHECK(bikePhysicsUpdateFirstCourseVertical(0, &s) == 0x0Fu, 50);
-    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, 0) == 0x0Fu, 51);
+    reset(&m, &s);
+    m.vertical_phase[0] = 3u;
+    m.object_y[0] = 0x25u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 42);
+    CHECK(m.vertical_phase[0] == 3u && m.object_y[0] == 0x25u, 43);
+
+    reset(&m, &s);
+    m.vertical_phase[0] = 4u;
+    m.object_y[0] = 0x25u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 44);
+    CHECK(m.vertical_phase[0] == 4u && m.object_y[0] == 0x24u, 45);
+
+    /* Phase 1 at/above $20 waits; below $20 advances to phase 4. */
+    reset(&m, &s);
+    m.vertical_phase[0] = 1u;
+    m.object_y[0] = 0x25u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 46);
+    CHECK(m.vertical_phase[0] == 1u && m.object_y[0] == 0x25u, 47);
+
+    reset(&m, &s);
+    m.vertical_phase[0] = 1u;
+    m.object_y[0] = 0x10u;
+    m.object_action_state[0] = 1u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 48);
+    CHECK(m.vertical_phase[0] == 4u && m.object_y[0] == 0x10u, 49);
+
+    /* Eligible phase 1 invokes DD06 and transitions 1 -> 4 -> 3. */
+    reset(&m, &s);
+    m.vertical_phase[0] = 1u;
+    m.object_y[0] = 0x10u;
+    m.object_action_state[0] = 0u;
+    m.speed_whole[0] = 2u;
+    m.speed_fraction[0] = 0x20u;
+    m.y_low[0] = 0x40u;
+    m.vertical_reference[0] = 0x55u;
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 50);
+    CHECK(m.vertical_phase[0] == 3u && m.vertical_reference[0] == 0u, 51);
+    CHECK(m.object_status[0] == 2u && m.player_event != 0u, 52);
+
+    CHECK(bikePhysicsUpdateFirstCourseVertical(0, &s) == 0x0Fu, 60);
+    CHECK(bikePhysicsUpdateFirstCourseVertical(&m, 0) == 0x0Fu, 61);
     puts("PASS: native E96C first-course vertical phase-zero path.");
     return 0;
 }
