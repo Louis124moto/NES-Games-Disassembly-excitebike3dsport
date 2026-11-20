@@ -15,6 +15,8 @@ static void prepare(Cpu6502 *c)
     for (slot=0; slot<4u; ++slot) { \
         if (native.field[slot] != reference.ram[(address)+slot]) { \
             printf("FAIL %s v=%u slot=%u n=%02X asm=%02X state=%02X/%02X y=%02X/%02X bc=%02X/%02X dc=%02X/%02X rider=%02X/%02X target=%02X/%02X timers=%02X/%02X frame=%02X/%02X\\n", #field, vector, slot, native.field[slot], reference.ram[(address)+slot], native.state[slot], reference.ram[0x009Cu+slot], native.y[slot], reference.ram[0x00B8u+slot], native.vertical_offset[slot], reference.ram[0x00BCu+slot], native.vertical_delta[slot], reference.ram[0x00DCu+slot], native.rider_present[slot], reference.ram[0x0370u+slot], native.target_index[slot], reference.ram[0x03E4u+slot], native.timer_state[slot], reference.ram[0x002Au+slot], native.frame_counter, reference.ram[0x003Fu]); \
+            printf("native state/timer: %02X/%02X %02X/%02X %02X/%02X %02X/%02X\\n",native.state[0],native.timer_state[0],native.state[1],native.timer_state[1],native.state[2],native.timer_state[2],native.state[3],native.timer_state[3]); \\
+            printf("ASM state/timer: %02X/%02X %02X/%02X %02X/%02X %02X/%02X\\n",reference.ram[0x009C],reference.ram[0x002A],reference.ram[0x009D],reference.ram[0x002B],reference.ram[0x009E],reference.ram[0x002C],reference.ram[0x009F],reference.ram[0x002D]); \\
             return 1; \
         } \
     } \
