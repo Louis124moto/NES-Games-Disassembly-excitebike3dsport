@@ -194,6 +194,7 @@ fail:
     free(assets->chr_pixels);
     assets->chr_pixels = NULL;
     assets->chr_tile_count = 0u;
+    assets->race_scene_available = 0u;
     assets->loaded = 0u;
     return 0;
 }
