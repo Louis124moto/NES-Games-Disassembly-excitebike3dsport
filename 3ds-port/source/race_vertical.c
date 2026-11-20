@@ -1,5 +1,28 @@
 #include "race_vertical.h"
 
+void bikePhysicsUpdateScreenY(BikeMovementState *movement)
+{
+    int index;
+    if (movement == 0) return;
+
+    /* E836 calls DC97 only for objects with ram_00B0 == 0.
+     * DC97/DC9A performs two 6502 SBC operations, so the borrow from the
+     * first subtraction must feed the second one. */
+    for (index = 3; index >= 0; --index) {
+        const unsigned int i = (unsigned int)index;
+        uint8_t a;
+        uint8_t carry;
+
+        if (movement->object_status[i] != 0u) continue;
+        carry = movement->global_vertical_reference >= movement->vertical_reference[i]
+                    ? 1u : 0u;
+        a = (uint8_t)(movement->global_vertical_reference -
+                      movement->vertical_reference[i]);
+        movement->y_low[i] = (uint8_t)(a - movement->object_y[i] -
+                                       (carry != 0u ? 0u : 1u));
+    }
+}
+
 static uint8_t is_vertical_anchor(uint8_t y)
 {
     return (uint8_t)(y == 0x0Eu || y == 0x1Au || y == 0x26u || y == 0x32u);
