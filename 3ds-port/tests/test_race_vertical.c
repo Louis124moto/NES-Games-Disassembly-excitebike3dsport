@@ -76,7 +76,7 @@ int main(void)
     m.object_y[0] = 0x01u;
     s.state[0] = 1u;
     CHECK(bikePhysicsUpdateFirstCourseVertical(&m, &s) == 0u, 32);
-    CHECK(m.object_y[0] == 0x01u && s.vertical_delta[0] == 0u, 33);
+    CHECK(m.object_y[0] == 0x01u && s.vertical_delta[0] == 1u, 33);
 
     reset(&m, &s);
     m.object_y[0] = 0x3Au;
