@@ -3,11 +3,43 @@
 
 static const uint8_t s_oam_base[4] = {0x04u, 0x28u, 0x4Cu, 0x70u};
 static const uint8_t s_bike_palette[4] = {0x00u, 0x01u, 0x01u, 0x02u};
-static const uint8_t s_pose6_tiles[9] = {
-    0xFCu, 0x0Au, 0x0Bu,
-    0x0Cu, 0x0Du, 0xAEu,
-    0xFCu, 0x0Fu, 0x10u
-};
+static void writeInitialPose6(uint8_t *oam, unsigned int base,
+                               uint8_t x, uint8_t y, uint8_t palette)
+{
+    uint8_t tile = 0x0Au; /* tbl_D892[6] */
+    uint8_t mask = 0x09u; /* tbl_D8A9[6] */
+    unsigned int sprite_index;
+    unsigned int offset = 1u;
+
+    /* D1C7 with shape $33: the mask emits six tile bytes. */
+    for (sprite_index = 3u; sprite_index < 9u; ++sprite_index) {
+        uint8_t output_tile;
+        if ((sprite_index & 1u) != 0u) {
+            output_tile = tile++;
+        } else {
+            const uint8_t carry = (uint8_t)(mask & 1u);
+            mask >>= 1;
+            output_tile = carry != 0u ? 0xFCu : tile++;
+        }
+        oam[base + offset] = output_tile;
+        oam[base + offset + 1u] = palette;
+        offset += 4u;
+    }
+
+    /* D1C7 coordinate pass: three rows in each of three columns. */
+    offset = 0u;
+    for (sprite_index = 0u; sprite_index < 3u; ++sprite_index) {
+        unsigned int row;
+        uint8_t sprite_y = y;
+        for (row = 0u; row < 3u; ++row) {
+            oam[base + offset] = sprite_y;
+            oam[base + offset + 3u] = x;
+            sprite_y = (uint8_t)(sprite_y + 8u);
+            offset += 4u;
+        }
+        x = (uint8_t)(x + 8u);
+    }
+}
 
 static uint8_t is_initial_pose6(const BikeMovementState *movement,
                                 const BikeStateMachineState *states,
@@ -60,25 +92,15 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
     for (i = 0u; i < 4u; ++i) {
         const unsigned int bike = order[i];
         const unsigned int base = s_oam_base[i];
-        unsigned int sprite;
-
         if (movement->object_active[bike] == 0u) continue;
         if (is_initial_pose6(movement, states, bike) == 0u) {
             unsupported_mask = (uint8_t)(unsupported_mask | (uint8_t)(1u << bike));
             continue;
         }
 
-        for (sprite = 0u; sprite < 9u; ++sprite) {
-            const unsigned int column = sprite / 3u;
-            const unsigned int row = sprite % 3u;
-            const unsigned int oam_offset = base + sprite * 4u;
-            oam->bytes[oam_offset + 0u] =
-                (uint8_t)(movement->y_low[bike] + row * 8u);
-            oam->bytes[oam_offset + 1u] = s_pose6_tiles[sprite];
-            oam->bytes[oam_offset + 2u] = s_bike_palette[bike];
-            oam->bytes[oam_offset + 3u] =
-                (uint8_t)(movement->x_low[bike] + column * 8u);
-        }
+        writeInitialPose6(oam->bytes, base,
+                          movement->x_low[bike], movement->y_low[bike],
+                          s_bike_palette[bike]);
     }
 
     return unsupported_mask;
