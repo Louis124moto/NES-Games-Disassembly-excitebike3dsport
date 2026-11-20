@@ -154,7 +154,7 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
         native.title_animation_flag = 0xA5u;
         native.title_animation_counter = cases[n].state == 2u ? 0x04u : 0x77u;
         native.transition_counter_03F8 = cases[n].state == 2u ? 0x04u : 0u;
-        native.transition_flag_004B = cases[n].state == 2u ? 0xB6u : 0u;
+        native.transition_flag_004B = cases[n].state == 2u ? 0xB6u : 0xB5u;
         native.transition_timer_0034 = cases[n].state == 2u ? 0x2Du : 0u;
         native.selected_mode = cases[n].state == 2u ? 0x01u : 0xA2u;
         if (cases[n].state == 2u) {
