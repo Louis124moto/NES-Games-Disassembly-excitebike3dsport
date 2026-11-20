@@ -163,4 +163,34 @@ void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object
 /* Complete source-order movement/camera pass from sub_DA26 (timer path). */
 void bikePhysicsUpdateRaceMovementPass(BikeMovementState *movement, uint8_t race_started);
 
+/* Native translation of the per-bike state dispatcher sub_D918/sub_D924.
+ * This is semantic gameplay state, not a live NES RAM image. */
+typedef struct BikeStateMachineState {
+    uint8_t state[4];                 /* ram_009C_obj */
+    uint8_t rider_present[4];         /* ram_0370_obj */
+    uint8_t x[4];                     /* ram_0080_obj */
+    uint8_t previous_x[4];            /* ram_0390_obj */
+    uint8_t target_index[4];          /* ram_03E4_obj */
+    uint8_t y[4];                     /* ram_obj_pos_Y_lo */
+    uint8_t vertical_delta[4];       /* ram_00DC_obj */
+    uint8_t speed_whole[4];           /* ram_0094_obj */
+    uint8_t timer_state[4];           /* ram_002A_timer */
+    uint8_t timer_recovery[4];        /* ram_0036_timer */
+    uint8_t vertical_state[4];        /* ram_0398_obj */
+    uint8_t vertical_offset[4];       /* ram_00BC_obj */
+    uint8_t overheat[4];              /* ram_03E0_obj */
+    uint8_t global_overheat;          /* ram_03F7 */
+    uint8_t global_timer_0022;         /* ram_0022_timer */
+    uint8_t frame_counter;             /* ram_003F */
+    uint8_t frame_phase;               /* ram_004C */
+    uint8_t controller_hold;           /* ram_btn_hold */
+    uint8_t remembered_controller;     /* ram_0049 */
+    uint8_t player_event;              /* ram_00FD */
+    uint8_t opponent_spawn_event;      /* ram_03A8 */
+    uint8_t vertical_collision_ref[4]; /* ram_006C_obj */
+} BikeStateMachineState;
+
+/* Exact source order: X=3..0, dispatch state, then update DA15 reference. */
+void bikePhysicsUpdateBikeStates(BikeStateMachineState *state);
+
 #endif
