@@ -7,6 +7,7 @@
 /* Semantic inputs consumed by C875 from setup state established earlier. */
 typedef struct NativeRaceSetupInput {
     uint8_t multiplayer_flag;       /* ram_03F2 */
+    uint8_t transition_flag_0046;    /* ram_0046, consumed by sub_C522/sub_CB13 */
     uint8_t object_param_0019[4];   /* ram_0019,X */
     uint8_t wrapped_param_0018;     /* ram_0019,$FF wraps to $0018 */
     uint8_t timer_0034;
@@ -35,6 +36,7 @@ typedef struct NativeRaceSetupState {
     uint8_t player_slot;
     uint8_t player_rider_present;
     uint8_t half_lock_slot;
+    uint8_t course_setup_parameters[3]; /* sub_C522: tbl_C091 + course/transition offset */
 } NativeRaceSetupState;
 
 /*
