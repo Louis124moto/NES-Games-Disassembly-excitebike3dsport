@@ -160,6 +160,44 @@ static void drawRaceHud(uint8_t *framebuffer, const NativeMenuAssets *assets,
     }
 }
 
+static void drawRaceOam(uint8_t *framebuffer, const NativeMenuAssets *assets,
+                          const NativeRaceSession *session, unsigned paletteSet)
+{
+    int sprite;
+    /* NES OAM priority: lower sprite indices are drawn last and appear in front. */
+    for (sprite = 63; sprite >= 0; --sprite) {
+        const size_t offset = (size_t)sprite * 4u;
+        const uint8_t y = session->oam.bytes[offset + 0u];
+        const uint8_t tile = session->oam.bytes[offset + 1u];
+        const uint8_t attribute = session->oam.bytes[offset + 2u];
+        const uint8_t x = session->oam.bytes[offset + 3u];
+        const uint8_t *pixels;
+        unsigned int py, px;
+
+        if (y >= 0xEFu || tile >= assets->chr_tile_count) continue;
+        pixels = assets->chr_pixels + (size_t)tile * 64u;
+        for (py = 0u; py < 8u; ++py) {
+            const unsigned int sourceY =
+                (attribute & 0x80u) != 0u ? 7u - py : py;
+            const unsigned int screenY = (unsigned int)y + 1u + py;
+            if (screenY >= 240u) continue;
+            for (px = 0u; px < 8u; ++px) {
+                const unsigned int sourceX =
+                    (attribute & 0x40u) != 0u ? 7u - px : px;
+                const unsigned int screenX = (unsigned int)x + px;
+                const uint8_t value = (uint8_t)(pixels[sourceY * 8u + sourceX] & 3u);
+                const size_t paletteIndex =
+                    16u + (size_t)(attribute & 3u) * 4u + value;
+
+                if (screenX >= 256u || value == 0u) continue;
+                if (assets->palette_written[paletteSet][paletteIndex] == 0u) continue;
+                putPixel(framebuffer, 72u + screenX, screenY,
+                         assets->palettes[paletteSet][paletteIndex]);
+            }
+        }
+    }
+}
+
 int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
                           const NativeRaceSession *session)
 {
@@ -175,7 +213,8 @@ int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     scene = &assets->scenes[6];
     memset(framebuffer, 0, 400u * 240u * 3u);
     drawBackground(framebuffer, assets, scene, 6u); /* palette stream 18 */
-    drawCursor(framebuffer, assets, menu, 6u);
     drawRaceHud(framebuffer, assets, scene, session, 6u);
+    drawRaceOam(framebuffer, assets, session, 6u);
+    drawCursor(framebuffer, assets, menu, 6u); /* OAM sprite zero has highest priority. */
     return 1;
 }
