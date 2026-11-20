@@ -24,6 +24,7 @@ static size_t framebufferOffset(unsigned int x, unsigned int y)
 static const NativeMenuSceneAssets *sceneForState(const NativeMenuAssets *assets,
                                                    uint8_t state)
 {
+    if (state == 2u) return assets->race_scene_available ? &assets->scenes[6] : NULL;
     if (state == 0u) return &assets->scenes[0];
     if (state == 1u) return &assets->scenes[1];
     if (state == 8u) return &assets->scenes[2];
