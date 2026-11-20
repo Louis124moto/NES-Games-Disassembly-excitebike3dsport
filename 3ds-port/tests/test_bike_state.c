@@ -89,6 +89,10 @@ int main(int argc, char **argv)
         bikePhysicsUpdateBikeStates(&native);
 
         CHECK_ARRAY(state,0x009Cu);
+        CHECK_ARRAY(x,0x0080u);
+        CHECK_ARRAY(y,0x00B8u);
+        CHECK_ARRAY(speed_whole,0x0094u);
+        CHECK_ARRAY(vertical_offset,0x00BCu);
         CHECK_ARRAY(rider_present,0x0370u);
         CHECK_ARRAY(previous_x,0x0390u);
         CHECK_ARRAY(vertical_delta,0x00DCu);
@@ -98,7 +102,10 @@ int main(int argc, char **argv)
         CHECK_ARRAY(vertical_collision_ref,0x006Cu);
         if(native.player_event!=reference.ram[0x00FDu] ||
            native.opponent_spawn_event!=reference.ram[0x03A8u] ||
-           native.remembered_controller!=reference.ram[0x0049u]) {
+           native.remembered_controller!=reference.ram[0x0049u] ||
+           native.global_timer_0022!=reference.ram[0x0022u] ||
+           native.frame_counter!=reference.ram[0x003Fu] ||
+           native.frame_phase!=reference.ram[0x004Cu]) {
             printf("FAIL globals vector=%u\\n",vector); return 1;
         }
     }
