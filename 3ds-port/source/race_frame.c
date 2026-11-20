@@ -393,7 +393,7 @@ void raceElapsedTimeUpdate(RaceElapsedTimeState *s)
         s->minutes = (uint8_t)(s->minutes + 1u);
         if (s->minutes < 0x09u) continue;
 
-        s->minutes = 0u;
+        /* DF79 sets the time-up flag but deliberately leaves $0068 at 9. */
         s->track_finished = 0x02u;
         break;
     }
