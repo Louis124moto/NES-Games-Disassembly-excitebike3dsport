@@ -25,6 +25,30 @@ int main(void)
         CHECK(s.vertical_delta[i] == 0u, 3);
     }
 
+    /* E836/DC97 screen projection, including the borrow chain between SBCs. */
+    reset(&m, &s);
+    m.global_vertical_reference = 0xA0u;
+    m.object_y[0] = 0x0Eu;
+    m.object_y[1] = 0x1Au;
+    m.object_y[2] = 0x26u;
+    m.object_y[3] = 0x32u;
+    bikePhysicsUpdateScreenY(&m);
+    CHECK(m.y_low[0] == 0x92u && m.y_low[1] == 0x86u &&
+          m.y_low[2] == 0x7Au && m.y_low[3] == 0x6Eu, 5);
+    reset(&m, &s);
+    m.global_vertical_reference = 0x10u;
+    m.vertical_reference[0] = 0x20u;
+    m.object_y[0] = 0x05u;
+    bikePhysicsUpdateScreenY(&m);
+    CHECK(m.y_low[0] == 0xEAu, 6); /* second SBC consumes first SBC's borrow */
+    reset(&m, &s);
+    m.global_vertical_reference = 0xA0u;
+    m.object_y[0] = 0x0Eu;
+    m.object_status[0] = 1u;
+    m.y_low[0] = 0x55u;
+    bikePhysicsUpdateScreenY(&m);
+    CHECK(m.y_low[0] == 0x55u, 7); /* E836 skips ram_00B0 != 0 */
+
     /* Source signed one-pixel drift toggles 0 -> +1 -> -1 -> +1. */
     reset(&m, &s);
     m.object_y[0] = 0x18u;
