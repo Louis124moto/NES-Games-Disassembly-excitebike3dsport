@@ -100,6 +100,17 @@ int main(int argc, char **argv)
                 if (native_oam.bytes[i] != expected_oam[i]) {
                     printf("FAIL E17F vector=%u OAM[%02X] native=%02X asm=%02X\n",
                            vector, i, native_oam.bytes[i], expected_oam[i]);
+                    printf("rider3=%u ref3=%02X\n", states.rider_present[3],
+                           states.vertical_collision_ref[3]);
+                    for (unsigned int b = 0u; b < 4u; ++b) {
+                        printf("bike%u active=%u y=%02X x=%02X screenY=%02X approach=%02X\n",
+                               b, movement.object_active[b], movement.object_y[b],
+                               movement.x_low[b], movement.y_low[b], movement.approach[b]);
+                    }
+                    for (unsigned int b = 0u; b < 0x30u; ++b) {
+                        printf("%02X:%02X/%02X%c", b, native_oam.bytes[b],
+                               expected_oam[b], (b & 3u) == 3u ? '\n' : ' ');
+                    }
                     break;
                 }
             }
