@@ -248,6 +248,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_vertical.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_screen_projection.c -o /tmp/test_race_screen_projection
           /tmp/test_race_screen_projection /tmp/prg.bin
 
+      - name: Differentially test initial bike OAM against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_sprites.c tests/oracle/cpu6502.c tests/test_race_sprites.c -o /tmp/test_race_sprites
+          /tmp/test_race_sprites /tmp/prg.bin
+
       - name: Differentially test native DD06 jump initialization against original ASM
         run: |
           cd 3ds-port
