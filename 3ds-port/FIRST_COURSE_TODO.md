@@ -67,7 +67,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Add direct ASM-oracle differential tests for `DC1A` and `DCF2`.
 - [x] Integrate exact per-bike order `DA58 → DC1A → DCF2 → DCDE` for slots 3,2,1,0; test the complete `DA26` pass across 50,000 randomized states.
 - [x] Integrate `DA6A → DA7A → DBFE` and compare the complete movement/camera state against `sub_DA26`.
-- [ ] Integrate the verified movement pass into the actual native race frame loop; the app currently remains a front-end prototype.
+- [ ] Integrate the verified movement pass and the D918 state dispatcher into a complete native race frame loop; the app still deliberately stops at the first-course scene because several intervening source-ordered systems are not yet integrated.
 
 ### 2. Complete player and opponent simulation
 - [x] Native semantic projection of the first-course `C875` setup path, including `C522/CB13`, `C53E`, `C90E/DF7F` HUD glyph data and all initialized per-bike/global fields. `C905` guards the first-course `$02` path; `object_class`, `$0064` origin, `$0074` setup parameter and `$0078` start-lock timer are separately modeled. The `C935` PPU command-list wrapper is replaced by native HUD data.
@@ -79,7 +79,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Integrate `NativeRaceSession` into `game.c` after setup list 2 completes, using the menu's actual `$0041/$0046/$0034/$03F8` values and the native RNG seed. It initializes gameplay state but deliberately does not run an incomplete frame loop.
 - [x] Add the native first-course background/HUD path: merge extracted snapshots 18, 01, 17 and 14, draw original CHR tiles with palette 18, and overlay the seven C875/C935 HUD glyphs directly into the framebuffer. No PPU/OAM emulator is used at runtime.
 - [x] Finish the rest of `CD59`, including `loc_CDBD` steering/timer side effects (`CE83`, `DCC7`); 240,000 tail vectors + 120,000 whole-routine vectors match ASM (2026-11-20). Verified domain: `ram_00B0` 0..3.
-- [ ] Trace and port every state branch reached from `D918/D924` and `D91A` (bike state machine, timers, rider posture, jumps and landings).
+- [x] Port the six-entry `D924` dispatch and all five non-idle state handlers (states 1–5), plus the `D91A → D924 → DA15` four-bike order. `bike_state.c` is semantic C; `test_bike_state.c` compares 50,000 randomized four-bike frames against the original `D918` ASM oracle. This covers the currently valid state domain 0–5; posture/jump/landing effects outside these handlers remain separate work.
 - [x] Port the source-derived first-course `C875` path (`C87F-C8DC`, `C522/CB13`, `C90E/DF7F`, and `C92C/C53E`) into native semantic state; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. `C905` confirms the first-course setup index is `$02`, so the `$08+` `C53A` branch is not taken. Host tests and New 3DS builds passed through commit `bfa160ca3fbc1f70674315e2afeb652532bda6a9`.
 - [ ] Trace and port the remaining `C875` tail and opponent initialization/AI: `C522/C53A`, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
 - [x] Port the semantic state transitions of `sub_DD8D` for the countdown/start handshake; its OAM-only `CCDD/CD13` work is represented as native renderer events. Host regression passed in CI.
@@ -97,7 +97,7 @@ This is the execution order for completing the first playable race. A checked it
 ### 4. Make the native race visible and playable
 - [ ] Implement course 1 background/ground/terrain drawing using verified extracted assets and native 3DS rendering; no PPU emulation.
 - [x] Implement and differentially verify the native E17F sprite path: E3F4 sorting, E1F9 dynamic pose selection, E1A3/D1C7 OAM generation, E1D7 temp overlays and E26A rider overlays for all four bike slots.
-- [ ] Port E456 off-screen sprite hiding and DB95 opponent-bike clearing; add multi-frame OAM transition tests and remaining ramp/obstacle sprites.
+- [x] Port E456 off-screen sprite hiding and DB95 opponent-bike clearing; 200,000 randomized routine vectors are checked by `test_e456`. Multi-frame OAM transition integration and remaining ramp/obstacle sprites remain open.
 - [ ] Implement camera scroll, HUD, heat meter, countdown, finish/results and native audio events.
 - [ ] Add a race state to the app loop: native menu confirm → race setup → countdown → per-frame simulation → finish/results → return flow.
 - [ ] Bind physical controls to throttle, braking/steering/posture exactly as traced; ensure pause and frame timing are deterministic.
@@ -112,10 +112,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Port E456 off-screen sprite hiding and DB95 opponent-bike clearing, then verify OAM persistence across consecutive frames.
-2. Trace and port camera/scroll updates in the same frame order, then compare first-course screenshots on a real New 3DS against the NES reference.
-3. Integrate the completed vertical physics functions and sprite renderer into the full race-frame scheduler in exact source order (including still-unported routines between DD8D and E96C, plus E70B/D0C6).
-4. Continue with steering, posture, heat, collision, course events and finish/results.
+1. Implement a semantic frame-state aggregate and connect the already-tested D918 state machine, DD8D countdown, DA26 movement pass, E70B smoothing, E4C8 collision, E456 culling and E17F sprite build in source order. Keep unported calls explicitly gated rather than silently skipping them.
+2. Trace and port the remaining handlers called between D918 and E96C, then differential-test consecutive frames (not only isolated routine calls).
+3. Trace the first-course terrain/obstacle data and replace any scene-only presentation with source-derived track geometry.
+4. Continue with heat, opponent AI, obstacle interaction, finish/results, and native menu-to-race input flow.
 
 ### Physics validation update — 2026-11-20
 - `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
