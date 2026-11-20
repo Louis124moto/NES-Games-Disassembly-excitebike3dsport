@@ -191,7 +191,7 @@ jobs:
         run: ./test_track_first_course
 
       - name: Compile native first-course vertical test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/race_vertical.c 3ds-port/tests/test_race_vertical.c -o test_race_vertical
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/race_vertical.c 3ds-port/source/bike_physics.c 3ds-port/tests/test_race_vertical.c -o test_race_vertical
 
       - name: Run native first-course vertical test
         run: ./test_race_vertical
@@ -239,7 +239,7 @@ jobs:
       - name: Differentially test E96C first-course phase-zero vertical physics against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_vertical.c tests/oracle/cpu6502.c tests/test_race_vertical_differential.c -o /tmp/test_race_vertical_differential
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_vertical.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_vertical_differential.c -o /tmp/test_race_vertical_differential
           /tmp/test_race_vertical_differential /tmp/prg.bin
 
       - name: Differentially test E836 screen-Y projection against original ASM
