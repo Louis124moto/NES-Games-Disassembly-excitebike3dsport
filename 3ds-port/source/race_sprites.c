@@ -139,7 +139,7 @@ static void writeRiderOverlay(uint8_t *oam, unsigned int base,
     if (vertical_state >= 3u) return;
 
     overlay_palette = (uint8_t)(palette |
-        (movement->vertical_phase[bike] == 0u ? 0x22u : 0x20u));
+        (movement->vertical_phase[bike] == 0u ? 0x00u : 0x20u));
     mask = vertical_state == 0u ? 0u : (uint8_t)(vertical_state ^ 0x03u);
     writeD1C7(oam, base, previous_x,
               (uint8_t)(0xA8u - states->vertical_collision_ref[bike]),
