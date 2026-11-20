@@ -14,7 +14,7 @@ static void prepare(Cpu6502 *c)
 #define CHECK_ARRAY(field, address) do { \
     for (slot=0; slot<4u; ++slot) { \
         if (native.field[slot] != reference.ram[(address)+slot]) { \
-            printf("FAIL %s vector=%u slot=%u native=%02X asm=%02X\\n", #field, vector, slot, native.field[slot], reference.ram[(address)+slot]); \
+            printf("FAIL %s vector=%u slot=%u native=%02X asm=%02X state=%02X/%02X y=%02X/%02X bc=%02X/%02X timer=%02X/%02X frame=%02X/%02X overheat=%02X/%02X\\n", #field, vector, slot, native.field[slot], reference.ram[(address)+slot], native.state[slot], reference.ram[0x009Cu+slot], native.y[slot], reference.ram[0x00B8u+slot], native.vertical_offset[slot], reference.ram[0x00BCu+slot], native.timer_state[slot], reference.ram[0x002Au+slot], native.frame_counter, reference.ram[0x003Fu], native.global_overheat, reference.ram[0x03F7u]); \
             return 1; \
         } \
     } \
