@@ -109,8 +109,8 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D347` | `sub_D347_read_joy_regs` | Pending | calls: sub_D35B |
 | `$D35B` | `sub_D35B` | Translated + host regression passed; 3DS build pending | — |
 | `$D3C1` | `sub_D3C1` | Pending | — |
-| `$D918` | `sub_D918` | Pending | — |
-| `$D924` | `sub_D924` | Pending | — |
+| `$D918` | `sub_D918` | Native translation + 50,000 randomized four-bike ASM differential frames; valid state domain 0–5 | `source/bike_state.c`, `tests/test_bike_state.c`; semantic session API exists, full frame-loop integration pending |
+| `$D924` | `sub_D924` | Native six-entry dispatch and five non-idle handlers translated and covered by the D918 50,000-frame oracle comparison | `source/bike_state.c`; invalid state values outside 0–5 are intentionally rejected by setup validation |
 | `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
 | `$DA26` | `sub_DA26` | Pending | — |
 | `$DA58` | `sub_DA58` | Translated in C; audit/test coverage recorded separately | — |
@@ -159,7 +159,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E2F6` | `sub_E2F6` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Host regression and 3DS build passed | Heat update and four OAM sprite records |
 | `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
-| `$E456` | `sub_E456` | Translated + regression-tested; host suite and 3DS build passed | Culling, opponent reset, and sprite hiding |
+| `$E456` | `sub_E456` | Differential-tested (200k vectors); host suite and 3DS build passed | `raceHideOffscreenOpponentSprites` in `source/race_frame.c`, `tests/test_race_frame.c`; session integration pending |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
 | `$E4AD` | `sub_E4AD_hide_4_sprites` | Differential-tested via `loc_E42B` | `raceHideCollidedSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E4C8` | `sub_E4C8` | Differential-tested (400k vectors, 7 mutants killed; includes sub_E52C Z-flag quirk) | `raceBikeCollision` in `source/race_frame.c`; not yet wired into the app race loop |
