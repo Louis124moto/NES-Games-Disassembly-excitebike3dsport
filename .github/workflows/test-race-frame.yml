@@ -1,0 +1,41 @@
+name: Verify native race-frame routines
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "Excitebike/bank_FF.asm"
+      - "3ds-port/source/race_frame.c"
+      - "3ds-port/source/race_spawn.c"
+      - "3ds-port/source/nes_routines.c"
+      - "3ds-port/include/race_frame.h"
+      - "3ds-port/include/race_spawn.h"
+      - "3ds-port/tests/test_race_frame.c"
+      - "3ds-port/tests/oracle/**"
+      - "3ds-port/tools/asm_to_prg.py"
+      - ".github/workflows/test-race-frame.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "Excitebike/bank_FF.asm"
+      - "3ds-port/source/race_frame.c"
+      - "3ds-port/source/race_spawn.c"
+      - "3ds-port/source/nes_routines.c"
+      - "3ds-port/include/race_frame.h"
+      - "3ds-port/include/race_spawn.h"
+      - "3ds-port/tests/test_race_frame.c"
+      - "3ds-port/tests/oracle/**"
+      - "3ds-port/tools/asm_to_prg.py"
+      - ".github/workflows/test-race-frame.yml"
+
+jobs:
+  differential-race-frame:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build original PRG from disassembly
+        run: python3 3ds-port/tools/asm_to_prg.py Excitebike/bank_FF.asm /tmp/prg.bin
+      - name: Compile native race-frame differential suite
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include -I3ds-port/tests/oracle 3ds-port/source/race_frame.c 3ds-port/source/race_spawn.c 3ds-port/source/nes_routines.c 3ds-port/tests/oracle/cpu6502.c 3ds-port/tests/test_race_frame.c -o /tmp/test_race_frame
+      - name: Compare native race-frame routines with original ASM
+        run: /tmp/test_race_frame /tmp/prg.bin
