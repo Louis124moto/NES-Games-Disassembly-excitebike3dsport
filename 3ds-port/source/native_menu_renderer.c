@@ -124,3 +124,58 @@ int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     drawCursor(framebuffer, assets, menu, paletteSet);
     return 1;
 }
+
+static void drawRaceHud(uint8_t *framebuffer, const NativeMenuAssets *assets,
+                        const NativeMenuSceneAssets *scene,
+                        const NativeRaceSession *session, unsigned paletteSet)
+{
+    unsigned int i, x, y;
+    const unsigned int tileY = 26u;
+
+    for (i = 0u; i < 7u; ++i) {
+        const unsigned int tileX = 3u + i;
+        const uint8_t tile = session->setup.hud_glyphs[i];
+        const size_t attributeIndex =
+            960u + (size_t)(tileY / 4u) * 8u + tileX / 4u;
+        const uint8_t attribute = scene->nametable[attributeIndex];
+        const unsigned int shift =
+            (unsigned int)(((tileY & 2u) << 1u) | (tileX & 2u));
+        const unsigned int subpalette = (attribute >> shift) & 3u;
+        const uint8_t *tilePixels;
+
+        if (tile >= assets->chr_tile_count) continue;
+        tilePixels = assets->chr_pixels + (size_t)tile * 64u;
+        for (y = 0u; y < 8u; ++y) {
+            for (x = 0u; x < 8u; ++x) {
+                const uint8_t value = (uint8_t)(tilePixels[y * 8u + x] & 3u);
+                const size_t paletteIndex =
+                    value == 0u ? 0u : (size_t)subpalette * 4u + value;
+                if (assets->palette_written[paletteSet][paletteIndex] != 0u) {
+                    putPixel(framebuffer, 72u + tileX * 8u + x,
+                             tileY * 8u + y,
+                             assets->palettes[paletteSet][paletteIndex]);
+                }
+            }
+        }
+    }
+}
+
+int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
+                          const NativeRaceSession *session)
+{
+    uint8_t *framebuffer;
+    const NativeMenuSceneAssets *scene;
+    if (assets == NULL || menu == NULL || session == NULL ||
+        assets->loaded == 0u || assets->race_scene_available == 0u ||
+        session->initialized == 0u) return 0;
+
+    framebuffer = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    if (framebuffer == NULL) return 0;
+
+    scene = &assets->scenes[6];
+    memset(framebuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+    drawBackground(framebuffer, assets, scene, 6u); /* palette stream 18 */
+    drawCursor(framebuffer, assets, menu, 6u);
+    drawRaceHud(framebuffer, assets, scene, session, 6u);
+    return 1;
+}
