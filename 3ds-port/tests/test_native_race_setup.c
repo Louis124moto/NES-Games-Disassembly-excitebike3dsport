@@ -44,7 +44,7 @@ int main(void)
     CHECK(out.setup_counter_0040 == 10u && out.setup_counter_0047 == 6u, 2);
     CHECK(out.timer_0034 == 5u && out.global_vertical_reference == 0xA0u, 3);
     CHECK(out.player_slot == 0u && out.player_rider_present == 1u, 4);
-    CHECK(out.frame_timer_00E8 == 0x34u && out.frame_timer_00E9 == 0x14u, 9);
+    CHECK(out.camera_scroll_00E8 == 0x34u && out.camera_scroll_00E9 == 0x14u && out.camera_scroll_00EA == 0x25u && out.camera_scroll_00EB == 0x0Au, 9);
     CHECK(out.countdown_x_03B4 == 0x80u && out.race_setup_state_03B0 == 0x80u, 25);
     CHECK(out.countdown_limit_03BD == 0xFFu && out.countdown_index_03BE == 0x02u, 26);
     CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x10u && out.course_setup_parameters[2] == 0x00u, 6);
