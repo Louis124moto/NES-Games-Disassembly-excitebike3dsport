@@ -51,6 +51,7 @@ static void build_first_course_hud_glyphs(NativeRaceSetupState *out,
 
 int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
                                const NativeRaceSetupInput *in,
+                               const NativeRngState *rng,
                                BikeMovementState *movement,
                                BikeStateMachineState *states)
 {
@@ -58,7 +59,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     unsigned int last;
     unsigned int half_lock_slot;
 
-    if (out == 0 || in == 0 || movement == 0 || states == 0)
+    if (out == 0 || in == 0 || rng == 0 || movement == 0 || states == 0)
         return 0;
     /* C905 skips sub_C53A only while ram_0041 < $08. The first-course
      * selector path enters this setup list with ram_0041 = $02. */
@@ -93,7 +94,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
         out->bike[i].lock_timer = 0x06u;
         out->bike[i].active = 0x01u;
         out->bike[i].animation_seed = 0x08u;
-        out->bike[i].speed_phase = (uint8_t)(in->object_param_0019[i] >> 1);
+        out->bike[i].speed_phase = (uint8_t)(rng->bytes[i + 1u] >> 1);
 
         movement->object_y[i] = s_start_y[i];
         movement->x_low[i] = s_start_x[i];
@@ -107,7 +108,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     }
 
     /* C8D3: X wrapped to $FF, so ram_0019,X reads zero-page $0018. */
-    half_lock_slot = (unsigned int)(in->wrapped_param_0018 & 0x03u);
+    half_lock_slot = (unsigned int)(rng->bytes[0] & 0x03u);
     if (half_lock_slot == 0u)
         half_lock_slot = 2u;
     out->half_lock_slot = (uint8_t)half_lock_slot;
