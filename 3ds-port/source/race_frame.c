@@ -292,14 +292,20 @@ void raceHideOffscreenOpponentSprites(RaceOffscreenSpriteState *s,
         hide_mask[1] = opponents->x_high[object];
         hide_mask[2] = opponents->x_high[object];
 
-        if ((hide_mask[0] & 1u) == 0u) {
+        {
             const uint8_t x = opponents->x_low[object];
 
-            if (x >= 0x70u && x < 0x90u) {
+            /* Only the $70-$8F opponent-clear window is gated by the
+             * high-byte low bit (the carry from LSR at E46D). */
+            if ((hide_mask[0] & 1u) == 0u && x >= 0x70u && x < 0x90u) {
                 raceSpawnClearSlot(opponents, object); /* sub_DB95 */
                 s->opponent_cleared_03A6 = 1u;
                 goto hide_groups;
             }
+
+            /* E484 is reached for BOTH carry paths. Its F8/F0 threshold
+             * increments must therefore run even when x_high is odd.
+             */
             if (x >= 0xF8u) hide_mask[1] = (uint8_t)(hide_mask[1] + 1u);
             if (x >= 0xF0u) hide_mask[2] = (uint8_t)(hide_mask[2] + 1u);
         }
