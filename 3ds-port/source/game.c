@@ -142,9 +142,9 @@ void gameUpdate(void)
         setupInput.setup_counter_0047 = 0u;
         if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
             s_raceSessionReady = 1;
-            rendererPrintBottom("FIRST COURSE — NATIVE SETUP READY\n"
-                                "Race state and track profile initialized.\n"
-                                "Native frame loop and track rendering are next.\n");
+            rendererPrintBottom("FIRST COURSE — NATIVE SCENE READY\n"
+                                "Original background and initial HUD are rendered.\n"
+                                "Bike sprites and the race frame loop are next.\n");
         } else {
             rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
                                 "Check the first-course setup input state.\n");
