@@ -126,6 +126,7 @@ typedef struct BikeMovementState {
     uint8_t secondary_scroll_x;         /* ram_0050 */
     uint8_t secondary_base_nametable;   /* ram_004E */
     uint8_t object_lock_timer[4];       /* ram_0374_obj */
+    uint8_t start_lock_timer[4];        /* ram_0078, initialized by C875 */
     uint8_t movement_flags[4];          /* ram_005C_obj */
     /* State consumed by sub_DC1A/sub_DCF2 and their DD38/DD6F dependencies. */
     uint8_t object_status[4];            /* ram_00B0_obj */
