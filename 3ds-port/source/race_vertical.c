@@ -25,7 +25,7 @@ void bikePhysicsUpdateScreenY(BikeMovementState *movement)
 
 static uint8_t is_vertical_anchor(uint8_t y)
 {
-    return (uint8_t)(y == 0x0Eu || y == 0x1Au || y == 0x26u);
+    return (uint8_t)(y == 0x0Eu || y == 0x1Au || y == 0x26u || y == 0x32u);
 }
 
 uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
@@ -56,7 +56,7 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
             y = (uint8_t)(y + delta);
         }
 
-        /* E981-E986: the three exact source anchors stop vertical drift. */
+        /* E981-E986: all four indexed source anchors stop vertical drift. */
         if (is_vertical_anchor(y) != 0u) {
             states->vertical_delta[i] = 0u;
             movement->object_y[i] = y;
