@@ -176,6 +176,41 @@ static int test_de31(Cpu6502 *cpu)
     return 0;
 }
 
+static int test_ea44(Cpu6502 *cpu)
+{
+    unsigned v, i;
+    static const uint8_t lows[] = { 0u, 0x0Fu, 0x10u, 0xF3u, 0xF4u, 0xF5u, 0xF6u, 0xFFu };
+    for (v = 0u; v < 300000u; ++v) {
+        RaceEffectSpriteState s;
+        uint8_t *r = cpu->ram;
+        memset(&s, 0, sizeof(s));
+        for (i = 0u; i < 4u; ++i) {
+            s.x_high[i] = nb() & 3u;
+            s.x_low[i] = (nb() & 1u) ? pick(lows, sizeof(lows)) : nb();
+            s.object_status[i] = (nb() & 1u) ? 0u : (uint8_t)(nb() & 3u);
+            s.vertical_reference[i] = (nb() & 1u) ? 0u : nb();
+            s.object_y[i] = nb(); s.marker_index[i] = (uint8_t)(nb() % 19u); s.y_low[i] = nb();
+            s.dust_flags[i] = (nb() & 1u) ? 0u : nb();
+            s.speed_whole[i] = (nb() & 1u) ? 0u : (uint8_t)(nb() & 3u); s.speed_fraction[i] = (nb() & 1u) ? 0u : nb();
+        }
+        s.frame_counter_003F = nb(); s.global_vertical_reference_03F1 = nb();
+        for (i = 0u; i < 8u; ++i) { s.sprite[i].y = nb(); s.sprite[i].tile = nb(); s.sprite[i].attribute = nb(); s.sprite[i].x = nb(); }
+        memset(r, 0, sizeof(cpu->ram));
+        MAP4(x_high, 0x84); MAP4(x_low, 0x80); MAP4(object_status, 0xB0); MAP4(vertical_reference, 0xBC);
+        MAP4(object_y, 0xB8); MAP4(marker_index, 0xB4); MAP4(y_low, 0x8C); MAP4(dust_flags, 0x36C);
+        MAP4(speed_whole, 0x94); MAP4(speed_fraction, 0x90);
+        r[0x3F] = s.frame_counter_003F; r[0x3F1] = s.global_vertical_reference_03F1;
+        for (i = 0u; i < 8u; ++i) { r[0x294 + i * 4] = s.sprite[i].y; r[0x295 + i * 4] = s.sprite[i].tile; r[0x296 + i * 4] = s.sprite[i].attribute; r[0x297 + i * 4] = s.sprite[i].x; }
+        prep(cpu, 0u);
+        if (cpu6502_call(cpu, 0xEA44u, 20000u) != 0) return 1;
+        raceEffectSprites(&s);
+        for (i = 0u; i < 8u; ++i) if (s.sprite[i].y != r[0x294 + i * 4] || s.sprite[i].tile != r[0x295 + i * 4] ||
+            s.sprite[i].attribute != r[0x296 + i * 4] || s.sprite[i].x != r[0x297 + i * 4]) { printf("FAIL EA44 v=%u sprite %u\n", v, i); return 1; }
+    }
+    puts("PASS: 300000 sub_EA44 effect-sprite vectors match original ASM.");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -185,5 +220,5 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
-    return test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu);
+    return test_ddd1(&cpu) || test_debb(&cpu) || test_dee2(&cpu) || test_de31(&cpu) || test_ea44(&cpu);
 }

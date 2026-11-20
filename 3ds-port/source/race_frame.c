@@ -144,3 +144,58 @@ void raceStartBanner(RaceStartBannerState *s)
     if (s->timer_0034 != 0u) s->timer_0024 = 0x88u; /* bra_DE9D */
 }
 
+
+static const uint8_t k_tblE69A[19] = { 0xCBu, 0xCDu, 0xCCu, 0xCEu, 0xCBu, 0xCBu, 0xCBu, 0x22u, 0x64u, 0x62u, 0xC0u, 0x22u, 0x74u, 0x63u, 0xE0u, 0x21u, 0x83u, 0xFCu, 0xC0u };
+
+/* sub_DC9A: A - ram_00BC - ram_obj_pos_Y_lo with the SBC borrow chain. */
+static uint8_t screenY(uint8_t a, uint8_t reference, uint8_t y)
+{
+    const unsigned first = (unsigned)a - reference;
+    const unsigned borrow = (a < reference) ? 1u : 0u;
+    return (uint8_t)(first - y - borrow);
+}
+
+/* sub_E2F6 for slot x (Y = 8 * x). */
+static void effectDust(RaceEffectSpriteState *s, unsigned x)
+{
+    RaceSprite *a = &s->sprite[2u * x];
+    RaceSprite *b = &s->sprite[2u * x + 1u];
+    uint8_t px;
+    if (s->dust_flags[x] == 0u) return;
+    if ((s->speed_whole[x] | s->speed_fraction[x]) == 0u) return;
+    if (s->vertical_reference[x] != 0u) return;
+    if ((s->x_high[x] & 1u) == 0u) return;
+    if (s->x_low[x] < 0x10u) return;
+    px = (uint8_t)(s->x_low[x] + 0xF9u);
+    a->x = px;
+    b->x = (uint8_t)(px + 0xF8u);
+    b->y = (uint8_t)(s->y_low[x] + 8u);
+    a->y = (uint8_t)(b->y + 8u);
+    a->tile = 0xF6u; b->tile = 0xF7u;
+    if ((s->frame_counter_003F & 4u) != 0u) { a->tile = 0xF7u; b->tile = 0xF6u; }
+    a->attribute = b->attribute = (uint8_t)(s->dust_flags[x] & 2u);
+    if (s->speed_whole[x] == 0u) b->y = 0xF8u;
+}
+
+void raceEffectSprites(RaceEffectSpriteState *s)
+{
+    int x;
+    if (s == 0) return;
+    for (x = 3; x >= 0; --x) {
+        int marker;
+        if ((s->x_high[x] & 1u) != 0u) {
+            marker = s->x_low[x] < 0xF4u;
+        } else {
+            marker = (s->x_high[x] & 2u) == 0u && s->x_low[x] >= 0xF6u;
+        }
+        if (marker && s->object_status[x] != 0u) {
+            RaceSprite *a = &s->sprite[2 * x];
+            a->y = screenY(0xB6u, s->vertical_reference[x], s->object_y[x]);
+            a->x = (uint8_t)(s->x_low[x] + 0x0Au);
+            a->tile = k_tblE69A[s->marker_index[x] % 19u];
+            a->attribute = 0u;
+        } else {
+            effectDust(s, (unsigned)x);
+        }
+    }
+}

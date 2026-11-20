@@ -124,7 +124,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
 | `$DC97` | `sub_DC97` | Translated in C; audit/test coverage recorded separately | — |
-| `$DC9A` | `sub_DC9A` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
+| `$DC9A` | `sub_DC9A` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$DCA0` | `sub_DCA0` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
 | `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
@@ -156,7 +156,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E1A3` | `sub_E1A3` | Command setup + overlay regression passed; 3DS build passed | `$D1C7` renderer remains separate |
 | `$E1F9` | `sub_E1F9` | Full branch-level translation; host regression and 3DS build passed | Includes `$000E` and `$039F` side effects and all RTS paths |
 | `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |
-| `$E2F6` | `sub_E2F6` | Full OAM path translated; host regression and 3DS build passed | Two wheel sprites and all early-return gates |
+| `$E2F6` | `sub_E2F6` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Host regression and 3DS build passed | Heat update and four OAM sprite records |
 | `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
 | `$E456` | `sub_E456` | Translated + regression-tested; host suite and 3DS build passed | Culling, opponent reset, and sprite hiding |
@@ -178,7 +178,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E893` | `sub_E893` | Pending | ; in |
 | `$E927` | `sub_E927` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
-| `$EA44` | `sub_EA44` | Host regression and 3DS build passed | Special wheel tile and fallback wheel rendering |
+| `$EA44` | `sub_EA44` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$EAC5` | `sub_EAC5` | Pending | — |
 | `$EB17` | `sub_EB17` | Pending | — |
 | `$EC25` | `sub_EC25` | Pending | — |

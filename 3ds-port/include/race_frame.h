@@ -84,4 +84,24 @@ typedef struct RaceStartBannerState {
 
 void raceStartBanner(RaceStartBannerState *state);
 
+/* Source: sub_EA44 ($EA44-$EA8E) with sub_DC9A and sub_E2F6 — per-bike
+ * marker/shadow sprite pairs at OAM $0294-$02B3 (two sprites per slot). */
+typedef struct RaceEffectSpriteState {
+    uint8_t x_high[4];              /* ram_0084_obj */
+    uint8_t x_low[4];               /* ram_0080_obj */
+    uint8_t object_status[4];       /* ram_00B0_obj */
+    uint8_t vertical_reference[4];  /* ram_00BC_obj */
+    uint8_t object_y[4];            /* ram_obj_pos_Y_lo */
+    uint8_t marker_index[4];        /* ram_00B4_obj */
+    uint8_t y_low[4];               /* ram_008C */
+    uint8_t dust_flags[4];          /* ram_036C_obj */
+    uint8_t speed_whole[4];         /* ram_0094_obj */
+    uint8_t speed_fraction[4];      /* ram_0090_obj */
+    uint8_t frame_counter_003F;     /* ram_003F */
+    uint8_t global_vertical_reference_03F1; /* ram_03F1 */
+    RaceSprite sprite[8];           /* OAM $0294-$02B3: slot x uses [2x],[2x+1] */
+} RaceEffectSpriteState;
+
+void raceEffectSprites(RaceEffectSpriteState *state);
+
 #endif
