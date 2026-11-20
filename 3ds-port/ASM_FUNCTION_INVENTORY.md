@@ -186,7 +186,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$EC5D` | `sub_EC5D` | Pending | calls: sub_EC25 |
 | `$EC75` | `sub_EC75` | Pending | — |
 | `$EC99` | `sub_EC99` | Pending | calls: sub_F6FB, sub_ECBF |
-| `$ECBF` | `sub_ECBF` | Pending | — |
+| `$ECBF` | `sub_ECBF` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
 | `$ECC9` | `sub_ECC9` | Pending | — |
 | `$ECE4` | `sub_ECE4` | Pending | — |
 
@@ -194,16 +194,16 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$F4FF` | `sub_F4FF` | Pending | — |
-| `$F64E` | `sub_F64E` | Pending | — |
-| `$F676` | `sub_F676` | Pending | — |
-| `$F681` | `sub_F681` | Pending | — |
+| `$F4FF` | `sub_F4FF` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
+| `$F64E` | `sub_F64E` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
+| `$F676` | `sub_F676` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
+| `$F681` | `sub_F681` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
 | `$F68D` | `sub_F68D` | Pending | calls: sub_F839 |
 | `$F6FB` | `sub_F6FB` | Pending | — |
 | `$F755` | `sub_F755` | Pending | — |
 | `$F821` | `sub_F821` | Pending | — |
 | `$F826` | `sub_F826` | Pending | — |
-| `$F82E` | `sub_F82E_prepare_pointers` | Pending | ; out |
+| `$F82E` | `sub_F82E_prepare_pointers` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | ; out |
 | `$F839` | `sub_F839` | Pending | ; out |
 | `$F844` | `sub_F844` | Pending | calls: sub_F8D4, sub_FA74, sub_FC3D, sub_FC8D |
 | `$F86B` | `sub_F86B` | Pending | — |

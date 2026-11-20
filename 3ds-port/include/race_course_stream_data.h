@@ -1,0 +1,7 @@
+#ifndef EXCITEBIKE_RACE_COURSE_STREAM_DATA_H
+#define EXCITEBIKE_RACE_COURSE_STREAM_DATA_H
+#include <stdint.h>
+#define COURSE_STREAM_ROM_BASE 0xED3Au
+#define COURSE_STREAM_ROM_SIZE 1989u
+extern const uint8_t kCourseStreamRom[COURSE_STREAM_ROM_SIZE];
+#endif

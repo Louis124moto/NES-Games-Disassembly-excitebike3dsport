@@ -139,3 +139,10 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Add 200,000 randomized full-entrypoint comparisons against original `sub_E70B`.
 - [ ] Integrate E70B at its exact `C99A` frame-order position and validate long deterministic race sequences.
 - [ ] Continue the remaining five-routine batch with the next source-ordered race-frame dependency; do not mark this helper as gameplay integration.
+
+## Course stream reader (`sub_F4FF`)
+
+- [x] Port `sub_F4FF` with `sub_F82E`, `sub_F676`, `sub_F681`, `sub_F64E` and `sub_ECBF` as `raceCourseStreamUpdate` (`race_course_stream.c`). The ROM-derived stream/template tables ($ED3A-$F4FE) are constant data in `race_course_stream_data.c`; no ROM is loaded at runtime. The six course pages, `ram_00E0_obj[0]` and `ram_03A8` stay in `RaceSpawnState`.
+- [x] 6502 quirks kept: the `sub_F64E` descending scan that stores the wrapped counter when the buffer is exhausted, and the `sub_F681` copy loop. Out-of-domain states (stream index 5 pointing at RAM $06E0, template byte count > $0E, reads outside the embedded data) set `unsupported` instead of guessing.
+- [x] 300,000 randomized vectors plus 150,000 sequential frames over all five streams × ten course ids match the original ASM; 16/17 mutants killed (`y < 0x58` vs `<=` is equivalent: template 9 record boundaries are $57 and $61).
+- [ ] Wire `raceCourseStreamUpdate` at its `C99A` slot (after `sub_EA44`, before `sub_E4C8`) and feed the column buffer/pages to the native track renderer.
