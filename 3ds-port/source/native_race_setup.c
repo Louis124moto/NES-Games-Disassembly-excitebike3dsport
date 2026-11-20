@@ -60,6 +60,10 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
 
     if (out == 0 || in == 0 || movement == 0 || states == 0)
         return 0;
+    /* C905 skips sub_C53A only while ram_0041 < $08. The first-course
+     * selector path enters this setup list with ram_0041 = $02. */
+    if (in->setup_index_0041 >= 0x08u)
+        return 0;
 
     memset(out, 0, sizeof(*out));
     out->setup_counter_0040 = (uint8_t)(in->setup_counter_0040 + 1u);
