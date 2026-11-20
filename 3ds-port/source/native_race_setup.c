@@ -71,6 +71,11 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     memcpy(out->course_setup_parameters,
            s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
            sizeof(out->course_setup_parameters));
+    /* C92C/C53E: CB06 selects $0580+$23 for ram_03F2=1; C1FD copied
+     * the same tbl_C091 bytes to $05A3, so the first-course triplet matches. */
+    memcpy(out->race_object_parameters,
+           s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
+           sizeof(out->race_object_parameters));
     build_first_course_hud_glyphs(out, in->transition_counter_03F8);
 
     /* C8A5 selects X=3..0 when ram_03F2 != 0, otherwise only X=0. */
