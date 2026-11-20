@@ -190,6 +190,7 @@ typedef struct BikeStateMachineState {
     uint8_t frame_counter;             /* ram_003F */
     uint8_t frame_phase;               /* ram_004C */
     uint8_t controller_hold;           /* ram_btn_hold */
+    uint8_t race_started;               /* ram_004F */
     uint8_t remembered_controller;     /* ram_0049 */
     uint8_t player_event;              /* ram_00FD */
     uint8_t opponent_spawn_event;      /* ram_03A8 */
