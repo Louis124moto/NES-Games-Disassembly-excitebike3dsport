@@ -142,7 +142,34 @@ static int playerSpeedCompareCap(const BikeSpeedState *speed, uint8_t mode)
     return 0;
 }
 
+static int updateObjectSpeedPrefix(BikeObjectSpeedContext *object);
+
 void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
+{
+    BikeSteeringState tail;
+    if (!updateObjectSpeedPrefix(object)) return;
+    tail.collision_state_0098 = object->collision_lock_0098;
+    tail.object_status_00B0 = object->object_status_00B0;
+    tail.inactive_0058 = object->inactive_0058;
+    tail.track_finished_0052 = object->race_finished;
+    tail.speed_fraction_0090 = object->speed.fraction;
+    tail.speed_whole_0094 = object->speed.whole;
+    tail.movement_flags_005C = object->controller;
+    tail.approach_00AC = object->approach_00AC;
+    tail.animation_state_0368 = object->animation_state_0368;
+    tail.movement_mode_0388 = object->movement_mode_0388;
+    tail.steer_timer_0026 = object->steer_timer_0026;
+    tail.approach_timer_002A = object->approach_timer_002A;
+    bikePhysicsSteeringTail(&tail);
+    object->collision_lock_0098 = tail.collision_state_0098;
+    object->approach_00AC = tail.approach_00AC;
+    object->movement_mode_0388 = tail.movement_mode_0388;
+    object->steer_timer_0026 = tail.steer_timer_0026;
+    object->approach_timer_002A = tail.approach_timer_002A;
+}
+
+/* Returns 0 when the input is outside the verified domain (no tail run). */
+static int updateObjectSpeedPrefix(BikeObjectSpeedContext *object)
 {
     uint8_t deceleration_mode;
     uint8_t acceleration_mode;
@@ -152,7 +179,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
 
     if (object == 0 || index >= 4u || object->frame_phase > 3u ||
         object->object_status_00B0 > 3u) {
-        return;
+        return 0;
     }
 
     zero_whole_threshold =
@@ -164,7 +191,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
          object->movement_state_009C != 5u)) {
         bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
-        return;
+        return 1;
     }
 
     /* Only player X=0 takes the track-finished speed-cap branch. */
@@ -177,7 +204,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
             bikePhysicsDecelerateObject(&object->speed, object->frame_phase,
                                         index, 3u, zero_whole_threshold);
         }
-        return;
+        return 1;
     }
 
     if (object->object_status_00B0 != 0u) {
@@ -185,13 +212,13 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
         deceleration_mode = direction == 0u ? 4u : (uint8_t)(direction + 1u);
         bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     deceleration_mode, zero_whole_threshold);
-        return;
+        return 1;
     }
 
     if ((object->controller & 0xC0u) == 0u) {
         bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
-        return;
+        return 1;
     }
 
     acceleration_mode = (object->controller & 0x80u) != 0u ? 0u : 1u;
@@ -199,7 +226,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
     if (gate_z == 0u && object->speed.whole != 0u) {
         bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
                                     0u, zero_whole_threshold);
-        return;
+        return 1;
     }
 
     {
@@ -213,6 +240,7 @@ void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
                                         zero_whole_threshold);
         }
     }
+    return 1;
 }
 
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
@@ -220,6 +248,76 @@ void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
     if (player == 0) return;
     player->object_index = 0u;
     bikePhysicsUpdateObjectSpeed(player);
+}
+
+/* tbl_C0C8..tbl_C0D5 as laid out in the PRG (C0C8,C0CA,C0D4 tables overlap-free
+ * for the verified index domain 0..1). */
+static const uint8_t k_tblC0C8[2] = { 0x06u, 0x02u };
+static const uint8_t k_tblC0CA[2] = { 0x0Au, 0x0Bu };
+static const uint8_t k_tblC0D4[2] = { 0x06u, 0x04u };
+
+/* Source: loc_CE83 ($CE83-$CECF). `which` is ram_0000_t18 (= 005C & 3). */
+static void steeringApproach(BikeSteeringState *s, uint8_t which)
+{
+    unsigned y;
+    if (s->steer_timer_0026 != 0u) return;
+    y = (unsigned)(s->object_status_00B0 >> 1);
+    if (y > 1u) return; /* outside the verified table domain */
+    s->steer_timer_0026 = k_tblC0D4[y];
+    if ((which & 1u) != 0u) {
+        if (s->approach_00AC == k_tblC0C8[y]) return;
+        if (s->approach_00AC < k_tblC0C8[y]) {
+            s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+        } else {
+            s->approach_00AC = (uint8_t)(s->approach_00AC - 1u);
+        }
+        return;
+    }
+    s->movement_mode_0388 = (uint8_t)(s->movement_mode_0388 & 2u);
+    if (s->approach_00AC < k_tblC0CA[y]) {
+        s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+        return;
+    }
+    if ((s->movement_flags_005C & 0xC0u) == 0u) return;
+    if (s->object_status_00B0 != 0u) return;
+    s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+    s->steer_timer_0026 = 0x0Du;
+    if (s->approach_00AC < 0x0Du) return;
+    s->collision_state_0098 = 1u;
+    s->steer_timer_0026 = 2u;
+}
+
+/* Source: loc_CDBD ($CDBD-$CDEB). */
+void bikePhysicsSteeringTail(BikeSteeringState *s)
+{
+    uint8_t branch;
+    int steer;
+    if (s == 0 || s->collision_state_0098 != 0u) return;
+    branch = (uint8_t)(s->movement_flags_005C & 3u); /* ram_000A_t06 */
+    if (s->object_status_00B0 != 0u) {
+        steer = 1;
+    } else if ((s->inactive_0058 | s->track_finished_0052) != 0u) {
+        steer = 0;
+    } else if (s->speed_whole_0094 != 0u) {
+        steer = 1;
+    } else {
+        steer = s->speed_fraction_0090 >= 0xA0u;
+    }
+    if (steer && branch != 0u) {
+        steeringApproach(s, branch);
+        return;
+    }
+    if (s->object_status_00B0 != 0u) return;
+    if (s->animation_state_0368 == s->approach_00AC) return;
+    /* JMP loc_DCC7 with A = ram_0368, Y = 5 */
+    if (s->approach_timer_002A != 0u) return;
+    s->approach_timer_002A = 5u;
+    if (s->approach_00AC == s->animation_state_0368) return;
+    if (s->approach_00AC > s->animation_state_0368) {
+        s->approach_00AC = (uint8_t)(s->approach_00AC - 1u);
+    } else {
+        s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+    }
 }
 
 /* Source: sub_CD1F ($CD1F-$CD58), object loop only. The original then

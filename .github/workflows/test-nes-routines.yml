@@ -262,6 +262,18 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical_init.c -o /tmp/test_bike_vertical_init
           /tmp/test_bike_vertical_init /tmp/prg.bin
 
+      - name: Differentially test native sub_CD59 steering tail against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_steering_tail.c -o /tmp/test_bike_steering_tail
+          /tmp/test_bike_steering_tail /tmp/prg.bin
+
+      - name: Differentially test native race-frame helpers (DDD1, DEBB, DEE2, DE31) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
+          /tmp/test_race_frame /tmp/prg.bin
+
       - name: Differentially test native vertical recovery and motion against original ASM
         run: |
           cd 3ds-port

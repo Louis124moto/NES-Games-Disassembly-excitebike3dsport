@@ -68,14 +68,49 @@ typedef struct BikePlayerSpeedContext {
     uint8_t overheat_lock_03E0;
     uint8_t movement_state_009C;
     uint8_t object_status_00B0;
+    /* State consumed by the steering/approach tail (loc_CDBD..). */
+    uint8_t inactive_0058;
+    uint8_t approach_00AC;
+    uint8_t animation_state_0368;
+    uint8_t movement_mode_0388;
+    uint8_t steer_timer_0026;
+    uint8_t approach_timer_002A;
 } BikePlayerSpeedContext;
 
 typedef BikePlayerSpeedContext BikeObjectSpeedContext;
 
-/* Native translation of the speed-control portion of sub_CD59 for any bike slot. */
+/* Native translation of sub_CD59 for any bike slot: speed control, then the
+ * steering/approach tail (loc_CDBD..). `controller` is ram_005C and
+ * `race_finished` is ram_0052, which the tail also reads. */
 void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object);
 /* Compatibility entry for the player slot (object_index is forced to zero). */
 void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player);
+
+/*
+ * Per-object state consumed by the steering/approach tail of sub_CD59
+ * (loc_CDBD-$CDEB), the leaf loc_CE83-$CECF and the shared loc_DCC7 entry.
+ * Fields map to the source object arrays at index X. The tail only reads
+ * ram_00B0_obj >> 1 for the tbl_C0C8..tbl_C0D5 lookups; the verified domain
+ * is object_status_00B0 in 0..3 (table index 0..1), the values the speed
+ * pass already restricts its tests to.
+ */
+typedef struct BikeSteeringState {
+    uint8_t collision_state_0098;
+    uint8_t object_status_00B0;
+    uint8_t inactive_0058;
+    uint8_t track_finished_0052;
+    uint8_t speed_fraction_0090;
+    uint8_t speed_whole_0094;
+    uint8_t movement_flags_005C;
+    uint8_t approach_00AC;
+    uint8_t animation_state_0368;
+    uint8_t movement_mode_0388;
+    uint8_t steer_timer_0026;
+    uint8_t approach_timer_002A;
+} BikeSteeringState;
+
+/* Native translation of loc_CDBD-$CDEB including loc_CE83 and loc_DCC7. */
+void bikePhysicsSteeringTail(BikeSteeringState *state);
 
 /* Four-bike speed-control pass from sub_CD1F. This models the active-object
  * loop and the speed-control prefix of sub_CD59; other per-frame systems

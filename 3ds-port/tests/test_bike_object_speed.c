@@ -70,8 +70,24 @@ int main(int argc, char **argv)
             native.terrain.vertical_position = nextByte();
             native.terrain.posture_state = (uint8_t)(nextByte() & 3u);
             native.terrain.player_event_flag = nextByte();
+            {
+                static const uint8_t appr[] = { 0u, 1u, 2u, 5u, 6u, 0x0Au, 0x0Bu, 0x0Cu, 0x0Du, 0xFFu };
+                static const uint8_t tmr[] = { 0u, 0u, 1u, 5u, 0x0Du };
+                native.inactive_0058 = (nextByte() & 3u) == 0u ? 1u : 0u;
+                native.approach_00AC = appr[nextByte() % sizeof(appr)];
+                native.animation_state_0368 = appr[nextByte() % sizeof(appr)];
+                native.movement_mode_0388 = nextByte();
+                native.steer_timer_0026 = tmr[nextByte() % sizeof(tmr)];
+                native.approach_timer_002A = tmr[nextByte() % sizeof(tmr)];
+            }
 
             memset(ram, 0, sizeof(reference.ram));
+            ram[0x0058u + slot] = native.inactive_0058;
+            ram[0x00ACu + slot] = native.approach_00AC;
+            ram[0x0368u + slot] = native.animation_state_0368;
+            ram[0x0388u + slot] = native.movement_mode_0388;
+            ram[0x0026u + slot] = native.steer_timer_0026;
+            ram[0x002Au + slot] = native.approach_timer_002A;
             ram[0x004Cu] = native.frame_phase;
             ram[0x0052u] = native.race_finished;
             ram[0x005Cu + slot] = native.controller;
@@ -100,7 +116,12 @@ int main(int argc, char **argv)
             if (native.speed.fraction != ram[0x0090u + slot] ||
                 native.speed.whole != ram[0x0094u + slot] ||
                 native.terrain.posture_state != ram[0x036Cu + slot] ||
-                native.terrain.player_event_flag != ram[0x00FDu]) {
+                native.terrain.player_event_flag != ram[0x00FDu] ||
+                native.collision_lock_0098 != ram[0x0098u + slot] ||
+                native.approach_00AC != ram[0x00ACu + slot] ||
+                native.movement_mode_0388 != ram[0x0388u + slot] ||
+                native.steer_timer_0026 != ram[0x0026u + slot] ||
+                native.approach_timer_002A != ram[0x002Au + slot]) {
                 printf("FAIL: sub_CD59 slot=%u vector=%u phase=%u ctl=%02X speed=%02X:%02X/%02X:%02X posture=%02X/%02X event=%02X/%02X\n",
                        slot, vector, native.frame_phase, native.controller,
                        native.speed.whole, native.speed.fraction,

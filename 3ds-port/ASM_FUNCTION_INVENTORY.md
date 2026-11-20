@@ -60,7 +60,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CC6B` | `sub_CC6B` | Pending | — |
 | `$CCCA` | `sub_CCCA` | Pending | — |
 | `$CD1F` | `sub_CD1F` | Native active-object dispatch translated and differentially tested for 12,000 deterministic vectors; speed-control loop only, separate race-start handshake not included | Calls native `bikePhysicsUpdateRaceSpeeds`; exact active-slot order 3..0 and controller suppression are verified |
-| `$CD59` | `sub_CD59` | Native speed/terrain prefix through `$CDBD` translated and differentially tested for 120,000 vectors across X=0..3 | Remaining steering, posture and animation side effects after `$CDBD` are not yet translated |
+| `$CD59` | `sub_CD59` | Native translation complete: speed/terrain prefix plus steering/approach tail (`loc_CDBD`, `loc_CE83`, `loc_DCC7`); 120,000 whole-routine vectors (tail fields included) and 240,000 tail-only vectors match the ASM oracle (2026-11-20) | Tail verified for `ram_00B0` in 0..3 (table index 0..1); wider values untested. Not yet integrated into the app race loop |
 | `$CDEE` | `sub_CDEE` | Native object-index-aware terrain gate translated; included in the 120,000 four-slot `$CD59` vectors | Player-only `$00FD` event side effect preserved; full surrounding posture/animation flow remains incomplete |
 | `$CE29` | `sub_CE29` | Native object-index-aware acceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE58` | `sub_CE58` | Native object-index-aware deceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
@@ -129,14 +129,14 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
 | `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCF2` | `sub_DCF2` | Pending | — |
-| `$DD06` | `sub_DD06` | Analyzed (partial trace; translation pending) | `$DD06-$DD37` traced; depends on `sub_DD38` and `sub_DD6F`; full caller/callee equivalence not verified |
+| `$DD06` | `sub_DD06` | Native (upstream `bikePhysics` DD06 jump init, differential-tested by `test_bike_vertical_init`) | `source/bike_physics.c` |
 | `$DD38` | `sub_DD38` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DD6F` | `sub_DD6F` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
-| `$DD8D` | `sub_DD8D` | Pending | — |
-| `$DDD1` | `sub_DDD1` | Pending | — |
-| `$DE31` | `sub_DE31` | Pending | — |
-| `$DEBB` | `sub_DEBB` | Pending | — |
-| `$DEE2` | `sub_DEE2` | Pending | — |
+| `$DD8D` | `sub_DD8D` | Native semantic port (upstream) | `bikePhysicsUpdateRaceCountdown` in `source/race_countdown.c`, `tests/test_race_countdown.c`; not yet wired into a full frame loop |
+| `$DDD1` | `sub_DDD1` | Differential-tested (120k vectors) | `source/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
+| `$DE31` | `sub_DE31` | Differential-tested (300k vectors) | `source/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
+| `$DEBB` | `sub_DEBB` | Differential-tested (100k vectors) | `raceOpponentCue` in `source/race_frame.c` |
+| `$DEE2` | `sub_DEE2` | Differential-tested (200k vectors) | `raceEngineSound` in `source/race_frame.c` |
 | `$DF30` | `sub_DF30` | Pending | — |
 | `$DF7F` | `sub_DF7F` | Pending | calls: sub_DFA2; ; in |
 | `$DFA2` | `sub_DFA2` | Translated in C; audit/test coverage recorded separately | — |
@@ -177,7 +177,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E86F` | `sub_E86F` | Pending | — |
 | `$E893` | `sub_E893` | Pending | ; in |
 | `$E927` | `sub_E927` | Pending | — |
-| `$E96C` | `sub_E96C` | Analyzed (partial block only; translation pending) | `nesLocE96EApplyVerticalDelta` covers `$E96E-$E97D` only; remaining state logic and player-slot identity unresolved |
+| `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
 | `$EA44` | `sub_EA44` | Host regression and 3DS build passed | Special wheel tile and fallback wheel rendering |
 | `$EAC5` | `sub_EAC5` | Pending | — |
 | `$EB17` | `sub_EB17` | Pending | — |
