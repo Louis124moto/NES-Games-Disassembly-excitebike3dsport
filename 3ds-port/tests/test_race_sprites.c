@@ -121,9 +121,18 @@ int main(int argc, char **argv)
                 if (native_oam.bytes[i] != expected_oam[i]) {
                     printf("FAIL E17F vector=%u OAM[%02X] native=%02X asm=%02X\n",
                            vector, i, native_oam.bytes[i], expected_oam[i]);
-                    printf("track=%u frame=%02X rider3=%u ref3=%02X\n",
+                    printf("track=%u frame=%02X rider3=%u ref3=%02X order=%u,%u,%u,%u 039F=%02X\n",
                            movement.track_finished, states.frame_counter,
-                           states.rider_present[3], states.vertical_collision_ref[3]);
+                           states.rider_present[3], states.vertical_collision_ref[3],
+                           cpu.ram[0x0088u], cpu.ram[0x0089u], cpu.ram[0x008Au],
+                           cpu.ram[0x008Bu], cpu.ram[0x039Fu]);
+                    printf("bike2 CPU xh=%02X prev=%02X x=%02X phase=%02X vstate=%02X vc=%02X\n",
+                           cpu.ram[0x0086u], cpu.ram[0x0392u], cpu.ram[0x0082u],
+                           cpu.ram[0x00A6u], cpu.ram[0x039Au], cpu.ram[0x006Eu]);
+                    for (unsigned int b = 0u; b < 0x30u; ++b) {
+                        printf("%02X:%02X/%02X%c", b, native_oam.bytes[b],
+                               expected_oam[b], (b & 3u) == 3u ? '\n' : ' ');
+                    }
                     for (unsigned int b = 0u; b < 4u; ++b) {
                         printf("bike%u active=%u state=%02X approach=%02X action=%02X "
                                "speed=%02X:%02X delta=%02X timer=%02X rider=%u "
