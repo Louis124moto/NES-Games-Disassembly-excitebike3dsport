@@ -159,6 +159,22 @@ static int test_native_menu_setup_commands(Cpu6502 *reference)
             printf("FAIL: ASM menu setup command %04X returned %u\n", cases[n].address, rc);
             return 1;
         }
+        if (cases[n].address == 0xC820u) {
+            unsigned k;
+            for (k = 0u; k < 0x80u; ++k) {
+                if (reference->ram[0x0400u + k] != 0x3Bu ||
+                    reference->ram[0x0480u + k] != 0x3Du ||
+                    reference->ram[0x0500u + k] != 0x3Du) {
+                    puts("FAIL: C820 first-course CPU track pages differ from $3B/$3D fills");
+                    return 1;
+                }
+            }
+            if (reference->ram[0x00E8u] != 0x3Fu || reference->ram[0x00E9u] != 0x1Fu ||
+                reference->ram[0x00EBu] != 0x0Au || reference->ram[0x00EAu] != 0x25u) {
+                puts("FAIL: C820 first-course scroll globals mismatch");
+                return 1;
+            }
+        }
 
         memset(&native, 0, sizeof(native));
         native.source_state = cases[n].state;
