@@ -146,3 +146,8 @@ This is the execution order for completing the first playable race. A checked it
 - [x] 6502 quirks kept: the `sub_F64E` descending scan that stores the wrapped counter when the buffer is exhausted, and the `sub_F681` copy loop. Out-of-domain states (stream index 5 pointing at RAM $06E0, template byte count > $0E, reads outside the embedded data) set `unsupported` instead of guessing.
 - [x] 300,000 randomized vectors plus 150,000 sequential frames over all five streams × ten course ids match the original ASM; 16/17 mutants killed (`y < 0x58` vs `<=` is equivalent: template 9 record boundaries are $57 and $61).
 - [ ] Wire `raceCourseStreamUpdate` at its `C99A` slot (after `sub_EA44`, before `sub_E4C8`) and feed the column buffer/pages to the native track renderer.
+
+## Pause/input and finish flow (`sub_CA38`, `sub_CA1B`, `sub_CA9B`)
+
+- [x] Port pause toggle (Start latch, `$4015` enable output, sound request bytes), `ram_005C` input copy, the `CA13` tail of `sub_CA08`, and the finish palette packet / `sub_C3AF` flow as `race_frame_control.c`; 200,000 vectors per entry match the original ASM (one `LDA ram_03B0` reload quirk found and fixed). `ram_03F7` != 0 restart paths are reported unsupported.
+- [ ] Wire `sub_CA08` (DCA0/DFB2 loop + `raceFrameInputStep`) and `sub_CA9B` into the native race loop.

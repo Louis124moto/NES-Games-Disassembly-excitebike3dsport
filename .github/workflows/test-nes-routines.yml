@@ -37,6 +37,9 @@ on:
       - "3ds-port/include/race_frame.h"
       - "3ds-port/source/race_spawn.c"
       - "3ds-port/source/race_course_stream.c"
+      - "3ds-port/source/race_frame_control.c"
+      - "3ds-port/include/race_frame_control.h"
+      - "3ds-port/tests/test_race_frame_control.c"
       - "3ds-port/source/race_course_stream_data.c"
       - "3ds-port/include/race_course_stream.h"
       - "3ds-port/include/race_course_stream_data.h"
@@ -300,6 +303,12 @@ jobs:
           cd 3ds-port
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_course_stream.c source/race_course_stream_data.c tests/oracle/cpu6502.c tests/test_race_course_stream.c -o /tmp/test_race_course_stream
           /tmp/test_race_course_stream /tmp/prg.bin
+
+      - name: Differentially test native pause/input and finish flow (CA38, CA1B, CA9B) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame_control.c tests/oracle/cpu6502.c tests/test_race_frame_control.c -o /tmp/test_race_frame_control
+          /tmp/test_race_frame_control /tmp/prg.bin
 
       - name: Differentially test native opponent AI (CED0, D018, D000, CF0C and helpers) against original ASM
         run: |

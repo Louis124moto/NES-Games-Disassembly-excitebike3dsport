@@ -50,10 +50,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$C935` | `sub_C935` | Pending | calls: sub_DF7F |
 | `$C94B` | `sub_C94B` | Pending | calls: sub_C971 |
 | `$C971` | `sub_C971` | Pending | — |
-| `$CA08` | `sub_CA08` | Pending | — |
-| `$CA1B` | `sub_CA1B` | Pending | — |
-| `$CA38` | `sub_CA38_pause_and_unpause` | Pending | — |
-| `$CA9B` | `sub_CA9B` | Pending | calls: sub_C3AF |
+| `$CA08` | `sub_CA08` | Partial: CA13 tail native (`raceFrameInputStep`, differential-tested); per-bike DCA0/DFB2 loop is wired at integration; `ram_03F7` != 0 restart path reported unsupported | — |
+| `$CA1B` | `sub_CA1B` | Differential-tested (`race_frame_control.c`, `test_race_frame_control`) | — |
+| `$CA38` | `sub_CA38_pause_and_unpause` | Differential-tested (`race_frame_control.c`, `test_race_frame_control`) | — |
+| `$CA9B` | `sub_CA9B` | Differential-tested (`race_frame_control.c`, `test_race_frame_control`) | calls: sub_C3AF |
 | `$CB06` | `sub_CB06` | Pending | calls: sub_CB13 |
 | `$CB13` | `sub_CB13` | Pending | — |
 | `$CC15` | `sub_CC15` | Pending | — |
