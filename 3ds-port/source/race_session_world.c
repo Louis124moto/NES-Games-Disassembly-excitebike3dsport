@@ -14,6 +14,14 @@ void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multi
     memset(world, 0, sizeof(*world));
     raceWorldStore_BikeMovementState(&session->movement, world);
     raceWorldStore_BikeStateMachineState(&session->states, world);
+    /* D0AB/D0C6 are part of the original first-course setup. Their outputs
+     * feed E733's script gate, AI terrain samples and opponent placement. */
+    memcpy(raceWorldByte(world, 0x360u), session->track.vertical_band,
+           sizeof(session->track.vertical_band));
+    memcpy(raceWorldByte(world, 0xC0u), session->track.terrain_code,
+           sizeof(session->track.terrain_code));
+    memcpy(raceWorldByte(world, 0x3C0u), session->track.terrain_samples,
+           sizeof(session->track.terrain_samples));
 
     /* C1CE's eight-byte seed is shared by opponent spawning, AI and race-tail
      * routines. It must exist in the world before the first frame. */
@@ -65,6 +73,12 @@ uint32_t nativeRaceSessionStepFrame(NativeRaceSession *session, RaceWorld *world
     }
     raceWorldLoad_BikeMovementState(&session->movement, world);
     raceWorldLoad_BikeStateMachineState(&session->states, world);
+    memcpy(session->track.vertical_band, raceWorldByte(world, 0x360u),
+           sizeof(session->track.vertical_band));
+    memcpy(session->track.terrain_code, raceWorldByte(world, 0xC0u),
+           sizeof(session->track.terrain_code));
+    memcpy(session->track.terrain_samples, raceWorldByte(world, 0x3C0u),
+           sizeof(session->track.terrain_samples));
     memcpy(session->rng.bytes, raceWorldByte(world, 0x18u), sizeof(session->rng.bytes));
     memcpy(session->oam.bytes, raceWorldByte(world, 0x200u), sizeof(session->oam.bytes));
     return mask;
