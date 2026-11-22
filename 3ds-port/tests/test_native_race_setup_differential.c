@@ -153,8 +153,7 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
         CHECK_EQ("native active", movement.object_active[i], cpu->ram[0xA8u + i], vector);
         CHECK_EQ("native rider flag", states.rider_present[i], cpu->ram[0x370u + i], vector);
         if (setup.bike[i].role !=
-            (i == 0u ? NATIVE_RACE_BIKE_PLAYER :
-             (mode != 0u ? NATIVE_RACE_BIKE_OPPONENT : NATIVE_RACE_BIKE_UNUSED))) {
+            (i == 0u ? NATIVE_RACE_BIKE_PLAYER : NATIVE_RACE_BIKE_OPPONENT)) {
             printf("FAIL C875 vector=%u role slot=%u role=%u\n",
                    vector, i, setup.bike[i].role);
             return 1;
