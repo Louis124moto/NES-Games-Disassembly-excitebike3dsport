@@ -41,28 +41,6 @@ static const char *tile_semantic(uint8_t value)
     return "other_source_tile_code";
 }
 
-static uint64_t hash_state(const RaceCourseStreamState *s,
-                           const RaceSpawnState *p)
-{
-    const uint8_t *bytes = (const uint8_t *)s;
-    uint64_t h = UINT64_C(1469598103934665603);
-    size_t i;
-    for (i = 0u; i < sizeof(*s); ++i) {
-        h ^= bytes[i];
-        h *= UINT64_C(1099511628211);
-    }
-    bytes = (const uint8_t *)p->track_pages;
-    for (i = 0u; i < sizeof(p->track_pages); ++i) {
-        h ^= bytes[i];
-        h *= UINT64_C(1099511628211);
-    }
-    h ^= p->spawn_request_03A8;
-    h *= UINT64_C(1099511628211);
-    h ^= p->object_class[0];
-    h *= UINT64_C(1099511628211);
-    return h;
-}
-
 static unsigned parse_limit(int argc, char **argv)
 {
     unsigned value = 512u;
@@ -80,11 +58,10 @@ int main(int argc, char **argv)
 {
     RaceCourseStreamState stream;
     RaceSpawnState spawn;
-    uint64_t *seen;
     const unsigned max_columns = parse_limit(argc, argv);
     const uint16_t stream_base = stream_address(0u);
-    unsigned page, frame, emitted = 0u, seen_count = 0u;
-    int complete = 0, cycle_detected = 0, truncated = 0;
+    unsigned page, frame, emitted = 0u;
+    int complete = 0, truncated = 0;
 
     if (max_columns == 0u || stream_base == 0u) {
         fputs("invalid extractor arguments or source stream pointer\n", stderr);
@@ -103,9 +80,6 @@ int main(int argc, char **argv)
     stream.row_00E9 = 0x14u;
     stream.nametable_00EA = 0x25u;
     stream.next_column_00EB = INITIAL_CLASS;
-
-    seen = (uint64_t *)calloc(MAX_FRAMES, sizeof(*seen));
-    if (seen == 0) return 2;
 
     puts("{");
     puts("  \"schema\": \"excitebike.first-course-geometry.v1\",");
@@ -134,28 +108,26 @@ int main(int argc, char **argv)
     puts("  \"columns\": [");
 
     for (frame = 0u; frame < MAX_FRAMES && emitted < max_columns; ++frame) {
-        const uint64_t key = hash_state(&stream, &spawn);
         const uint8_t course_class = stream.next_column_00EB;
         const uint8_t old_column = stream.column_00E8;
         const uint8_t old_row = stream.row_00E9;
         const uint8_t old_nametable = stream.nametable_00EA;
         const uint8_t old_stream_offset = stream.stream_offset_00ED;
 
-        for (page = 0u; page < seen_count; ++page) {
-            if (seen[page] == key) {
-                complete = 1;
-                cycle_detected = 1;
-                goto extraction_done;
-            }
-        }
-        seen[seen_count++] = key;
         spawn.object_class[0] = course_class;
         raceCourseStreamUpdate(&stream, &spawn);
         if (stream.unsupported != 0u) {
             fprintf(stderr, "unsupported F4FF state at frame %u, stream offset $%02X\n",
                     frame, stream.stream_offset_00ED);
-            free(seen);
             return 1;
+        }
+
+        /* F638 is the source-defined end of the configured stream: template
+         * 9 decrements $0057 and sets $03BC when the lap counter reaches zero.
+         * The game loop then stops requesting more course data. */
+        if (stream.flag_03BC != 0u && stream.counter_0057 == 0u) {
+            complete = 1;
+            break;
         }
 
         if (stream.column_00E8 != old_column ||
@@ -179,19 +151,9 @@ int main(int argc, char **argv)
                        tile_semantic(spawn.track_pages[page][old_column]));
             printf("] }");
             ++emitted;
-        } else if (hash_state(&stream, &spawn) == key) {
-            complete = 1;
-            break;
         }
     }
 
-extraction_done:
-    if (emitted >= max_columns && !complete) truncated = 1;
-    if (frame >= MAX_FRAMES && !complete && !truncated) {
-        fputs("course stream did not reach a stable/cyclic state within frame guard\n", stderr);
-        free(seen);
-        return 1;
-    }
     puts("");
     puts("  ],");
     printf("  \"summary\": { \"column_count\": %u, \"frames_processed\": %u, ",
@@ -201,6 +163,5 @@ extraction_done:
            cycle_detected ? "true" : "false",
            truncated ? "true" : "false");
     puts("}");
-    free(seen);
     return truncated ? 3 : 0;
 }
