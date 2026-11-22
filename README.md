@@ -84,7 +84,7 @@ A successful compile proves only that the target builds. It does not prove that 
 The original NES disassembly can be assembled separately for source/reference work:
 
 ```sh
-sh Excitebike/assemble.sh
+bash Excitebike/assemble.sh
 ```
 
 This legacy helper is optional and is **not** part of the native 3DS build, host differential tests, or release dependency chain. It requires the original helper scripts plus **cc65 2.19** (`ca65` and `ld65`) and **Lua 5.3.x**. Its setup scripts may offer interactive dependency installation, so it is not suitable for unattended CI.
