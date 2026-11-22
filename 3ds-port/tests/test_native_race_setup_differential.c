@@ -31,6 +31,31 @@ static void prepare_cpu(Cpu6502 *cpu)
     } \
 } while (0)
 
+static int call_c875_trace(Cpu6502 *cpu)
+{
+    unsigned long steps;
+    cpu->sp = 0xFDu;
+    cpu->ram[0x1FDu] = 0xFFu;
+    cpu->ram[0x1FCu] = 0xFEu;
+    cpu->sp = 0xFBu;
+    cpu->pc = 0xC875u;
+    for (steps = 0u; steps < 500000u; ++steps) {
+        if (cpu->pc == 0xC90Eu || cpu->pc == 0xC911u ||
+            cpu->pc == 0xC915u || cpu->pc == 0xC91Du ||
+            cpu->pc == 0xC927u || cpu->pc == 0xC935u ||
+            cpu->pc == 0xC94Bu || cpu->pc == 0xC92Au) {
+            printf("TRACE pc=%04X A=%02X P=%02X 03F8=%02X 0005=%02X 0006=%02X 0007=%02X D3=%02X D4=%02X\\n",
+                   cpu->pc, cpu->a, cpu->p, cpu->ram[0x3F8u],
+                   cpu->ram[5u], cpu->ram[6u], cpu->ram[7u],
+                   cpu->ram[0x3D3u], cpu->ram[0x3D4u]);
+        }
+        if (cpu->pc == 0xFFFFu && cpu->sp == 0xFDu) return 0;
+        cpu6502_step(cpu);
+        if (cpu->bad_opcode >= 0) return 2;
+    }
+    return 1;
+}
+
 static int run_case(Cpu6502 *cpu, unsigned vector)
 {
     NativeRaceSetupInput input;
@@ -84,7 +109,7 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
     cpu->ram[0xEBu] = 0x0Au;
 
     prepare_cpu(cpu);
-    if (cpu6502_call(cpu, 0xC875u, 500000u) != 0) {
+    if ((vector == 0u ? call_c875_trace(cpu) : cpu6502_call(cpu, 0xC875u, 500000u)) != 0) {
         printf("FAIL C875 vector=%u original ASM call\n", vector);
         return 1;
     }
