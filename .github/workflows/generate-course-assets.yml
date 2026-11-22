@@ -10,6 +10,8 @@ on:
       - "3ds-port/include/race_course_stream*.h"
       - "3ds-port/tools/extract_first_course.c"
       - "3ds-port/tools/extract_first_course.py"
+      - "3ds-port/tools/read_course.py"
+      - "3ds-port/tools/test_read_course.py"
       - ".github/workflows/generate-course-assets.yml"
   workflow_dispatch:
 
