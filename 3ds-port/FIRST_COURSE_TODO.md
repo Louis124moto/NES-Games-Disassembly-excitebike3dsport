@@ -29,8 +29,8 @@ Scope: **only the first original course** (the title-menu selector's first race 
 - [ ] Keep later courses out of the first implementation.
 
 ### C. Native presentation
-- [ ] Identify the exact source CHR/tile/sprite assets and palette for course 1.
-- [ ] Implement native 3DS course/background rendering and horizontal scrolling; no PPU/nametable emulator.
+- [x] Identify and use the extracted source CHR/tile/sprite assets and course-1 palette for the native race scene.
+- [x] Feed the source F4FF 14-tile vertical column packet into the native scrolling renderer, using the verified race-scene CHR/palette and vertical nametable layout; no NES PPU runtime.
 - [ ] Draw bikes, opponents, ramps/obstacles and HUD from semantic state.
 - [ ] Compare fixed-frame captures with the original reference and record any known platform-specific differences.
 
@@ -180,3 +180,14 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Update README status to distinguish an integrated native frame scheduler from a fully playable/accepted race.
 - [ ] Run host CI and the exact-commit devkitARM build after these integration changes.
 - [ ] Physical New 3DS validation remains outstanding.
+
+
+### Native race-world and course-render integration — 2026-11-22
+
+- [x] Seed the unified RaceWorld with the exact C820 CPU course pages ($3B,$3B,$3D,$3D,$3D,$3D), the D0AB vertical bands, D0C6 terrain codes/samples, the C1CE RNG bytes and the setup transition flag $0046.
+- [x] Keep the F4FF output packet ($EA/$E9 address, $8E control and fourteen tile bytes) in the native session whenever the source column index advances.
+- [x] Apply each decoded course column to the native race nametable and render with extracted CHR/palette assets, source horizontal scroll and vertical nametable selection.
+- [x] Forward HID held and pressed button states separately; the original pause handler consumes the press latch, not held input.
+- [x] Add host integration assertions for course pages, D0AB/D0C6 projections, RNG/transition seeding and Start press behavior.
+- [ ] Compare dynamic course captures at fixed frames against the original NES reference and verify on a physical New Nintendo 3DS.
+- [ ] Finish trigger, result presentation and return-to-menu state transition are still not end-to-end integrated. Do not mark the first course playable until those pass.
