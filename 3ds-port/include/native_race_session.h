@@ -16,6 +16,8 @@ typedef struct NativeRaceSession {
     BikeRaceCountdownState countdown;
     NativeTrackState track;
     NativeOamState oam;
+    uint8_t course_column_buffer[0x12]; /* F4FF -> PPU column command */
+    uint32_t course_column_serial;      /* increments for each decoded column */
     BikeRaceCountdownRenderEvent countdown_render_event;
     uint8_t vertical_unsupported_mask;
     uint8_t sprite_unsupported_mask;
