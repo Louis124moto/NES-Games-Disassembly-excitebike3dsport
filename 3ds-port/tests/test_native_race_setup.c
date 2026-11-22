@@ -43,7 +43,7 @@ int main(void)
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states), 1);
     CHECK(out.setup_counter_0040 == 10u && out.setup_counter_0047 == 6u, 2);
     CHECK(out.timer_0034 == 5u && out.global_vertical_reference == 0xA0u, 3);
-    CHECK(out.player_slot == 0u && out.player_rider_present == 1u, 4);
+    CHECK(out.player_slot == 0u && out.first_opponent_slot == 1u && out.player_rider_present == 1u, 4);
     CHECK(out.camera_scroll_00E8 == 0x34u && out.camera_scroll_00E9 == 0x14u && out.camera_scroll_00EA == 0x25u && out.camera_scroll_00EB == 0x0Au, 9);
     CHECK(out.countdown_x_03B4 == 0x80u && out.race_setup_state_03B0 == 0x80u, 25);
     CHECK(out.countdown_limit_03BD == 0xFFu && out.countdown_index_03BE == 0x02u, 26);
@@ -58,6 +58,7 @@ int main(void)
         CHECK(out.bike[i].object_class == expected_class[i], 12);
         CHECK(out.bike[i].approach == 6u && out.bike[i].active == 1u, 13);
         CHECK(out.bike[i].object_origin_x == 8u, 14);
+        CHECK(out.bike[i].role == (i == 0u ? NATIVE_RACE_BIKE_PLAYER : NATIVE_RACE_BIKE_OPPONENT), 51);
         CHECK(out.bike[i].setup_parameter == (uint8_t)(rng.bytes[i + 1u] >> 1), 15);
         CHECK(movement.object_y[i] == expected_y[i] && states.y[i] == expected_y[i], 16);
         CHECK(movement.x_low[i] == expected_x[i] && movement.x_high[i] == 1u, 17);
@@ -69,6 +70,7 @@ int main(void)
     CHECK(out.bike[2].lock_timer == 6u && out.bike[3].lock_timer == 6u, 21);
     CHECK(movement.start_lock_timer[1] == 3u, 22);
     CHECK(states.rider_present[0] == 1u && states.rider_present[1] == 0u, 23);
+    CHECK(out.bike[0].role == NATIVE_RACE_BIKE_PLAYER && out.bike[1].role == NATIVE_RACE_BIKE_OPPONENT, 52);
     CHECK(movement.global_vertical_reference == 0xA0u, 24);
 
     /* Single-rider route initializes only slot zero; other native slots survive. */
@@ -99,6 +101,10 @@ int main(void)
     CHECK(nativeRaceSetupFirstCourse(&out, 0, &rng, &movement, &states) == 0, 41);
     CHECK(nativeRaceSetupFirstCourse(&out, &in, 0, &movement, &states) == 0, 42);
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, 0) == 0, 43);
+    in.setup_index_0041 = 2u;
+    in.course_index_0043 = 1u;
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 53);
+    in.course_index_0043 = 0u;
     in.setup_index_0041 = 8u;
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 44);
 
