@@ -100,11 +100,13 @@ static int runFirstCourseSequence(Cpu6502 *cpu)
 {
     RaceCourseStreamState s;
     RaceSpawnState p;
-    unsigned frame, writes = 0u;
+    unsigned frame, writes = 0u, page;
     int complete = 0;
 
     memset(&s, 0, sizeof(s));
     memset(&p, 0, sizeof(p));
+    for (page = 0u; page < 6u; ++page)
+        memset(p.track_pages[page], page < 2u ? 0x3Bu : 0x3Du, 64u);
     s.stream_index = 0u;
     s.course_id = 2u;
     s.flag_0046 = 0u;
