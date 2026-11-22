@@ -94,8 +94,8 @@ int courseAssetExportWrite(const char *directory, char *status, size_t statusCap
     if (directory == NULL) goto fail;
     if (stat(directory, &st) != 0 && mkdir(directory, 0777) != 0 && errno != EEXIST)
         goto fail;
-    if (snprintf(path, sizeof(path), "%s/course1_geometry.ebc", directory) <= 0 ||
-        strlen(path) >= sizeof(path)) goto fail;
+    { int pathLength = snprintf(path, sizeof(path), "%s/course1_geometry.ebc", directory);
+      if (pathLength <= 0 || (size_t)pathLength >= sizeof(path)) goto fail; }
 
     memset(&stream, 0, sizeof(stream));
     memset(&spawn, 0, sizeof(spawn));
