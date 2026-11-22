@@ -4,7 +4,7 @@ This directory contains source-derived, editable level data. It does not contain
 
 ## First course
 
-- `course1_geometry.json` — **1,335 ordered columns**, each carrying six vertical-band tile IDs, the complete 18-byte `$0300-$0311` F4FF buffer, `$03A8` spawn-request state, stream counters, PPU/ring coordinates and source provenance.
+- `course1_geometry.json` — **1,335 ordered columns**, each carrying six vertical-band track-page bytes, the complete 18-byte `$0300-$0311` F4FF buffer, `$03A8` spawn-request state, stream counters, PPU/ring coordinates and source provenance.
 - The source stream starts at `$ED46`; the next stream pointer is `$EE59`, so stream 0 occupies 275 bytes. Its first byte sets the repeat counter to `$02`.
 - Schema v2 preserves raw track-page bytes, all 18 stream-buffer bytes, `$03A8` spawn requests, `$0057/$03A4/$03A5` counters, template IDs, stream offsets, course/ring coordinates and source addresses.
 - Extraction stops at the original `$F638` path when template 9 reduces `$0057` to zero and sets `$03BC`. This is the source-defined two-pass completion signal; it is not a guessed column limit.
