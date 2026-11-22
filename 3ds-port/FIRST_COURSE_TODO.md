@@ -27,7 +27,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### B. Decode first-course data
 - [x] Trace the first-course stream/template sources: $ED3A/$ED40 selects stream 0 at $ED46; the next stream begins at $EE59; $F063/$F087 supplies template pointers. Keep palette list $12 separate from geometry.
-- [x] Extract the complete raw two-pass stream to extracted/course1_geometry.json: 1,334 ordered columns, six source pages per column, raw tile IDs, ring/PPU coordinates, stream offsets and template addresses. Stop on the original $F638 / $03BC completion signal.
+- [x] Extract the complete raw two-pass stream to extracted/course1_geometry.json: 1,335 ordered columns, six source pages per column, raw tile IDs, ring/PPU coordinates, stream offsets and template addresses. Stop on the original $F638 / $03BC completion signal.
 - [x] Add 3ds-port/tools/read_course.py: strict complete-file validation, six-band hex map, diagnostic glyph map, per-column inspection and CSV export.
 - [ ] Differentially replay the exact first-course initial state frame-by-frame against F4FF through $F638; the test has been added and awaits CI confirmation.
 - [ ] Interpret raw tile IDs into semantic surface/elevation/ramp/obstacle/collision structures and connect those structures to the native runtime.
@@ -152,7 +152,7 @@ This is the execution order for completing the first playable race. A checked it
 
 - Source stream 0: $ED46; next stream pointer: $EE59; source stream segment: 275 bytes.
 - The first stream byte supplies repeat count $02. The decoder reaches the source-defined $F638 branch twice; when $0057 reaches zero, the original code sets $03BC.
-- Generated artifact: extracted/course1_geometry.json — 1,334 columns × 6 vertical bands. Each column keeps raw bytes and provenance; semantic names are annotations, not a claim that ramps/collision bounds have been fully interpreted.
+- Generated artifact: extracted/course1_geometry.json — 1,335 columns × 6 vertical bands. Each column keeps raw bytes and provenance; semantic names are annotations, not a claim that ramps/collision bounds have been fully interpreted.
 - Reader: python3 3ds-port/tools/read_course.py. Use --format glyph for a compact diagnostic map or --column N for the full metadata of one column.
 - The generation workflow stores the JSON in extracted/; host CI checks reproducibility against the disassembly.
 - Remaining: exact initial-state full-sequence differential replay, semantic tile decoding, collision mapping, and native runtime integration.
