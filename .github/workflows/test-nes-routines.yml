@@ -222,6 +222,7 @@ jobs:
         run: |
           python3 3ds-port/tools/extract_first_course.py --output /tmp/course1_geometry.json
           python3 -m json.tool /tmp/course1_geometry.json > /dev/null
+          python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --validate
           test -s /tmp/course1_geometry.json
 
       - name: Upload editable first-course geometry
