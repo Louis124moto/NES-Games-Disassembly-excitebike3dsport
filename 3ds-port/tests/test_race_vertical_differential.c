@@ -201,19 +201,19 @@ int main(int argc, char **argv)
         prepare_cpu(&cpu);
         rc = cpu6502_call(&cpu, 0xE96Cu, 1024u);
         if (rc != 0) {
-            printf("FAIL E96C all-phase oracle rc=%d vector=%u opcode=%02X\\n",
+            printf("FAIL E96C all-phase oracle rc=%d vector=%u opcode=%02X\n",
                    rc, vector, cpu.bad_opcode);
             return 1;
         }
 
         if (bikePhysicsUpdateFirstCourseVertical(&movement, &states) != 0u) {
-            printf("FAIL native E96C rejected all-phase vector=%u\\n", vector);
+            printf("FAIL native E96C rejected all-phase vector=%u\n", vector);
             return 1;
         }
         if (states.player_event != cpu.ram[0x00FDu] ||
             movement.player_event != cpu.ram[0x00FFu] ||
             movement.movement_mode[0] != cpu.ram[0x0388u]) {
-            printf("FAIL E96C tail vector=%u FD=%02X/%02X FF=%02X/%02X mode=%02X/%02X\\n",
+            printf("FAIL E96C tail vector=%u FD=%02X/%02X FF=%02X/%02X mode=%02X/%02X\n",
                    vector, states.player_event, cpu.ram[0x00FDu],
                    movement.player_event, cpu.ram[0x00FFu],
                    movement.movement_mode[0], cpu.ram[0x0388u]);
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
                 movement.motion_whole_start[i] != cpu.ram[0x037Cu + i] ||
                 movement.motion_delta[i] != cpu.ram[0x038Cu + i]) {
                 printf("FAIL E96C all-phase vector=%u slot=%u phase=%02X action=%02X "
-                       "Y=%02X/%02X A4=%02X/%02X B0=%02X/%02X\\n",
+                       "Y=%02X/%02X A4=%02X/%02X B0=%02X/%02X\n",
                        vector, i, movement.vertical_phase[i],
                        movement.object_action_state[i], movement.object_y[i],
                        cpu.ram[0x00B8u + i], movement.vertical_phase[i],
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
         }
     }
 
-    puts("PASS: 50000 phase-zero and 100000 all-phase E96C/EA07/ DD06 jump frames match original ASM.");
+    puts("PASS: 50000 phase-zero and 100000 all-phase E96C/EA07/DD06 jump frames match original ASM.");
     puts("PASS: 150000 four-bike E96C all-phase + EA07/DD06 jump frames match original ASM.");
     return 0;
 }
