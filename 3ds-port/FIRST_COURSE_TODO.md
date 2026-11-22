@@ -15,7 +15,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### A. Complete the minimum native race simulation
 - [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
-- [x] Port the state handlers called by `sub_D918` and the source-ordered object-update chain; preserve the exact call order. The remaining C875 setup tail is tracked separately below.
+- [x] Port the state handlers called by `sub_D918` and the source-ordered object-update chain; preserve the exact call order. The C875 setup tail and player/opponent identity are now verified below.
   - [x] Translate and integrate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM.
 - [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
 - [x] Complete and integrate the core steering, braking, posture, jump/landing, heat/overheat, bike-contact, obstacle-hit, collision, crash/recovery and opponent-decision routines in native C.
