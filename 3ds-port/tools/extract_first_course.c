@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     puts("");
     puts("  ],");
     printf("  \"summary\": { \"column_count\": %u, \"frames_processed\": %u, ",
-           emitted, frame);
+           emitted, frame + 1u);
     printf("\"complete\": %s, \"cycle_detected\": false, \"truncated\": %s }\n",
            complete ? "true" : "false", truncated ? "true" : "false");
     puts("}");
