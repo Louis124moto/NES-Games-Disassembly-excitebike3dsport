@@ -124,7 +124,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
         return 0;
     /* C905 skips sub_C53A only while ram_0041 < $08. The first-course
      * selector path enters this setup list with ram_0041 = $02. */
-    if (in->setup_index_0041 >= 0x08u)
+    if (in->setup_index_0041 >= 0x08u || in->course_index_0043 != 0u)
         return 0;
 
     memset(out, 0, sizeof(*out));
@@ -134,6 +134,8 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->transition_flag_0046 = in->transition_flag_0046;
     out->global_vertical_reference = 0xA0u;
     out->player_slot = 0u;
+    /* C36C writes $0001 to ram_004A; CED0 therefore controls only slots 1..3. */
+    out->first_opponent_slot = 1u;
     out->player_rider_present = 1u;
     out->camera_scroll_00E8 = 0x34u;
     out->camera_scroll_00E9 = 0x14u;
@@ -165,6 +167,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
         out->bike[i].active = 0x01u;
         out->bike[i].object_origin_x = 0x08u;
         out->bike[i].setup_parameter = (uint8_t)(rng->bytes[i + 1u] >> 1);
+        out->bike[i].role = i == 0u ? NATIVE_RACE_BIKE_PLAYER : NATIVE_RACE_BIKE_OPPONENT;
 
         movement->object_y[i] = s_start_y[i];
         movement->x_low[i] = s_start_x[i];
