@@ -53,8 +53,9 @@ int main(void)
         }
     }
 
-    /* The source pause handler consumes the press latch separately from held
-     * input. Start must therefore reach $0015 on the first frame it is pressed. */
+    /* The source pause handler ignores Start while the countdown state at
+     * $03B0 is active; clear that gate to test the actual press-latch path. */
+    *raceWorldByte(&world, 0x3B0u) = 0u;
     (void)nativeRaceSessionStepFrame(&session, &world, 0x10u, 0x10u);
     if (*raceWorldByte(&world, 0x15u) != 0x10u ||
         *raceWorldByte(&world, 0x3B1u) == 0u) {
