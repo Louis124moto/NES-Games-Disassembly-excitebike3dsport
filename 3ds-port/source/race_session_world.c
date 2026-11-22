@@ -39,6 +39,8 @@ void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multi
     *raceWorldByte(world, 0x3BEu) = session->setup.countdown_index_03BE;
     *raceWorldByte(world, 0x41u) = 2u;
     *raceWorldByte(world, 0x46u) = session->setup.transition_flag_0046;
+    /* C36C's $004A=1 excludes the human player (slot 0) from CED0 AI. */
+    *raceWorldByte(world, 0x4Au) = session->setup.first_opponent_slot;
 
     /* C820's CPU-side course profile is six consecutive 64-byte pages:
      * $0400-$047F = $3B, $0480-$057F = $3D. These are lookup/AI data,
