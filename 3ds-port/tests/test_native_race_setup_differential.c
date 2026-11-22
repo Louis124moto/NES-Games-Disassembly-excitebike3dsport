@@ -69,14 +69,22 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
 
     for (i = 0u; i < sizeof(rng.bytes); ++i)
         cpu->ram[0x18u + i] = rng.bytes[i];
-    cpu->ram[0x41u] = 0x02u;
+    /* Execute the original menu-selection tail at C36A. It derives
+     * $004A=1 (first AI slot) and $03F2 from the selected race mode. */
+    cpu->ram[0x42u] = mode;
+    prepare_cpu(cpu);
+    if (cpu6502_call(cpu, 0xC36Au, 200000u) != 0 ||
+        cpu->ram[0x4Au] != 0x01u || cpu->ram[0x3F2u] != mode) {
+        printf("FAIL C875 vector=%u C36A first-AI-slot/mode setup\\n", vector);
+        return 1;
+    }
+
+    cpu->ram[0x41u] = 0x02u; /* first-course C875 setup list */
     cpu->ram[0x43u] = 0x00u; /* first course: tbl_ED3A stream zero */
     cpu->ram[0x46u] = transition;
-    cpu->ram[0x4Au] = 0x01u; /* C36C: first AI-controlled slot is one */
     cpu->ram[0x34u] = timer;
     cpu->ram[0x40u] = counter40;
     cpu->ram[0x47u] = counter47;
-    cpu->ram[0x3F2u] = mode;
     cpu->ram[0x3F8u] = counter;
     cpu->ram[0xE8u] = 0x3Fu;
     cpu->ram[0xE9u] = 0x1Fu;
