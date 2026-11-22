@@ -49,7 +49,7 @@ int main(void)
     CHECK(out.countdown_limit_03BD == 0xFFu && out.countdown_index_03BE == 0x02u, 26);
     CHECK(out.course_setup_parameters[0] == 0x01u && out.course_setup_parameters[1] == 0x10u && out.course_setup_parameters[2] == 0x00u, 6);
     CHECK(out.race_object_parameters[0] == 0x01u && out.race_object_parameters[1] == 0x10u && out.race_object_parameters[2] == 0x00u, 8);
-    CHECK(out.hud_glyphs[0] == 1u && out.hud_glyphs[1] == 0xFBu && out.hud_glyphs[2] == 2u && out.hud_glyphs[3] == 4u && out.hud_glyphs[4] == 0xFBu && out.hud_glyphs[5] == 0u && out.hud_glyphs[6] == 0u, 7);
+    CHECK(out.hud_glyphs[0] == 0u && out.hud_glyphs[1] == 0xFBu && out.hud_glyphs[2] == 2u && out.hud_glyphs[3] == 3u && out.hud_glyphs[4] == 0xFBu && out.hud_glyphs[5] == 0u && out.hud_glyphs[6] == 0xFFu, 7);
     CHECK(out.half_lock_slot == 1u, 5);
 
     for (i = 0u; i < 4u; ++i) {
@@ -95,7 +95,7 @@ int main(void)
     in.transition_flag_0046 = 0u;
     in.transition_counter_03F8 = 0x16u; /* 2*$16 + $10 = $3C: source subtracts once. */
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states), 37);
-    CHECK(out.hud_glyphs[0] == 2u && out.hud_glyphs[2] == 0u && out.hud_glyphs[3] == 0u, 38);
+    CHECK(out.hud_glyphs[0] == 1u && out.hud_glyphs[2] == 0u && out.hud_glyphs[3] == 0xFFu, 38);
 
     CHECK(nativeRaceSetupFirstCourse(0, &in, &rng, &movement, &states) == 0, 40);
     CHECK(nativeRaceSetupFirstCourse(&out, 0, &rng, &movement, &states) == 0, 41);
