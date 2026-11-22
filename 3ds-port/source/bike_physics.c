@@ -3,7 +3,7 @@
 /* Source: Excitebike/bank_FF.asm, tbl_C0BC ($C0BC), tbl_C0CE ($C0CE),
  * tbl_C0D1 ($C0D1), and sub_CE29 ($CE29-$CE57).
  * The values below are copied from the source tables, not tuned estimates. */
-static const uint8_t kAccelerationIncrement[3] = { 0x18u, 0x3Fu, 0x28u };
+static const uint8_t kAccelerationIncrement[5] = { 0x18u, 0x3Fu, 0x28u, 0x20u, 0x28u };
 static const uint8_t kPlayerSpeedFractionCap[3] = { 0x20u, 0x40u, 0x7Fu };
 static const uint8_t kPlayerSpeedWholeCap[3] = { 0x03u, 0x03u, 0x01u };
 
@@ -14,7 +14,7 @@ static void bikePhysicsAccelerateObject(BikeSpeedState *speed,
 {
     uint16_t sum;
 
-    if (speed == 0 || frame_phase != object_index || acceleration_mode > 2u) {
+    if (speed == 0 || frame_phase != object_index || acceleration_mode > 4u) {
         return;
     }
 
@@ -25,10 +25,11 @@ static void bikePhysicsAccelerateObject(BikeSpeedState *speed,
         speed->whole = (uint8_t)(speed->whole + 1u);
     }
 
-    /* Only object X=0 is capped here; preserve the source CMP/BCC behavior. */
-    if (speed->whole > kPlayerSpeedWholeCap[acceleration_mode] ||
-        (speed->whole == kPlayerSpeedWholeCap[acceleration_mode] &&
-         speed->fraction >= kPlayerSpeedFractionCap[acceleration_mode])) {
+    /* Only object X=0 is capped here (CE39 TXA/BNE); opponents return uncapped. */
+    if (object_index == 0u && acceleration_mode <= 2u &&
+        (speed->whole > kPlayerSpeedWholeCap[acceleration_mode] ||
+         (speed->whole == kPlayerSpeedWholeCap[acceleration_mode] &&
+          speed->fraction >= kPlayerSpeedFractionCap[acceleration_mode]))) {
         speed->fraction = kPlayerSpeedFractionCap[acceleration_mode];
         speed->whole = kPlayerSpeedWholeCap[acceleration_mode];
     }
@@ -229,6 +230,12 @@ static int updateObjectSpeedPrefix(BikeObjectSpeedContext *object)
         return 1;
     }
 
+    if (index != 0u) {
+        /* CD95/CDAC: opponents use Y = X (+1 for the 0x40 throttle bit), no cap compare. */
+        bikePhysicsAccelerateObject(&object->speed, object->frame_phase, index,
+                                    (uint8_t)(index + (acceleration_mode != 0u ? 1u : 0u)));
+        return 1;
+    }
     {
         const int cap_order = playerSpeedCompareCap(&object->speed, acceleration_mode);
         if (cap_order < 0) {

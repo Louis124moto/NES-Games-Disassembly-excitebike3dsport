@@ -112,7 +112,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D918` | `sub_D918` | Native translation + 50,000 randomized four-bike ASM differential frames; valid state domain 0–5 | `source/bike_state.c`, `tests/test_bike_state.c`; semantic session API exists, full frame-loop integration pending |
 | `$D924` | `sub_D924` | Native six-entry dispatch and five non-idle handlers translated and covered by the D918 50,000-frame oracle comparison | `source/bike_state.c`; invalid state values outside 0–5 are intentionally rejected by setup validation |
 | `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
-| `$DA26` | `sub_DA26` | Pending | — |
+| `$DA26` | `sub_DA26` | Native (movement pass + DA44 tail E0E6/E2AF); verified inside the composed race loop vs ASM | `bikePhysicsUpdateRaceMovementPass`, `raceFrameTail` in `source/race_tail.c`, `tests/test_race_tail.c`, `tests/test_race_loop.c` |
 | `$DA58` | `sub_DA58` | Translated in C; audit/test coverage recorded separately | — |
 | `$DA6A` | `sub_DA6A` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DA7A` | `sub_DA7A` | Translated + tested; host regression passed, 3DS build status being checked | Exact helper and instruction-level regression test added |
@@ -137,7 +137,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$DE31` | `sub_DE31` | Differential-tested (300k vectors) | `source/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
 | `$DEBB` | `sub_DEBB` | Differential-tested (100k vectors) | `raceOpponentCue` in `source/race_frame.c` |
 | `$DEE2` | `sub_DEE2` | Differential-tested (200k vectors) | `raceEngineSound` in `source/race_frame.c` |
-| `$DF30` | `sub_DF30` | Pending | — |
+| `$DF30` | `sub_DF30` | Native inside the composed race loop; compared stage by stage vs ASM | `source/race_loop.c`, `tests/test_race_loop.c` |
 | `$DF7F` | `sub_DF7F` | Pending | calls: sub_DFA2; ; in |
 | `$DFA2` | `sub_DFA2` | Translated in C; audit/test coverage recorded separately | — |
 | `$DFA4` | `sub_DFA4` | Translated in C; audit/test coverage recorded separately | — |
@@ -152,7 +152,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E098` | `sub_E098` | Differential-tested (via `sub_DFD5`) | `raceBikeContacts` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E09F` | `sub_E09F` | Differential-tested (400k vectors; includes sub_DC97 borrow chain) | `raceObstacleHit` in `source/race_frame.c`; not yet wired into the app race loop |
 | `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
-| `$E17F` | `sub_E17F` | Pending | calls: sub_E3F4 |
+| `$E17F` | `sub_E17F` | Native + differential (50,000 OAM frames) and consecutive-frame persistence in the race loop (exports E3F4 order in $0088 and $039F) | `nativeRaceUpdateBikeOam` in `source/race_sprites.c` |
 | `$E1A3` | `sub_E1A3` | Command setup + overlay regression passed; 3DS build passed | `$D1C7` renderer remains separate |
 | `$E1F9` | `sub_E1F9` | Full branch-level translation; host regression and 3DS build passed | Includes `$000E` and `$039F` side effects and all RTS paths |
 | `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |

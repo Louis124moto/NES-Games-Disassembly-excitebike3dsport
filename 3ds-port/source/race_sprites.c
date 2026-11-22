@@ -147,17 +147,19 @@ static uint8_t writeRiderOverlay(uint8_t *oam, unsigned int base,
     return 0u;
 }
 
-uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
-                                      const BikeStateMachineState *states,
-                                      NativeOamState *oam)
+static uint8_t buildBikeOam(const BikeMovementState *movement,
+                            const BikeStateMachineState *states,
+                            NativeOamState *oam, int clear_baseline,
+                            uint8_t order_out[4], uint8_t *marker_039F)
 {
+    unsigned int marker_seen = 0u;
     uint8_t order[4] = {0u, 1u, 2u, 3u};
     uint8_t sort_y[4];
     uint8_t unsupported_mask = 0u;
     unsigned int i, pass;
 
     if (movement == 0 || states == 0 || oam == 0) return 0x0Fu;
-    memset(oam->bytes, 0xF8, sizeof(oam->bytes));
+    if (clear_baseline) memset(oam->bytes, 0xF8, sizeof(oam->bytes));
 
     for (i = 0u; i < 4u; ++i) sort_y[i] = movement->object_y[i];
     /* E3F4 substitutes bike 3's vertical collision reference when rider 3
@@ -176,6 +178,7 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
         }
     }
 
+    if (order_out != 0) for (i = 0u; i < 4u; ++i) order_out[i] = order[i]; /* ram_0088 */
     /* E17F writes one sorted object into each fixed D8C0 OAM block. */
     for (i = 0u; i < 4u; ++i) {
         const unsigned int bike = order[i];
@@ -187,6 +190,12 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
 
         if (movement->object_active[bike] == 0u) continue;
         pose = selectPose(movement, states, bike, &temp);
+        /* E1F9 clears ram_039F per active rider and E1BE sets it for pose $16; the
+         * ASM walks the sorted slots 3..0, so the lowest active slot wins. */
+        if (marker_039F != 0 && marker_seen == 0u) {
+            *marker_039F = pose == 0x16u ? (uint8_t)oam_base : 0u;
+            marker_seen = 1u;
+        }
         if (pose >= sizeof(s_pose_tile)) {
             unsupported_mask = (uint8_t)(unsupported_mask | (uint8_t)(1u << bike));
             continue;
@@ -217,4 +226,22 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
     }
 
     return unsupported_mask;
+}
+
+uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
+                                      const BikeStateMachineState *states,
+                                      NativeOamState *oam)
+{
+    return buildBikeOam(movement, states, oam, 1, 0, 0);
+}
+
+/* Same E17F pass without resetting OAM first: the race frame only rewrites the
+ * bike blocks and leaves sprites owned by other routines untouched. */
+uint8_t nativeRaceUpdateBikeOam(const BikeMovementState *movement,
+                                const BikeStateMachineState *states,
+                                NativeOamState *oam,
+                                uint8_t order_out[4],
+                                uint8_t *marker_039F)
+{
+    return buildBikeOam(movement, states, oam, 0, order_out, marker_039F);
 }

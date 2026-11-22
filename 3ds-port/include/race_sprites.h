@@ -17,4 +17,12 @@ uint8_t nativeRaceBuildInitialBikeOam(const BikeMovementState *movement,
                                       const BikeStateMachineState *states,
                                       NativeOamState *oam);
 
+/* order_out (optional) receives the E3F4 sorted object order stored in ram_0088;
+ * marker_039F (optional) is the E1F9/E1BE ram_039F value left by the last-drawn rider. */
+uint8_t nativeRaceUpdateBikeOam(const BikeMovementState *movement,
+                                const BikeStateMachineState *states,
+                                NativeOamState *oam,
+                                uint8_t order_out[4],
+                                uint8_t *marker_039F);
+
 #endif

@@ -94,22 +94,32 @@ static uint8_t update_one_bike_state(BikeStateMachineState *s, unsigned x)
             break;
         }
         if (s->timer_state[x] != 0u) break;
-        if ((x | s->global_overheat) == 0u) {
-            uint8_t old = s->remembered_controller;
-            a = (uint8_t)(s->controller_hold & 0xC0u);
-            if (a != 0u) {
-                s->remembered_controller = a;
-                if (old == 0u) {
-                    /* Source branches directly to D9A7 with A still = held. */
+        {
+            int to_d9a7 = 0;
+            if ((x | s->global_overheat) == 0u) {
+                uint8_t old = s->remembered_controller;
+                a = (uint8_t)(s->controller_hold & 0xC0u);
+                if (a != 0u) {
+                    s->remembered_controller = a;
+                    if (old == 0u) {
+                        /* D99C TYA/BEQ D9A7: A = old = 0, so the DEC at D9A7 runs and
+                         * D9AA sees A = 0 whatever ram_003F is. */
+                        to_d9a7 = 1;
+                    } else {
+                        s->remembered_controller = old;
+                    }
                 } else {
-                    s->remembered_controller = old;
+                    s->remembered_controller = 0u;
                 }
+            }
+            if (to_d9a7) {
+                --s->previous_x[x];
+                a = 0u;
             } else {
-                s->remembered_controller = 0u;
+                a = (uint8_t)(s->frame_counter & 0x0Fu);
+                if (a == 0u) --s->previous_x[x];
             }
         }
-        a = (uint8_t)(s->frame_counter & 0x0Fu);
-        if (a == 0u) --s->previous_x[x];
         a &= 0x07u;
         if (a == 0u) s->vertical_state[x] ^= 0x01u;
         a = (uint8_t)(s->previous_x[x] - 0x08u);
