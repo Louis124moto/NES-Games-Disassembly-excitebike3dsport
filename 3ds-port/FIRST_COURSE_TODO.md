@@ -27,10 +27,10 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### B. Decode first-course data
 - [x] Trace the first-course stream/template sources: $ED3A/$ED40 selects stream 0 at $ED46; the next stream begins at $EE59; $F063/$F087 supplies template pointers. Keep palette list $12 separate from geometry.
-- [x] Extract the complete raw two-pass stream to extracted/course1_geometry.json: 1,335 ordered columns, six source pages per column, all 18 `$0300-$0311` buffer bytes, `$03A8` spawn requests, stream counters, raw tile IDs, ring/PPU coordinates, stream offsets and template addresses. Stop on the original $F638 / $03BC completion signal.
+- [x] Extract the complete raw two-pass stream to extracted/course1_geometry.json: 1,335 ordered columns, six source pages per column, all 18 `$0300-$0311` buffer bytes, `$03A8` spawn requests, stream counters, raw track-page bytes, ring/PPU coordinates, stream offsets and template addresses. Stop on the original $F638 / $03BC completion signal.
 - [x] Add 3ds-port/tools/read_course.py: strict complete-file validation, six-band hex map, diagnostic glyph map, per-column inspection and CSV export.
 - [ ] Differentially replay the exact first-course initial state frame-by-frame against F4FF through $F638; the test has been added and awaits CI confirmation.
-- [ ] Interpret raw tile IDs into semantic surface/elevation/ramp/obstacle/collision structures and connect those structures to the native runtime.
+- [ ] Interpret raw track-page bytes into semantic surface/elevation/ramp/obstacle/collision structures and connect those structures to the native runtime.
 - [ ] Keep later courses out of the first implementation.
 
 ### C. Native presentation
