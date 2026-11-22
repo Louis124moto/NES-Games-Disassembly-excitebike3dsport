@@ -27,17 +27,17 @@ The goal is behavioral fidelity, not merely a similar-looking game. No approxima
 
 See [NATIVE_PORT_ARCHITECTURE.md](3ds-port/NATIVE_PORT_ARCHITECTURE.md) for the runtime boundary and module design, [PORTING_RULES.md](3ds-port/PORTING_RULES.md) for translation and verification rules, and [TODO.md](3ds-port/TODO.md) for the controlling roadmap.
 
-## Current status — 2026-11-19
+## Current status — 2026-11-22
 
 <details>
 <summary>Evidence-based status</summary>
 
-- **Stage 1 — asset extraction:** accepted by owner decision on 2026-11-17, with verification debt. The extractor/asset inspector is a development utility, not the final game and not a prerequisite that the released game must run at startup.
-- **Stage 2 — native menus/front-end:** in progress and not accepted. Some source-derived native menu/input/timer/transition functions exist and have differential tests, but the complete menu, renderer, editor, save/load flow and application integration are not done.
-- **Stage 3 — first playable race:** blocked until Stage 2 is accepted. Native C slices exist for player speed control, acceleration/deceleration, terrain gating, temperature/overheat and movement. They are not a complete physics loop or playable race.
-- **Runtime boundary:** the emulator/recompiler gameplay runtime has been removed from the active 3DS build. The host-only 6502 oracle is test tooling. The current 3DS application is still an asset inspector, not a playable native Excitebike game.
-- **Differential evidence:** the recorded native physics/movement slices total 1,798,992 reference vectors. The verified code revision `f214e5bbc96473896ca3abbbbf9e8cb6c8cc05f8` passed host differential CI [44585477913](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585477913) and the New 3DS build [44585478080](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44585478080). These results validate only the tested slices, not a complete game.
-- **Latest documentation commit before this rewrite:** `639554501e839b8758776bbd01b691f58eb9cc99`.
+- **Stage 1 — asset extraction:** accepted by owner decision on 2026-11-17, with verification debt.
+- **Stage 2 — native menus/front-end:** the title, selector and design baseline was accepted by the owner for race-engine work on 2026-11-19. Optional editor and tape save/load screens are deferred; some transitions and visual/hardware validation remain.
+- **Stage 3 — first playable race:** in progress. Multiple isolated native C systems now have host regression or ASM differential coverage, including bike movement, opponent logic, course-stream decoding, and pause/finish control. The complete race-frame scheduler, integration, track rendering, and end-to-end play are still unfinished.
+- **Runtime boundary:** the 3DS target uses native C modules. The 6502 core is confined to host-side differential tests and is not part of the 3DS source glob or runtime.
+- **Playability:** the application is not yet a playable race. The native race session and initial scene can be prepared/rendered, but the complete per-frame race update and bike/track presentation are not integrated.
+- **Assembler dependencies:** the legacy Excitebike/assemble.sh script is optional. Native builds and host differential tests do not require cc65 or Lua; the host workflow reconstructs the reference PRG with 3ds-port/tools/asm_to_prg.py.
 
 </details>
 
@@ -46,8 +46,8 @@ See [NATIVE_PORT_ARCHITECTURE.md](3ds-port/NATIVE_PORT_ARCHITECTURE.md) for the 
 Stages are sequential. Do not start a later stage until the current one meets its acceptance gate.
 
 1. **Stage 1 — source asset/data extraction.** Keep the accepted extractor and close its relevant verification debt. Extract only source-confirmed data into documented native formats. Keep the inspector separable from the game.
-2. **Stage 2 — native menus and front-end.** Implement title, course selector, design menu/editor, save/load, transitions, menu state flow, visuals, animation and sound in native C. Integrate them into the actual game loop. No PPU/NMI/register emulation.
-3. **Stage 3 — first complete race.** Implement one original course end-to-end: track, player bike, opponents, input, physics, collisions, heat, race timing, finish, scoring and results. Compare per-frame behavior against original ASM.
+2. **Stage 2 — native menus and front-end.** The title, course selector and design/options baseline is accepted for race-engine work. Optional editor and tape save/load screens are deferred; complete the remaining race-entry transitions and visual/hardware validation in native C. No PPU/NMI/register emulation.
+3. **Stage 3 — first complete race.** In progress. Implement one original course end-to-end: track, player bike, opponents, input, physics, collisions, heat, race timing, finish, scoring and results. Existing isolated C routines do not count as a playable race until integrated and compared per frame against original ASM.
 4. **Stage 4 — remaining original game.** Port the other courses, modes, editor interactions and all remaining original flows in source-confirmed order.
 5. **Stage 5 — faithful release acceptance.** Validate complete sessions on New Nintendo 3DS and, where supported, original 3DS; verify visuals, audio, input, stability and frame pacing; publish the faithful `.3dsx`.
 6. **After acceptance — enhanced branch.** Only then create `enhanced` from the accepted `main` commit. Keep optional improvements out of the faithful baseline.
