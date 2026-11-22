@@ -31,7 +31,7 @@ def byte_value(value: Any, where: str) -> int:
 
 
 def validate_course(data: dict[str, Any]) -> list[dict[str, Any]]:
-    if data.get("schema") != "excitebike.first-course-geometry.v1":
+    if data.get("schema") != "excitebike.first-course-geometry.v2":
         raise ValueError("unsupported or missing course geometry schema")
     if "F638" not in data.get("termination", ""):
         raise ValueError("missing source-defined F638 course termination metadata")
@@ -51,10 +51,17 @@ def validate_course(data: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError(f"column {ordinal}: expected exactly six vertical bands")
         for band, value in enumerate(values):
             byte_value(value, f"column {ordinal}, band {band}")
-        for field in ("course_class", "ring_column", "ppu_row", "nametable"):
+        for field in ("course_class", "ring_column", "ppu_row", "nametable",
+                      "next_column_00EB", "repeat_counter_0057", "counter_03A4",
+                      "counter_03A5", "flag_03A2", "flag_03BC", "spawn_request_03A8"):
             if field not in column:
                 raise ValueError(f"column {ordinal}: missing {field}")
             byte_value(column[field], f"column {ordinal}, {field}")
+        buffer = column.get("stream_buffer_0300_0311")
+        if not isinstance(buffer, list) or len(buffer) != 0x12:
+            raise ValueError(f"column {ordinal}: expected all 18 bytes of the F4FF stream buffer")
+        for offset, value in enumerate(buffer):
+            byte_value(value, f"column {ordinal}, stream buffer byte {offset}")
     return columns
 
 
@@ -62,7 +69,6 @@ def render_hex(columns: list[dict[str, Any]], start: int, count: int) -> str:
     stop = min(len(columns), start + count) if count else len(columns)
     if start >= len(columns):
         raise ValueError(f"start column {start} is outside the {len(columns)}-column course")
-    width = len(str(stop - 1))
     lines = [f"columns {start}..{stop - 1} (hex tile IDs; band 0 is uppermost)"]
     lines.append("band | " + " ".join(f"{i:02X}" for i in range(start, stop)))
     lines.append("-----+" + "-" * (1 + 3 * (stop - start)))
@@ -93,9 +99,12 @@ def print_column(column: dict[str, Any]) -> None:
     for field in ("course_class", "ring_column", "ppu_row", "nametable",
                   "stream_offset_before", "stream_address_before",
                   "stream_offset_after", "template_id", "template_address",
-                  "template_offset_next"):
+                  "template_offset_next", "next_column_00EB", "repeat_counter_0057",
+                  "counter_03A4", "counter_03A5", "flag_03A2", "flag_03BC",
+                  "spawn_request_03A8"):
         if field in column:
             print(f"  {field}: {column[field]}")
+    print("  stream buffer $0300-$0311: " + " ".join(column["stream_buffer_0300_0311"]))
     print("  vertical bands (0=top, 5=bottom):")
     semantics = column.get("semantics_by_band", [])
     for band, value in enumerate(column["values_by_band"]):
@@ -108,11 +117,18 @@ def write_csv(path: Path, columns: list[dict[str, Any]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as output:
         writer = csv.writer(output)
         writer.writerow(["ordinal", "course_class", "ring_column", "ppu_row",
-                         "nametable", *[f"band_{i}" for i in range(BANDS)]])
+                         "nametable", "next_column_00EB", "repeat_counter_0057",
+                         "counter_03A4", "counter_03A5", "flag_03A2", "flag_03BC",
+                         "spawn_request_03A8", *[f"band_{i}" for i in range(BANDS)],
+                         *[f"buffer_{0x300 + i:04X}" for i in range(0x12)]])
         for column in columns:
             writer.writerow([column["ordinal"], column["course_class"],
                              column["ring_column"], column["ppu_row"],
-                             column["nametable"], *column["values_by_band"]])
+                             column["nametable"], column["next_column_00EB"],
+                             column["repeat_counter_0057"], column["counter_03A4"],
+                             column["counter_03A5"], column["flag_03A2"],
+                             column["flag_03BC"], column["spawn_request_03A8"],
+                             *column["values_by_band"], *column["stream_buffer_0300_0311"]])
 
 
 def main() -> int:
