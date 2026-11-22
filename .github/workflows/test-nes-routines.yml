@@ -78,7 +78,7 @@ jobs:
         # nes_ppu_render.c must be linked in too (missing since this step was
         # added on 2026-10-31; the step never executed before 2026-11-01 because
         # the cache test failed earlier in the pipeline).
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/course_asset_export.c 3ds-port/source/race_course_stream.c 3ds-port/source/race_course_stream_data.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
       - name: Test native CHR exports
         run: ./test_asset_export
       - name: Compile race setup test
