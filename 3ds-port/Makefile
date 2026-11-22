@@ -19,7 +19,8 @@ CFLAGS := -g -Wall -Wextra -O2 -mword-relocations -ffunction-sections -fdata-sec
 CFLAGS += $(INCLUDE) -D__3DS__
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
-LDFLAGS := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+# Recursive expansion is required: OUTPUT is assigned below, after this line.
+LDFLAGS = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(OUTPUT).map
 LIBS := -lctru -lm
 LIBDIRS := $(CTRULIB)
 
