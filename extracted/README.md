@@ -4,7 +4,7 @@ This directory contains source-derived, editable level data. It does not contain
 
 ## First course
 
-- `course1_geometry.json` — **1,334 ordered columns**, each carrying six 64-byte vertical-band tile IDs, PPU/ring coordinates and source provenance.
+- `course1_geometry.json` — **1,335 ordered columns**, each carrying six 64-byte vertical-band tile IDs, PPU/ring coordinates and source provenance.
 - The source stream starts at `$ED46`; the next stream pointer is `$EE59`, so stream 0 occupies 275 bytes. Its first byte sets the repeat counter to `$02`.
 - The JSON preserves raw tile IDs, course/ring coordinates, PPU coordinates, stream offsets, template IDs and source addresses.
 - Extraction stops at the original `$F638` path when template 9 reduces `$0057` to zero and sets `$03BC`. This is the source-defined two-pass completion signal; it is not a guessed column limit.
