@@ -25,6 +25,7 @@ static RaceWorld s_raceWorld;
 static uint8_t s_raceMultiplayer;
 static NativeRngState s_raceRng;
 static int s_raceSessionReady;
+static uint32_t s_raceUnsupportedMask;
 
 static void rememberExecutablePath(const char *path)
 {
@@ -64,6 +65,7 @@ void gameInit(const char *executablePath)
     nativeRngReset(&s_raceRng); /* C1CE seed; startup wait-loop advances are still pending. */
     memset(&s_raceSession, 0, sizeof(s_raceSession));
     s_raceSessionReady = 0;
+    s_raceUnsupportedMask = 0u;
     s_extractorInitialized = 0;
     s_menuDirty = 1;
     memset(&s_menuAssets, 0, sizeof(s_menuAssets));
@@ -118,8 +120,19 @@ void gameUpdate(void)
      * Otherwise menu timers/setup commands continue advancing underneath the race
      * and can consume gameplay inputs or mutate the selected mode/state. */
     if (s_raceSessionReady) {
-        (void)nativeRaceSessionStepFrame(&s_raceSession, &s_raceWorld,
-                                         inputNesHeld(&s_input));
+        const uint32_t previousUnsupported = s_raceUnsupportedMask;
+        s_raceUnsupportedMask |= nativeRaceSessionStepFrame(
+            &s_raceSession, &s_raceWorld, inputNesHeld(&s_input));
+        /* Keep out-of-domain source states observable instead of silently
+         * presenting a partially simulated frame as a verified result. */
+        if (s_raceUnsupportedMask != previousUnsupported) {
+            char warning[160];
+            (void)snprintf(warning, sizeof(warning),
+                           "NATIVE RACE: unsupported stage mask %08lX\n"
+                           "Simulation continues for diagnosis; frame is not fully verified.",
+                           (unsigned long)s_raceUnsupportedMask);
+            rendererPrintBottom(warning);
+        }
         s_menuDirty = 1;
         return;
     }
