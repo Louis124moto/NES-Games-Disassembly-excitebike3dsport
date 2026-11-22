@@ -33,6 +33,8 @@ def byte_value(value: Any, where: str) -> int:
 def validate_course(data: dict[str, Any]) -> list[dict[str, Any]]:
     if data.get("schema") != "excitebike.first-course-geometry.v1":
         raise ValueError("unsupported or missing course geometry schema")
+    if "F638" not in data.get("termination", ""):
+        raise ValueError("missing source-defined F638 course termination metadata")
     summary = data.get("summary")
     columns = data.get("columns")
     if not isinstance(summary, dict) or not isinstance(columns, list):
