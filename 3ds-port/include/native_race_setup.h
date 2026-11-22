@@ -7,7 +7,7 @@
 
 /* Semantic inputs consumed by C875 from setup state established earlier. */
 typedef struct NativeRaceSetupInput {
-    uint8_t multiplayer_flag;       /* ram_03F2: nonzero enables opponent slots/systems */
+    uint8_t multiplayer_flag;       /* ram_03F2: nonzero initializes slots 1..3 during C875; identity is fixed separately */
     uint8_t course_index_0043;       /* selected course; this initializer accepts course 0 only */
     uint8_t setup_index_0041;        /* C905: first-course path is below $08 */
     uint8_t transition_flag_0046;    /* ram_0046, consumed by sub_C522/sub_CB13 */
@@ -34,7 +34,7 @@ typedef struct NativeRaceBikeSetup {
     uint8_t active;
     uint8_t object_origin_x;
     uint8_t setup_parameter;
-    uint8_t role;                 /* slot 0 player; slots 1..3 opponents */
+    uint8_t role;                 /* slot identity: slot 0 player; slots 1..3 AI, even when not currently active */
 } NativeRaceBikeSetup;
 
 typedef struct NativeRaceSetupState {
