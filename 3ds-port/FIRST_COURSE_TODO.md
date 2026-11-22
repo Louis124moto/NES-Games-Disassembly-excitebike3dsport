@@ -15,12 +15,15 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### A. Complete the minimum native race simulation
 - [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
-- [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.
-  - [x] Translate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM. This is a standalone verified routine, not yet integrated into the race-frame scheduler.
+- [x] Port the state handlers called by `sub_D918` and the source-ordered object-update chain; preserve the exact call order. The remaining C875 setup tail is tracked separately below.
+  - [x] Translate and integrate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM.
 - [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
-- [ ] Complete steering, braking, posture, jump/landing, heat/overheat, collision/crash/recovery and opponent decisions.
-- [ ] Differential-test each routine and deterministic whole-frame scenarios against the host-only original-ASM oracle.
-- [ ] Integrate the semantic race update into the native application loop. No NES RAM image or CPU execution in the shipped runtime.
+- [x] Complete and integrate the core steering, braking, posture, jump/landing, heat/overheat, bike-contact, obstacle-hit, collision, crash/recovery and opponent-decision routines in native C.
+- [x] Differential-test the routines and deterministic source-ordered whole-frame scenarios against the host-only original-ASM oracle. This includes 50,000 phase-zero plus 100,000 all-phase E96C/DD06 jump frames; the test caught and fixed the missing E97D Y store before the phase-one early branch.
+- [x] Integrate the semantic race update into the native application loop. No NES RAM image or CPU execution is used in the shipped runtime.
+- [x] Integrate the semantic `BikeTemperatureState` into E359, including native temperature-bar OAM output; the full race-loop differential test passes after this wiring.
+- [ ] Finish the remaining C875 setup tail and confirm the first-course player/opponent slot identity from the complete setup path.
+- [ ] Validate obstacle collision inputs against the fully decoded first-course geometry; the collision algorithms are ported, but the complete geometry source is not yet decoded.
 
 ### B. Decode first-course data
 - [ ] Trace the first-course geometry/data source and every table/pointer it consumes; distinguish palette list $12 from course data.
@@ -84,8 +87,10 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port the source-derived first-course `C875` path (`C87F-C8DC`, `C522/CB13`, `C90E/DF7F`, and `C92C/C53E`) into native semantic state; preserve the `$0018` zero-page wrap and selected `$0078` half-lock operation. `C905` confirms the first-course setup index is `$02`, so the `$08+` `C53A` branch is not taken. Host tests and New 3DS builds passed through commit `bfa160ca3fbc1f70674315e2afeb652532bda6a9`.
 - [ ] Trace and port the remaining `C875` tail and opponent initialization/AI: `C522/C53A`, `DA9F/DAE3`, `DB50`, `DB95`, `D000`, and every table they consume. Confirm which slots are active and how player identity is assigned.
 - [x] Port the semantic state transitions of `sub_DD8D` for the countdown/start handshake; its OAM-only `CCDD/CD13` work is represented as native renderer events. Host regression passed in CI.
-- [ ] Port heat/overheat integration beyond the countdown handshake; the current temperature and speed helpers remain isolated slices.
-- [ ] Port collision detection, crash/recovery, obstacle interaction and finish-state transitions from their actual callers.
+- [x] Integrate heat/overheat into E359 using the semantic temperature state and native OAM output; verified by the full race-loop ASM differential suite.
+- [x] Integrate bike-to-bike contacts (DFD5), obstacle-hit checks (E09F), bike collision checks (E4C8), crash recovery (DDD1) and collision sprite hiding (E42B) at their source-ordered race-loop call sites; the race-frame and full-loop ASM differential tests pass.
+- [ ] Complete source-derived first-course obstacle/terrain geometry and validate every obstacle-hit input against it.
+- [ ] Port the source-faithful finish/results state transition (kept separate from the physics milestone).
 - [ ] Build deterministic race-frame fixtures and compare all semantic bike state against the original ASM oracle over long frame sequences.
 
 ### 3. Recover the actual first-course data (do not guess geometry)
@@ -204,3 +209,13 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Fix the missing E97D-equivalent store of updated object Y before the phase-one jump branch. Without it, the ASM wrapped the Y coordinate correctly and entered jump setup, while native C kept the pre-addition value.
 - [x] Validate 50,000 phase-zero and 100,000 all-phase randomized four-bike vectors against the host-only original-ASM oracle.
 - [x] Verify the New 3DS devkitARM build after the fix.
+
+
+### Full native physics integration — 2026-11-22
+
+- [x] Fix E96C phase-one jump Y wrap: commit `8248314e768368d31b16cf73d04e8d028a9849c1` stores the E97D result before the jump branch.
+- [x] Extend E96C/DD06 differential coverage to 100,000 randomized all-phase frames in addition to 50,000 phase-zero frames.
+- [x] Route E359 through `BikeTemperatureState` and `bikePhysicsUpdateTemperature`; generate the four temperature-bar sprites natively in `race_loop.c`.
+- [x] Verify race-loop, AI, race-frame collision/crash/obstacle, vertical recovery, DA26 movement and all-phase jump tests against the original ASM.
+- [x] Verify the devkitARM/New 3DS target build.
+- [ ] Remaining physics dependency: decode the complete first-course obstacle/terrain geometry and validate the already-ported obstacle-hit algorithm with real course inputs.
