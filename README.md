@@ -87,7 +87,9 @@ The original NES disassembly can be assembled separately for source/reference wo
 sh Excitebike/assemble.sh
 ```
 
-This is not part of the 3DS runtime or a release dependency.
+This legacy helper is optional and is **not** part of the native 3DS build, host differential tests, or release dependency chain. It requires the original helper scripts plus **cc65 2.19** (`ca65` and `ld65`) and **Lua 5.3.x**. Its setup scripts may offer interactive dependency installation, so it is not suitable for unattended CI.
+
+The host differential workflow does **not** invoke that assembler: `3ds-port/tools/asm_to_prg.py` reconstructs the 16 KiB reference PRG from the byte annotations already present in `Excitebike/bank_FF.asm`, then the host-only 6502 oracle executes reference routines. Consequently, installing cc65 or Lua is not required to build the native 3DS application or run the differential suite.
 
 ## Acceptance standard
 
