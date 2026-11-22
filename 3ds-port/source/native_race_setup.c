@@ -15,10 +15,9 @@ static const uint8_t s_course0_parameters[2][3] = {
 static void split_decimal(uint8_t value, uint8_t *quotient, uint8_t *remainder)
 {
     *quotient = (uint8_t)(value / 10u);
-    /* DFA2's final ADC runs with carry clear after the terminating SBC.
-     * Its A result is therefore (value % 10) - 1, not a conventional
-     * decimal remainder. C935 uses that biased digit as a tile index. */
-    *remainder = (uint8_t)((value % 10u) - 1u);
+    /* DFA2 subtracts ten until negative, then adds ten back with carry clear;
+     * this returns the ordinary base-10 remainder. */
+    *remainder = (uint8_t)(value % 10u);
 }
 
 /* C935 runs twice during C875. The first output from C90E is transient;
