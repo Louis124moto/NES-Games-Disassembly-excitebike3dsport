@@ -230,7 +230,7 @@ jobs:
         run: |
           cd 3ds-port
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_loop.c source/race_world.c source/race_frame.c source/race_frame_control.c source/race_course_stream.c source/race_course_stream_data.c source/race_spawn.c source/race_ai.c source/race_script.c source/race_countdown.c source/race_sprites.c source/race_vertical.c source/bike_physics.c source/nes_routines.c source/native_race_session.c source/native_race_setup.c source/native_rng.c source/track.c source/bike_state.c source/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
-          /tmp/test_race_loop /tmp/prg.bin 60 2500
+          /tmp/test_race_loop /tmp/prg.bin 80 2500
 
       - name: Differentially test native opponent AI (CED0, D018, D000, CF0C and helpers) against original ASM
         run: |

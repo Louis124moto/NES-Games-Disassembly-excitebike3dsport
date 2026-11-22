@@ -104,6 +104,8 @@ int main(int argc, char **argv)
     cpu.read_hook = read2002;
     for (seq = 0u; seq < nseq; ++seq) {
         static RaceWorld w, step, before;
+        unsigned finish_at = (seq & 1u) ? 200u + (nb() % 400u) : 0xFFFFFFFFu;
+        uint8_t finish_kind = (uint8_t)(1u + (nb() & 1u));
         initWorld(&w);
         worldToRam(&w, &cpu);
         for (f = 0u; f < nframes; ++f) {
@@ -112,6 +114,11 @@ int main(int argc, char **argv)
             if ((nb() & 7u) == 0u) hold = (uint8_t)(hold & 0xF0u);
             *raceWorldByte(&w, 0x14) = hold; cpu.ram[0x14] = hold;
             *raceWorldByte(&w, 0x15) = 0u; cpu.ram[0x15] = 0u;
+            if (f == finish_at) { /* force the finished state as EAB5/DF79 would */
+                uint8_t t = (uint8_t)(nb() & 0x1Fu);
+                *raceWorldByte(&w, 0x52) = finish_kind; cpu.ram[0x52] = finish_kind;
+                *raceWorldByte(&w, 0x32) = t; cpu.ram[0x32] = t;
+            }
             raceLoopNmiTick(&w);
             if ((cpu.ram[0x3B1] | cpu.ram[0x3B2]) == 0u) {
                 cpu.ram[0x3F] = (uint8_t)(cpu.ram[0x3F] + 1u);
