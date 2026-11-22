@@ -127,8 +127,8 @@ jobs:
 
       - name: Extract and validate complete editable first-course geometry
         run: |
-          python3 3ds-port/tools/extract_first_course.py --output /tmp/course1_geometry.json
-          python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --validate
+          python3 3ds-port/tools/extract_first_course.py --check
+          python3 3ds-port/tools/read_course.py --validate
 
       - name: Build original PRG for native differential tests
         run: |
