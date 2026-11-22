@@ -44,6 +44,14 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
         self.assertIn("wildcard $(dir)/*.c", makefile)
         self.assertTrue((PORT / "source/bike_physics.c").exists())
 
+    def test_linker_map_uses_resolved_output_path(self):
+        makefile = (PORT / "Makefile").read_text(encoding="utf-8")
+        # OUTPUT is assigned below LDFLAGS. A simply-expanded := would freeze
+        # the automatic $* as empty and emit a useless ".map" in the build cwd.
+        self.assertIn("LDFLAGS = -specs=3dsx.specs", makefile)
+        self.assertIn("-Wl,-Map,$(OUTPUT).map", makefile)
+        self.assertNotIn("$(notdir $*.map)", makefile)
+
 
 if __name__ == "__main__":
     unittest.main()
