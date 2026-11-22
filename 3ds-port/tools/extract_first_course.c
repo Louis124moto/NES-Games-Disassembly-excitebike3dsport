@@ -165,8 +165,8 @@ int main(int argc, char **argv)
             printf("    %s{ \"ordinal\": %u, \"course_class\": \"$%02X\", \"ring_column\": \"$%02X\", \"ppu_row\": \"$%02X\", \"nametable\": \"$%02X\", ",
                    emitted == 0u ? "" : ",\n", emitted, course_class,
                    old_column, old_row, old_nametable);
-            printf("\"stream_offset_before\": %u, \"stream_offset_after\": %u, ",
-                   old_stream_offset, stream.stream_offset_00ED);
+            printf("\"stream_offset_before\": %u, \"stream_address_before\": \"$%04X\", \"stream_offset_after\": %u, ",
+                   old_stream_offset, (unsigned)(stream_base + old_stream_offset), stream.stream_offset_00ED);
             printf("\"template_id\": %u, \"template_address\": \"$%04X\", \"template_offset_next\": %u, ",
                    stream.template_00EE, template_addr, stream.template_offset_00EF);
             printf("\"values_by_band\": [");
