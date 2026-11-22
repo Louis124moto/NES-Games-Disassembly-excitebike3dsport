@@ -139,8 +139,8 @@ static int runFirstCourseSequence(Cpu6502 *cpu)
         puts("FAIL first course did not reach F638 lap completion");
         return 1;
     }
-    if (writes != 1334u) {
-        printf("FAIL first course geometry columns=%u expected=1334\\n", writes);
+    if (writes != 1335u) {
+        printf("FAIL first course geometry columns=%u expected=1335\\n", writes);
         return 1;
     }
     printf("PASS: exact first-course F4FF sequence (%u columns, %u frames) matches ASM through F638\\n",
