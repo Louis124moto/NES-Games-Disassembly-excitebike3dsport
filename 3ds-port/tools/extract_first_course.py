@@ -145,7 +145,7 @@ def main() -> int:
             temp_dir = Path(temporary)
             base, size = verify_against_asm(temp_dir)
             data = compile_and_extract(args.max_columns, temp_dir)
-        data["source"]["embedded_stream_base"] = f"${base:04X}"
+        data["source"]["embedded_rom_data_base"] = f"${base:04X}"
         data["source"]["embedded_stream_size"] = size
         rendered = json.dumps(data, indent=2) + "\n"
 
