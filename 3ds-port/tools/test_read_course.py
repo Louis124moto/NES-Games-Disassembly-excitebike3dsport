@@ -37,11 +37,11 @@ class CourseReaderTests(unittest.TestCase):
 
     def test_hex_reader_displays_raw_ids(self):
         output = render_hex(validate_course(sample()), 0, 1)
-        self.assertIn("3B 3C 3D E4 E6 FC", output)
+        self.assertIn("0  | 3B", output)\n        self.assertIn("5  | FC", output)
 
     def test_glyph_reader_is_explicitly_diagnostic(self):
         output = render_glyphs(validate_course(sample()), 0, 1)
-        self.assertIn("#=-.^ ", output)
+        self.assertIn("0: #", output)\n        self.assertIn("4: ^", output)
         self.assertIn("not NES artwork", output)
 
 
