@@ -38725,10 +38725,39 @@
         "other_source_tile_code",
         "other_source_tile_code"
       ]
+    },
+    {
+      "ordinal": 1334,
+      "course_class": "$00",
+      "ring_column": "$2A",
+      "ppu_row": "$0A",
+      "nametable": "$25",
+      "stream_offset_before": 129,
+      "stream_address_before": "$EDC7",
+      "stream_offset_after": 2,
+      "template_id": 0,
+      "template_address": "$F0AB",
+      "template_offset_next": 7,
+      "values_by_band": [
+        "$3B",
+        "$3C",
+        "$3D",
+        "$3B",
+        "$3C",
+        "$3D"
+      ],
+      "semantics_by_band": [
+        "road",
+        "road",
+        "road",
+        "road",
+        "road",
+        "road"
+      ]
     }
   ],
   "summary": {
-    "column_count": 1334,
+    "column_count": 1335,
     "frames_processed": 1334,
     "complete": true,
     "cycle_detected": false,
