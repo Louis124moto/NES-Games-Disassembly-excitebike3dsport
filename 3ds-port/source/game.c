@@ -122,7 +122,8 @@ void gameUpdate(void)
     if (s_raceSessionReady) {
         const uint32_t previousUnsupported = s_raceUnsupportedMask;
         s_raceUnsupportedMask |= nativeRaceSessionStepFrame(
-            &s_raceSession, &s_raceWorld, inputNesHeld(&s_input));
+            &s_raceSession, &s_raceWorld,
+            inputNesHeld(&s_input), inputNesPressed(&s_input));
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
         if (s_raceUnsupportedMask != previousUnsupported) {
