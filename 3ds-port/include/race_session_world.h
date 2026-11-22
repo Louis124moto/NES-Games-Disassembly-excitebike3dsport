@@ -5,14 +5,13 @@
 #include "native_race_session.h"
 #include "race_world.h"
 
-/* Seed the unified race world from the composed first-course session.
- * Known gap (documented in FIRST_COURSE_TODO.md): the $0400-$0446 HUD/column
- * leftovers of ECE4/D13F/D0C6/D0F4 are not yet produced natively and start zeroed. */
+/* Seed the unified race world from the composed first-course session,
+ * including the C820 CPU course lookup pages and the native RNG state. */
 void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multiplayer_flag,
                                  RaceWorld *world);
-/* One native race frame: NES-layout held buttons in, OAM copied back to the session
- * and movement/state structs refreshed. Returns the raceLoopStep unsupported mask. */
+/* One native race frame: NES-layout held/pressed buttons in, semantic state
+ * and OAM copied back to the session. Returns the raceLoopStep unsupported mask. */
 uint32_t nativeRaceSessionStepFrame(NativeRaceSession *session, RaceWorld *world,
-                                    uint8_t nes_hold);
+                                    uint8_t nes_hold, uint8_t nes_press);
 
 #endif
