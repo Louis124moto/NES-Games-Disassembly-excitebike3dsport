@@ -21,6 +21,7 @@ Check that the committed file is reproducible:
 
 ```sh
 python3 3ds-port/tools/extract_first_course.py --check
+python3 3ds-port/tools/extract_first_course.py --emit-c /tmp/course1_geometry.h
 ```
 
 Inspect the level as raw track-page bytes, six bands from top to bottom:
@@ -35,4 +36,4 @@ python3 3ds-port/tools/read_course.py --csv /tmp/course1.csv
 
 The glyph view is a diagnostic shorthand, not a reconstruction of NES graphics. Use the hexadecimal view when exact raw byte values matter. The six bands are the original CPU-side `$0400-$057F` pages, not a decoded NES pixel image.
 
-Edit the JSON to experiment with course geometry. Re-run the reader to inspect changes. Re-running the extractor overwrites the generated JSON with source-derived data. Runtime gameplay still consumes compiled native course data; editing this JSON alone does not silently alter the 3DS executable. Generate a C header explicitly with `--emit-c PATH` when integrating edited geometry into the native runtime.
+Edit the JSON to experiment with course geometry. Re-run the reader to inspect changes. Re-running the extractor overwrites the generated JSON with source-derived data. Runtime gameplay still consumes compiled native course data; editing this JSON alone does not silently alter the 3DS executable. `--emit-c PATH` exports the complete extracted track-page arrays, stream metadata, spawn-request flags and 18-byte F4FF buffers to a C header for native runtime integration.
