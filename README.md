@@ -34,9 +34,9 @@ See [NATIVE_PORT_ARCHITECTURE.md](3ds-port/NATIVE_PORT_ARCHITECTURE.md) for the 
 
 - **Stage 1 — asset extraction:** accepted by owner decision on 2026-11-17, with verification debt.
 - **Stage 2 — native menus/front-end:** the title, selector and design baseline was accepted by the owner for race-engine work on 2026-11-19. Optional editor and tape save/load screens are deferred; some transitions and visual/hardware validation remain.
-- **Stage 3 — first playable race:** in progress. Multiple isolated native C systems now have host regression or ASM differential coverage, including bike movement, opponent logic, course-stream decoding, and pause/finish control. The complete race-frame scheduler, integration, track rendering, and end-to-end play are still unfinished.
+- **Stage 3 — first playable race:** in progress. The source-ordered native race-frame scheduler (`race_loop.c`) is integrated through a session-to-world bridge in `game.c`. It runs the translated race stages, including bike-state dispatch, countdown, speed/vertical/movement updates, course-stream update, collision checks, sprite generation/culling and finish-related routines. The scheduler has stage-by-stage differential coverage against the original ASM; the session bridge has a 3,000-frame host integration test.
 - **Runtime boundary:** the 3DS target uses native C modules. The 6502 core is confined to host-side differential tests and is not part of the 3DS source glob or runtime.
-- **Playability:** the application is not yet a playable race. The native race session and initial scene can be prepared/rendered, but the complete per-frame race update and bike/track presentation are not integrated.
+- **Playability:** still not accepted as playable. The native frame scheduler now runs in the application, but verified first-course geometry and native track rendering, complete controls/heat/crash/AI behavior, finish/results flow, audio and physical New 3DS validation remain incomplete.
 - **Assembler dependencies:** the legacy Excitebike/assemble.sh script is optional. Native builds and host differential tests do not require cc65 or Lua; the host workflow reconstructs the reference PRG with 3ds-port/tools/asm_to_prg.py.
 
 </details>
