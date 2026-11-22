@@ -114,6 +114,16 @@ void gameUpdate(void)
         return;
     }
 
+    /* Once the first-course session starts, the menu state machine must stop.
+     * Otherwise menu timers/setup commands continue advancing underneath the race
+     * and can consume gameplay inputs or mutate the selected mode/state. */
+    if (s_raceSessionReady) {
+        (void)nativeRaceSessionStepFrame(&s_raceSession, &s_raceWorld,
+                                         inputNesHeld(&s_input));
+        s_menuDirty = 1;
+        return;
+    }
+
     if ((s_input.pressed & KEY_X) != 0u) {
         if (!s_extractorInitialized) {
             assetExtractorInit(s_executablePath);
@@ -147,20 +157,13 @@ void gameUpdate(void)
             s_raceSessionReady = 1;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
-            rendererPrintBottom("FIRST COURSE — NATIVE SCENE READY\n"
-                                "Original background and initial HUD are rendered.\n"
-                                "Bike sprites and the race frame loop are next.\n");
+            rendererPrintBottom("FIRST COURSE — NATIVE RACE\n"
+                                "Native frame simulation is running.\n"
+                                "Track geometry/rendering and full gameplay remain in progress.\n");
         } else {
             rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
                                 "Check the first-course setup input state.\n");
         }
-    }
-
-    if (s_raceSessionReady) {
-        /* Native source-ordered race frame (verified stage by stage against the ASM).
-         * A nonzero mask means a stage left its verified domain; it is never guessed. */
-        (void)nativeRaceSessionStepFrame(&s_raceSession, &s_raceWorld, inputNesHeld(&s_input));
-        s_menuDirty = 1;
     }
 
     if (menuVisualStateChanged(&before, &s_menu)) s_menuDirty = 1;
