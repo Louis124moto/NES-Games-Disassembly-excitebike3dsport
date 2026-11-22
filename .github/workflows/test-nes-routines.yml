@@ -3,6 +3,7 @@ name: Verify NES routine translations
 on:
   push:
     paths:
+      - "README.md"
       - "3ds-port/README.md"
       - "3ds-port/TODO.md"
       - "3ds-port/ASM_FUNCTION_INVENTORY.md"
@@ -90,6 +91,7 @@ on:
       - ".github/workflows/test-nes-routines.yml"
   pull_request:
     paths:
+      - "README.md"
       # Keep PR validation aligned with the native source tree. A source-only
       # fix must run CI even when its regression test file is unchanged.
       - "3ds-port/README.md"
