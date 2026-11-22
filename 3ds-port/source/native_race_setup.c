@@ -15,7 +15,10 @@ static const uint8_t s_course0_parameters[2][3] = {
 static void split_decimal(uint8_t value, uint8_t *quotient, uint8_t *remainder)
 {
     *quotient = (uint8_t)(value / 10u);
-    *remainder = (uint8_t)(value % 10u);
+    /* DFA2's final ADC runs with carry clear after the terminating SBC.
+     * Its A result is therefore (value % 10) - 1, not a conventional
+     * decimal remainder. C935 uses that biased digit as a tile index. */
+    *remainder = (uint8_t)((value % 10u) - 1u);
 }
 
 /* Source C90E-C91D then DF7F: create the seven glyph bytes consumed by C935. */
