@@ -8,6 +8,7 @@ static const uint8_t k_tblC170[4] = { 0x26u, 0x06u, 0x36u, 0x26u };
 void racePauseUpdate(RaceFrameControlState *s)
 {
     uint8_t a;
+    if (s == 0) return;
     s->apu_enable_write = 0u;
     if (s->pause_timer != 0u) {
         s->pause_timer = (uint8_t)(s->pause_timer - 1u);
@@ -37,11 +38,13 @@ void racePauseUpdate(RaceFrameControlState *s)
 
 void raceHoldInput(RaceFrameControlState *s)
 {
+    if (s == 0) return;
     s->input_005C = s->button_hold;
 }
 
 void raceFrameInputStep(RaceFrameControlState *s)
 {
+    if (s == 0) return;
     s->apu_enable_write = 0u;
     if (s->flag_03F7 != 0u) { s->unsupported = 1u; return; }
     racePauseUpdate(s);
@@ -51,6 +54,7 @@ void raceFrameInputStep(RaceFrameControlState *s)
 void raceFinishUpdate(RaceFrameControlState *s)
 {
     unsigned i;
+    if (s == 0) return;
     if (s->timer_0032 == 0u) {
         s->course_id = (uint8_t)(s->course_id + 1u); /* sub_C3AF falls into sub_C3B1 */
         s->frame_flag_0040 = 0u;
