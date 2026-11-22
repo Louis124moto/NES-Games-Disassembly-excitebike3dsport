@@ -122,6 +122,7 @@ int main(int argc, char **argv)
     for (vector = 0u; vector < 100000u; ++vector) {
         BikeMovementState movement;
         BikeStateMachineState states;
+        uint8_t initial_y[4], initial_delta[4], initial_phase[4], initial_action[4];
         int rc;
         memset(&movement, 0, sizeof(movement));
         memset(&states, 0, sizeof(states));
@@ -196,6 +197,10 @@ int main(int argc, char **argv)
             cpu.ram[0x0380u + i] = movement.motion_fraction[i];
             cpu.ram[0x0384u + i] = movement.motion_whole[i];
             cpu.ram[0x038Cu + i] = movement.motion_delta[i];
+            initial_y[i] = movement.object_y[i];
+            initial_delta[i] = states.vertical_delta[i];
+            initial_phase[i] = movement.vertical_phase[i];
+            initial_action[i] = movement.object_action_state[i];
         }
 
         prepare_cpu(&cpu);
@@ -240,6 +245,11 @@ int main(int argc, char **argv)
                        cpu.ram[0x00B8u + i], movement.vertical_phase[i],
                        cpu.ram[0x00A4u + i], movement.object_status[i],
                        cpu.ram[0x00B0u + i]);
+                printf("  input Y=%02X delta=%02X phase=%02X action=%02X; CPU Y=%02X delta=%02X phase=%02X action=%02X; native delta=%02X\\n",
+                       initial_y[i], initial_delta[i], initial_phase[i], initial_action[i],
+                       cpu.ram[0x00B8u + i], cpu.ram[0x00DCu + i],
+                       cpu.ram[0x00A4u + i], cpu.ram[0x0058u + i],
+                       states.vertical_delta[i]);
                 return 1;
             }
         }
