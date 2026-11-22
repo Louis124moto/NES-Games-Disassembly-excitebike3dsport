@@ -87,6 +87,8 @@ def compile_and_extract(max_columns: int, temp_dir: Path) -> dict:
             "increase the limit rather than accepting a partial course")
     if not data["summary"]["complete"]:
         raise RuntimeError("course stream did not reach a stable end/cycle")
+    if not data["columns"]:
+        raise RuntimeError("course stream produced no geometry columns")
     return data
 
 
