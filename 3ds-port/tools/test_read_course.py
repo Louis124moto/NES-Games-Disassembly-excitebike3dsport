@@ -9,6 +9,7 @@ from read_course import render_glyphs, render_hex, validate_course
 def sample():
     return {
         "schema": "excitebike.first-course-geometry.v1",
+        "termination": "F638 source lap completion",
         "columns": [{
             "ordinal": 0, "course_class": "$0A", "ring_column": "$34",
             "ppu_row": "$14", "nametable": "$25",
