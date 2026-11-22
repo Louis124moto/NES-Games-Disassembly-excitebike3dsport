@@ -9,6 +9,7 @@ This directory contains source-derived, editable level data. It does not contain
 - Schema v2 preserves raw track-page bytes, all 18 stream-buffer bytes, `$03A8` spawn requests, `$0057/$03A4/$03A5` counters, template IDs, stream offsets, course/ring coordinates and source addresses.
 - Extraction stops at the original `$F638` path when template 9 reduces `$0057` to zero and sets `$03BC`. This is the source-defined two-pass completion signal; it is not a guessed column limit.
 - `complete: true` means the source-defined F638 lap counter reached zero and set `$03BC`; partial/truncated output is rejected by the reader.
+- `semantics_by_band` contains source-oriented annotations for a few recognized byte classes only. Treat the raw bytes as authoritative; full terrain, ramp, obstacle and collision semantics are still being traced.
 
 Regenerate from the original disassembly and the native C stream decoder:
 
