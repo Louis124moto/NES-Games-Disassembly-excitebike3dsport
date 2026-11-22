@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "asset_export.h"
+#include "course_asset_export.h"
 #include "nes_chr_decode.h"
 #include "nes_ppu_commands.h"
 #include "nes_ppu_render.h"
@@ -356,6 +357,14 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         (void)sourceLabel;
         (void)writes;
     }
+    {
+        char courseStatus[160];
+        if (!courseAssetExportWrite(directory, courseStatus, sizeof(courseStatus))) {
+            if (status != NULL && statusCapacity > 0u)
+                (void)snprintf(status, statusCapacity, "%s", courseStatus);
+            return 0;
+        }
+    }
     manifestLength = snprintf(manifest, sizeof(manifest),
         "Excitebike 3DS native CHR export\n"
         "Embedded source header: Excitebike/header.bin = mapper 0, 16 KiB PRG, 8 KiB CHR-ROM, vertical mirroring\n"
@@ -412,6 +421,6 @@ int assetExportWrite(const char *directory, const uint8_t *rawChr, size_t rawChr
         return 0;
     }
     if (status != NULL && statusCapacity > 0u)
-        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, EBPX tile pack, atlas, color PPU previews, palettes, snapshots, manifest.");
+        (void)snprintf(status, statusCapacity, "SD exports saved: CHR, EBPX tile pack, atlas, PPU previews, palettes, snapshots, first-course EBCG geometry, manifest.");
     return 1;
 }
