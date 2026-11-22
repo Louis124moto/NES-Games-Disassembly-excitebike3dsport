@@ -59,6 +59,8 @@ Stages are sequential. Do not start a later stage until the current one meets it
 - `Excitebike/` — original NES disassembly, source assets and assembly scripts. Preserve unchanged.
 - `3ds-port/source/` — native 3DS application and native game systems.
 - `3ds-port/include/` — native interfaces.
+- `3ds-port/tools/` — host extraction and inspection tools, including `extract_first_course.py` and `read_course.py`.
+- `extracted/` — generated, editable source-derived course geometry.
 - `3ds-port/tests/` — host regression and differential tests.
 - `3ds-port/tests/oracle/` — host-only reference CPU/oracle; never part of the 3DS link.
 - `3ds-port/TODO.md` — controlling roadmap, status and acceptance record.
