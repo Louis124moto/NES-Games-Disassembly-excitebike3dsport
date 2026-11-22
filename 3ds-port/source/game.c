@@ -9,6 +9,7 @@
 #include "native_menu_assets.h"
 #include "native_menu_renderer.h"
 #include "native_race_session.h"
+#include "race_session_world.h"
 #include "renderer.h"
 
 static InputState s_input;
@@ -20,6 +21,8 @@ static int s_extractorInitialized;
 static int s_menuDirty = 1;
 static int s_assetsLoaded;
 static NativeRaceSession s_raceSession;
+static RaceWorld s_raceWorld;
+static uint8_t s_raceMultiplayer;
 static NativeRngState s_raceRng;
 static int s_raceSessionReady;
 
@@ -142,6 +145,8 @@ void gameUpdate(void)
         setupInput.setup_counter_0047 = 0u;
         if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
             s_raceSessionReady = 1;
+            s_raceMultiplayer = s_menu.selected_mode;
+            nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
             rendererPrintBottom("FIRST COURSE — NATIVE SCENE READY\n"
                                 "Original background and initial HUD are rendered.\n"
                                 "Bike sprites and the race frame loop are next.\n");
@@ -149,6 +154,13 @@ void gameUpdate(void)
             rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
                                 "Check the first-course setup input state.\n");
         }
+    }
+
+    if (s_raceSessionReady) {
+        /* Native source-ordered race frame (verified stage by stage against the ASM).
+         * A nonzero mask means a stage left its verified domain; it is never guessed. */
+        (void)nativeRaceSessionStepFrame(&s_raceSession, &s_raceWorld, inputNesHeld(&s_input));
+        s_menuDirty = 1;
     }
 
     if (menuVisualStateChanged(&before, &s_menu)) s_menuDirty = 1;
