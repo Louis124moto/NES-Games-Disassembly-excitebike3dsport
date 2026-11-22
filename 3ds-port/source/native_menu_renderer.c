@@ -3,6 +3,8 @@
 #include <string.h>
 #include <3ds.h>
 #include "native_menu_renderer.h"
+#include "nes_ppu_commands.h"
+#include "nes_ppu_render.h"
 
 /* Excitebike is NROM-128/CHR-ROM 8 KiB. The original writes $90 at C1D5
  * and $10 at C32B-C333 before the first race: PPUCTRL bit 4 selects the
@@ -207,6 +209,70 @@ static void drawRaceOam(uint8_t *framebuffer, const NativeMenuAssets *assets,
     }
 }
 
+/* Native dynamic race nametable. F4FF emits the original 14-tile vertical
+ * PPU write packet; applying it to a software nametable is presentation, not
+ * PPU emulation. The game loop and all gameplay remain semantic native C. */
+static uint8_t s_racePpuRam[NES_PPU_ADDRESS_SPACE];
+static uint8_t s_racePpuWritten[NES_PPU_ADDRESS_SPACE];
+static uint8_t s_raceRgb[NES_PPU_RGB_BYTES];
+static uint8_t s_raceOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
+static uint32_t s_raceLastColumnSerial;
+static int s_racePpuReady;
+
+void nativeRaceRenderReset(void)
+{
+    memset(s_racePpuRam, 0, sizeof(s_racePpuRam));
+    memset(s_racePpuWritten, 0, sizeof(s_racePpuWritten));
+    s_raceLastColumnSerial = 0u;
+    s_racePpuReady = 0;
+}
+
+static int drawRaceCourse(uint8_t *framebuffer, const NativeMenuAssets *assets,
+                          const NativeMenuSceneAssets *scene,
+                          const NativeRaceSession *session)
+{
+    size_t writes = 0u;
+    unsigned int x, y;
+    int result;
+
+    if (!s_racePpuReady) {
+        memcpy(&s_racePpuRam[0x2000u], scene->nametable, NATIVE_MENU_SCENE_BYTES);
+        memset(s_racePpuWritten, 0, sizeof(s_racePpuWritten));
+        s_raceLastColumnSerial = 0u;
+        s_racePpuReady = 1;
+    }
+
+    if (session->course_column_serial != s_raceLastColumnSerial) {
+        /* buffer[1..17] is exactly: address high, address low, $8E control,
+         * and fourteen tile bytes. Excitebike uses vertical nametable mirroring. */
+        result = nesPpuApplyCommandStreamMirrored(
+            &session->course_column_buffer[1], 17u,
+            s_racePpuRam, s_racePpuWritten, sizeof(s_racePpuRam),
+            &writes, NES_PPU_MIRROR_VERTICAL);
+        if (result != NES_PPU_COMMAND_OK) return 0;
+        s_raceLastColumnSerial = session->course_column_serial;
+    }
+
+    result = nesPpuRenderMirroredNametablesOpaque(
+        assets->chr_pixels, assets->chr_tile_count,
+        &s_racePpuRam[0x2000u], assets->palettes[6],
+        (uint8_t)(0x90u | (session->movement.base_nametable & 0x03u)),
+        session->movement.player_scroll_x, 0u,
+        s_raceRgb, sizeof(s_raceRgb), s_raceOpaque, sizeof(s_raceOpaque));
+    if (result != NES_PPU_RENDER_OK) return 0;
+
+    for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
+        for (x = 0u; x < NES_PPU_WIDTH; ++x) {
+            const size_t source = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
+            const size_t target = framebufferOffset(72u + x, y);
+            framebuffer[target] = s_raceRgb[source + 2u];
+            framebuffer[target + 1u] = s_raceRgb[source + 1u];
+            framebuffer[target + 2u] = s_raceRgb[source];
+        }
+    }
+    return 1;
+}
+
 int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
                           const NativeRaceSession *session)
 {
@@ -221,7 +287,7 @@ int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
 
     scene = &assets->scenes[6];
     memset(framebuffer, 0, 400u * 240u * 3u);
-    drawBackground(framebuffer, assets, scene, 6u); /* palette stream 18 */
+    if (!drawRaceCourse(framebuffer, assets, scene, session)) return 0;
     drawRaceHud(framebuffer, assets, scene, session, 6u);
     drawRaceOam(framebuffer, assets, session, 6u);
     drawCursor(framebuffer, assets, menu, 6u); /* OAM sprite zero has highest priority. */
