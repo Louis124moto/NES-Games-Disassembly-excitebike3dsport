@@ -245,7 +245,7 @@ int main(int argc, char **argv)
                        cpu.ram[0x00B8u + i], movement.vertical_phase[i],
                        cpu.ram[0x00A4u + i], movement.object_status[i],
                        cpu.ram[0x00B0u + i]);
-                printf("  input Y=%02X delta=%02X phase=%02X action=%02X; CPU Y=%02X delta=%02X phase=%02X action=%02X; native delta=%02X\\n",
+                printf("  input Y=%02X delta=%02X phase=%02X action=%02X; CPU Y=%02X delta=%02X phase=%02X action=%02X; native delta=%02X\n",
                        initial_y[i], initial_delta[i], initial_phase[i], initial_action[i],
                        cpu.ram[0x00B8u + i], cpu.ram[0x00DCu + i],
                        cpu.ram[0x00A4u + i], cpu.ram[0x0058u + i],
@@ -255,7 +255,6 @@ int main(int argc, char **argv)
         }
     }
 
-    puts("PASS: 50000 phase-zero and 100000 all-phase E96C/EA07/DD06 jump frames match original ASM.");
     puts("PASS: 150000 four-bike E96C all-phase + EA07/DD06 jump frames match original ASM.");
     return 0;
 }
