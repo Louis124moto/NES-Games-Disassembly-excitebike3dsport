@@ -69,7 +69,7 @@ def render_hex(columns: list[dict[str, Any]], start: int, count: int) -> str:
     stop = min(len(columns), start + count) if count else len(columns)
     if start >= len(columns):
         raise ValueError(f"start column {start} is outside the {len(columns)}-column course")
-    lines = [f"columns {start}..{stop - 1} (hex tile IDs; band 0 is uppermost)"]
+    lines = [f"columns {start}..{stop - 1} (hex track-page bytes; band 0 is uppermost)"]
     lines.append("band | " + " ".join(f"{i:02X}" for i in range(start, stop)))
     lines.append("-----+" + "-" * (1 + 3 * (stop - start)))
     for band in range(BANDS):
