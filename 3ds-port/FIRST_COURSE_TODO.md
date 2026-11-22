@@ -14,7 +14,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 ## Implementation order
 
 ### A. Complete the minimum native race simulation
-- [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
+- [x] Build semantic per-bike state from the complete first-course setup path, including the verified C875 tail and player/opponent identity.
 - [x] Port the state handlers called by `sub_D918` and the source-ordered object-update chain; preserve the exact call order. The C875 setup tail and player/opponent identity are now verified below.
   - [x] Translate and integrate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM.
 - [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
@@ -23,7 +23,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 - [x] Integrate the semantic race update into the native application loop. No NES RAM image or CPU execution is used in the shipped runtime.
 - [x] Integrate the semantic `BikeTemperatureState` into E359, including native temperature-bar OAM output; the full race-loop differential test passes after this wiring.
 - [x] Finish the first-course C875 setup tail and confirm player/opponent identity: C36A derives `$004A=1`; slot 0 is always the player and slots 1–3 are the AI identities. `$03F2` controls whether C875 initially writes bike data to slots 1–3, not their identity. The 2,000-vector C875 differential test passes.
-- [ ] Validate obstacle collision inputs against the fully decoded first-course geometry; the collision algorithms are ported, but the complete geometry source is not yet decoded.
+- [ ] Validate obstacle collision inputs against the extracted first-course data; raw F4FF geometry is complete and source-differential-tested, but terrain/obstacle semantics are not yet fully interpreted.
 
 ### B. Decode first-course data
 - [x] Trace the first-course stream/template sources: $ED3A/$ED40 selects stream 0 at $ED46; the next stream begins at $EE59; $F063/$F087 supplies template pointers. Keep palette list $12 separate from geometry.
@@ -91,25 +91,25 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port the semantic state transitions of `sub_DD8D` for the countdown/start handshake; its OAM-only `CCDD/CD13` work is represented as native renderer events. Host regression passed in CI.
 - [x] Integrate heat/overheat into E359 using the semantic temperature state and native OAM output; verified by the full race-loop ASM differential suite.
 - [x] Integrate bike-to-bike contacts (DFD5), obstacle-hit checks (E09F), bike collision checks (E4C8), crash recovery (DDD1) and collision sprite hiding (E42B) at their source-ordered race-loop call sites; the race-frame and full-loop ASM differential tests pass.
-- [ ] Complete source-derived first-course obstacle/terrain geometry and validate every obstacle-hit input against it.
+- [ ] Complete semantic interpretation of first-course terrain/obstacle events and validate every obstacle-hit input against the extracted raw stream.
 - [ ] Port the source-faithful finish/results state transition (kept separate from the physics milestone).
 - [ ] Build deterministic race-frame fixtures and compare all semantic bike state against the original ASM oracle over long frame sequences.
 
 ### 3. Recover the actual first-course data (do not guess geometry)
 - [ ] Trace state-2 setup command 3 completely, including `D13F/ECE4` uploads and their source data.
-- [ ] Trace command 6 from `C875` through its tail and identify the exact first-course data pointers.
-- [ ] Follow every first-course geometry/terrain/obstacle table read from the race update and renderer paths. The `D3D6_12` palette list is not geometry.
+- [x] Trace command 6 from `C875` through its tail and identify the first-course stream/template pointers (`$ED46`, `$EE59`, `$F063/$F087`); exact C875 state matches ASM across 2,000 vectors.
+- [ ] Decode the remaining terrain/obstacle lookup semantics used by the race update and collision paths. The raw F4FF stream, template tables and six `$0400-$057F` track pages are extracted; `D3D6_12` remains palette data, not geometry.
 - [ ] Decode course segments, height/surface, ramps, obstacles, bounds, wrap and finish marker into a compact semantic structure.
 - [ ] Add source-to-native data tests (counts, values, pointers, boundaries and terminators).
 
 ### 4. Make the native race visible and playable
-- [ ] Implement course 1 background/ground/terrain drawing using verified extracted assets and native 3DS rendering; no PPU emulation.
+- [x] Apply the decoded course columns to the native race nametable and render them with extracted CHR/palette assets, source horizontal scroll and vertical nametable selection; no PPU emulation.
 - [x] Implement and differentially verify the native E17F sprite path: E3F4 sorting, E1F9 dynamic pose selection, E1A3/D1C7 OAM generation, E1D7 temp overlays and E26A rider overlays for all four bike slots.
 - [x] Port E456 off-screen sprite hiding and DB95 opponent-bike clearing; 200,000 randomized routine vectors are checked by `test_e456`. Multi-frame OAM transition integration and remaining ramp/obstacle sprites remain open.
 - [ ] Implement camera scroll, HUD, heat meter, countdown, finish/results and native audio events.
 - [ ] Add a race state to the app loop: native menu confirm → race setup → countdown → per-frame simulation → finish/results → return flow.
 - [ ] Bind physical controls to throttle, braking/steering/posture exactly as traced; ensure pause and frame timing are deterministic.
-- [ ] Add replayable integration scenarios: start line, acceleration, terrain transitions, jump/landing, opponent interaction, finish and result.
+- [ ] Add replayable end-to-end scenarios for start line, acceleration, terrain transitions, jump/landing, opponent interaction, finish and result.
 
 ### 5. Acceptance — stop only here
 - [ ] The first course starts from the native menu without `rom.nes` and without any emulator/recompiler in the runtime.
@@ -122,13 +122,13 @@ This is the execution order for completing the first playable race. A checked it
 ### Immediate next implementation slice
 1. [x] Implement `RaceWorld` and connect the source-ordered race stages, including D918, DD8D, CD1F, DA26, F4FF, E4C8, E456 and E17F. The composed loop is stage-by-stage differential-tested; the app calls it through `race_session_world.c`.
 2. [ ] Trace and port the remaining unimplemented/unsupported handlers and validate long consecutive-frame scenarios, not only isolated routines.
-3. [ ] Trace the first-course terrain/obstacle data and replace the scene-only presentation with source-derived geometry; pass the course-stream output to the renderer.
+3. [ ] Interpret the extracted first-course track-page bytes and spawn events into semantic terrain/obstacle/collision data; the raw course stream is already passed to the native nametable renderer.
 4. [ ] Complete heat, opponent AI, obstacle interaction, finish/results, physical controls and native menu-to-race return flow.
 
 ### Physics validation update — 2026-11-20
 - `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
 - Added a 50,000-vector differential test that invokes the original `E836` entrypoint in the host-only 6502 oracle and compares all four `$008C` screen-Y bytes with the native C implementation.
-- The native E17F path now passes 50,000 randomized full OAM differential frames across four bikes, including E3F4 sorting, E1F9 state/approach selection, all D892/D8A9 pose-table entries, D1C7 tile/coordinate generation, E1D7 temporary overlays, and E26A rider overlays. E456 off-screen hiding and DB95 opponent-bike clearing remain unported; OAM is still rebuilt from a clean `$F8` baseline, so consecutive-frame persistence must be tested after E456 is integrated.
+- The native E17F path passes 50,000 randomized full OAM differential frames across four bikes, including E3F4 sorting, E1F9 state/approach selection, D892/D8A9 pose tables, D1C7 tile/coordinate generation, E1D7 overlays, E26A rider overlays, E456 off-screen hiding and DB95 opponent-bike clearing. Remaining OAM work is multi-frame persistence/transition validation, not porting E456/DB95.
 
 
 ## Verified movement milestone — 2026-11-19 21:09 CET
@@ -137,7 +137,7 @@ This is the execution order for completing the first playable race. A checked it
 - Native routines: `DC1A`, `DCF2`, their `DD38/DD6F` dependencies, and the complete `DA26` movement/camera pass.
 - Differential tests: 50,000 `DC1A` vectors, 50,000 `DCF2` vectors, and 50,000 complete `DA26` frames.
 - CI: [host differential tests](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749414) and [New 3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749343) passed.
-- Important boundary: this is a verified simulation subsystem, not yet connected to the app's native menu/race state machine. Course data, full frame order, AI, collisions, race rendering and finish/results remain outstanding.
+- Important boundary: the source-ordered race simulation, F4FF course stream, first-course renderer and several finish-flow routines have host differential tests, but the app is not yet connected to the complete native menu-to-race state machine. Semantic terrain/obstacle mapping, collision inputs, end-to-end finish/results and physical New 3DS validation remain.
 
 
 ### Native routine batch — 2026-11-20 (E70B)
