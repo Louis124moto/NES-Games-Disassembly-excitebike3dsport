@@ -50,11 +50,19 @@ uint32_t nativeRaceSessionStepFrame(NativeRaceSession *session, RaceWorld *world
                                     uint8_t nes_hold, uint8_t nes_press)
 {
     uint32_t mask;
+    const uint8_t previousColumn = world != 0 ? *raceWorldByte(world, 0xE8u) : 0u;
     if (session == 0 || world == 0 || session->initialized == 0u) return 0xFFFFFFFFu;
     *raceWorldByte(world, 0x14u) = nes_hold;
     *raceWorldByte(world, 0x15u) = nes_press;
     raceLoopNmiTick(world);
     mask = raceLoopStep(world);
+    /* F4FF emits one source PPU column whenever $00E8 advances. Preserve the
+     * complete 18-byte command so the renderer can apply it exactly once. */
+    if (*raceWorldByte(world, 0xE8u) != previousColumn) {
+        memcpy(session->course_column_buffer, raceWorldByte(world, 0x300u),
+               sizeof(session->course_column_buffer));
+        ++session->course_column_serial;
+    }
     raceWorldLoad_BikeMovementState(&session->movement, world);
     raceWorldLoad_BikeStateMachineState(&session->states, world);
     memcpy(session->rng.bytes, raceWorldByte(world, 0x18u), sizeof(session->rng.bytes));
