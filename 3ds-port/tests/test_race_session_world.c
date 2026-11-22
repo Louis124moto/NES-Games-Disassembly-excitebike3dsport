@@ -25,6 +25,19 @@ int main(void)
     nativeRaceSessionBuildWorld(&session, 0u, &world);
 
     if (*raceWorldByte(&world, 0x46u) != 1u) { puts("FAIL transition flag seed"); return 1; }
+    for (i = 0u; i < 4u; ++i) {
+        unsigned j;
+        if (*raceWorldByte(&world, 0x360u + i) != session.track.vertical_band[i] ||
+            *raceWorldByte(&world, 0xC0u + i) != session.track.terrain_code[i]) {
+            printf("FAIL D0AB/D0C6 bike projection %u\\n", i); return 1;
+        }
+        for (j = 0u; j < 4u; ++j) {
+            if (*raceWorldByte(&world, 0x3C0u + i * 4u + j) !=
+                session.track.terrain_samples[i][j]) {
+                printf("FAIL D0C6 sample %u/%u\\n", i, j); return 1;
+            }
+        }
+    }
     for (i = 0u; i < 8u; ++i) {
         if (*raceWorldByte(&world, 0x18u + i) != rng.bytes[i]) {
             printf("FAIL RNG seed byte %u\n", i); return 1;
