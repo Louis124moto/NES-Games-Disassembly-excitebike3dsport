@@ -224,9 +224,9 @@ jobs:
           python3 -m json.tool /tmp/course1_geometry.json > /dev/null
           python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --validate
           cat > /tmp/check_course_header.c <<'EOF'
-#include "course1_geometry.h"
-int main(void) { return excitebike_course1_track_pages[0][0] == 0x3Bu ? 0 : 1; }
-EOF
+          #include "course1_geometry.h"
+          int main(void) { return excitebike_course1_track_pages[0][0] == 0x3Bu ? 0 : 1; }
+          EOF
           gcc -std=c11 -Werror -Wno-unused-const-variable -I/tmp /tmp/check_course_header.c -o /tmp/check_course_header
           /tmp/check_course_header
           test -s /tmp/course1_geometry.json
