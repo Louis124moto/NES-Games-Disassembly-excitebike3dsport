@@ -6,10 +6,19 @@
 void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multiplayer_flag,
                                  RaceWorld *world)
 {
-    if (session == 0 || world == 0) return;
+    RaceSpawnState spawn;
+    unsigned page;
+
+    if (session == 0 || world == 0 || session->initialized == 0u) return;
+
     memset(world, 0, sizeof(*world));
     raceWorldStore_BikeMovementState(&session->movement, world);
     raceWorldStore_BikeStateMachineState(&session->states, world);
+
+    /* C1CE's eight-byte seed is shared by opponent spawning, AI and race-tail
+     * routines. It must exist in the world before the first frame. */
+    memcpy(raceWorldByte(world, 0x18u), session->rng.bytes, sizeof(session->rng.bytes));
+
     *raceWorldByte(world, 0x3F2u) = (uint8_t)(multiplayer_flag != 0u);
     *raceWorldByte(world, 0x34u) = session->setup.timer_0034;
     *raceWorldByte(world, 0xE8u) = session->setup.camera_scroll_00E8;
@@ -18,23 +27,37 @@ void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multi
     *raceWorldByte(world, 0xEBu) = session->setup.camera_scroll_00EB;
     *raceWorldByte(world, 0x3B4u) = session->setup.countdown_x_03B4;
     *raceWorldByte(world, 0x3B0u) = session->setup.race_setup_state_03B0;
-    if (raceWorldByte(world, 0x3BDu) != 0) *raceWorldByte(world, 0x3BDu) = session->setup.countdown_limit_03BD;
-    if (raceWorldByte(world, 0x3BEu) != 0) *raceWorldByte(world, 0x3BEu) = session->setup.countdown_index_03BE;
+    *raceWorldByte(world, 0x3BDu) = session->setup.countdown_limit_03BD;
+    *raceWorldByte(world, 0x3BEu) = session->setup.countdown_index_03BE;
     *raceWorldByte(world, 0x41u) = 2u;
+    *raceWorldByte(world, 0x46u) = session->setup.transition_flag_0046;
+
+    /* C820's CPU-side course profile is six consecutive 64-byte pages:
+     * $0400-$047F = $3B, $0480-$057F = $3D. These are lookup/AI data,
+     * not the PPU background or a fabricated visual track. */
+    raceWorldLoad_RaceSpawnState(&spawn, world);
+    for (page = 0u; page < 6u; ++page) {
+        memset(spawn.track_pages[page], page < 2u ? 0x3Bu : 0x3Du,
+               sizeof(spawn.track_pages[page]));
+    }
+    memcpy(spawn.rng, session->rng.bytes, sizeof(spawn.rng));
+    raceWorldStore_RaceSpawnState(&spawn, world);
+
     memcpy(raceWorldByte(world, 0x200u), session->oam.bytes, sizeof(session->oam.bytes));
 }
 
 uint32_t nativeRaceSessionStepFrame(NativeRaceSession *session, RaceWorld *world,
-                                    uint8_t nes_hold)
+                                    uint8_t nes_hold, uint8_t nes_press)
 {
     uint32_t mask;
-    if (session == 0 || world == 0) return 0xFFFFFFFFu;
+    if (session == 0 || world == 0 || session->initialized == 0u) return 0xFFFFFFFFu;
     *raceWorldByte(world, 0x14u) = nes_hold;
-    *raceWorldByte(world, 0x15u) = 0u;
+    *raceWorldByte(world, 0x15u) = nes_press;
     raceLoopNmiTick(world);
     mask = raceLoopStep(world);
     raceWorldLoad_BikeMovementState(&session->movement, world);
     raceWorldLoad_BikeStateMachineState(&session->states, world);
+    memcpy(session->rng.bytes, raceWorldByte(world, 0x18u), sizeof(session->rng.bytes));
     memcpy(session->oam.bytes, raceWorldByte(world, 0x200u), sizeof(session->oam.bytes));
     return mask;
 }
