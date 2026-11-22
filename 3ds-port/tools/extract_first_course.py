@@ -92,39 +92,73 @@ def compile_and_extract(max_columns: int, temp_dir: Path) -> dict:
     return data
 
 
+def c_literal(value: Any, bits: int = 8) -> str:
+    if isinstance(value, int):
+        number = value
+    elif isinstance(value, str) and value.startswith("$"):
+        number = int(value[1:], 16)
+    else:
+        raise ValueError(f"cannot encode C byte/address value: {value!r}")
+    limit = 1 << bits
+    if not 0 <= number < limit:
+        raise ValueError(f"C value out of range for uint{bits}_t: {value!r}")
+    return f"0x{number:0{bits // 4}X}u"
+
+
 def emit_c_header(data: dict, destination: Path) -> None:
     columns = data["columns"]
     if not columns:
         raise RuntimeError("cannot emit C data: no decoded columns")
+    prefix = "excitebike_course1"
     lines = [
-        "/* Generated from editable course1_geometry.json. Do not edit by hand. */",
+        "/* Generated from extracted/course1_geometry.json. Do not edit by hand. */",
         "#ifndef EXCITEBIKE_COURSE1_GEOMETRY_H",
         "#define EXCITEBIKE_COURSE1_GEOMETRY_H",
         "#include <stdint.h>",
         f"#define EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS {len(columns)}u",
-        "/* Six source pages $0400-$057F, indexed by vertical band. */",
-        "static const uint8_t excitebike_course1_geometry[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS][6] = {",
+        "#define EXCITEBIKE_COURSE1_VERTICAL_BANDS 6u",
+        "#define EXCITEBIKE_COURSE1_STREAM_BUFFER_BYTES 18u",
+        "/* Raw CPU track-page values from $0400-$057F. */",
+        f"static const uint8_t {prefix}_track_pages[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS][6] = {{",
     ]
     for column in columns:
-        values = ", ".join(value.replace("$", "0x") + "u"
-                           for value in column["values_by_band"])
+        values = ", ".join(c_literal(value) for value in column["values_by_band"])
         lines.append(f"    {{ {values} }},")
-    lines.extend([
-        "};",
-        "static const uint8_t excitebike_course1_geometry_course_class[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS] = {",
-        "    " + ", ".join(value["course_class"].replace("$", "0x") + "u"
-                            for value in columns),
-        "};",
-        "static const uint8_t excitebike_course1_geometry_ring_column[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS] = {",
-        "    " + ", ".join(value["ring_column"].replace("$", "0x") + "u"
-                            for value in columns),
-        "};",
-        "#endif",
-        "",
-    ])
+    lines.append("};")
+
+    byte_fields = (
+        "course_class", "ring_column", "ppu_row", "nametable",
+        "stream_offset_before", "stream_offset_after", "template_id",
+        "template_offset_next", "next_column_00EB", "repeat_counter_0057",
+        "counter_03A4", "counter_03A5", "flag_03A2", "flag_03BC",
+        "spawn_request_03A8",
+    )
+    for field in byte_fields:
+        values = ", ".join(c_literal(column[field]) for column in columns)
+        lines.extend([
+            f"static const uint8_t {prefix}_{field}[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS] = {{",
+            f"    {values}",
+            "};",
+        ])
+
+    address_fields = ("stream_address_before", "template_address")
+    for field in address_fields:
+        values = ", ".join(c_literal(column[field], 16) for column in columns)
+        lines.extend([
+            f"static const uint16_t {prefix}_{field}[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS] = {{",
+            f"    {values}",
+            "};",
+        ])
+
+    lines.append(
+        f"static const uint8_t {prefix}_stream_buffer[EXCITEBIKE_COURSE1_GEOMETRY_COLUMNS][EXCITEBIKE_COURSE1_STREAM_BUFFER_BYTES] = {{"
+    )
+    for column in columns:
+        values = ", ".join(c_literal(value) for value in column["stream_buffer_0300_0311"])
+        lines.append(f"    {{ {values} }},")
+    lines.extend(["};", "#endif", ""])
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text("\n".join(lines), encoding="utf-8")
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
