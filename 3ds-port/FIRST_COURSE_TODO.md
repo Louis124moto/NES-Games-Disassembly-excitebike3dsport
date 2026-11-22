@@ -191,3 +191,8 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Add host integration assertions for course pages, D0AB/D0C6 projections, RNG/transition seeding and Start press behavior.
 - [ ] Compare dynamic course captures at fixed frames against the original NES reference and verify on a physical New Nintendo 3DS.
 - [ ] Finish trigger, result presentation and return-to-menu state transition are still not end-to-end integrated. Do not mark the first course playable until those pass.
+
+
+- [x] Latch the first $0041 transition out of race state 2 so CA9B/C3AF is not called repeatedly by the app after the original dispatcher would have left the race loop.
+- [x] Add a temporary development escape from the frozen finish frame back to the native title with B.
+- [ ] Replace the temporary finish hold with the source-faithful results presentation, score/rank calculation and original post-race menu transition.
