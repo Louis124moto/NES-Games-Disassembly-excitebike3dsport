@@ -79,7 +79,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Menu logic | Owner-accepted development baseline: native title/selector/design state and direct-framebuffer presentation are integrated in the app loop. | Optional editor/tape save-load screens are deferred; race-entry transition and visual/hardware acceptance remain open. |
 | Bike speed/physics | Native four-slot speed-control prefix (sub_CD59) and active-bike dispatch (sub_CD1F), plus acceleration/deceleration/terrain gate and temperature/overheat slices. New all-slot tests compare 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame vectors against the ASM oracle. | Remaining sub_CD59 steering/posture side effects, heat state integration, jump/landing, crash/recovery, opponents and complete frame ordering. |
 | Movement | Native `DA58/DC1A/DCF2/DCDE` per-bike chain and `DA6A/DA7A/DBFE` camera pass; 50,000 full `DA26` frames match original ASM. | Integration into the actual app race loop, remaining object/frame handlers, track events and collision. |
-| Track | Module/interface scaffolding. | Verified course geometry, ramps, obstacles, scrolling and native rendering. |
+| Track | Native F4FF stream decoder is integrated at its source-ordered race-loop slot; the exact first-course stream matches ASM through F638. `extracted/course1_geometry.json` stores 1,335 columns with six track-page bands, the complete 18-byte stream buffer and spawn-request/counter state; `read_course.py` validates and inspects it. | Interpret raw track-page values into terrain/ramp/obstacle/collision semantics, connect geometry to collision and rendering, then validate visuals/hardware. |
 | Opponents | Some movement primitives only. | Full initialization, AI/state decisions, collision and race behavior. |
 | Collision | No faithful complete implementation. | Trace and implement all original collision paths. |
 | Graphics | CHR extraction/decoding, exported EBPX/snapshots, and direct-framebuffer native rendering for title/selector/design plus static editor/save/load source-snapshot backgrounds. | Validate all scenes/palettes against reference captures; implement editor objects/cursor, save/load UI, transition sprites and animations. |
@@ -235,7 +235,7 @@ Historical trace entries may describe old emulator/recompiler experiments. Treat
 
 ### First-course execution scope — 2026-11-19
 
-The next playable milestone is restricted to course 1. See [FIRST_COURSE_TODO.md](FIRST_COURSE_TODO.md) for the source-backed implementation order and acceptance gate. In particular, setup list `$12` (`_off_000_D3D6_12`) is the first course's palette setup, not its geometry. Course geometry must be traced independently before any native track data or rendering is authored.
+The next playable milestone is restricted to course 1. See [FIRST_COURSE_TODO.md](FIRST_COURSE_TODO.md) for the source-backed implementation order and acceptance gate. In particular, setup list `$12` (`_off_000_D3D6_12`) is the first course's palette setup, not its geometry. The first course's F4FF stream and template sources are now traced and extracted as raw editable data; semantic terrain/ramp/obstacle decoding and collision integration remain before the geometry can be considered gameplay-complete.
 
 
 ### E456 off-screen sprite pass — 2026-11-20
