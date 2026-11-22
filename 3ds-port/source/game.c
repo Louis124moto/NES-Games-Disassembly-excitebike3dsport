@@ -131,9 +131,9 @@ void gameUpdate(void)
                 s_raceFinishLatched = 0;
                 nativeMenuInit(&s_menu);
                 s_menuDirty = 1;
-                rendererPrintBottom("EXCITEBIKE — NATIVE MENU\\n"
-                                    "D-pad: move   A/Start: confirm\\n"
-                                    "X: asset extractor\\n");
+                rendererPrintBottom("EXCITEBIKE — NATIVE MENU\n"
+                                    "D-pad: move   A/Start: confirm\n"
+                                    "X: asset extractor\n");
             }
             return;
         }
@@ -147,17 +147,17 @@ void gameUpdate(void)
         if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
             *raceWorldByte(&s_raceWorld, 0x52u) == 1u) {
             s_raceFinishLatched = 1;
-            rendererPrintBottom("RACE COMPLETE — SOURCE FINISH TRANSITION\\n"
-                                "The native race is frozen at the finish state.\\n"
-                                "Original result table is still being ported.\\n"
-                                "B: return to title\\n");
+            rendererPrintBottom("RACE COMPLETE — SOURCE FINISH TRANSITION\n"
+                                "The native race is frozen at the finish state.\n"
+                                "Original result table is still being ported.\n"
+                                "B: return to title\n");
         }
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
         if (s_raceUnsupportedMask != previousUnsupported) {
             char warning[160];
             (void)snprintf(warning, sizeof(warning),
-                           "NATIVE RACE: unsupported stage mask %08lX\\n"
+                           "NATIVE RACE: unsupported stage mask %08lX\n"
                            "Simulation continues for diagnosis; frame is not fully verified.",
                            (unsigned long)s_raceUnsupportedMask);
             rendererPrintBottom(warning);
