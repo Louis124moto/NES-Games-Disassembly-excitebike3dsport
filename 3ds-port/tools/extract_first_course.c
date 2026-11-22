@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     stream.next_column_00EB = INITIAL_CLASS;
 
     puts("{");
-    puts("  \"schema\": \"excitebike.first-course-geometry.v1\",");
+    puts("  \"schema\": \"excitebike.first-course-geometry.v2\",");
     puts("  \"source\": {");
     puts("    \"asm\": \"Excitebike/bank_FF.asm\",");
     puts("    \"stream_pointer_table\": \"$ED3A/$ED40\",");
