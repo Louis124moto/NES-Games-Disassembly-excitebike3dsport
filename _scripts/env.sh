@@ -30,7 +30,7 @@ function check_cc65_env() {
     else
         ca65_version=$(ca65 --version 2>&1)
         ld65_version=$(ld65 --version 2>&1)
-        [[ "$ca65_version" == *"V\${CC65_VERSION}"* && "$ld65_version" == *"V\${CC65_VERSION}"* ]] || cc65_ready=0
+        [[ "$ca65_version" == *"V${CC65_VERSION}"* && "$ld65_version" == *"V${CC65_VERSION}"* ]] || cc65_ready=0
     fi
 
     # If the required assembler/linker are absent or not the pinned version,
