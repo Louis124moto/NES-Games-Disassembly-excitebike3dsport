@@ -131,6 +131,18 @@ int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
     FILE *fp;
+    /* Null state is a no-op; null spawn is reported as unsupported. */
+    raceCourseStreamUpdate(0, 0);
+    {
+        RaceCourseStreamState null_spawn_state;
+        memset(&null_spawn_state, 0, sizeof(null_spawn_state));
+        raceCourseStreamUpdate(&null_spawn_state, 0);
+        if (null_spawn_state.unsupported != 1u) {
+            puts("FAIL null spawn must be reported as unsupported");
+            return 1;
+        }
+    }
+
     if (argc != 2) { puts("usage: test_race_course_stream <prg>"); return 2; }
     fp = fopen(argv[1], "rb");
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
