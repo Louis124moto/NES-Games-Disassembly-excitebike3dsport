@@ -1,0 +1,50 @@
+name: Generate extracted first-course level data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Excitebike/bank_FF.asm"
+      - "3ds-port/source/race_course_stream.c"
+      - "3ds-port/source/race_course_stream_data.c"
+      - "3ds-port/include/race_course_stream*.h"
+      - "3ds-port/tools/extract_first_course.c"
+      - "3ds-port/tools/extract_first_course.py"
+      - ".github/workflows/generate-course-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: first-course-extraction
+  cancel-in-progress: true
+
+jobs:
+  extract-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Generate complete source-derived geometry
+        run: |
+          python3 3ds-port/tools/extract_first_course.py
+          python3 3ds-port/tools/read_course.py --validate
+      - name: Commit generated extracted data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extracted/course1_geometry.json
+          if git diff --cached --quiet; then
+            echo "Extracted course data is already up to date."
+          else
+            git commit -m "Generate editable first-course geometry"
+            git push origin HEAD:main
+          fi
