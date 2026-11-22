@@ -154,10 +154,28 @@ uint8_t raceLoopRunStage(RaceWorld *world, RaceLoopStage stage)
     case RACE_STAGE_DEE2: { RaceEngineSoundState s; raceWorldLoad_RaceEngineSoundState(&s, world);
         raceEngineSound(&s); raceWorldStore_RaceEngineSoundState(&s, world); return 0u; }
     case RACE_STAGE_E359: {
-        uint8_t oam[256];
-        memcpy(oam, P(0x200), 256);
-        nesSubE359UpdateTemperatureMeter(*P(0x52), *P(0x5C), *P(0x4F), P(0x3C), P(0x3B5), P(0x3B6), P(0x3E0), P(0xFC), oam);
-        memcpy(P(0x200), oam, 256);
+        BikeTemperatureState temperature;
+        NativeOamState oam;
+        uint8_t tile;
+        uint8_t sprite_x;
+        int offset;
+        raceWorldLoad_BikeTemperatureState(&temperature, world);
+        tile = bikePhysicsUpdateTemperature(&temperature, *P(0x5C),
+                                            *P(0x4F), *P(0x52));
+        raceWorldStore_BikeTemperatureState(&temperature, world);
+
+        /* E3C8-E3F1: render the four native temperature-bar sprites. */
+        memcpy(oam.bytes, P(0x200), sizeof(oam.bytes));
+        sprite_x = (uint8_t)(temperature.whole + 0x50u);
+        for (offset = 0x0Cu; offset >= 0; offset -= 4) {
+            const unsigned int base = 0xF0u + (unsigned int)offset;
+            oam.bytes[base] = 0xCFu;
+            oam.bytes[base + 1u] = tile;
+            oam.bytes[base + 2u] = 0x20u;
+            oam.bytes[base + 3u] = sprite_x;
+            sprite_x = (uint8_t)(sprite_x + 0x08u);
+        }
+        memcpy(P(0x200), oam.bytes, sizeof(oam.bytes));
         return 0u; }
     case RACE_STAGE_E17F: { BikeMovementState m; BikeStateMachineState s; NativeOamState oam;
         raceWorldLoad_BikeMovementState(&m, world); raceWorldLoad_BikeStateMachineState(&s, world);
