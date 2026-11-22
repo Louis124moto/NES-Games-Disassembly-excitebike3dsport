@@ -163,8 +163,8 @@ void gameRender(void)
         if (s_raceSessionReady) {
             if (!nativeRaceRenderFrame(s_assetsLoaded ? &s_menuAssets : NULL,
                                        &s_menu, &s_raceSession)) {
-                rendererPrintBottom("FIRST COURSE — SCENE ASSETS MISSING\\n"
-                                    "Re-run the asset extractor for snapshots 01, 14, 17 and 18.\\n");
+                rendererPrintBottom("FIRST COURSE — SCENE ASSETS MISSING\n"
+                                    "Re-run the asset extractor for snapshots 01, 14, 17 and 18.\n");
             }
         } else {
             (void)nativeMenuRenderFrame(s_assetsLoaded ? &s_menuAssets : NULL, &s_menu);
