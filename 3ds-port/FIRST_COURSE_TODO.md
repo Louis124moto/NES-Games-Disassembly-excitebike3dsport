@@ -155,7 +155,7 @@ This is the execution order for completing the first playable race. A checked it
 - Generated artifact: extracted/course1_geometry.json — 1,335 columns × 6 vertical bands. Each column keeps raw bytes and provenance; semantic names are annotations, not a claim that ramps/collision bounds have been fully interpreted.
 - Reader: python3 3ds-port/tools/read_course.py. Use --format glyph for a compact diagnostic map or --column N for the full metadata of one column.
 - The generation workflow stores the JSON in extracted/; host CI checks reproducibility against the disassembly.
-- Remaining: exact initial-state full-sequence differential replay, semantic tile decoding, collision mapping, and native runtime integration.
+- Exact initial-state full-sequence differential replay passes against ASM through `$F638` (1,335 columns). Remaining: semantic tile decoding, collision mapping, and native runtime integration.
 
 ## Course stream reader (`sub_F4FF`)
 
