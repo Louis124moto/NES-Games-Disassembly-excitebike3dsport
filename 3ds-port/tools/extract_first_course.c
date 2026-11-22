@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     puts("  \"source\": {");
     puts("    \"asm\": \"Excitebike/bank_FF.asm\",");
     puts("    \"stream_pointer_table\": \"$ED3A/$ED40\",");
-    printf("    \"stream_index\": 0, \"stream_address\": \"$%04X\",\n", stream_base);
+    printf("    \"stream_index\": 0, \"stream_address\": \"$%04X\", \"next_stream_address\": \"$%04X\", \"stream_segment_bytes\": %u,\n", stream_base, next_stream_base, (unsigned)(next_stream_base - stream_base));
     puts("    \"course_index\": 0, \"setup_id_0041\": 2,");
     puts("    \"decoder\": \"native F4FF/F64E/F676/F681/F82E/ECBF translation; ASM differential suite\",");
     puts("    \"track_pages\": \"$0400-$057F, six 64-byte vertical-band pages\"");
@@ -95,9 +95,10 @@ int main(int argc, char **argv)
     puts("  \"initial_state\": {");
     puts("    \"object_class_before_first_stream_column\": \"$09\",");
     puts("    \"stream_trigger_class\": \"$0A\",");
-    puts("    \"ppu_column\": \"$34\", \"ppu_row\": \"$14\", \"nametable\": \"$25\"");
+    printf("    \"ppu_column\": \"$34\", \"ppu_row\": \"$14\", \"nametable\": \"$25\", \"repeat_counter_first_byte\": \"$%02X\"\n", read_rom(stream_base));
     puts("  },");
     puts("  \"initial_profile_by_band\": [\"$3B\", \"$3B\", \"$3D\", \"$3D\", \"$3D\", \"$3D\"],");
+    puts("  \"termination\": \"F638: template 9 completion sets $03BC when the stream lap counter reaches zero\",");
     puts("  \"tile_semantics\": {");
     puts("    \"$3B-$3D\": \"road values used by CF8B/AI lane checks\",");
     puts("    \"$E4\": \"empty/no-spawn marker checked by DAE3\",");
