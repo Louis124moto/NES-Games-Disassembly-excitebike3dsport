@@ -126,6 +126,11 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
                  cpu->ram[0x05u + i], vector);
     }
     CHECK_EQ("HUD first digit", setup.hud_glyphs[0], cpu->ram[0x3D1u], vector);
+    if (setup.hud_glyphs[2] != cpu->ram[0x3D3u]) {
+        printf("DEBUG counter_input=%02X counter_ram=%02X p5=%02X p6=%02X p7=%02X native_second=%02X ASM_D3=%02X ASM_D4=%02X\\n",
+               counter, cpu->ram[0x03F8u], cpu->ram[0x05u], cpu->ram[0x06u],
+               cpu->ram[0x07u], setup.hud_glyphs[2], cpu->ram[0x3D3u], cpu->ram[0x3D4u]);
+    }
     CHECK_EQ("HUD second tens", setup.hud_glyphs[2], cpu->ram[0x3D3u], vector);
     CHECK_EQ("HUD second units", setup.hud_glyphs[3], cpu->ram[0x3D4u], vector);
     CHECK_EQ("HUD third tens", setup.hud_glyphs[5], cpu->ram[0x3D6u], vector);
