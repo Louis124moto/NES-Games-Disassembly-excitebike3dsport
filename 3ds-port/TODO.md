@@ -107,6 +107,7 @@ No stage may be marked accepted until all its required native integration, diffe
 **Status: owner-accepted 2026-11-17; verification debt remains.**
 
 - [x] Native CHR extraction/decoding and asset export path exists.
+- [x] The existing on-device asset extractor now exports the first course alongside CHR/PPU assets as `extracted/course1_geometry.ebc` (EBCG v1; 1,335 columns, six raw track bands and per-column stream metadata).
 - [x] Source PPU command/palette/nametable snapshots and static preview exports exist for supported source lists.
 - [x] On-device atlas/inspector controls and SD-card export exist.
 - [ ] Audit supported ROM/header/CHR cases and malformed inputs.
