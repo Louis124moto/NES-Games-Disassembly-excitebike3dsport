@@ -49,6 +49,10 @@ uint8_t bikePhysicsUpdateFirstCourseVertical(BikeMovementState *movement,
             y = (uint8_t)(y + delta);
         }
 
+        /* E97D stores the updated Y before the phase-one early branch. */
+        movement->object_y[i] = y;
+        states->y[i] = y;
+
         /* E981-E986: all four indexed source anchors stop vertical motion. */
         if (is_vertical_anchor(y) != 0u) {
             states->vertical_delta[i] = 0u;
