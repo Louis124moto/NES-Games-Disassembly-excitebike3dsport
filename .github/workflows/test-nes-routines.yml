@@ -130,6 +130,12 @@ jobs:
           cd 3ds-port
           python3 tools/asm_to_prg.py ../Excitebike/bank_FF.asm /tmp/prg.bin
 
+      - name: Differentially test complete first-course C875 setup and bike identities against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/native_race_setup.c tests/oracle/cpu6502.c tests/test_native_race_setup_differential.c -o /tmp/test_native_race_setup_differential
+          /tmp/test_native_race_setup_differential /tmp/prg.bin
+
       - name: Differentially test native player acceleration against original ASM
         run: |
           cd 3ds-port
@@ -206,6 +212,20 @@ jobs:
           cd 3ds-port
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_course_stream.c source/race_course_stream_data.c tests/oracle/cpu6502.c tests/test_race_course_stream.c -o /tmp/test_race_course_stream
           /tmp/test_race_course_stream /tmp/prg.bin
+
+      - name: Extract complete first-course geometry as editable JSON
+        run: |
+          python3 3ds-port/tools/extract_first_course.py --output /tmp/course1_geometry.json
+          python3 -m json.tool /tmp/course1_geometry.json > /dev/null
+          test -s /tmp/course1_geometry.json
+
+      - name: Upload editable first-course geometry
+        uses: actions/upload-artifact@v4
+        with:
+          name: excitebike-first-course-geometry
+          path: /tmp/course1_geometry.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Differentially test native pause/input and finish flow (CA38, CA1B, CA9B) against original ASM
         run: |
