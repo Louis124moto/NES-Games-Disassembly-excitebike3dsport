@@ -13,17 +13,29 @@ LUA_INSTALL_PACKAGE_VERSION=lua-5.3.6
 CC65_HOME=${EXEC_PACKAGES_FOLDER}/${CC65_INSTALL_PACKAGE_VERSION}
 LUA_HOME=${EXEC_PACKAGES_FOLDER}/${LUA_INSTALL_PACKAGE_VERSION}
 
-export PATH=${PATH}:${CC65_HOME}/bin:${CC65_HOME}/lib:${CC65_HOME}/include:${LUA_HOME}/src
+export PATH=${CC65_HOME}/bin:${CC65_HOME}/lib:${CC65_HOME}/include:${LUA_HOME}/src:${PATH}
 
 mkdir -p ${EXEC_PACKAGES_FOLDER}
 mkdir -p ${INSTALL_PACKAGES_FOLDER}
 
 function check_cc65_env() {
-    # test-command for check cc65 exec was exists?
-    cc65 --version
+    # The build invokes ca65 and ld65 directly; checking only the cc65
+    # compiler driver can pass even when the required assembler/linker are absent.
+    local ca65_version=""
+    local ld65_version=""
+    local cc65_ready=1
 
-    # if there is no execution environment, recompile and install
-    if [ "$?" -ne 0 ]; then
+    if ! command -v ca65 >/dev/null 2>&1 || ! command -v ld65 >/dev/null 2>&1; then
+        cc65_ready=0
+    else
+        ca65_version=$(ca65 --version 2>&1)
+        ld65_version=$(ld65 --version 2>&1)
+        [[ "$ca65_version" == *"V\${CC65_VERSION}"* && "$ld65_version" == *"V\${CC65_VERSION}"* ]] || cc65_ready=0
+    fi
+
+    # If the required assembler/linker are absent or not the pinned version,
+    # install the project's known cc65 toolchain.
+    if [ "$cc65_ready" -ne 1 ]; then
         echoerror "Please make sure that your computer has installed cc65! => https://github.com/cc65/cc65"
         read -p "Do you need to install the cc65 compiler?(yes/no): " result
         if [[ $result = [Yy][Ee][Ss] ]] || [[ $result = [Yy] ]]; then
@@ -39,6 +51,11 @@ function check_cc65_env() {
             echoinfo "You have successfully installed [cc65]!"
             cd "${currentPwd}" ;
             mv ${INSTALL_PACKAGES_FOLDER}/${CC65_INSTALL_PACKAGE_VERSION} ${EXEC_PACKAGES_FOLDER}
+            hash -r
+            ca65 --version
+            Return
+            ld65 --version
+            Return
         else
             echoerror "Please make sure that [cc65] is installed on your computer, otherwise the project cannot be compiled!"
             exit 254
@@ -48,11 +65,19 @@ function check_cc65_env() {
 
 # check lua vm
 function check_lua_env() {
-    # test-command for check lua exec was exists?
-    lua -v
+    # The preparation script targets Lua 5.3.x; accepting any "lua" binary
+    # can silently select an incompatible system version.
+    local lua_version=""
+    local lua_ready=1
+    if ! command -v lua >/dev/null 2>&1; then
+        lua_ready=0
+    else
+        lua_version=$(lua -v 2>&1)
+        [[ "$lua_version" =~ Lua[[:space:]]+5\.3([.]|[[:space:]]|$) ]] || lua_ready=0
+    fi
 
-    # if there is no execution environment, recompile and install
-    if [ "$?" -ne 0 ]; then
+    # If Lua 5.3.x is unavailable, install the pinned 5.3.6 toolchain.
+    if [ "$lua_ready" -ne 1 ]; then
         echoerror "Please make sure that your computer has installed lua 5.3.x! => https://www.lua.org/versions.html"
         read -p "Do you need to install the lua VM?(yes/no): " result
         if [[ $result = [Yy][Ee][Ss] ]] || [[ $result = [Yy] ]]; then
@@ -84,6 +109,9 @@ function check_lua_env() {
             echoinfo "You have successfully installed [lua]!"
             cd "${currentPwd}" ;
             mv ${INSTALL_PACKAGES_FOLDER}/${LUA_INSTALL_PACKAGE_VERSION} ${EXEC_PACKAGES_FOLDER}
+            hash -r
+            lua -v
+            Return
         else
             echoerror "Please make sure that [lua] is installed on your computer, otherwise the project cannot be compiled!"
             exit 254
