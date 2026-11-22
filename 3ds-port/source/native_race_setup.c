@@ -150,7 +150,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     memcpy(out->race_object_parameters,
            s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
            sizeof(out->race_object_parameters));
-    build_first_course_hud_glyphs(out, in->transition_counter_03F8);
+    build_first_course_hud_glyphs(out);
 
     /* C8A5 selects X=3..0 when ram_03F2 != 0, otherwise only X=0. */
     last = in->multiplayer_flag != 0u ? 3u : 0u;
