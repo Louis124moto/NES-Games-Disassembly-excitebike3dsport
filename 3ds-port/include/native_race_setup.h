@@ -34,6 +34,7 @@ typedef struct NativeRaceSetupState {
     uint8_t setup_counter_0040;
     uint8_t setup_counter_0047;
     uint8_t timer_0034;
+    uint8_t transition_flag_0046;
     uint8_t global_vertical_reference;
     uint8_t player_slot;
     uint8_t player_rider_present;
