@@ -31,31 +31,6 @@ static void prepare_cpu(Cpu6502 *cpu)
     } \
 } while (0)
 
-static int call_c875_trace(Cpu6502 *cpu)
-{
-    unsigned long steps;
-    cpu->sp = 0xFDu;
-    cpu->ram[0x1FDu] = 0xFFu;
-    cpu->ram[0x1FCu] = 0xFEu;
-    cpu->sp = 0xFBu;
-    cpu->pc = 0xC875u;
-    for (steps = 0u; steps < 500000u; ++steps) {
-        if (cpu->pc == 0xC90Eu || cpu->pc == 0xC911u ||
-            cpu->pc == 0xC915u || cpu->pc == 0xC91Du ||
-            cpu->pc == 0xC927u || cpu->pc == 0xC935u ||
-            cpu->pc == 0xC94Bu || cpu->pc == 0xC92Au) {
-            printf("TRACE pc=%04X A=%02X P=%02X 03F8=%02X 0005=%02X 0006=%02X 0007=%02X D3=%02X D4=%02X\\n",
-                   cpu->pc, cpu->a, cpu->p, cpu->ram[0x3F8u],
-                   cpu->ram[5u], cpu->ram[6u], cpu->ram[7u],
-                   cpu->ram[0x3D3u], cpu->ram[0x3D4u]);
-        }
-        if (cpu->pc == 0xFFFFu && cpu->sp == 0xFDu) return 0;
-        cpu6502_step(cpu);
-        if (cpu->bad_opcode >= 0) return 2;
-    }
-    return 1;
-}
-
 static int run_case(Cpu6502 *cpu, unsigned vector)
 {
     NativeRaceSetupInput input;
@@ -109,7 +84,7 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
     cpu->ram[0xEBu] = 0x0Au;
 
     prepare_cpu(cpu);
-    if ((vector == 0u ? call_c875_trace(cpu) : cpu6502_call(cpu, 0xC875u, 500000u)) != 0) {
+    if (cpu6502_call(cpu, 0xC875u, 500000u) != 0) {
         printf("FAIL C875 vector=%u original ASM call\n", vector);
         return 1;
     }
@@ -151,11 +126,6 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
                  cpu->ram[0x05u + i], vector);
     }
     CHECK_EQ("HUD first digit", setup.hud_glyphs[0], cpu->ram[0x3D1u], vector);
-    if (setup.hud_glyphs[2] != cpu->ram[0x3D3u]) {
-        printf("DEBUG counter_input=%02X counter_ram=%02X p5=%02X p6=%02X p7=%02X native_second=%02X ASM_D3=%02X ASM_D4=%02X\\n",
-               counter, cpu->ram[0x03F8u], cpu->ram[0x05u], cpu->ram[0x06u],
-               cpu->ram[0x07u], setup.hud_glyphs[2], cpu->ram[0x3D3u], cpu->ram[0x3D4u]);
-    }
     CHECK_EQ("HUD second tens", setup.hud_glyphs[2], cpu->ram[0x3D3u], vector);
     CHECK_EQ("HUD second units", setup.hud_glyphs[3], cpu->ram[0x3D4u], vector);
     CHECK_EQ("HUD third tens", setup.hud_glyphs[5], cpu->ram[0x3D6u], vector);
