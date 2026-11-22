@@ -124,14 +124,6 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        /* F638 is the source-defined end of the configured stream: template
-         * 9 decrements $0057 and sets $03BC when the lap counter reaches zero.
-         * The game loop then stops requesting more course data. */
-        if (stream.flag_03BC != 0u && stream.counter_0057 == 0u) {
-            complete = 1;
-            break;
-        }
-
         if (stream.column_00E8 != old_column ||
             stream.row_00E9 != old_row ||
             stream.nametable_00EA != old_nametable) {
@@ -153,6 +145,14 @@ int main(int argc, char **argv)
                        tile_semantic(spawn.track_pages[page][old_column]));
             printf("] }");
             ++emitted;
+        }
+
+        /* F638 is the source-defined end of the configured stream: template
+         * 9 decrements $0057 and sets $03BC when the lap counter reaches zero.
+         * Preserve any final column written by that same F4FF call, then stop. */
+        if (stream.flag_03BC != 0u && stream.counter_0057 == 0u) {
+            complete = 1;
+            break;
         }
     }
 
