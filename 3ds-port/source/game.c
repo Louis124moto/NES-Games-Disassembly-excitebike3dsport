@@ -175,7 +175,7 @@ void gameUpdate(void)
             nativeRaceRenderReset();
             rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
                                 "Native bike movement, opponent, collision and course-stream stages run.\n"
-                                "Course geometry/rendering and full finish/results flow remain incomplete.\n");
+                                "F4FF course columns now feed the native scrolling renderer; finish/results flow remains incomplete.\\n");
         } else {
             rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
                                 "Check the first-course setup input state.\n");
