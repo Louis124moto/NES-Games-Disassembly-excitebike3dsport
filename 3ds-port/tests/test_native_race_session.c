@@ -9,6 +9,8 @@ int main(void)
     NativeRaceSession session;
     NativeRaceSetupInput input;
     NativeRngState rng;
+    NativeOamState first_oam;
+    uint8_t sprite_mask;
     unsigned int i;
 
     memset(&input, 0, sizeof(input));
@@ -56,12 +58,21 @@ int main(void)
         CHECK(session.states.vertical_delta[i] == expected_delta, 12);
     }
 
+    /* E836 + E17F are exposed as a session-level native sprite step.
+     * Repeating it without changing semantic state must produce identical OAM. */
+    sprite_mask = nativeRaceSessionUpdateSprites(&session);
+    CHECK(sprite_mask == session.sprite_unsupported_mask, 13);
+    first_oam = session.oam;
+    CHECK(nativeRaceSessionUpdateSprites(&session) == sprite_mask, 14);
+    CHECK(memcmp(&first_oam, &session.oam, sizeof(first_oam)) == 0, 15);
 
     input.setup_index_0041 = 8u;
     CHECK(nativeRaceSessionInitFirstCourse(&session, &input, &rng) == 0, 20);
     CHECK(session.initialized == 0u, 21);
     CHECK(nativeRaceSessionUpdateCountdown(&session) == BIKE_COUNTDOWN_RENDER_NONE, 22);
     CHECK(nativeRaceSessionUpdateVertical(&session) == 0x0Fu, 23);
+    CHECK(nativeRaceSessionUpdateSprites(0) == 0x0Fu, 33);
+    nativeRaceSessionUpdateBikeStates(0);
     CHECK(nativeRaceSessionInitFirstCourse(0, &input, &rng) == 0, 24);
     CHECK(nativeRaceSessionInitFirstCourse(&session, 0, &rng) == 0, 25);
     CHECK(nativeRaceSessionInitFirstCourse(&session, &input, 0) == 0, 26);
