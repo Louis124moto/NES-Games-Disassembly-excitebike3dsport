@@ -135,6 +135,17 @@ int main(int argc, char **argv)
                    old_stream_offset, (unsigned)(stream_base + old_stream_offset), stream.stream_offset_00ED);
             printf("\"template_id\": %u, \"template_address\": \"$%04X\", \"template_offset_next\": %u, ",
                    stream.template_00EE, template_addr, stream.template_offset_00EF);
+            printf("\"next_column_00EB\": \"$%02X\", \"repeat_counter_0057\": \"$%02X\", ",
+                   stream.next_column_00EB, stream.counter_0057);
+            printf("\"counter_03A4\": \"$%02X\", \"counter_03A5\": \"$%02X\", ",
+                   stream.counter_03A4, stream.counter_03A5);
+            printf("\"flag_03A2\": \"$%02X\", \"flag_03BC\": \"$%02X\", ",
+                   stream.flag_03A2, stream.flag_03BC);
+            printf("\"spawn_request_03A8\": \"$%02X\", \"stream_buffer_0300_0311\": [",
+                   spawn.spawn_request_03A8);
+            for (page = 0u; page < 0x12u; ++page)
+                printf("%s\"$%02X\"", page == 0u ? "" : ", ", stream.buffer[page]);
+            printf("], ");
             printf("\"values_by_band\": [");
             for (page = 0u; page < 6u; ++page)
                 printf("%s\"$%02X\"", page == 0u ? "" : ", ",
