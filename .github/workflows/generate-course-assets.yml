@@ -12,6 +12,7 @@ on:
       - "3ds-port/tools/extract_first_course.py"
       - "3ds-port/tools/read_course.py"
       - "3ds-port/tools/test_read_course.py"
+      - "3ds-port/tools/test_extract_first_course.py"
       - ".github/workflows/generate-course-assets.yml"
   workflow_dispatch:
 
