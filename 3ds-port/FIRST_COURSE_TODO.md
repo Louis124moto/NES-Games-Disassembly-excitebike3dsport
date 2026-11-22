@@ -113,10 +113,10 @@ This is the execution order for completing the first playable race. A checked it
 - [ ] Only then mark Stage 3 accepted and begin another course.
 
 ### Immediate next implementation slice
-1. Implement a semantic frame-state aggregate and connect the already-tested D918 state machine, DD8D countdown, DA26 movement pass, E70B smoothing, E4C8 collision, E456 culling and E17F sprite build in source order. Keep unported calls explicitly gated rather than silently skipping them.
-2. Trace and port the remaining handlers called between D918 and E96C, then differential-test consecutive frames (not only isolated routine calls).
-3. Trace the first-course terrain/obstacle data and replace any scene-only presentation with source-derived track geometry.
-4. Continue with heat, opponent AI, obstacle interaction, finish/results, and native menu-to-race input flow.
+1. [x] Implement `RaceWorld` and connect the source-ordered race stages, including D918, DD8D, CD1F, DA26, F4FF, E4C8, E456 and E17F. The composed loop is stage-by-stage differential-tested; the app calls it through `race_session_world.c`.
+2. [ ] Trace and port the remaining unimplemented/unsupported handlers and validate long consecutive-frame scenarios, not only isolated routines.
+3. [ ] Trace the first-course terrain/obstacle data and replace the scene-only presentation with source-derived geometry; pass the course-stream output to the renderer.
+4. [ ] Complete heat, opponent AI, obstacle interaction, finish/results, physical controls and native menu-to-race return flow.
 
 ### Physics validation update — 2026-11-20
 - `E836` calls `DC97`, which is exactly `SEC; SBC $00BC,X; SBC $00B8,X`; native `bikePhysicsUpdateScreenY` preserves the first subtraction borrow and skips slots with `$00B0 != 0`.
@@ -146,7 +146,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port `sub_F4FF` with `sub_F82E`, `sub_F676`, `sub_F681`, `sub_F64E` and `sub_ECBF` as `raceCourseStreamUpdate` (`race_course_stream.c`). The ROM-derived stream/template tables ($ED3A-$F4FE) are constant data in `race_course_stream_data.c`; no ROM is loaded at runtime. The six course pages, `ram_00E0_obj[0]` and `ram_03A8` stay in `RaceSpawnState`.
 - [x] 6502 quirks kept: the `sub_F64E` descending scan that stores the wrapped counter when the buffer is exhausted, and the `sub_F681` copy loop. Out-of-domain states (stream index 5 pointing at RAM $06E0, template byte count > $0E, reads outside the embedded data) set `unsupported` instead of guessing.
 - [x] 300,000 randomized vectors plus 150,000 sequential frames over all five streams × ten course ids match the original ASM; 16/17 mutants killed (`y < 0x58` vs `<=` is equivalent: template 9 record boundaries are $57 and $61).
-- [ ] Wire `raceCourseStreamUpdate` at its `C99A` slot (after `sub_EA44`, before `sub_E4C8`) and feed the column buffer/pages to the native track renderer.
+- [x] Wire `raceCourseStreamUpdate` at its `C99A` slot (after `sub_EA44`, before `sub_E4C8`) in `race_loop.c`; the decoded column buffer/pages are now available in `RaceWorld`. Feeding them into a native track renderer remains open.
 
 ## Pause/input and finish flow (`sub_CA38`, `sub_CA1B`, `sub_CA9B`)
 
@@ -171,3 +171,12 @@ This is the execution order for completing the first playable race. A checked it
 - [x] DA44 tail (E0E6 banner, E2AF finish sign) ported in `source/race_tail.c`.
 - [ ] Still open: D347 input layer, D19B frame sync, menu↔race transitions, native course renderer, audio, 3DS devkitARM build and hardware validation.
 - [x] `race_session_world.c` seeds the world from the composed session and steps native frames; `game.c` now runs one native race frame per update after setup (host-tested only; 3DS build/hardware not verified here). `$0400-$0446` is the NES PPU packet buffer (ECE4/D13F/D0F4 are presentation-only and intentionally not reproduced; the native renderer draws from semantic state).
+
+
+## App-loop integration correction — 2026-11-22
+
+- [x] `game.c` now steps the native `RaceWorld` once per application update after first-course setup.
+- [x] Freeze menu timers, menu input handling and setup-command sequencing once the race session is active; previously those menu updates continued underneath the race. Fix: commit `500ed1521566dd127ad346e42cf98e5c4818561b`.
+- [x] Update README status to distinguish an integrated native frame scheduler from a fully playable/accepted race.
+- [ ] Run host CI and the exact-commit devkitARM build after these integration changes.
+- [ ] Physical New 3DS validation remains outstanding.
