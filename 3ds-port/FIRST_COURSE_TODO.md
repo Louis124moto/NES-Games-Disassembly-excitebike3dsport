@@ -15,7 +15,8 @@ Scope: **only the first original course** (the title-menu selector's first race 
 
 ### A. Complete the minimum native race simulation
 - [ ] Build semantic per-bike state from the complete first-course setup path, including the C875 tail and player/opponent identity.
-- [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.\n  - [x] Translate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM. This is a standalone verified routine, not yet integrated into the race-frame scheduler.
+- [ ] Port the remaining state handlers called by `sub_D918` and the object-update chain; preserve the exact call order above.
+  - [x] Translate `sub_E70B` as semantic four-bike position smoothing (`$0060/$0064/$00E0/$00D8`); 200,000 randomized full-routine vectors compare against the original ASM. This is a standalone verified routine, not yet integrated into the race-frame scheduler.
 - [x] Complete the per-bike pass `DA58 → DC1A → DCF2 → DCDE`, then camera/opponent movement and `DBFE`; 50,000 complete `DA26` differential frames match ASM on commit `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
 - [ ] Complete steering, braking, posture, jump/landing, heat/overheat, collision/crash/recovery and opponent decisions.
 - [ ] Differential-test each routine and deterministic whole-frame scenarios against the host-only original-ASM oracle.
@@ -151,3 +152,14 @@ This is the execution order for completing the first playable race. A checked it
 
 - [x] Port pause toggle (Start latch, `$4015` enable output, sound request bytes), `ram_005C` input copy, the `CA13` tail of `sub_CA08`, and the finish palette packet / `sub_C3AF` flow as `race_frame_control.c`; 200,000 vectors per entry match the original ASM (one `LDA ram_03B0` reload quirk found and fixed). `ram_03F7` != 0 restart paths are reported unsupported.
 - [ ] Wire `sub_CA08` (DCA0/DFB2 loop + `raceFrameInputStep`) and `sub_CA9B` into the native race loop.
+
+
+## Small integration and maintenance fixes — 2026-11-22
+
+- [x] Guard public race-frame control entry points against null state; add host test coverage.
+- [x] Guard the course-stream entry point against null state/spawn projection; null spawn is reported as unsupported and covered by a host test.
+- [x] Exercise the existing session-level E836/E17F sprite update wrapper from the native race-session test and verify repeated OAM generation is deterministic.
+- [x] Fix the 3DS link-map output path so Make expands the resolved `$(OUTPUT)` rather than freezing an empty automatic `$*` during immediate assignment.
+- [x] Fix literal backslash-n sequences in the native scene asset-error message.
+- [ ] Run the updated host CI and an exact-commit devkitARM/New 3DS build; these checks are not claimed until Actions reports success.
+- [ ] Keep the complete source-ordered race-frame scheduler, remaining simulation dependencies, and course renderer assigned to the main gameplay implementation work.
