@@ -131,6 +131,7 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->setup_counter_0040 = (uint8_t)(in->setup_counter_0040 + 1u);
     out->setup_counter_0047 = (uint8_t)(in->setup_counter_0047 + 1u);
     out->timer_0034 = in->timer_0034 != 0u ? in->timer_0034 : 0x05u;
+    out->transition_flag_0046 = in->transition_flag_0046;
     out->global_vertical_reference = 0xA0u;
     out->player_slot = 0u;
     out->player_rider_present = 1u;
