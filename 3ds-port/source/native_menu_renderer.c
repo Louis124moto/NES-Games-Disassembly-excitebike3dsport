@@ -3,8 +3,6 @@
 #include <string.h>
 #include <3ds.h>
 #include "native_menu_renderer.h"
-#include "nes_ppu_commands.h"
-#include "nes_ppu_render.h"
 
 /* Excitebike is NROM-128/CHR-ROM 8 KiB. The original writes $90 at C1D5
  * and $10 at C32B-C333 before the first race: PPUCTRL bit 4 selects the
@@ -209,65 +207,86 @@ static void drawRaceOam(uint8_t *framebuffer, const NativeMenuAssets *assets,
     }
 }
 
-/* Native dynamic race nametable. F4FF emits the original 14-tile vertical
- * PPU write packet; applying it to a software nametable is presentation, not
- * PPU emulation. The game loop and all gameplay remain semantic native C. */
-static uint8_t s_racePpuRam[NES_PPU_ADDRESS_SPACE];
-static uint8_t s_racePpuWritten[NES_PPU_ADDRESS_SPACE];
-static uint8_t s_raceRgb[NES_PPU_RGB_BYTES];
-static uint8_t s_raceOpaque[NES_PPU_WIDTH * NES_PPU_HEIGHT];
+/* Native two-page course map. The source stream's $8E packets are decoded
+ * once into tile/attribute cells; no NES PPU, register or timing model exists
+ * in the game runtime. The renderer rasterizes these native scene cells. */
+static uint8_t s_raceCourseMap[2u * 1024u];
 static uint32_t s_raceLastColumnSerial;
-static int s_racePpuReady;
+static int s_raceCourseMapReady;
 
 void nativeRaceRenderReset(void)
 {
-    memset(s_racePpuRam, 0, sizeof(s_racePpuRam));
-    memset(s_racePpuWritten, 0, sizeof(s_racePpuWritten));
+    memset(s_raceCourseMap, 0, sizeof(s_raceCourseMap));
     s_raceLastColumnSerial = 0u;
-    s_racePpuReady = 0;
+    s_raceCourseMapReady = 0;
+}
+
+static int applyRaceCourseColumn(const uint8_t command[0x12])
+{
+    unsigned int page, offset, i;
+    unsigned int address;
+    if (command == NULL || command[3] != 0x8Eu) return 0;
+    address = ((unsigned int)command[1] << 8u) | command[2];
+    if (address < 0x2000u || address >= 0x3000u) return 0;
+
+    offset = address - 0x2000u;
+    page = (offset >> 10u) & 1u; /* Excitebike's vertical two-page layout. */
+    offset &= 0x03FFu;
+    for (i = 0u; i < 14u; ++i) {
+        if (offset >= 1024u) return 0;
+        s_raceCourseMap[page * 1024u + offset] = command[4u + i];
+        offset += 32u; /* $8E: next tile is one 32-byte nametable row below. */
+        if (offset >= 1024u) {
+            offset -= 1024u;
+            page ^= 1u;
+        }
+    }
+    return 1;
 }
 
 static int drawRaceCourse(uint8_t *framebuffer, const NativeMenuAssets *assets,
                           const NativeMenuSceneAssets *scene,
                           const NativeRaceSession *session)
 {
-    size_t writes = 0u;
     unsigned int x, y;
-    int result;
-
-    if (!s_racePpuReady) {
-        memcpy(&s_racePpuRam[0x2000u], scene->nametable, NATIVE_MENU_SCENE_BYTES);
-        memset(s_racePpuWritten, 0, sizeof(s_racePpuWritten));
+    if (!s_raceCourseMapReady) {
+        /* Scene 6 is four source nametables; vertical mirroring uses pages 0/1. */
+        memcpy(s_raceCourseMap, scene->nametable, sizeof(s_raceCourseMap));
         s_raceLastColumnSerial = 0u;
-        s_racePpuReady = 1;
+        s_raceCourseMapReady = 1;
     }
 
     if (session->course_column_serial != s_raceLastColumnSerial) {
-        /* buffer[1..17] is exactly: address high, address low, $8E control,
-         * and fourteen tile bytes. Excitebike uses vertical nametable mirroring. */
-        result = nesPpuApplyCommandStreamMirrored(
-            &session->course_column_buffer[1], 17u,
-            s_racePpuRam, s_racePpuWritten, sizeof(s_racePpuRam),
-            &writes, NES_PPU_MIRROR_VERTICAL);
-        if (result != NES_PPU_COMMAND_OK) return 0;
+        if (!applyRaceCourseColumn(session->course_column_buffer)) return 0;
         s_raceLastColumnSerial = session->course_column_serial;
     }
 
-    result = nesPpuRenderMirroredNametablesOpaque(
-        assets->chr_pixels, assets->chr_tile_count,
-        &s_racePpuRam[0x2000u], assets->palettes[6],
-        (uint8_t)(0x90u | (session->movement.base_nametable & 0x03u)),
-        session->movement.player_scroll_x, 0u,
-        s_raceRgb, sizeof(s_raceRgb), s_raceOpaque, sizeof(s_raceOpaque));
-    if (result != NES_PPU_RENDER_OK) return 0;
-
-    for (y = 0u; y < NES_PPU_HEIGHT; ++y) {
-        for (x = 0u; x < NES_PPU_WIDTH; ++x) {
-            const size_t source = ((size_t)y * NES_PPU_WIDTH + x) * 3u;
-            const size_t target = framebufferOffset(72u + x, y);
-            framebuffer[target] = s_raceRgb[source + 2u];
-            framebuffer[target + 1u] = s_raceRgb[source + 1u];
-            framebuffer[target + 2u] = s_raceRgb[source];
+    for (y = 0u; y < 240u; ++y) {
+        const unsigned int tileY = y >> 3u;
+        for (x = 0u; x < 256u; ++x) {
+            const unsigned int worldX =
+                ((unsigned int)(session->movement.base_nametable & 1u) << 8u) +
+                (unsigned int)session->movement.player_scroll_x + x;
+            const unsigned int page = (worldX >> 8u) & 1u;
+            const unsigned int sourceX = worldX & 0xFFu;
+            const unsigned int tileX = sourceX >> 3u;
+            const size_t pageBase = (size_t)page * 1024u;
+            const size_t tileIndex = pageBase + (size_t)tileY * 32u + tileX;
+            const size_t attributeIndex = pageBase + 960u +
+                (size_t)(tileY >> 2u) * 8u + (tileX >> 2u);
+            const uint8_t tile = s_raceCourseMap[tileIndex];
+            const uint8_t attribute = s_raceCourseMap[attributeIndex];
+            const unsigned int shift = ((tileY & 2u) << 1u) | (tileX & 2u);
+            const unsigned int subpalette = (attribute >> shift) & 3u;
+            const size_t chrTile = EXCITEBIKE_BG_CHR_TILE_BASE + (size_t)tile;
+            uint8_t pixel, paletteIndex;
+            if (chrTile >= assets->chr_tile_count) continue;
+            pixel = (uint8_t)(assets->chr_pixels[
+                chrTile * 64u + (size_t)(y & 7u) * 8u + (sourceX & 7u)] & 3u);
+            paletteIndex = pixel == 0u ? 0u : (uint8_t)(subpalette * 4u + pixel);
+            if (assets->palette_written[6u][paletteIndex] != 0u) {
+                putPixel(framebuffer, 72u + x, y, assets->palettes[6u][paletteIndex]);
+            }
         }
     }
     return 1;
