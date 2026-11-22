@@ -95,6 +95,57 @@ static int runRandom(Cpu6502 *cpu, unsigned count)
 }
 
 /* Frame-by-frame play through every stream from the real start state. */
+/* Exact first-course state from C820 + C875, through F638 lap completion. */
+static int runFirstCourseSequence(Cpu6502 *cpu)
+{
+    RaceCourseStreamState s;
+    RaceSpawnState p;
+    unsigned frame, writes = 0u;
+    int complete = 0;
+
+    memset(&s, 0, sizeof(s));
+    memset(&p, 0, sizeof(p));
+    s.stream_index = 0u;
+    s.course_id = 2u;
+    s.flag_0046 = 0u;
+    s.column_00E8 = 0x34u;
+    s.row_00E9 = 0x14u;
+    s.nametable_00EA = 0x25u;
+    s.next_column_00EB = 0x0Au;
+    p.object_class[0] = 0x0Au;
+    for (frame = 0u; frame < 30000u; ++frame) {
+        const uint8_t old_column = s.column_00E8;
+        const uint8_t old_row = s.row_00E9;
+        const uint8_t old_nametable = s.nametable_00EA;
+        toRam(&s, &p, cpu->ram);
+        raceCourseStreamUpdate(&s, &p);
+        if (s.unsupported != 0u) {
+            printf("FAIL first course frame=%u native decoder unsupported\\n", frame);
+            return 1;
+        }
+        if (callOracle(cpu, frame, "first course F4FF") != 0) return 1;
+        if (compare("first course F4FF", frame, &s, &p, cpu->ram) != 0) return 1;
+        if (s.column_00E8 != old_column || s.row_00E9 != old_row ||
+            s.nametable_00EA != old_nametable) ++writes;
+        if (s.flag_03BC != 0u && s.counter_0057 == 0u) {
+            complete = 1;
+            break;
+        }
+        p.object_class[0] = s.next_column_00EB;
+    }
+    if (!complete) {
+        puts("FAIL first course did not reach F638 lap completion");
+        return 1;
+    }
+    if (writes != 1334u) {
+        printf("FAIL first course geometry columns=%u expected=1334\\n", writes);
+        return 1;
+    }
+    printf("PASS: exact first-course F4FF sequence (%u columns, %u frames) matches ASM through F638\\n",
+           writes, frame + 1u);
+    return 0;
+}
+
 static int runSequences(Cpu6502 *cpu)
 {
     unsigned stream, course, f, calls = 0u, writes = 0u;
@@ -149,5 +200,6 @@ int main(int argc, char **argv)
     fclose(fp);
     cpu6502_reset_state(&cpu);
     if (runRandom(&cpu, 300000u) != 0) return 1;
+    if (runFirstCourseSequence(&cpu) != 0) return 1;
     return runSequences(&cpu);
 }
