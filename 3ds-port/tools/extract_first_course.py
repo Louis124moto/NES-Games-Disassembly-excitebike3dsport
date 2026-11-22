@@ -59,7 +59,7 @@ def verify_against_asm(temp_dir: Path) -> tuple[int, int]:
         mismatch = next((i for i, (a, b) in enumerate(zip(original, embedded))
                          if a != b), min(len(original), len(embedded)))
         raise RuntimeError(
-            f"embedded course stream differs from ASM at {chr(36)}base + mismatch:04X}")
+            f"embedded course stream differs from ASM at ${base + mismatch:04X}")
     return base, size
 
 
