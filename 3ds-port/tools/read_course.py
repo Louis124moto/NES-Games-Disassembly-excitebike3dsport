@@ -90,7 +90,7 @@ def render_glyphs(columns: list[dict[str, Any]], start: int, count: int) -> str:
             value = byte_value(columns[i]["values_by_band"][band], "tile")
             cells.append(GLYPHS.get(value, "?"))
         lines.append(f"{band}: " + "".join(cells))
-    lines.append("legend: #=$3B  =$3C  -=$3D  .= $E4  ^=$E6  ?=other tile ID")
+    lines.append("legend: #=$3B  =$3C  -=$3D  .= $E4  ^=$E6  ?=other raw value")
     return "\n".join(lines)
 
 
