@@ -25,6 +25,7 @@ static RaceWorld s_raceWorld;
 static uint8_t s_raceMultiplayer;
 static NativeRngState s_raceRng;
 static int s_raceSessionReady;
+static int s_raceFinishLatched;
 static uint32_t s_raceUnsupportedMask;
 
 static void rememberExecutablePath(const char *path)
@@ -65,6 +66,7 @@ void gameInit(const char *executablePath)
     nativeRngReset(&s_raceRng); /* C1CE seed; startup wait-loop advances are still pending. */
     memset(&s_raceSession, 0, sizeof(s_raceSession));
     s_raceSessionReady = 0;
+    s_raceFinishLatched = 0;
     s_raceUnsupportedMask = 0u;
     s_extractorInitialized = 0;
     s_menuDirty = 1;
@@ -120,16 +122,42 @@ void gameUpdate(void)
      * Otherwise menu timers/setup commands continue advancing underneath the race
      * and can consume gameplay inputs or mutate the selected mode/state. */
     if (s_raceSessionReady) {
+        if (s_raceFinishLatched) {
+            /* C3AF advances $0041 out of race state 2. The original main
+             * dispatcher would leave C99A here; do not keep calling CA9B and
+             * increment the source state again on every rendered frame. */
+            if ((s_input.pressed & KEY_B) != 0u) {
+                s_raceSessionReady = 0;
+                s_raceFinishLatched = 0;
+                nativeMenuInit(&s_menu);
+                s_menuDirty = 1;
+                rendererPrintBottom("EXCITEBIKE — NATIVE MENU\\n"
+                                    "D-pad: move   A/Start: confirm\\n"
+                                    "X: asset extractor\\n");
+            }
+            return;
+        }
+
         const uint32_t previousUnsupported = s_raceUnsupportedMask;
         s_raceUnsupportedMask |= nativeRaceSessionStepFrame(
             &s_raceSession, &s_raceWorld,
             inputNesHeld(&s_input), inputNesPressed(&s_input));
+        /* C3AF increments $0041 when the source finish transition completes.
+         * Latch that state exactly once, as the original state dispatcher does. */
+        if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
+            *raceWorldByte(&s_raceWorld, 0x52u) == 1u) {
+            s_raceFinishLatched = 1;
+            rendererPrintBottom("RACE COMPLETE — SOURCE FINISH TRANSITION\\n"
+                                "The native race is frozen at the finish state.\\n"
+                                "Original result table is still being ported.\\n"
+                                "B: return to title\\n");
+        }
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
         if (s_raceUnsupportedMask != previousUnsupported) {
             char warning[160];
             (void)snprintf(warning, sizeof(warning),
-                           "NATIVE RACE: unsupported stage mask %08lX\n"
+                           "NATIVE RACE: unsupported stage mask %08lX\\n"
                            "Simulation continues for diagnosis; frame is not fully verified.",
                            (unsigned long)s_raceUnsupportedMask);
             rendererPrintBottom(warning);
@@ -170,6 +198,7 @@ void gameUpdate(void)
         setupInput.setup_counter_0047 = 0u;
         if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
             s_raceSessionReady = 1;
+            s_raceFinishLatched = 0;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
             nativeRaceRenderReset();
