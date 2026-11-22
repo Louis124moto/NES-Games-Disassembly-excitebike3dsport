@@ -9,7 +9,7 @@
     "setup_id_0041": 2,
     "decoder": "native F4FF/F64E/F676/F681/F82E/ECBF translation; ASM differential suite",
     "track_pages": "$0400-$057F, six 64-byte vertical-band pages",
-    "embedded_stream_base": "$ED3A",
+    "embedded_rom_data_base": "$ED3A",
     "embedded_stream_size": 1989
   },
   "initial_state": {
