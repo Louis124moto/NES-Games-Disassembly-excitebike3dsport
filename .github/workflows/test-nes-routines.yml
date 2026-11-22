@@ -223,6 +223,12 @@ jobs:
           python3 3ds-port/tools/extract_first_course.py --output /tmp/course1_geometry.json --emit-c /tmp/course1_geometry.h
           python3 -m json.tool /tmp/course1_geometry.json > /dev/null
           python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --validate
+          python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --column 0 > /tmp/course1-column0.txt
+          python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --format glyph --start 0 --count 64 > /tmp/course1-glyph.txt
+          python3 3ds-port/tools/read_course.py --json /tmp/course1_geometry.json --csv /tmp/course1.csv --validate
+          test -s /tmp/course1-column0.txt
+          test -s /tmp/course1-glyph.txt
+          test -s /tmp/course1.csv
           cat > /tmp/check_course_header.c <<'EOF'
           #include "course1_geometry.h"
           int main(void) { return excitebike_course1_track_pages[0][0] == 0x3Bu ? 0 : 1; }
