@@ -151,6 +151,11 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
            sizeof(out->race_object_parameters));
     build_first_course_hud_glyphs(out);
 
+    /* C36C/CED0 define slot identity independently of current activation:
+     * slot 0 is the player, and the AI pass begins at slot 1. */
+    for (i = 0u; i < 4u; ++i)
+        out->bike[i].role = i == 0u ? NATIVE_RACE_BIKE_PLAYER : NATIVE_RACE_BIKE_OPPONENT;
+
     /* C8A5 selects X=3..0 when ram_03F2 != 0, otherwise only X=0. */
     last = in->multiplayer_flag != 0u ? 3u : 0u;
     for (i = 0u; i <= last; ++i) {
