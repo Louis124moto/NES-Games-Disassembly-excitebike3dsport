@@ -140,8 +140,9 @@ void gameUpdate(void)
     (void)nativeMenuStepSetup(&s_menu);
 
     /* The source setup list 2 completes C551/C869/C820/C5A3/C566/C875.
-     * Compose its native gameplay state once, without starting the still
-     * incomplete per-frame race loop or invoking the NES CPU/PPU. */
+     * Compose the semantic native world once. Subsequent gameUpdate calls
+     * advance raceLoopStep through nativeRaceSessionStepFrame; no NES CPU/PPU
+     * or emulator is used by the shipped runtime. */
     if (s_menu.race_setup_complete && !s_raceSessionReady) {
         NativeRaceSetupInput setupInput;
         memset(&setupInput, 0, sizeof(setupInput));
@@ -157,9 +158,9 @@ void gameUpdate(void)
             s_raceSessionReady = 1;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
-            rendererPrintBottom("FIRST COURSE — NATIVE RACE\n"
-                                "Native frame simulation is running.\n"
-                                "Track geometry/rendering and full gameplay remain in progress.\n");
+            rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
+                                "Native bike movement, opponent, collision and course-stream stages run.\n"
+                                "Course geometry/rendering and full finish/results flow remain incomplete.\n");
         } else {
             rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
                                 "Check the first-course setup input state.\n");
