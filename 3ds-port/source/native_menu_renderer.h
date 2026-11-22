@@ -9,6 +9,7 @@
  * Returns 1 only when a complete supported front-end scene was drawn.
  */
 int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu);
+void nativeRaceRenderReset(void);
 int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
                           const NativeRaceSession *session);
 
