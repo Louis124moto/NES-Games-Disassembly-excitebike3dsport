@@ -75,7 +75,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Port `sub_D326` as an eight-byte native RNG state (`$0018-$001F`), seeded from `C1CE`; the setup initializer now consumes the native RNG state rather than fabricated per-bike inputs. Its startup-loop call site is not yet wired into the application.
 - [x] Port the first-course CPU track lookup profile from `C820` plus `D0AB/D0C6/E7FC`: six 64-byte pages are `$3B,$3B,$3D,$3D,$3D,$3D`; native code computes each bike's vertical band and four source samples. For these initial values, `E733`'s `$40` gate is never reached, so first-course opponent event dispatch is a no-op.
 - [x] Port the gameplay-field reset performed by `C869` (`$004D-$00EF`) and `C820` (`$0340-$03EF`) into `nativeRaceSetupClearFirstCourseState`; preserve bytes outside those ranges.
-- [x] Port the phase-zero first-course path of `E96C` (`E96E-EA05`): exact anchors `$0E,$1A,$26,$32` (the fourth indexed byte is labeled at `$E540`), `$08/$3A` bounds, and the source-specific direction-update branches (in-range Y does not toggle; player slot 0 has the low-bound bypass). The `EA07-EA43` player vertical-input handshake is also ported and covered by the four-bike differential test. Nonzero `$00A4` jump phases and their `DD06` initialization remain separate work.
+- [x] Port the complete first-course `E96C` vertical path (`E96E-EA05`): exact anchor and bound tables, all `$00A4` phase branches (including phase-one `DD06` jump creation, phase-two/four descent and phase-three hold), the `DD38/DD1A/DD6F` arc initialization/update, and the `EA07-EA43` player vertical-input handshake. The differential suite now runs 50,000 phase-zero frames plus 100,000 randomized all-phase four-bike frames against the original ASM. It caught and fixed a missing `$00B8` Y store before the phase-one early branch.
 - [x] Implement native menu setup list 2 (`C551,C869,C820,C5A3,C566,C875`) and test each command against the original ASM. The host oracle bypasses only `D13F`'s PPU artwork upload when testing `C820`; it executes and checks the CPU track-page fills, scroll values and sprite marker.
 - [x] Integrate `NativeRaceSession` into `game.c` after setup list 2 completes, using the menu's actual `$0041/$0046/$0034/$03F8` values and the native RNG seed. It initializes gameplay state but deliberately does not run an incomplete frame loop.
 - [x] Add the native first-course background/HUD path: merge extracted snapshots 18, 01, 17 and 14, draw original CHR tiles with palette 18, and overlay the seven C875/C935 HUD glyphs directly into the framebuffer. No PPU/OAM emulator is used at runtime.
@@ -196,3 +196,11 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Latch the first $0041 transition out of race state 2 so CA9B/C3AF is not called repeatedly by the app after the original dispatcher would have left the race loop.
 - [x] Add a temporary development escape from the frozen finish frame back to the native title with B.
 - [ ] Replace the temporary finish hold with the source-faithful results presentation, score/rank calculation and original post-race menu transition.
+
+
+### Vertical physics completion — 2026-11-22
+
+- [x] Differentially exercise all first-course vertical phases and action-state gates through the real E96C → DD06 → DD38 → DD1A/DD6F path.
+- [x] Fix the missing E97D-equivalent store of updated object Y before the phase-one jump branch. Without it, the ASM wrapped the Y coordinate correctly and entered jump setup, while native C kept the pre-addition value.
+- [x] Validate 50,000 phase-zero and 100,000 all-phase randomized four-bike vectors against the host-only original-ASM oracle.
+- [x] Verify the New 3DS devkitARM build after the fix.
