@@ -61,6 +61,14 @@ void raceCourseStreamUpdate(RaceCourseStreamState *s, RaceSpawnState *spawn)
     uint8_t a;
     unsigned guard = 0u;
 
+    /* Public API boundary: a missing state is a no-op; a missing spawn
+     * projection is an explicit unsupported input, never a dereference. */
+    if (s == 0) return;
+    if (spawn == 0) {
+        s->unsupported = 1u;
+        return;
+    }
+
     s->unsupported = 0u;
     stream = romRead(s, 0xED3Au + s->stream_index) | ((unsigned)romRead(s, 0xED40u + s->stream_index) << 8);
     if (s->unsupported) return;
