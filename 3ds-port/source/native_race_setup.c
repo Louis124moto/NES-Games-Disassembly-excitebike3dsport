@@ -21,35 +21,29 @@ static void split_decimal(uint8_t value, uint8_t *quotient, uint8_t *remainder)
     *remainder = (uint8_t)((value % 10u) - 1u);
 }
 
-/* Source C90E-C91D then DF7F: create the seven glyph bytes consumed by C935. */
-static void build_first_course_hud_glyphs(NativeRaceSetupState *out,
-                                          uint8_t transition_counter)
+/* C935 runs twice during C875. The first output from C90E is transient;
+ * C92C then reloads the final three values through C53E and C935 overwrites
+ * all seven HUD bytes. Model that final, observable output only. */
+static void build_first_course_hud_glyphs(NativeRaceSetupState *out)
 {
-    uint8_t first = out->course_setup_parameters[0];
-    uint8_t second = (uint8_t)((uint8_t)(transition_counter << 1) +
-                               out->course_setup_parameters[1]);
-    uint8_t third = 0u;
     uint8_t quotient;
     uint8_t remainder;
+    unsigned i;
 
-    /* CMP #$3C / SBC #$3C / INC $0005: one source-defined carry step. */
-    if (second >= 0x3Cu) {
-        second = (uint8_t)(second - 0x3Cu);
-        first = (uint8_t)(first + 1u);
+    for (i = 0u; i < 3u; ++i) {
+        split_decimal(out->race_object_parameters[i], &quotient, &remainder);
+        if (i == 0u) {
+            out->hud_glyphs[0] = remainder;
+            out->hud_glyphs[1] = 0xFBu;
+        } else if (i == 1u) {
+            out->hud_glyphs[2] = quotient;
+            out->hud_glyphs[3] = remainder;
+            out->hud_glyphs[4] = 0xFBu;
+        } else {
+            out->hud_glyphs[5] = quotient;
+            out->hud_glyphs[6] = remainder;
+        }
     }
-
-    split_decimal(first, &quotient, &remainder);
-    out->hud_glyphs[0] = remainder; /* DFA2 stores only A for the first value. */
-    out->hud_glyphs[1] = 0xFBu;      /* C935 overwrites the second copied byte with the $FB marker. */
-
-    split_decimal(second, &quotient, &remainder);
-    out->hud_glyphs[2] = quotient;
-    out->hud_glyphs[3] = remainder;
-    out->hud_glyphs[4] = 0xFBu;      /* C935 overwrites the fifth copied byte with the $FB marker. */
-
-    split_decimal(third, &quotient, &remainder);
-    out->hud_glyphs[5] = quotient;
-    out->hud_glyphs[6] = remainder;
 }
 
 void nativeRaceSetupClearFirstCourseState(BikeMovementState *movement,
