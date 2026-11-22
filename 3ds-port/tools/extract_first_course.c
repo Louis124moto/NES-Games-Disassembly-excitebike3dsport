@@ -60,10 +60,11 @@ int main(int argc, char **argv)
     RaceSpawnState spawn;
     const unsigned max_columns = parse_limit(argc, argv);
     const uint16_t stream_base = stream_address(0u);
+    const uint16_t next_stream_base = stream_address(1u);
     unsigned page, frame, emitted = 0u;
     int complete = 0, truncated = 0;
 
-    if (max_columns == 0u || stream_base == 0u) {
+    if (max_columns == 0u || stream_base == 0u || next_stream_base <= stream_base) {
         fputs("invalid extractor arguments or source stream pointer\n", stderr);
         return 2;
     }
