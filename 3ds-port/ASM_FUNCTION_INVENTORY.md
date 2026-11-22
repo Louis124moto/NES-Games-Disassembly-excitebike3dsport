@@ -90,10 +90,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D000` | `sub_D000` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$D018` | `sub_D018` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$D0AB` | `sub_D0AB` | Translated in C; audit/test coverage recorded separately | — |
-| `$D0C6` | `sub_D0C6` | Pending | — |
-| `$D0F4` | `sub_D0F4` | Pending | — |
+| `$D0C6` | `sub_D0C6` | Native semantic effect (per-bike course parameters) in `source/track.c`; the $03C0 byte copy is PPU-feed data only | `source/track.c` |
+| `$D0F4` | `sub_D0F4` | Presentation only (builds a PPU packet for the HUD at $2356); the native renderer draws HUD from semantic state, no PPU packet is produced | out of scope by PORTING_RULES (no PPU) |
 | `$D11F` | `sub_D11F` | Translated in C; audit/test coverage recorded separately | — |
-| `$D13F` | `sub_D13F` | Pending | calls: sub_ECE4 |
+| `$D13F` | `sub_D13F` | Presentation only (three ECE4 PPU strip packets) | out of scope by PORTING_RULES (no PPU) |
 | `$D14E` | `sub_D14E` | Pending | — |
 | `$D19B` | `sub_D19B` | Pending | — |
 | `$D1A9` | `sub_D1A9` | Pending | — |
@@ -188,7 +188,7 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$EC99` | `sub_EC99` | Pending | calls: sub_F6FB, sub_ECBF |
 | `$ECBF` | `sub_ECBF` | Differential-tested (`race_course_stream.c`, `test_race_course_stream`) | — |
 | `$ECC9` | `sub_ECC9` | Pending | — |
-| `$ECE4` | `sub_ECE4` | Pending | — |
+| `$ECE4` | `sub_ECE4` | Presentation only (fills the $0400 PPU packet buffer with background strips from tbl_E6A1) | out of scope by PORTING_RULES (no PPU) |
 
 ## $F000–$FFFF · graphics, data and audio
 
