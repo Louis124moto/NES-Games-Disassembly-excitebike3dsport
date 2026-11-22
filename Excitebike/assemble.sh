@@ -2,7 +2,7 @@
 # transplant & edit: angel
 # date: Thu Oct  7 16:20:43 CST 2021
 # notice: Terminal only for MacOSX, Linux and MinGW
-# usage: sh assemble.sh
+# usage: bash assemble.sh
 
 NES_OUTPUT_SIMPLE_NAME=_excitebike
 NES_OUTPUT_FILE_SIZE=24592
