@@ -24,6 +24,12 @@ int main(void)
     if (!nativeRaceSessionInitFirstCourse(&session, &in, &rng)) { puts("FAIL init"); return 1; }
     nativeRaceSessionBuildWorld(&session, 0u, &world);
 
+    if (*raceWorldByte(&world, 0x4Au) != 1u || session.setup.player_slot != 0u ||
+        session.setup.first_opponent_slot != 1u ||
+        session.setup.bike[0].role != NATIVE_RACE_BIKE_PLAYER ||
+        session.setup.bike[1].role != NATIVE_RACE_BIKE_OPPONENT) {
+        puts("FAIL player/opponent slot identity (expected player=0, AI=1..3)"); return 1;
+    }
     if (*raceWorldByte(&world, 0x46u) != 1u) { puts("FAIL transition flag seed"); return 1; }
     for (i = 0u; i < 4u; ++i) {
         unsigned j;
