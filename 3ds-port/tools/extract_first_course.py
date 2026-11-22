@@ -59,7 +59,7 @@ def verify_against_asm(temp_dir: Path) -> tuple[int, int]:
         mismatch = next((i for i, (a, b) in enumerate(zip(original, embedded))
                          if a != b), min(len(original), len(embedded)))
         raise RuntimeError(
-            f"embedded course stream differs from ASM at \${base + mismatch:04X}")
+            f"embedded course stream differs from ASM at {chr(36)}base + mismatch:04X}")
     return base, size
 
 
@@ -145,7 +145,7 @@ def main() -> int:
             temp_dir = Path(temporary)
             base, size = verify_against_asm(temp_dir)
             data = compile_and_extract(args.max_columns, temp_dir)
-        data["source"]["embedded_stream_base"] = f"\${base:04X}"
+        data["source"]["embedded_stream_base"] = f"{chr(36)}base:04X}"
         data["source"]["embedded_stream_size"] = size
         rendered = json.dumps(data, indent=2) + "\n"
 
