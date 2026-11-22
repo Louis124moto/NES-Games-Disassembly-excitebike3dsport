@@ -172,6 +172,7 @@ void gameUpdate(void)
             s_raceSessionReady = 1;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
+            nativeRaceRenderReset();
             rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
                                 "Native bike movement, opponent, collision and course-stream stages run.\n"
                                 "Course geometry/rendering and full finish/results flow remain incomplete.\n");
