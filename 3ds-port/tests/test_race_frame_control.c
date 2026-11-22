@@ -61,6 +61,12 @@ int main(int argc, char **argv)
     unsigned mode, v, skipped = 0u;
     static const char *names[] = { "sub_CA38", "sub_CA1B", "sub_CA13 tail", "sub_CA9B" };
     static const uint16_t entry[] = { 0xCA38u, 0xCA1Bu, 0xCA13u, 0xCA9Bu };
+    /* Public API null guards must be safe before any reference setup. */
+    racePauseUpdate(0);
+    raceHoldInput(0);
+    raceFrameInputStep(0);
+    raceFinishUpdate(0);
+
     if (argc != 2) { puts("usage: test_race_frame_control <prg>"); return 2; }
     fp = fopen(argv[1], "rb");
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
