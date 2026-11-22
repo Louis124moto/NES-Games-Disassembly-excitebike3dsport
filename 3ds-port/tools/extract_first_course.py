@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PORT = ROOT / "3ds-port"
-DEFAULT_OUTPUT = PORT / "assets" / "course1_geometry.json"
+DEFAULT_OUTPUT = ROOT / "extracted" / "course1_geometry.json"
 
 
 def embedded_stream_bytes() -> tuple[int, int, bytes]:
@@ -129,7 +129,7 @@ def emit_c_header(data: dict, destination: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT,
-                        help="JSON output path (default: 3ds-port/assets/course1_geometry.json)")
+                        help="JSON output path (default: extracted/course1_geometry.json)")
     parser.add_argument("--max-columns", type=int, default=4096,
                         help="hard safety limit; incomplete extraction is rejected")
     parser.add_argument("--emit-c", type=Path,
@@ -145,7 +145,7 @@ def main() -> int:
             temp_dir = Path(temporary)
             base, size = verify_against_asm(temp_dir)
             data = compile_and_extract(args.max_columns, temp_dir)
-        data["source"]["embedded_stream_base"] = f"{chr(36)}base:04X}"
+        data["source"]["embedded_stream_base"] = f"${base:04X}"
         data["source"]["embedded_stream_size"] = size
         rendered = json.dumps(data, indent=2) + "\n"
 
