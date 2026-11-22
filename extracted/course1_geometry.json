@@ -5,6 +5,8 @@
     "stream_pointer_table": "$ED3A/$ED40",
     "stream_index": 0,
     "stream_address": "$ED46",
+    "next_stream_address": "$EE59",
+    "stream_segment_bytes": 275,
     "course_index": 0,
     "setup_id_0041": 2,
     "decoder": "native F4FF/F64E/F676/F681/F82E/ECBF translation; ASM differential suite",
@@ -17,7 +19,8 @@
     "stream_trigger_class": "$0A",
     "ppu_column": "$34",
     "ppu_row": "$14",
-    "nametable": "$25"
+    "nametable": "$25",
+    "repeat_counter_first_byte": "$02"
   },
   "initial_profile_by_band": [
     "$3B",
@@ -27,6 +30,7 @@
     "$3D",
     "$3D"
   ],
+  "termination": "F638: template 9 completion sets $03BC when the stream lap counter reaches zero",
   "tile_semantics": {
     "$3B-$3D": "road values used by CF8B/AI lane checks",
     "$E4": "empty/no-spawn marker checked by DAE3",
