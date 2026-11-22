@@ -29,6 +29,7 @@ Inspect the level as raw track-page bytes, six bands from top to bottom:
 ```sh
 python3 3ds-port/tools/read_course.py
 python3 3ds-port/tools/read_course.py --start 64 --count 64
+python3 3ds-port/tools/read_course.py --count 0  # all 1,335 columns
 python3 3ds-port/tools/read_course.py --format glyph
 python3 3ds-port/tools/read_course.py --column 0
 python3 3ds-port/tools/read_course.py --csv /tmp/course1.csv
