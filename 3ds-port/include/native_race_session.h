@@ -20,6 +20,7 @@ typedef struct NativeRaceSession {
     uint8_t result_record_glyphs[7];    /* C5A7: $03D1-$03D7, PPU $21F2 */
     uint8_t result_current_glyphs[7];   /* CB77: $03D9-$03DF, PPU $2232 */
     uint8_t result_active;
+    uint8_t result_podium_active;
     uint32_t course_column_serial;      /* increments for each decoded column */
     BikeRaceCountdownRenderEvent countdown_render_event;
     uint8_t vertical_unsupported_mask;
