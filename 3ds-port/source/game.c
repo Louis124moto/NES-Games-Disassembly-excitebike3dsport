@@ -95,9 +95,17 @@ static void buildRaceResultTimes(void)
     } else if (comparison == 0) {
         *raceWorldByte(&s_raceWorld, 0x53u) = 1u;
     } else {
-        /* C485 computes a threshold-based placement for slower runs. The
-         * first-course transition treats rank >= 4 as the non-advancing path. */
-        *raceWorldByte(&s_raceWorld, 0x53u) = 4u;
+        /* C4AD/C522: first-course threshold from tbl_C091. sub_CB13
+         * selects index 0, or index $10 when $0046 is set. Only the
+         * <4 / >=4 distinction affects the native first-course transition. */
+        const uint8_t threshold[3] = {
+            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Bu : 0x01u,
+            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Du : 0x10u,
+            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Fu : 0x00u
+        };
+        const int thresholdComparison = memcmp(current, threshold, sizeof(current));
+        *raceWorldByte(&s_raceWorld, 0x53u) =
+            thresholdComparison <= 0 ? 2u : 4u;
     }
 
     s_raceSession.result_record_glyphs[0] = (uint8_t)(record[0] % 10u);
