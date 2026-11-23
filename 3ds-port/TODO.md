@@ -61,6 +61,10 @@ A function, passing test, successful build or screenshot alone does not mean the
 ### Repository/runtime state
 
 - [x] The shipped 3DS target is a native C application. The host-only 6502 oracle remains outside the 3DS source glob.
+- [x] Removed the retail ROM file from the current public tree in commit `dc970b9e6289b0d239c8ebe8cdb4bd8a006e5eb3`; `.gitignore` already excludes `*.nes`. **Security cleanup remains incomplete:** earlier commits still contain the blob and the repository is still public. The available GitHub connection cannot change repository visibility or delete refs/rewrite all history.
+- [x] Reset `s_raceUnsupportedMask` when a first-course session starts and when returning to the selector (commit `05d849ba90d58bc8c13734ab8a9bc85dc71325f6`).
+- [x] Upgraded workflow actions from Node 20-era versions to Node 24-compatible releases in all four workflows (checkout/setup-python/upload-artifact v7 where used).
+- [ ] Remove stale branch refs. Six branches have zero commits ahead of main; `faithful-audit-menu-assets` has 15 unique commits and must be reviewed before deletion. The available GitHub connection exposes no delete-ref operation.
 - [x] The native title, course selector and design baseline are integrated into the app loop; the asset inspector remains an optional diagnostic mode.
 - [x] The native race session, semantic RaceWorld and source-ordered race-frame scheduler are integrated into the app loop.
 - [x] The first-course simulation has reached the original source finish transition in a full host session: 34,370 frames, 13,177 live horizontal-scroll updates and zero unsupported-stage bits. The test was introduced on commit `8f05fa7af9086759dec496f664b2e19c4c864bf1`; the successful full host CI run 45088718550 is attached to commit `e900fcef9269d85da7ef82e8aff994d3ea15d49d`.
