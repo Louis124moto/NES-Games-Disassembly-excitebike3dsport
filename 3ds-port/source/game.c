@@ -11,6 +11,7 @@
 #include "native_race_session.h"
 #include "race_session_world.h"
 #include "renderer.h"
+#include "audio.h"
 
 static InputState s_input;
 static GameState s_diagnosticState;
@@ -73,6 +74,7 @@ void gameInit(const char *executablePath)
     memset(&s_menuAssets, 0, sizeof(s_menuAssets));
     rememberExecutablePath(executablePath);
     rendererInit();
+    audioInit();
 
     /* Normal game startup consumes only the previously extracted asset pack.
      * It does not load or require rom.nes. X opens the separate extractor tool.
@@ -99,6 +101,7 @@ void gameUpdate(void)
 {
     NativeMenuState before;
     inputUpdate(&s_input);
+    audioUpdate();
 
     if (assetExtractorIsActive()) {
         assetExtractorUpdate(s_input.pressed);
@@ -150,6 +153,15 @@ void gameUpdate(void)
         s_raceUnsupportedMask |= nativeRaceSessionStepFrame(
             &s_raceSession, &s_raceWorld,
             inputNesHeld(&s_input), inputNesPressed(&s_input));
+        audioSubmitSourceEvents(*raceWorldByte(&s_raceWorld, 0xFCu),
+                                *raceWorldByte(&s_raceWorld, 0xFBu),
+                                *raceWorldByte(&s_raceWorld, 0xFDu),
+                                *raceWorldByte(&s_raceWorld, 0xFEu),
+                                *raceWorldByte(&s_raceWorld, 0xFFu));
+        *raceWorldByte(&s_raceWorld, 0xFBu) = 0u;
+        *raceWorldByte(&s_raceWorld, 0xFDu) = 0u;
+        *raceWorldByte(&s_raceWorld, 0xFEu) = 0u;
+        *raceWorldByte(&s_raceWorld, 0xFFu) = 0u;
         /* C3AF increments $0041 when the source finish transition completes.
          * Latch that state exactly once, as the original state dispatcher does. */
         if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
@@ -248,4 +260,5 @@ void gameExit(void)
     memset(&s_raceSession, 0, sizeof(s_raceSession));
     nativeMenuAssetsUnload(&s_menuAssets);
     rendererExit();
+    audioExit();
 }
