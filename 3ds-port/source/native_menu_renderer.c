@@ -266,6 +266,32 @@ static uint8_t s_raceCourseMap[2u * 1024u];
 static uint32_t s_raceLastColumnSerial;
 static int s_raceCourseMapReady;
 
+
+/* Source CBA4/CBD4/CBE3 + CCCA/D1C7: each podium is two diagonal
+ * 8x8 sprites, placed in OAM $02C4, $02CC and $02D4. */
+void nativeRaceRenderBuildResultsPodium(NativeRaceSession *session)
+{
+    static const uint8_t x_position[3] = { 0x78u, 0x70u, 0x80u };
+    static const uint8_t y_position[3] = { 0x37u, 0x3Fu, 0x3Fu };
+    static const uint8_t tile_base[3] = { 0xB7u, 0xB9u, 0xB9u };
+    static const uint8_t attribute[3] = { 0x01u, 0x01u, 0x41u };
+    static const uint8_t oam_offset[3] = { 0x04u, 0x0Cu, 0x14u };
+    unsigned int i;
+    if (session == NULL) return;
+    for (i = 0u; i < 3u; ++i) {
+        const unsigned int base = 0xC0u + oam_offset[i];
+        session->oam.bytes[base] = y_position[i];
+        session->oam.bytes[base + 1u] = tile_base[i];
+        session->oam.bytes[base + 2u] = attribute[i];
+        session->oam.bytes[base + 3u] = x_position[i];
+        session->oam.bytes[base + 4u] = (uint8_t)(y_position[i] + 8u);
+        session->oam.bytes[base + 5u] = (uint8_t)(tile_base[i] + 1u);
+        session->oam.bytes[base + 6u] = attribute[i];
+        session->oam.bytes[base + 7u] = (uint8_t)(x_position[i] + 8u);
+    }
+    session->result_podium_active = 1u;
+}
+
 void nativeRaceRenderReset(void)
 {
     memset(s_raceCourseMap, 0, sizeof(s_raceCourseMap));
