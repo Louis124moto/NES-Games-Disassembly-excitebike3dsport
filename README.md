@@ -18,7 +18,7 @@ The goal is behavioral fidelity, not merely a similar-looking game. No approxima
 
 - **Game logic:** native, deterministic C modules with semantic game state. Do not keep a live 64 KiB NES RAM image or 6502 register file as the game's state model.
 - **Graphics:** native 3DS rendering using verified extracted assets and semantic scene/sprite data. No runtime PPU or NES register model.
-- **Audio:** native 3DS playback/mixing from verified source sound data. No runtime APU/register emulation.
+- **Audio:** native NDSP procedural engine-sputter and event effects driven by source sound-request bytes. Original soundtrack playback is not included; no runtime APU/register emulation.
 - **Input:** libctru HID mapped to game actions; do not copy NES controller bitmasks into hardware input code.
 - **Platform:** devkitARM, libctru and native 3DS filesystem/timing/audio/graphics APIs.
 - **Tests:** host-side deterministic regression and differential tests against the original ASM. A 6502 oracle or external emulator may exist under host test tooling only and must never be linked into the 3DS executable.
@@ -34,12 +34,12 @@ See [NATIVE_PORT_ARCHITECTURE.md](3ds-port/NATIVE_PORT_ARCHITECTURE.md) for the 
 
 - **Stage 1 — asset extraction:** accepted by owner decision on 2026-11-17, with verification debt.
 - **Stage 2 — native menus/front-end:** title, course selector and design baseline accepted for race-engine work on 2026-11-19. Optional editor and tape save/load screens remain deferred; visual and hardware validation remain.
-- **Stage 3 — first-course simulation:** the native session-to-world bridge now drives the first course from setup through the source finish transition. The host integration test completed after 34,370 frames, recorded 13,177 live horizontal-scroll column updates and reported no unsupported-stage bits (test commit 8f05fa7af9086759dec496f664b2e19c4c864bf1). This is a simulation/finish-transition milestone, not final acceptance.
-- **Finish handling:** the app latches the source finish state. B returns to the native course selector while preserving the selected race mode; course 2 is intentionally out of scope for this milestone (game.c, commit f847add1a635de3e18212659da4061ff8844b251).
+- **Stage 3 — first-course simulation:** the native session reaches the source finish after 34,370 frames and 13,177 live scroll updates. It now shows the source best/current time rows, persists the course record, builds the source podium OAM sprites and runs the timed result interval. Full next-course flow and physical-console acceptance remain open.
+- **Finish handling:** the result screen displays best/current times at source PPU addresses `$21F2`/`$2232`, the three source podium sprite blocks, and the timer-driven state-3 interval. Afterward the app returns to the native course selector because course 2 is not yet playable; this is not the complete automatic next-course flow.
 - **Runtime boundary:** the 3DS target uses native C modules. The 6502 core is confined to host-side differential tests and is not part of the 3DS source glob or runtime.
 - **Course data:** the first course's complete raw F4FF source pass is extracted to extracted/course1_geometry.json (1,335 source records × six vertical-band values), with the complete 18-byte F4FF buffer, $03A8 spawn requests, stream counters, source addresses, templates, PPU/ring coordinates and $F638/$03BC completion provenance. The reader validates and exports the editable data. The 1,335 source records are distinct from the live scroll-update counter measured during a full race.
 - **Course rendering:** native scrolling nametable rendering consumes F4FF column packets and extracted CHR/palette assets. The race renderer also draws the native OAM bike/effect sprites and HUD. This is native framebuffer rendering, not a runtime NES PPU. Fixed-frame visual comparison and physical-console validation remain open.
-- **Remaining acceptance blockers:** source-faithful result/score presentation and post-race transition, native audio/music, complete course-specific terrain/event validation, fixed-frame visual comparison, and physical New 3DS testing. The audio module is still empty; do not claim audio support.
+- **Remaining acceptance blockers:** complete source post-results/next-course transition, original music, full course-specific surface/ramp/event physics, fixed-frame visual comparison, and physical New 3DS testing. The current procedural audio is not soundtrack parity.
 - **Assembler dependencies:** the legacy Excitebike/assemble.sh script is optional. Native builds and host differential tests do not require cc65 or Lua; the host workflow reconstructs the reference PRG with 3ds-port/tools/asm_to_prg.py.
 
 </details>
