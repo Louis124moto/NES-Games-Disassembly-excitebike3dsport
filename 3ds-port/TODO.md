@@ -88,10 +88,10 @@ A function, passing test, successful build or screenshot alone does not mean the
 
 ### Current build/test evidence
 
-- Exact first-course session result: 34,370 frames; finish flag $0052 asserted; source state $0041 left race state 2; 13,177 live scroll updates; unsupported mask zero. Test run: [GitHub Actions 45087865825](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45087865825).
-- New 3DS devkitARM build passed at commit f2e7fd17e891f13c99ce6031656407934fa67760: [GitHub Actions 45088450227](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088450227).
-- The new host framebuffer regression test for F4FF column application and invalid-address rejection is included in the current host workflow; do not mark it passed until its step reports success.
-- A successful compile is not physical-hardware validation and does not make Stage 3 accepted.
+- Exact first-course session result: 34,370 frames; finish flag $0052 asserted; source state $0041 left race state 2; 13,177 live scroll updates; unsupported mask zero. Full host suite: [GitHub Actions 45088718550](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088718550).
+- Native framebuffer regression test passed: the source scene draws, F4FF $8E column packets update the native nametable, and invalid PPU addresses are rejected. Verified in the same host run, commit e900fcef9269d85da7ef82e8aff994d3ea15d49d.
+- Exact-commit New 3DS devkitARM build passed at commit e900fcef9269d85da7ef82e8aff994d3ea15d49d: [GitHub Actions 45088718674](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088718674).
+- These host/build results are not physical-hardware validation and do not make Stage 3 accepted.
 
 
 ## 5. Sequential milestone plan
@@ -170,7 +170,7 @@ Goal: one original course playable from native menu entry through source-faithfu
 - [ ] Implement source-derived race sound effects and music through native 3DS audio. audio.c is currently empty.
 - [ ] Compare fixed-frame course, bike, opponent, HUD and finish captures against the original NES reference.
 - [ ] Validate rendering, controls, timing, frame pacing and full first-course completion on a physical New 3DS.
-- [ ] Run the complete host differential suite and exact-commit devkitARM build after the final implementation changes.
+- [x] Run the complete host differential suite and exact-commit devkitARM build at commit e900fcef9269d85da7ef82e8aff994d3ea15d49d.
 - [ ] Stage 3 acceptance report complete.
 
 The 1,335 value is the count of extracted F4FF source records. The full runtime session's 13,177 value is the number of live horizontal-scroll column updates; these counters describe different things and must not be conflated. The current host session proves that the native simulation reaches the source finish transition, not that visual/audio parity or the original result flow is complete.
