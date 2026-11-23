@@ -328,6 +328,13 @@ void gameUpdate(void)
     nativeMenuUpdate(&s_menu, inputNesPressed(&s_input));
     (void)nativeMenuStepSetup(&s_menu);
 
+    /* Source $00FB music requests raised by the title/menu setup code (C2D1,
+     * C514...) go to the sound driver, which consumes them once. */
+    if (s_menu.title_animation_flag != 0u) {
+        audioSubmitSourceEvents(0u, s_menu.title_animation_flag, 0u, 0u, 0u);
+        s_menu.title_animation_flag = 0u;
+    }
+
     /* The source setup list 2 completes C551/C869/C820/C5A3/C566/C875.
      * Compose the semantic native world once. Subsequent gameUpdate calls
      * advance raceLoopStep through nativeRaceSessionStepFrame; no NES CPU/PPU

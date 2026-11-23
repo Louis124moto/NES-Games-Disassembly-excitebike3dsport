@@ -2,41 +2,33 @@
 #include <stdint.h>
 #include <string.h>
 #include "audio.h"
+#include "sound_driver.h"
+#include "sound_synth.h"
 
 /*
  * Native 3DS audio backend.
  *
- * This is a procedural engine/effect synthesizer driven by the source game's
- * semantic sound request bytes. It deliberately does not embed or reproduce
- * the commercial soundtrack. A source-accurate music sequence requires
- * separately licensed/user-supplied music assets and a dedicated native
- * sequence player.
+ * The source sound driver (sound_driver.c, a 1:1 port of sub_F844, verified
+ * differentially against the original code) runs once per source frame and
+ * logs its APU register writes. sound_synth.c turns each frame's log into PCM
+ * and this file streams it through NDSP. Production is paced by the DSP queue
+ * so the music keeps the source tempo (60.0988 Hz) whatever the display rate.
  */
-#define AUDIO_RATE 32728.0f
-#define AUDIO_SAMPLES 512u
 #define AUDIO_CHANNEL 0u
+#define AUDIO_BUFFERS 4u
+#define AUDIO_MAX_QUEUED 3u
 
 typedef struct AudioBuffer {
     ndspWaveBuf wave;
-    int16_t samples[AUDIO_SAMPLES];
+    int16_t samples[SOUND_SYNTH_MAX_FRAME_SAMPLES];
 } AudioBuffer;
 
-static AudioBuffer s_buffers[2];
+static AudioBuffer s_buffers[AUDIO_BUFFERS];
 static unsigned s_nextBuffer;
-static uint32_t s_phase;
-static uint32_t s_engineStep;
-static uint32_t s_effectStep;
-static uint32_t s_noise = 0x6D2B79F5u;
-static uint16_t s_engineCode;
-static uint16_t s_effectTicks;
-static uint16_t s_effectDuration;
-static uint8_t s_effectType;
+static SoundDriver s_driver;
+static SoundSynth s_synth;
+static uint8_t s_pendingFb, s_pendingFd, s_pendingFe, s_pendingFf, s_engineFc;
 static uint8_t s_initialized;
-
-static uint32_t phaseStep(uint32_t frequency)
-{
-    return (uint32_t)(((uint64_t)frequency << 32) / 32728u);
-}
 
 void audioInit(void)
 {
@@ -44,106 +36,69 @@ void audioInit(void)
     if (s_initialized) return;
     memset(s_buffers, 0, sizeof(s_buffers));
     s_nextBuffer = 0u;
-    s_phase = 0u;
-    s_engineStep = 0u;
-    s_effectStep = 0u;
-    s_engineCode = 0u;
-    s_effectTicks = 0u;
-    s_effectDuration = 0u;
-    s_effectType = 0u;
-    s_noise = 0x6D2B79F5u;
+    s_pendingFb = s_pendingFd = s_pendingFe = s_pendingFf = s_engineFc = 0u;
+    soundDriverReset(&s_driver, kSoundData);
+    soundSynthReset(&s_synth);
     if (R_FAILED(ndspInit())) return;
     ndspSetOutputMode(NDSP_OUTPUT_STEREO);
     ndspChnReset(AUDIO_CHANNEL);
     ndspChnSetInterp(AUDIO_CHANNEL, NDSP_INTERP_LINEAR);
-    ndspChnSetRate(AUDIO_CHANNEL, AUDIO_RATE);
+    ndspChnSetRate(AUDIO_CHANNEL, (float)SOUND_SYNTH_RATE);
     ndspChnSetFormat(AUDIO_CHANNEL, NDSP_FORMAT_MONO_PCM16);
     {
         float mix[12] = {
-            0.18f, 0.18f, 0.0f, 0.0f, 0.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
         };
         ndspChnSetMix(AUDIO_CHANNEL, mix);
     }
-    for (i = 0u; i < 2u; ++i) {
+    for (i = 0u; i < AUDIO_BUFFERS; ++i)
         s_buffers[i].wave.data_pcm16 = s_buffers[i].samples;
-        s_buffers[i].wave.nsamples = AUDIO_SAMPLES;
-        s_buffers[i].wave.looping = false;
-    }
     s_initialized = 1u;
 }
 
+/* Latches the source request bytes ($FC engine level, $FB music, $FD noise,
+ * $FE overheat flag, $FF effects); the driver consumes them on its next frame. */
 void audioSubmitSourceEvents(uint8_t engine, uint8_t request_fb,
                              uint8_t request_fd, uint8_t request_fe,
                              uint8_t request_ff)
 {
     if (!s_initialized) return;
-    s_engineCode = engine;
-    s_engineStep = engine != 0u ? phaseStep(58u + (uint32_t)(engine & 0x3Fu) * 7u) : 0u;
-    if (request_fd != 0u) { s_effectType = 2u; s_effectTicks = 18u * AUDIO_SAMPLES; }
-    else if (request_fe != 0u) { s_effectType = 3u; s_effectTicks = 12u * AUDIO_SAMPLES; }
-    else if (request_fb != 0u) { s_effectType = 1u; s_effectTicks = 24u * AUDIO_SAMPLES; }
-    else if (request_ff != 0u) { s_effectType = 4u; s_effectTicks = 8u * AUDIO_SAMPLES; }
-    if (s_effectTicks != 0u) {
-        s_effectDuration = s_effectTicks;
-        s_effectStep = s_effectType == 3u ? phaseStep(880u) :
-                       s_effectType == 4u ? phaseStep(660u) : phaseStep(440u);
-    }
+    s_engineFc = engine;
+    s_pendingFb |= request_fb;
+    s_pendingFd |= request_fd;
+    s_pendingFe |= request_fe;
+    s_pendingFf |= request_ff;
 }
 
-static int16_t renderSample(void)
+static unsigned busyBuffers(void)
 {
-    int32_t sample = 0;
-    if (s_engineCode != 0u) {
-        /* $00FC is the source engine-sound intensity/pitch request. */
-        s_phase += s_engineStep;
-        sample = (s_phase & 0x80000000u) ? 3600 : -3600;
-    }
-    if (s_effectTicks != 0u) {
-        int32_t effect = 0;
-        --s_effectTicks;
-        if (s_effectType != 2u) s_phase += s_effectStep;
-        switch (s_effectType) {
-        case 1u: /* countdown/start cue */
-            effect = (s_phase & 0x40000000u) ? 4200 : -4200;
-            break;
-        case 2u: /* impact/collision */
-            s_noise ^= s_noise << 13;
-            s_noise ^= s_noise >> 17;
-            s_noise ^= s_noise << 5;
-            effect = (int32_t)(s_noise & 0x1FFFu) - 4096;
-            break;
-        case 3u: /* crash/alert */
-            effect = (s_phase & 0x20000000u) ? 5200 : -5200;
-            break;
-        default: /* short opponent/event tick */
-            effect = (s_effectTicks & 2u) ? 1800 : -1800;
-            break;
-        }
-        if (s_effectDuration != 0u)
-            sample += (effect * (int32_t)s_effectTicks) / (int32_t)s_effectDuration;
-    }
-    if (sample > 12000) sample = 12000;
-    if (sample < -12000) sample = -12000;
-    return (int16_t)sample;
+    unsigned i, busy = 0u;
+    for (i = 0u; i < AUDIO_BUFFERS; ++i)
+        if (s_buffers[i].wave.status != NDSP_WBUF_FREE &&
+            s_buffers[i].wave.status != NDSP_WBUF_DONE) ++busy;
+    return busy;
 }
 
 void audioUpdate(void)
 {
-    AudioBuffer *buffer;
-    unsigned i;
     if (!s_initialized) return;
-    buffer = &s_buffers[s_nextBuffer];
-    if (buffer->wave.status != NDSP_WBUF_FREE &&
-        buffer->wave.status != NDSP_WBUF_DONE) return;
-    for (i = 0u; i < AUDIO_SAMPLES; ++i)
-        buffer->samples[i] = renderSample();
-    DSP_FlushDataCache(buffer->samples, sizeof(buffer->samples));
-    buffer->wave.data_pcm16 = buffer->samples;
-    buffer->wave.nsamples = AUDIO_SAMPLES;
-    buffer->wave.looping = false;
-    ndspChnWaveBufAdd(AUDIO_CHANNEL, &buffer->wave);
-    s_nextBuffer ^= 1u;
+    while (busyBuffers() < AUDIO_MAX_QUEUED) {
+        AudioBuffer *buffer = &s_buffers[s_nextBuffer];
+        unsigned count;
+        if (buffer->wave.status != NDSP_WBUF_FREE && buffer->wave.status != NDSP_WBUF_DONE) break;
+        soundDriverSetRequests(&s_driver, s_pendingFb, s_engineFc, s_pendingFd,
+                               s_pendingFe, s_pendingFf);
+        s_pendingFb = s_pendingFd = s_pendingFe = s_pendingFf = 0u;
+        soundDriverFrame(&s_driver);
+        count = soundSynthFrame(&s_synth, s_driver.writes, s_driver.write_count, buffer->samples);
+        DSP_FlushDataCache(buffer->samples, count * sizeof(int16_t));
+        buffer->wave.data_pcm16 = buffer->samples;
+        buffer->wave.nsamples = count;
+        buffer->wave.looping = false;
+        ndspChnWaveBufAdd(AUDIO_CHANNEL, &buffer->wave);
+        s_nextBuffer = (s_nextBuffer + 1u) % AUDIO_BUFFERS;
+    }
 }
 
 void audioExit(void)
