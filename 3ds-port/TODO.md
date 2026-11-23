@@ -56,47 +56,43 @@ Use these labels precisely:
 
 A function, passing test, successful build or screenshot alone does not mean the subsystem is integrated or accepted.
 
-## 4. Current verified baseline — 2026-11-19
+## 4. Current verified baseline — 2026-11-23
 
 ### Repository/runtime state
 
-- [x] The live game loop no longer initializes or steps an NES CPU/system/APU or PRG-backed menu recompiler.
-- [x] Generated 6502 recompiler, CPU call glue, NES system/APU/game wrappers, old emulator menu, ROM boot path, emulator-only tests and generators were removed from the active source tree.
-- [x] 3DS Makefile compiles the native C source glob directly.
-- [x] Host-only 6502 reference CPU is retained under `tests/oracle/`, outside the 3DS source glob.
-- [x] The normal game path now loads the existing exported EBPX CHR pack and source scene snapshots without opening or requiring rom.nes.
-- [x] The title/selector/design front-end is wired to the native menu state and setup sequencer; its tilemap and cursor are drawn directly to the 3DS framebuffer by native code.
-- [x] The native asset loader now reads source snapshots for editor state 9 and tape save/load states 12/13, and loads all seven palette presets 12–18. Renderer support is static-background-only; it is not editor/save/load functionality.
-- [ ] The diagnostic asset inspector and its static PPU preview/compositor helpers still need a strict utility-only boundary from the final game renderer.
-- [ ] The application is now a native front-end prototype, not yet a complete playable Excitebike game; editor/save/load and several transitions remain incomplete.
-- [ ] Native menu and physics modules must be integrated into a real game loop; isolated helper coverage is not gameplay completion.
+- [x] The shipped 3DS target is a native C application. The host-only 6502 oracle remains outside the 3DS source glob.
+- [x] The native title, course selector and design baseline are integrated into the app loop; the asset inspector remains an optional diagnostic mode.
+- [x] The native race session, semantic RaceWorld and source-ordered race-frame scheduler are integrated into the app loop.
+- [x] The first-course simulation has reached the original source finish transition in a full host session: 34,370 frames, 13,177 live horizontal-scroll updates and zero unsupported-stage bits (test commit 8f05fa7af9086759dec496f664b2e19c4c864bf1).
+- [x] The app latches that finish state and B returns to the native course selector while preserving the selected race mode. This is a scoped first-course exit, not the original next-course/results flow (game.c commit f847add1a635de3e18212659da4061ff8844b251).
+- [x] The first-course F4FF stream is extracted as 1,335 source records × six vertical-band values, with the full 18-byte packet and source provenance.
+- [x] The native race renderer draws the scrolling course map, HUD and native OAM bike/effect sprites from extracted CHR and palette assets.
+- [ ] The final race renderer still needs fixed-frame comparison against the original and physical New 3DS validation.
+- [ ] Native audio/music is not implemented; source/audio.c is still an empty interface.
+- [ ] Source-faithful result/score presentation and the original post-race/next-course transition remain incomplete.
+- [ ] First-course terrain/event interpretation and its collision/render consequences still need source-backed validation.
+- [ ] Full first-course acceptance and faithful .3dsx release remain open.
 
-### Existing native code — verified slices only
+### Native subsystem status
 
-| Area | Present native code/evidence | Not yet proven or implemented |
+| Area | Integrated state | Remaining work |
 |---|---|---|
-| Input | `inputMapNesButtons` maps libctru buttons to semantic/original input bits; all 256 combinations tested. | Full game action handling/integration. |
-| Menu logic | Owner-accepted development baseline: native title/selector/design state and direct-framebuffer presentation are integrated in the app loop. | Optional editor/tape save-load screens are deferred; race-entry transition and visual/hardware acceptance remain open. |
-| Bike speed/physics | Native four-slot speed-control prefix (sub_CD59) and active-bike dispatch (sub_CD1F), plus acceleration/deceleration/terrain gate and temperature/overheat slices. New all-slot tests compare 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame vectors against the ASM oracle. | Remaining sub_CD59 steering/posture side effects, heat state integration, jump/landing, crash/recovery, opponents and complete frame ordering. |
-| Movement | Native `DA58/DC1A/DCF2/DCDE` per-bike chain and `DA6A/DA7A/DBFE` camera pass; 50,000 full `DA26` frames match original ASM. | Integration into the actual app race loop, remaining object/frame handlers, track events and collision. |
-| Track | Native F4FF stream decoder is integrated at its source-ordered race-loop slot; the exact first-course stream matches ASM through F638. `extracted/course1_geometry.json` stores 1,335 columns with six track-page bands, the complete 18-byte stream buffer and spawn-request/counter state; `read_course.py` validates and inspects it. | Interpret raw track-page values into terrain/ramp/obstacle/collision semantics, connect geometry to collision and rendering, then validate visuals/hardware. |
-| Opponents | Some movement primitives only. | Full initialization, AI/state decisions, collision and race behavior. |
-| Collision | No faithful complete implementation. | Trace and implement all original collision paths. |
-| Graphics | CHR extraction/decoding, exported EBPX/snapshots, and direct-framebuffer native rendering for title/selector/design plus static editor/save/load source-snapshot backgrounds. | Validate all scenes/palettes against reference captures; implement editor objects/cursor, save/load UI, transition sprites and animations. |
-| Audio | Interface/scaffolding only. | Source-derived sound/music import, native playback/mixing and event timing. |
-| Runtime/game flow | Native title/selector/design front-end runs without loading the ROM; X opens the separate extractor. The native race speed dispatcher now exists as a tested subsystem. | Wire race entry and the complete state-2 game loop; finish track, object, collision, rendering, audio and results integration. |
+| Input/menu | Native HID mapping, title, selector, design baseline and first-course entry. | Remaining menu/editor/tape transitions, visual comparison and hardware validation. |
+| Setup/world | C869/C820/C875 setup translated into semantic state; RaceWorld generated and seeded. | Complete remaining source state transitions. |
+| Physics | Player speed, acceleration/braking, steering, vertical phases, jumps, heat, recovery and four-bike movement integrated. | Verify all first-course terrain/event cases in real deterministic runs. |
+| Opponents/collisions | Native opponent AI/state handlers, bike contacts, obstacle-hit checks and crash recovery integrated. | Validate complete course-specific interactions against the original. |
+| Course stream | F4FF and dependencies integrated; exact first-course source pass is differentially tested through F638. | Verify live scroll/render behavior and source-defined terrain/event semantics. |
+| Graphics | Native scrolling nametable framebuffer renderer, HUD and OAM sprite rendering. | Fixed-frame visual parity, transitions and hardware performance. |
+| Audio | Empty interface only. | Source-derived sound/music assets and native 3DS playback/mixing. |
+| Finish/flow | Full native session reaches source finish; B returns to course selector. | Original score/results and source-faithful post-race/next-course flow. |
 
-### Existing differential evidence
+### Current build/test evidence
 
-- Native player speed-control/acceleration/terrain/temperature slices: 1,224,704 ASM reference vectors recorded in the current tracker. The new four-slot speed-control test adds 120,000 sub_CD59 vectors and 12,000 sub_CD1F frame-dispatch vectors.
-- Native movement slices: 574,288 ASM reference vectors recorded in the current tracker.
-- Previous recorded slice count: **1,798,992 vectors**. The new movement milestone adds 50,000 `DC1A`, 50,000 `DCF2` and 50,000 complete `DA26` frame comparisons; these are subsystem tests, not full race validation.
-- Verified movement revision: `e80b85b9c03ae61f65e0ecec61a1816938cb8f92`.
-- Host differential CI: [44615749414](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749414).
-- New 3DS build CI: [44615749343](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44615749343).
-- Latest documentation commit before this roadmap rewrite: `639554501e839b8758776bbd01b691f58eb9cc99`.
+- Exact first-course session result: 34,370 frames; finish flag $0052 asserted; source state $0041 left race state 2; 13,177 live scroll updates; unsupported mask zero. Test run: [GitHub Actions 45087865825](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45087865825).
+- New 3DS devkitARM build passed at commit f2e7fd17e891f13c99ce6031656407934fa67760: [GitHub Actions 45088450227](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088450227).
+- The new host framebuffer regression test for F4FF column application and invalid-address rejection is included in the current host workflow; do not mark it passed until its step reports success.
+- A successful compile is not physical-hardware validation and does not make Stage 3 accepted.
 
-These CI results validate only the code/tests included in that revision. They do not validate the current HEAD after later changes, nor prove a playable game.
 
 ## 5. Sequential milestone plan
 
@@ -156,29 +152,29 @@ Do not carry forward emulator-specific goals such as scanline accuracy, PPU regi
 
 ### Stage 3 — first complete playable race
 
-**Status: IN PROGRESS by owner instruction. Some isolated native physics slices and the first four-bike speed-control frame pass are now implemented and differential-tested.**
+**Status: IN PROGRESS.** The first-course native simulation now reaches the original source finish transition in a complete host session. It is not yet accepted as a faithful playable race.
 
-Goal: one original course playable from menu entry through finish/results, with source-faithful game behavior.
+Goal: one original course playable from native menu entry through source-faithful finish/results/return behavior, with verified visuals and audio.
 
-- [ ] Complete source trace of state-2 race entry, setup sequence and exact per-frame update order. Initial evidence: dispatcher state 2 enters ofs_000_C99A_02; sub_CD1F runs from loc_C9D5 and dispatches active bike slots 3..0 through sub_CD59.
-- [ ] Establish player/opponent identity and all persistent semantic state from initialization, writers, input flow and callers.
-- [ ] Convert race setup results into semantic native track/race structures; do not use a NES RAM image as live state.
-- [ ] Decode/import the first course's verified geometry, ramps, terrain, obstacles and visual data.
-- [x] Translate and differential-test the active-bike speed-control pass (sub_CD1F) and its sub_CD59 speed/terrain prefix for all four object slots.
-- [ ] Complete player acceleration, braking, speed limits, heat/cooling, steering, posture, jumps, landing, collisions, crashes and recovery; speed-control translation is only one subsystem, not a complete bike controller.
-- [x] Translate the secondary camera/parallax accumulator (`sub_DBFE`) into semantic native movement state; 100,000 randomized vectors match the ASM oracle, including carry into the secondary nametable bit.
-- [x] Translate the four-object lock-timer decay (`sub_DCDE`) into semantic native movement state; 100,000 randomized per-slot vectors match the ASM oracle.
-- [ ] Complete opponent initialization, movement, AI and collision behavior.
-- [ ] Implement race timers, lap/finish detection, scoring, result flow and return-to-menu behavior.
-- [ ] Implement native rendering for track, bike, opponents, HUD and animation.
-- [ ] Implement native audio events and music for the race.
-- [ ] Differential-test deterministic frame-by-frame scenarios against the original ASM, including all branches and boundary conditions.
-- [ ] Integrate the complete race into the native runtime.
-- [ ] Run end-to-end on physical New 3DS and compare captures/behavior against the original reference.
-- [ ] Exact-commit host tests and New 3DS build pass.
+- [x] Trace the state-2 race dispatcher and source-ordered per-frame call sequence.
+- [x] Establish player/opponent identity and initialize the first-course semantic race state from C869/C820/C875.
+- [x] Build the semantic RaceWorld and integrate raceLoopStep through nativeRaceSessionStepFrame into the actual app loop.
+- [x] Translate and integrate player acceleration, braking, speed control, steering, vertical phases, jump setup, heat/overheat, movement and camera scroll.
+- [x] Translate and integrate opponent state handlers/AI, bike contacts, obstacle-hit checks, collision handling and crash recovery.
+- [x] Port the F4FF course stream and dependencies; compare the exact 1,335-record first-course source pass against the original ASM through F638.
+- [x] Integrate the F4FF packets into the native scrolling course renderer; render the native OAM bikes/effects and HUD using extracted assets.
+- [x] Drive a complete native first-course session to the source finish transition. The host test reached $0052=1 and $0041!=2 after 34,370 frames, with 13,177 live scroll updates and no unsupported-stage bits.
+- [x] Add a first-course-only B exit from the finish latch back to the native course selector, preserving the selected race mode. Course 2 remains outside this milestone.
+- [ ] Implement the original post-race/next-course transition and any source-defined score/results presentation. The current selector return is a scoped fallback, not the original transition.
+- [ ] Complete source-backed terrain/event and collision validation using the actual first-course run, not only randomized routine vectors.
+- [ ] Implement source-derived race sound effects and music through native 3DS audio. audio.c is currently empty.
+- [ ] Compare fixed-frame course, bike, opponent, HUD and finish captures against the original NES reference.
+- [ ] Validate rendering, controls, timing, frame pacing and full first-course completion on a physical New 3DS.
+- [ ] Run the complete host differential suite and exact-commit devkitARM build after the final implementation changes.
 - [ ] Stage 3 acceptance report complete.
 
-The new `sub_DBFE` and `sub_DCDE` helpers are isolated translations and are not yet wired into the full `sub_DA26` frame sequence. Existing speed, temperature and movement vectors are reusable evidence. They do not waive any item above.
+The 1,335 value is the count of extracted F4FF source records. The full runtime session's 13,177 value is the number of live horizontal-scroll column updates; these counters describe different things and must not be conflated. The current host session proves that the native simulation reaches the source finish transition, not that visual/audio parity or the original result flow is complete.
+
 
 ### Stage 4 — remaining original game
 
