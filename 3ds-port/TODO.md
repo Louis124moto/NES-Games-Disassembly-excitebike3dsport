@@ -63,7 +63,7 @@ A function, passing test, successful build or screenshot alone does not mean the
 - [x] The shipped 3DS target is a native C application. The host-only 6502 oracle remains outside the 3DS source glob.
 - [x] The native title, course selector and design baseline are integrated into the app loop; the asset inspector remains an optional diagnostic mode.
 - [x] The native race session, semantic RaceWorld and source-ordered race-frame scheduler are integrated into the app loop.
-- [x] The first-course simulation has reached the original source finish transition in a full host session: 34,370 frames, 13,177 live horizontal-scroll updates and zero unsupported-stage bits (test commit 8f05fa7af9086759dec496f664b2e19c4c864bf1).
+- [x] The first-course simulation has reached the original source finish transition in a full host session: 34,370 frames, 13,177 live horizontal-scroll updates and zero unsupported-stage bits. The test was introduced on commit `8f05fa7af9086759dec496f664b2e19c4c864bf1`; the successful full host CI run 45088718550 is attached to commit `e900fcef9269d85da7ef82e8aff994d3ea15d49d`.
 - [x] The app latches that finish state and B returns to the native course selector while preserving the selected race mode. This is a scoped first-course exit, not the original next-course/results flow (game.c commit f847add1a635de3e18212659da4061ff8844b251).
 - [x] The first-course F4FF stream is extracted as 1,335 source records × six vertical-band values, with the full 18-byte packet and source provenance.
 - [x] The native race renderer draws the scrolling course map, HUD and native OAM bike/effect sprites from extracted CHR and palette assets.
