@@ -32,7 +32,7 @@ jobs:
   differential-race-frame:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build original PRG from disassembly
         run: python3 3ds-port/tools/asm_to_prg.py Excitebike/bank_FF.asm /tmp/prg.bin
       - name: Compile native race-frame differential suite
