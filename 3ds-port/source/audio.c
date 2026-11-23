@@ -52,7 +52,13 @@ void audioInit(void)
     ndspChnSetInterp(AUDIO_CHANNEL, NDSP_INTERP_LINEAR);
     ndspChnSetRate(AUDIO_CHANNEL, AUDIO_RATE);
     ndspChnSetFormat(AUDIO_CHANNEL, NDSP_FORMAT_MONO_PCM16, 1);
-    ndspChnSetMix(AUDIO_CHANNEL, 0.18f, 0.18f, 0.0f, 0.0f, 0.0f, 0.0f);
+    {
+        const float mix[12] = {
+            0.18f, 0.18f, 0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
+        };
+        ndspChnSetMix(AUDIO_CHANNEL, mix);
+    }
     for (i = 0u; i < 2u; ++i) {
         s_buffers[i].wave.data = s_buffers[i].samples;
         s_buffers[i].wave.nsamples = AUDIO_SAMPLES;
