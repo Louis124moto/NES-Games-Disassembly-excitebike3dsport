@@ -230,3 +230,11 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Verify race-loop, AI, race-frame collision/crash/obstacle, vertical recovery, DA26 movement and all-phase jump tests against the original ASM.
 - [x] Verify the devkitARM/New 3DS target build.
 - [ ] Remaining physics dependency: decode the complete first-course obstacle/terrain geometry and validate the already-ported obstacle-hit algorithm with real course inputs.
+
+## End-to-end first-course runtime test — 2026-11-23
+
+- [x] Extend test_race_session_world.c from a 3,000-frame smoke test to a full native race run (100,000-frame safety limit). The test drives the player, requires $0052 to signal the finish, then requires $0041 to leave race state 2.
+- [x] The exact native session reached the source finish transition after 34,370 frames, with 13,177 live horizontal-scroll column updates and no unsupported-stage bits. CI: commit 8f05fa7af9086759dec496f664b2e19c4c864bf1.
+- [x] Correct the test's count semantics: 1,335 is the extracted F4FF source-record count; course_column_serial counts live scroll-column updates during the full race and is not expected to equal 1,335.
+- [x] After the finish latch, B now returns to the native course selector while preserving the selected race mode; course 2 remains deliberately out of scope. Implementation: game.c, commit f847add1a635de3e18212659da4061ff8844b251.
+- [ ] Do not mark the first course accepted yet: source-faithful result presentation/score flow, complete audio, visual comparison and physical New 3DS validation remain open.
