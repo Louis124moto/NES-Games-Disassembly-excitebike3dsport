@@ -249,21 +249,31 @@ void gameUpdate(void)
                 (s_menu.source_state != 3u && s_menu.transition_phase == 0u)) {
                 /* The next course is not yet playable. Finish the original
                  * results interval, then expose the native selector. */
+                const uint8_t completedState = s_menu.source_state;
                 const uint8_t nextCourse = s_menu.selected_course;
+                const uint8_t returnToTitle = (uint8_t)(completedState == 0u);
                 s_raceSession.result_active = 0u;
+                s_raceSession.result_podium_active = 0u;
                 s_raceSessionReady = 0;
                 s_raceFinishLatched = 0;
                 s_raceUnsupportedMask = 0u;
                 audioSubmitSourceEvents(0u, 0u, 0u, 0u, 0u);
                 nativeMenuInit(&s_menu);
-                s_menu.source_state = 1u;
                 s_menu.selected_mode = s_raceMultiplayer;
                 s_menu.selected_course = nextCourse;
-                s_menu.input.selection = nextCourse;
+                if (returnToTitle == 0u) {
+                    s_menu.source_state = 1u;
+                    s_menu.input.selection = nextCourse;
+                } else {
+                    s_menu.source_state = 0u;
+                }
+                nativeMenuUpdate(&s_menu, 0u);
                 s_menuDirty = 1;
-                rendererPrintBottom("RACE RESULTS COMPLETE\n"
-                                    "D-pad: choose course   A/Start: confirm\n"
-                                    "X: asset extractor\n");
+                rendererPrintBottom(returnToTitle != 0u
+                    ? "RACE RESULTS COMPLETE — SOURCE TITLE RETURN\n"
+                    : "RACE RESULTS COMPLETE — NEXT COURSE SELECTOR\n"
+                      "D-pad: choose course   A/Start: confirm\n"
+                      "X: asset extractor\n");
             }
             return;
         }
