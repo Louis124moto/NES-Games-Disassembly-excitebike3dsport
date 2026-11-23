@@ -51,16 +51,16 @@ void audioInit(void)
     ndspChnReset(AUDIO_CHANNEL);
     ndspChnSetInterp(AUDIO_CHANNEL, NDSP_INTERP_LINEAR);
     ndspChnSetRate(AUDIO_CHANNEL, AUDIO_RATE);
-    ndspChnSetFormat(AUDIO_CHANNEL, NDSP_FORMAT_MONO_PCM16, 1);
+    ndspChnSetFormat(AUDIO_CHANNEL, NDSP_FORMAT_MONO_PCM16);
     {
-        const float mix[12] = {
+        float mix[12] = {
             0.18f, 0.18f, 0.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
         };
         ndspChnSetMix(AUDIO_CHANNEL, mix);
     }
     for (i = 0u; i < 2u; ++i) {
-        s_buffers[i].wave.data = s_buffers[i].samples;
+        s_buffers[i].wave.data_pcm16 = s_buffers[i].samples;
         s_buffers[i].wave.nsamples = AUDIO_SAMPLES;
         s_buffers[i].wave.looping = false;
     }
@@ -127,7 +127,7 @@ void audioUpdate(void)
     for (i = 0u; i < AUDIO_SAMPLES; ++i)
         buffer->samples[i] = renderSample();
     DSP_FlushDataCache(buffer->samples, sizeof(buffer->samples));
-    buffer->wave.data = buffer->samples;
+    buffer->wave.data_pcm16 = buffer->samples;
     buffer->wave.nsamples = AUDIO_SAMPLES;
     buffer->wave.looping = false;
     ndspChnWaveBufAdd(AUDIO_CHANNEL, &buffer->wave);
