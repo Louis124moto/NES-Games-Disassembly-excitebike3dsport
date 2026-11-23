@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "race_session_world.h"
+#include "race_world_glue.h"
 #include "race_spawn.h"
 #include "race_frame.h"
 
