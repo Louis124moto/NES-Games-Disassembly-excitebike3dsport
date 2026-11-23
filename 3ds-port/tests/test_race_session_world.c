@@ -71,13 +71,37 @@ int main(void)
     /* Resume the test in a fresh session so pause timing cannot mask movement. */
     if (!nativeRaceSessionInitFirstCourse(&session, &in, &rng)) { puts("FAIL reinit"); return 1; }
     nativeRaceSessionBuildWorld(&session, 0u, &world);
-    for (f = 0u; f < 3000u; ++f) {
-        mask |= nativeRaceSessionStepFrame(&session, &world, f > 400u ? 0x80u : 0u, 0u);
-        if (*raceWorldByte(&world, 0x4Fu) != 0u) ++started;
-        if (*raceWorldByte(&world, 0x94u) != 0u) ++moved;
+    {
+        int track_finished = 0;
+        int finish_transition = 0;
+        for (f = 0u; f < 100000u; ++f) {
+            mask |= nativeRaceSessionStepFrame(&session, &world,
+                                               f > 400u ? 0x80u : 0u, 0u);
+            if (*raceWorldByte(&world, 0x4Fu) != 0u) ++started;
+            if (*raceWorldByte(&world, 0x94u) != 0u) ++moved;
+            if (*raceWorldByte(&world, 0x52u) != 0u) track_finished = 1;
+            if (track_finished && *raceWorldByte(&world, 0x41u) != 2u) {
+                finish_transition = 1;
+                break;
+            }
+        }
+        if (mask != 0u) { printf("FAIL unsupported mask %08X\n", (unsigned)mask); return 1; }
+        if (started == 0u || moved == 0u) {
+            printf("FAIL race never started/moved (%u/%u)\n", started, moved); return 1;
+        }
+        if (!track_finished || !finish_transition) {
+            printf("FAIL first course did not complete (finished=%d transition=%d frame=%u columns=%lu)\n",
+                   track_finished, finish_transition, f,
+                   (unsigned long)session.course_column_serial);
+            return 1;
+        }
+        if (session.course_column_serial != 1335u) {
+            printf("FAIL first-course runtime columns=%lu expected=1335\n",
+                   (unsigned long)session.course_column_serial);
+            return 1;
+        }
     }
-    if (mask != 0u) { printf("FAIL unsupported mask %08X\n", (unsigned)mask); return 1; }
-    if (started == 0u || moved == 0u) { printf("FAIL race never started/moved (%u/%u)\n", started, moved); return 1; }
-    printf("PASS: native race world seeded; pressed input works; 3000 frames (started=%u moved=%u)\n", started, moved);
+    printf("PASS: native first course completed end-to-end; 1335 columns; finish/results state reached (frames=%u started=%u moved=%u)\n",
+           f + 1u, started, moved);
     return 0;
 }
