@@ -20,6 +20,22 @@ class NativeRuntimeBoundaryTests(unittest.TestCase):
             with self.subTest(symbol=symbol):
                 self.assertNotIn(symbol, source)
 
+    def test_runtime_has_no_ppu_or_software_framebuffer_leftovers(self):
+        runtime = ("game.c", "renderer.c", "main.c", "native_scene.c", "gfx_c3d.c")
+        forbidden = ("nes_ppu_", "nesPpu", "gfxGetFramebuffer",
+                     "game_state.h", "collision.h", "nes_active_stream",
+                     "nes_race_setup", "native_menu_renderer")
+        for filename in runtime:
+            text = (PORT / "source" / filename).read_text(encoding="utf-8")
+            for symbol in forbidden:
+                with self.subTest(file=filename, symbol=symbol):
+                    self.assertNotIn(symbol, text)
+
+    def test_renderer_uses_citro3d(self):
+        text = (PORT / "source/gfx_c3d.c").read_text(encoding="utf-8")
+        self.assertIn("C3D_FrameBegin", text)
+        self.assertIn("C3D_TexInit", text)
+
     def test_emulator_runtime_sources_are_not_in_game_source_tree(self):
         forbidden = (
             "nes_gen_code.c", "nes_call.c", "nes_menu_cpu.c",

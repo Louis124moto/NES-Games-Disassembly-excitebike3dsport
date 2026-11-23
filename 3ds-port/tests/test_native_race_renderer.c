@@ -1,39 +1,50 @@
+/*
+ * Regression test for the race scene builder: course tiles, $8E column
+ * packets, podium OAM blocks, result-time glyphs and invalid packets.
+ * The draw list is checked through the baked atlas texel each quad samples.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <3ds.h>
-#include "native_menu_renderer.h"
+#include "native_scene.h"
 
-static uint8_t framebuffer[400u * 240u * 3u];
+static uint32_t s_atlas[SCENE_ATLAS_WIDTH * SCENE_ATLAS_HEIGHT];
+static SceneDrawList s_list;
 
-uint8_t *gfxGetFramebuffer(int screen, int side, u16 *width, u16 *height)
+/* Blue channel of the first texel of the topmost (last drawn) quad at (x,y);
+ * -1 when absent. */
+static int quadBlue(unsigned x, unsigned y)
 {
-    (void)screen;
-    (void)side;
-    if (width != NULL) *width = 240u;
-    if (height != NULL) *height = 400u;
-    return framebuffer;
+    unsigned n;
+    for (n = s_list.count; n-- > 0u;) {
+        const SceneQuad *q = &s_list.quads[n];
+        if (q->x == (int)x && q->y == (int)y) {
+            const uint32_t texel = s_atlas[(size_t)q->v0 * SCENE_ATLAS_WIDTH + q->u0];
+            return (int)((texel >> 8) & 0xFFu);
+        }
+    }
+    return -1;
 }
 
-static size_t pixelOffset(unsigned x, unsigned y)
+static void bake(const NativeMenuAssets *assets)
 {
-    return (((size_t)x * 240u) + (239u - y)) * 3u;
+    nativeSceneBakeAtlas(s_atlas, assets, s_list.palette_set);
 }
+
+#define FAIL(msg) do { puts("FAIL " msg); free(assets.chr_pixels); return 1; } while (0)
 
 int main(void)
 {
     NativeMenuAssets assets;
     NativeMenuState menu;
     NativeRaceSession session;
-    size_t i, offset;
-    uint8_t before;
+    size_t i;
 
     memset(&assets, 0, sizeof(assets));
     memset(&menu, 0, sizeof(menu));
     memset(&session, 0, sizeof(session));
 
-    assets.chr_pixels = (uint8_t *)calloc(
-        NATIVE_MENU_CHR_TILE_LIMIT, 64u);
+    assets.chr_pixels = (uint8_t *)calloc(NATIVE_MENU_CHR_TILE_LIMIT, 64u);
     if (assets.chr_pixels == NULL) {
         puts("FAIL allocate host CHR image");
         return 1;
@@ -52,20 +63,12 @@ int main(void)
     for (i = 0u; i < 64u; ++i)
         session.oam.bytes[i * 4u] = 0xF8u;
 
-    nativeRaceRenderReset();
-    if (!nativeRaceRenderFrame(&assets, &menu, &session)) {
-        puts("FAIL render initial native course scene");
-        free(assets.chr_pixels);
-        return 1;
-    }
-
-    offset = pixelOffset(72u, 0u);
-    before = framebuffer[offset];
-    if (before != 116u) {
-        printf("FAIL initial source tile pixel B=%u expected=116\n", before);
-        free(assets.chr_pixels);
-        return 1;
-    }
+    nativeSceneRaceReset();
+    if (!nativeSceneBuildRace(&s_list, &assets, &menu, &session))
+        FAIL("build initial native course scene");
+    bake(&assets);
+    if (quadBlue(0u, 0u) != 116)
+        FAIL("initial source tile colour (expected B=116)");
 
     /* A source $8E packet must update one native nametable column (14 rows). */
     session.course_column_serial = 1u;
@@ -74,39 +77,24 @@ int main(void)
     session.course_column_buffer[3] = 0x8Eu;
     for (i = 4u; i < 18u; ++i)
         session.course_column_buffer[i] = 1u;
-
-    if (!nativeRaceRenderFrame(&assets, &menu, &session)) {
-        puts("FAIL apply native F4FF column packet");
-        free(assets.chr_pixels);
-        return 1;
-    }
-    if (framebuffer[offset] != 144u) {
-        printf("FAIL dynamic course tile pixel B=%u expected=144\n",
-               framebuffer[offset]);
-        free(assets.chr_pixels);
-        return 1;
-    }
+    if (!nativeSceneBuildRace(&s_list, &assets, &menu, &session))
+        FAIL("apply native F4FF column packet");
+    bake(&assets);
+    if (quadBlue(0u, 0u) != 144 || quadBlue(0u, 13u * 8u) != 144 ||
+        quadBlue(0u, 14u * 8u) != 116)
+        FAIL("dynamic course column (expected 14 rows of B=144 then B=116)");
 
     /* CBA4/CBD4/CBE3/CCCA: exact three podium 2x2 OAM blocks. */
-    nativeRaceRenderBuildResultsPodium(&session);
+    nativeSceneBuildResultsPodium(&session);
     if (session.result_podium_active == 0u ||
-        session.oam.bytes[0xC4u] != 0x37u ||
-        session.oam.bytes[0xC5u] != 0xB7u ||
-        session.oam.bytes[0xC7u] != 0x78u ||
-        session.oam.bytes[0xC8u] != 0x3Fu ||
-        session.oam.bytes[0xC9u] != 0xB8u ||
-        session.oam.bytes[0xCBu] != 0x80u ||
-        session.oam.bytes[0xCCu] != 0x3Fu ||
-        session.oam.bytes[0xCDu] != 0xB9u ||
-        session.oam.bytes[0xCFu] != 0x70u ||
-        session.oam.bytes[0xD4u] != 0x3Fu ||
-        session.oam.bytes[0xD5u] != 0xB9u ||
-        session.oam.bytes[0xD6u] != 0x41u ||
-        session.oam.bytes[0xD7u] != 0x80u) {
-        puts("FAIL source podium OAM blocks were not built correctly");
-        free(assets.chr_pixels);
-        return 1;
-    }
+        session.oam.bytes[0xC4u] != 0x37u || session.oam.bytes[0xC5u] != 0xB7u ||
+        session.oam.bytes[0xC7u] != 0x78u || session.oam.bytes[0xC8u] != 0x3Fu ||
+        session.oam.bytes[0xC9u] != 0xB8u || session.oam.bytes[0xCBu] != 0x80u ||
+        session.oam.bytes[0xCCu] != 0x3Fu || session.oam.bytes[0xCDu] != 0xB9u ||
+        session.oam.bytes[0xCFu] != 0x70u || session.oam.bytes[0xD4u] != 0x3Fu ||
+        session.oam.bytes[0xD5u] != 0xB9u || session.oam.bytes[0xD6u] != 0x41u ||
+        session.oam.bytes[0xD7u] != 0x80u)
+        FAIL("source podium OAM blocks were not built correctly");
     memset(session.oam.bytes + 0xC0u, 0xF8, 0x20u);
     session.result_podium_active = 0u;
 
@@ -114,26 +102,21 @@ int main(void)
     session.result_active = 1u;
     session.result_record_glyphs[0] = 0u;
     session.result_current_glyphs[0] = 1u;
-    if (!nativeRaceRenderFrame(&assets, &menu, &session) ||
-        framebuffer[pixelOffset(72u + 18u * 8u, 15u * 8u)] != 116u ||
-        framebuffer[pixelOffset(72u + 18u * 8u, 17u * 8u)] != 144u) {
-        puts("FAIL source result times were not rendered at $21F2/$2232");
-        free(assets.chr_pixels);
-        return 1;
-    }
+    if (!nativeSceneBuildRace(&s_list, &assets, &menu, &session))
+        FAIL("build result scene");
+    bake(&assets);
+    if (quadBlue(18u * 8u, 15u * 8u) != 116 || quadBlue(18u * 8u, 17u * 8u) != 144)
+        FAIL("source result times were not placed at $21F2/$2232");
     session.result_active = 0u;
 
     /* Invalid PPU addresses are rejected instead of corrupting the map. */
     session.course_column_serial = 2u;
     session.course_column_buffer[1] = 0x30u;
     session.course_column_buffer[2] = 0x00u;
-    if (nativeRaceRenderFrame(&assets, &menu, &session)) {
-        puts("FAIL renderer accepted out-of-range course packet");
-        free(assets.chr_pixels);
-        return 1;
-    }
+    if (nativeSceneBuildRace(&s_list, &assets, &menu, &session) || s_list.count != 0u)
+        FAIL("scene builder accepted out-of-range course packet");
 
     free(assets.chr_pixels);
-    puts("PASS: native race framebuffer draws the source scene, applies F4FF columns and rejects invalid addresses.");
+    puts("PASS: race scene draws the source course, applies F4FF columns and rejects invalid addresses.");
     return 0;
 }

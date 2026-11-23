@@ -4,23 +4,21 @@
 #include <sys/stat.h>
 #include "game.h"
 #include "asset_extractor.h"
-#include "game_state.h"
 #include "input.h"
 #include "native_menu.h"
 #include "native_menu_assets.h"
-#include "native_menu_renderer.h"
+#include "native_scene.h"
 #include "native_race_session.h"
 #include "race_session_world.h"
 #include "renderer.h"
 #include "audio.h"
 
 static InputState s_input;
-static GameState s_diagnosticState;
 static NativeMenuState s_menu;
 static NativeMenuAssets s_menuAssets;
 static char s_executablePath[512];
 static int s_extractorInitialized;
-static int s_menuDirty = 1;
+static SceneDrawList s_scene;
 static int s_assetsLoaded;
 static NativeRaceSession s_raceSession;
 static RaceWorld s_raceWorld;
@@ -134,26 +132,10 @@ static void rememberExecutablePath(const char *path)
     s_executablePath[i] = '\0';
 }
 
-static int menuVisualStateChanged(const NativeMenuState *before,
-                                  const NativeMenuState *after)
-{
-    return before->source_state != after->source_state ||
-           before->input.selection != after->input.selection ||
-           before->source_visual_asset != after->source_visual_asset ||
-           before->setup_command != after->setup_command ||
-           before->transition_phase != after->transition_phase ||
-           before->race_setup_complete != after->race_setup_complete ||
-           before->cursor_sprite_y != after->cursor_sprite_y ||
-           before->cursor_sprite_tile != after->cursor_sprite_tile ||
-           before->cursor_sprite_attribute != after->cursor_sprite_attribute ||
-           before->cursor_sprite_x != after->cursor_sprite_x;
-}
-
-void gameInit(const char *executablePath)
+int gameInit(const char *executablePath)
 {
     s_input.held = 0u;
     s_input.pressed = 0u;
-    gameStateReset(&s_diagnosticState);
     nativeMenuInit(&s_menu);
     loadRaceRecords();
     nativeRngReset(&s_raceRng); /* C1CE seed; startup wait-loop advances are still pending. */
@@ -162,17 +144,16 @@ void gameInit(const char *executablePath)
     s_raceFinishLatched = 0;
     s_raceUnsupportedMask = 0u;
     s_extractorInitialized = 0;
-    s_menuDirty = 1;
     memset(&s_menuAssets, 0, sizeof(s_menuAssets));
     rememberExecutablePath(executablePath);
-    rendererInit();
+    if (!rendererInit()) return 0;
     audioInit();
 
     /* Normal game startup consumes only the previously extracted asset pack.
      * It does not load or require rom.nes. X opens the separate extractor tool.
      */
     s_assetsLoaded = nativeMenuAssetsLoad(&s_menuAssets, s_executablePath);
-    rendererSetMenuActive(1);
+    rendererInvalidateAssets();
     if (s_assetsLoaded) {
         rendererPrintBottom("EXCITEBIKE — NATIVE MENU\n"
                             "D-pad: move   A/Start: confirm\n"
@@ -187,11 +168,11 @@ void gameInit(const char *executablePath)
                        "Run extraction to create the EBPX and source snapshots.");
         rendererPrintBottom(message);
     }
+    return 1;
 }
 
 void gameUpdate(void)
 {
-    NativeMenuState before;
     inputUpdate(&s_input);
     audioUpdate();
 
@@ -199,8 +180,7 @@ void gameUpdate(void)
         assetExtractorUpdate(s_input.pressed);
         if (!assetExtractorIsActive()) {
             s_assetsLoaded = nativeMenuAssetsLoad(&s_menuAssets, s_executablePath);
-            rendererSetMenuActive(1);
-            s_menuDirty = 1;
+            rendererInvalidateAssets();
             if (s_assetsLoaded) {
                 rendererPrintBottom("EXCITEBIKE — NATIVE MENU\n"
                                     "D-pad: move   A/Start: confirm\n"
@@ -209,6 +189,20 @@ void gameUpdate(void)
                 rendererPrintBottom("Native menu asset pack is incomplete.\n"
                                     "The extractor must export CHR + source snapshots.\n");
             }
+        } else {
+            char text[512];
+            (void)snprintf(text, sizeof(text),
+                           "EXCITEBIKE 3DS — ASSET EXTRACTOR\n"
+                           "------------------------------\n"
+                           "ROM: %.44s\n"
+                           "%.100s\n"
+                           "CHR tiles: %lu\n\n"
+                           "A: extract / export again\n"
+                           "B: close and reload the game assets\n",
+                           assetExtractorGetRomIdentitySummary(),
+                           assetExtractorGetStatus(),
+                           (unsigned long)assetExtractorGetTotalTiles());
+            rendererPrintBottom(text);
         }
         return;
     }
@@ -233,12 +227,11 @@ void gameUpdate(void)
                     if (s_raceSession.result_podium_active == 0u &&
                         s_menu.timer_values[18] == s_menu.transition_duration &&
                         s_menu.frame_timer == 0u) {
-                        nativeRaceRenderBuildResultsPodium(&s_raceSession);
+                        nativeSceneBuildResultsPodium(&s_raceSession);
                         s_menu.timer_values[14] = 3u; /* $002F podium timer */
                         audioSubmitSourceEvents(0u,
                             s_menu.transition_gate_0053 < 4u ? 2u : 1u,
                             0u, 0u, 0u);
-                        s_menuDirty = 1;
                     }
                     if (s_menu.timer_values[18] == 0u)
                         nativeMenuTransitionPhase3(&s_menu);
@@ -268,7 +261,6 @@ void gameUpdate(void)
                     s_menu.source_state = 0u;
                 }
                 nativeMenuUpdate(&s_menu, 0u);
-                s_menuDirty = 1;
                 rendererPrintBottom(returnToTitle != 0u
                     ? "RACE RESULTS COMPLETE — SOURCE TITLE RETURN\n"
                     : "RACE RESULTS COMPLETE — NEXT COURSE SELECTOR\n"
@@ -320,7 +312,6 @@ void gameUpdate(void)
                            (unsigned long)s_raceUnsupportedMask);
             rendererPrintBottom(warning);
         }
-        s_menuDirty = 1;
         return;
     }
 
@@ -330,11 +321,9 @@ void gameUpdate(void)
             s_extractorInitialized = 1;
         }
         assetExtractorUpdate(KEY_A);
-        rendererSetMenuActive(0);
         return;
     }
 
-    before = s_menu;
     nativeMenuTickTimers(&s_menu);
     nativeMenuUpdate(&s_menu, inputNesPressed(&s_input));
     (void)nativeMenuStepSetup(&s_menu);
@@ -361,7 +350,7 @@ void gameUpdate(void)
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
             applyRaceRecordsToWorld();
-            nativeRaceRenderReset();
+            nativeSceneRaceReset();
             rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
                                 "Native bike movement, opponent, collision and course-stream stages run.\n"
                                 "F4FF columns feed the native renderer; source time results, podium and timed transition are implemented.\n");
@@ -371,27 +360,23 @@ void gameUpdate(void)
         }
     }
 
-    if (menuVisualStateChanged(&before, &s_menu)) s_menuDirty = 1;
 }
 
 void gameRender(void)
 {
-    rendererBeginFrame();
-    if (assetExtractorIsActive()) {
-        rendererDraw(&s_diagnosticState);
-    } else if (s_menuDirty) {
+    const NativeMenuAssets *assets = s_assetsLoaded ? &s_menuAssets : NULL;
+    s_scene.count = 0u;
+    if (!assetExtractorIsActive()) {
         if (s_raceSessionReady) {
-            if (!nativeRaceRenderFrame(s_assetsLoaded ? &s_menuAssets : NULL,
-                                       &s_menu, &s_raceSession)) {
+            if (!nativeSceneBuildRace(&s_scene, assets, &s_menu, &s_raceSession)) {
                 rendererPrintBottom("FIRST COURSE — SCENE ASSETS MISSING\n"
                                     "Re-run the asset extractor for snapshots 01, 14, 17 and 18.\n");
             }
         } else {
-            (void)nativeMenuRenderFrame(s_assetsLoaded ? &s_menuAssets : NULL, &s_menu);
+            (void)nativeSceneBuildMenu(&s_scene, assets, &s_menu);
         }
-        s_menuDirty = 0;
     }
-    rendererEndFrame();
+    rendererDrawScene(assets, &s_scene);
 }
 
 void gameExit(void)

@@ -1,19 +1,22 @@
 #ifndef EXCITEBIKE_RENDERER_H
 #define EXCITEBIKE_RENDERER_H
 
-#include <stdint.h>
-#include "game_state.h"
+struct NativeMenuAssets;
+struct SceneDrawList;
 
-void rendererInit(void);
-void rendererBeginFrame(void);
-void rendererDraw(const GameState *state);
-void rendererGetSprite0Hit(uint8_t *found, uint32_t *cycleFromPrerender);
-void rendererEndFrame(void);
-void rendererSetGameStarted(int started);
-/* Faithful game path: show a complete 256x240 RGB frame (row-major) on the top screen and wait for vblank. */
-void rendererPresentNesFrame(const uint8_t *rgb);
+/* Initialises libctru gfx, the bottom-screen text console and the citro3d
+ * top-screen renderer. Returns 1 on success. */
+int rendererInit(void);
+
+/* Draws one top-screen frame from a scene description (black when empty). */
+void rendererDrawScene(const struct NativeMenuAssets *assets, const struct SceneDrawList *list);
+
+/* Call after the extracted assets were (re)loaded so the tile atlas is rebuilt. */
+void rendererInvalidateAssets(void);
+
+/* Replaces the text on the bottom screen; identical text is not redrawn. */
 void rendererPrintBottom(const char *text);
-void rendererSetMenuActive(int active);
+
 void rendererExit(void);
 
 #endif

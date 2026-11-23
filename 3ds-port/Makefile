@@ -21,7 +21,7 @@ CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
 # Recursive expansion is required: OUTPUT is assigned below, after this line.
 LDFLAGS = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(OUTPUT).map
-LIBS := -lctru -lm
+LIBS := -lcitro3d -lctru -lm
 LIBDIRS := $(CTRULIB)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
@@ -35,6 +35,7 @@ CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+PICAFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.v.pica)))
 
 ifeq ($(strip $(CPPFILES)),)
 export LD := $(CC)
@@ -42,7 +43,11 @@ else
 export LD := $(CXX)
 endif
 
-export OFILES := $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_BIN := $(addsuffix .o,$(BINFILES)) $(PICAFILES:.v.pica=.shbin.o)
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+# Generated headers (shader binaries) must exist before any C file is compiled.
+export HFILES := $(PICAFILES:.v.pica=_shbin.h)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
@@ -63,7 +68,19 @@ OUTPUT := $(TOPDIR)/$(BUILD)/$(TARGET)
 .PHONY: all
 all: $(OUTPUT).elf $(OUTPUT).3dsx
 
+$(OFILES_SOURCES): $(HFILES)
+
 $(OUTPUT).elf: $(OFILES)
+
+# PICA200 vertex shaders: scene.v.pica -> scene.shbin -> scene_shbin.h + object.
+.PRECIOUS: %.shbin
+%.shbin: %.v.pica
+	@echo $(notdir $<)
+	@picasso -o $@ $<
+
+%.shbin.o %_shbin.h: %.shbin
+	@echo $(notdir $<)
+	@$(bin2o)
 
 -include $(DEPSDIR)/*.d
 endif

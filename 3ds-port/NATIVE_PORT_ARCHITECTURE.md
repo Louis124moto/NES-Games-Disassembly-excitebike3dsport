@@ -60,7 +60,6 @@ Use these as responsibility boundaries, adapting names to the actual codebase:
 
 | Module | Native responsibility |
 |---|---|
-| `game_state.c` | Semantic game/session state and reset |
 | `game_flow.c` | Title-to-race-to-results state machine |
 | `input.c` | libctru HID mapped to semantic game actions |
 | `menus.c` | Title, selector, design menu, editor and transitions |
@@ -68,8 +67,8 @@ Use these as responsibility boundaries, adapting names to the actual codebase:
 | `bike_physics.c` | Source-derived speed, acceleration, braking, heat, jumps, posture, landing and recovery |
 | `track.c` | Native course geometry, terrain, ramps and scrolling |
 | `opponents.c` | Opponent state, AI and movement |
-| `collision.c` | Source-derived collision rules |
-| `renderer.c` | Native 3DS rendering of semantic scenes/sprites/HUD |
+| `native_scene.c` | Pure-C scene builder: menu/race state + extracted assets → ordered textured quads and a baked tile atlas (host-testable, no 3DS API) |
+| `gfx_c3d.c`, `scene.v.pica`, `renderer.c` | citro3d backend: uploads the swizzled atlas, draws the quad list on the top screen through a PICA200 vertex shader; bottom screen is a text console |
 | `audio.c` | Native playback/mixing from verified source sound data |
 | `save_data.c` | Native SD save/load format and validation |
 | platform backends | 3DS graphics, audio, input, storage and timing |

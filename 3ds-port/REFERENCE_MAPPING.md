@@ -43,13 +43,11 @@ Source: `Excitebike/bank_FF.asm`, CPU `$C2A9` (ROM offset `$0002B9`), `$C2ED` (R
 
 | Module | Responsibility | Current status |
 |---|---|---|
-| `game_state.c` | Shared state and reset | Initial state container |
 | `input.c` | Sample 3DS controls | Basic input sampling; NES-to-3DS mapping still needed |
 | `bike_physics.c` | Speed, heat, posture, jumps and landing | Temporary placeholder; not faithful |
-| `collision.c` | Track bounds, obstacles and crashes | Temporary boundary placeholder |
 | `track.c` | Course data, terrain and ramps | Interface only |
 | `renderer.c` | 3DS display, debug view and CHR atlas | Diagnostic console plus raw CHR tile atlas; original menu layout not reconstructed |
-| `audio.c` | Sound events and audio backend | Interface only |
+| `audio.c` | Sound events and audio backend | Procedural NDSP effects; original sound data not yet ported |
 | `menus.c` | Menus, pause and help | Source-derived state/input trace; verified setup-command effects for states 0, 1, 4, 6, 8, and 13; state 7 blocked at sub_C621; other states incomplete |
 | `game.c` | Module lifecycle and update order | Initial orchestration |
 

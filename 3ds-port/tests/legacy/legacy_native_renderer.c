@@ -1,8 +1,12 @@
+/* Frozen reference: the pre-citro3d software rasterizer, kept ONLY so the golden test can prove the
+ * citro3d scene builder draws exactly the same pixels. Never compiled into the 3DS executable. */
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <3ds.h>
-#include "native_menu_renderer.h"
+#include "native_menu.h"
+#include "native_menu_assets.h"
+#include "native_race_session.h"
 
 /* Excitebike is NROM-128/CHR-ROM 8 KiB. The original writes $90 at C1D5
  * and $10 at C32B-C333 before the first race: PPUCTRL bit 4 selects the
@@ -111,7 +115,7 @@ static void drawCursor(uint8_t *framebuffer, const NativeMenuAssets *assets,
     }
 }
 
-int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu)
+int legacyMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu)
 {
     u16 width = 0u, height = 0u;
     uint8_t *framebuffer;
@@ -269,7 +273,7 @@ static int s_raceCourseMapReady;
 
 /* Source CBA4/CBD4/CBE3 + CCCA/D1C7: each podium is two diagonal
  * 8x8 sprites, placed in OAM $02C4, $02CC and $02D4. */
-void nativeRaceRenderBuildResultsPodium(NativeRaceSession *session)
+void legacyRaceRenderBuildResultsPodium(NativeRaceSession *session)
 {
     static const uint8_t x_position[3] = { 0x78u, 0x70u, 0x80u };
     static const uint8_t y_position[3] = { 0x37u, 0x3Fu, 0x3Fu };
@@ -292,7 +296,7 @@ void nativeRaceRenderBuildResultsPodium(NativeRaceSession *session)
     session->result_podium_active = 1u;
 }
 
-void nativeRaceRenderReset(void)
+void legacyRaceRenderReset(void)
 {
     memset(s_raceCourseMap, 0, sizeof(s_raceCourseMap));
     s_raceLastColumnSerial = 0u;
@@ -370,7 +374,7 @@ static int drawRaceCourse(uint8_t *framebuffer, const NativeMenuAssets *assets,
     return 1;
 }
 
-int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
+int legacyRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
                           const NativeRaceSession *session)
 {
     uint8_t *framebuffer;

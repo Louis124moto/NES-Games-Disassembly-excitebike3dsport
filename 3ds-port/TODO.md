@@ -86,14 +86,14 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Physics | Player speed, acceleration/braking, steering, vertical phases, jumps, heat, recovery and four-bike movement integrated. | Verify all first-course terrain/event cases in real deterministic runs. |
 | Opponents/collisions | Native opponent AI/state handlers, bike contacts, obstacle-hit checks and crash recovery integrated. | Validate complete course-specific interactions against the original. |
 | Course stream | F4FF and dependencies integrated; exact first-course source pass is differentially tested through F638. | Verify live scroll/render behavior and source-defined terrain/event semantics. |
-| Graphics | Native scrolling nametable framebuffer renderer, HUD and OAM sprite rendering. | Fixed-frame visual parity, transitions and hardware performance. |
+| Graphics | citro3d scene renderer (scrolling nametable, HUD, OAM sprites as textured quads over a baked atlas); host golden test proves pixel equality with the former software rasterizer. | Fixed-frame visual parity, transitions and hardware performance. |
 | Audio | Native NDSP procedural event/sputter effects. | Original soundtrack and complete source sound sequencing. |
 | Finish/flow | Best/current time rows, persistent record, podium sprites and timed result phases; returns to selector. | Complete `$CC15/$CC7D` and automatic next-course transition. |
 
 ### Current build/test evidence
 
 - Exact first-course session result: 34,370 frames; finish flag $0052 asserted; source state $0041 left race state 2; 13,177 live scroll updates; unsupported mask zero. Full host suite: [GitHub Actions 45088718550](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088718550).
-- Native framebuffer regression test passed: the source scene draws, F4FF $8E column packets update the native nametable, and invalid PPU addresses are rejected. Verified in the same host run, commit e900fcef9269d85da7ef82e8aff994d3ea15d49d.
+- Scene builder regression + golden tests (host): the source scene draws, F4FF $8E column packets update the native nametable, and invalid PPU addresses are rejected. Earlier evidence (pre-citro3d): the source scene draws, F4FF $8E column packets update the native nametable, and invalid PPU addresses are rejected. Verified in the same host run, commit e900fcef9269d85da7ef82e8aff994d3ea15d49d.
 - Exact-commit New 3DS devkitARM build passed at commit e900fcef9269d85da7ef82e8aff994d3ea15d49d: [GitHub Actions 45088718674](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/45088718674).
 - These host/build results are not physical-hardware validation and do not make Stage 3 accepted.
 
@@ -171,7 +171,7 @@ Goal: one original course playable from native menu entry through source-faithfu
 - [x] Add a first-course-only B exit from the finish latch back to the native course selector, preserving the selected race mode. Course 2 remains outside this milestone.
 - [x] Implement source best/current time rows, persistent record comparison, podium OAM and timed result phases. [ ] Complete the final automatic next-course transition and remaining `$CC15/$CC7D` effects; selector return remains the fallback.
 - [ ] Complete source-backed terrain/event and collision validation using the actual first-course run, not only randomized routine vectors.
-- [ ] Implement source-derived race sound effects and music through native 3DS audio. audio.c is currently empty.
+- [ ] Implement source-derived race sound effects and music through native 3DS audio. audio.c currently provides procedural event/sputter effects only (NDSP).
 - [ ] Compare fixed-frame course, bike, opponent, HUD and finish captures against the original NES reference.
 - [ ] Validate rendering, controls, timing, frame pacing and full first-course completion on a physical New 3DS.
 - [x] Run the complete host differential suite and exact-commit devkitARM build at commit e900fcef9269d85da7ef82e8aff994d3ea15d49d.

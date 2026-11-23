@@ -57,12 +57,8 @@ jobs:
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_chr_cache.c 3ds-port/tests/test_nes_chr_cache.c -o test_nes_chr_cache
       - name: Test decoded-pixel cache
         run: ./test_nes_chr_cache
-      - name: Compile active command-stream trace test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_active_stream.c 3ds-port/source/nes_ppu_commands.c 3ds-port/tests/test_nes_active_stream.c -o test_nes_active_stream
-      - name: Test active command-stream trace
-        run: ./test_nes_active_stream
       - name: Compile native PPU renderer regression test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_ppu_render.c 3ds-port/tests/test_nes_ppu_render.c -o test_nes_ppu_render
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_palette.c 3ds-port/tests/test_nes_ppu_render.c -o test_nes_ppu_render
       - name: Test native PPU renderer
         run: ./test_nes_ppu_render
       - name: Compile source-derived PPU command interpreter test
@@ -78,15 +74,9 @@ jobs:
         # nes_ppu_render.c must be linked in too (missing since this step was
         # added on 2026-10-31; the step never executed before 2026-11-01 because
         # the cache test failed earlier in the pipeline).
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/course_asset_export.c 3ds-port/source/race_course_stream.c 3ds-port/source/race_course_stream_data.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/course_asset_export.c 3ds-port/source/race_course_stream.c 3ds-port/source/race_course_stream_data.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_palette.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
       - name: Test native CHR exports
         run: ./test_asset_export
-      - name: Compile race setup test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_race_setup.c 3ds-port/tests/test_nes_race_setup.c -o test_nes_race_setup
-
-      - name: Run race setup test
-        run: ./test_nes_race_setup
-
       - name: Compile native semantic C875 setup test
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_race_setup.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
 
@@ -323,9 +313,14 @@ jobs:
         run: ./test_native_menu_assets
 
       - name: Compile native race renderer regression test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/native_menu_renderer.c 3ds-port/tests/test_native_race_renderer.c -o /tmp/test_native_race_renderer
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/native_scene.c 3ds-port/source/nes_palette.c 3ds-port/tests/test_native_race_renderer.c -o /tmp/test_native_race_renderer
       - name: Test native race renderer
         run: /tmp/test_native_race_renderer
+
+      - name: Compile citro3d scene golden test
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/native_scene.c 3ds-port/source/nes_palette.c 3ds-port/tests/legacy/legacy_native_renderer.c 3ds-port/tests/test_native_scene_golden.c -o /tmp/test_native_scene_golden
+      - name: Test citro3d scene against frozen legacy renderer
+        run: /tmp/test_native_scene_golden
 
       - name: Compile native 3DS controller mapping test
         run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/input.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping

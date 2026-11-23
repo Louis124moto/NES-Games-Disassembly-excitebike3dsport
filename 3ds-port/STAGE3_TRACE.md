@@ -83,6 +83,8 @@ Finish the remaining `loc_CDBD` steering/timer side effects, trace the initializ
 ## Not yet traced (required before any gameplay is accepted)
 Complete player-slot initialization (commands 6/`sub_E1A3`/`sub_EC25`/`loc_EC47`, all RAM writers), the full `ram_005C` input-to-speed path beyond `sub_CE29`, every subroutine in the frame handler above, PPU lists $01/$12–$17 contents, `sub_D14E` raster-split wait (sprite-0 hit), track data decoding, opponents, timers, scoring, crashes/collisions.
 
+> Note (2026-11): `nes_race_setup.c` was removed from the runtime tree (dead code, superseded by `native_race_setup.c`). This section is kept as history.
+
 ## Ported so far (2026-11-18) — `source/nes_race_setup.c`, test `tests/test_nes_race_setup.c`
 Earlier helpers were translated line by line and host-tested with hand-derived expectations (including mutation checks on zero-page wrap). The newly added ECE4 helper has regression vectors wired, but project CI execution is still pending:
 - cmd 1 (C551), cmd 2 (C869), cmd 4 (C5A3), cmd 5 (C566): complete.

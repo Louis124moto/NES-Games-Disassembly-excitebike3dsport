@@ -8,7 +8,6 @@
 #include "nes_chr_cache.h"
 #include "nes_chr_decode.h"
 #include "nes_ppu_commands.h"
-#include "nes_ppu_render.h"
 #include "nes_rom_identify.h"
 
 /*
@@ -36,25 +35,16 @@ static int s_sourceIsRaw;
 static char s_cachePath[EXTRACTOR_PATH_CAPACITY] = "extracted/chr_cache.bin";
 static char s_exportDirectory[EXTRACTOR_PATH_CAPACITY] = "extracted";
 #define EXTRACTOR_MAX_TILES 960u
-#define EXTRACTOR_PAGE_TILES 375u
 #define EXTRACTOR_MAX_ROM_BYTES (8u * 1024u * 1024u)
 
 static uint32_t s_romFingerprint;
 static uint8_t s_pixels[EXTRACTOR_MAX_TILES][64];
-static uint8_t s_pagePixels[EXTRACTOR_PAGE_TILES][64];
-static uint8_t *s_rawChr;
-static size_t s_rawChrBytes;
 static size_t s_totalTiles; /* complete source tile count (rawChrBytes/16) */
 static size_t s_tileCount;  /* eager decoded count = min(s_totalTiles, 960) */
 static NesRomIdentity s_identity;
 static char s_identitySummary[160] = "Pending ROM header check.";
 static int s_active;
 static int s_attempted;
-static size_t s_page;
-static unsigned int s_viewMode;
-static size_t s_paletteIndex;
-static unsigned int s_atlasMode = NES_ATLAS_MODE_GRAYSCALE; /* CHR atlas palette choice, see nes_ppu_render.h */
-static size_t s_ppuStreamIndex;
 static char s_status[160] = "Starting native CHR extraction...";
 
 static void setStatus(const char *message)
@@ -116,23 +106,6 @@ static int computeRomFingerprint(uint32_t *fingerprint)
     fclose(file);
     *fingerprint = hash;
     return 1;
-}
-
-/*
- * Retain the complete raw CHR on the heap (bounded by the 8 MiB ROM limit) so
- * every tile stays available for streamed exports and on-demand page decode.
- */
-static void retainRawChr(const uint8_t *rawChr, size_t rawChrBytes)
-{
-    uint8_t *copy;
-    if (rawChr == NULL || rawChrBytes == 0u ||
-        rawChrBytes > EXTRACTOR_MAX_ROM_BYTES) return;
-    copy = (uint8_t *)malloc(rawChrBytes);
-    if (copy == NULL) return;
-    memcpy(copy, rawChr, rawChrBytes);
-    free(s_rawChr);
-    s_rawChr = copy;
-    s_rawChrBytes = rawChrBytes;
 }
 
 /* Header-level ROM identity for the loaded source; honest when raw/unreadable. */
@@ -222,7 +195,6 @@ static int exportCurrentRomAssets(void)
                         EXTRACTOR_MAX_TILES, &s_tileCount) != NES_CHR_DECODE_OK) {
         s_tileCount = 0u;
     }
-    retainRawChr(rawChr, rawChrBytes);
     if (!assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
                           s_tileCount, &s_identity, exportStatus, sizeof(exportStatus))) {
         free(rom); setStatus(exportStatus); return 0;
@@ -311,8 +283,7 @@ static void loadChrRom(void)
         refreshRomIdentity(rom, romSize);
         exportOk = assetExportWrite(s_exportDirectory, rawChr, rawChrBytes, &s_pixels[0][0],
                                    s_tileCount, &s_identity, exportStatus, sizeof(exportStatus));
-        retainRawChr(rawChr, rawChrBytes);
-    }
+        }
     free(rom);
     if (result != NES_CHR_DECODE_OK) {
         s_tileCount = 0u;
@@ -375,23 +346,15 @@ void assetExtractorInit(const char *executablePath)
 
     s_active = 0;
     s_attempted = 0;
-    s_page = 0u;
-    s_viewMode = 0u;
-    s_paletteIndex = 0u;
-    s_atlasMode = NES_ATLAS_MODE_GRAYSCALE;
-    s_ppuStreamIndex = 0u;
     s_tileCount = 0u;
     s_totalTiles = 0u;
-    free(s_rawChr);
-    s_rawChr = NULL;
-    s_rawChrBytes = 0u;
     memset(&s_identity, 0, sizeof(s_identity));
     (void)snprintf(s_identitySummary, sizeof(s_identitySummary), "Pending ROM header check.");
     if (pathValid) {
         /*
          * Load the cache or attempt extraction immediately so the bottom-screen
          * log reports the result on startup without requiring the user to open
-         * the viewer first. A opens/exports; B closes/retries; D-pad pages.
+         * the extractor screen first. A opens/exports; B closes/retries.
          */
         s_attempted = 1;
         selectSourcePath();
@@ -419,35 +382,9 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             (void)exportCurrentRomAssets();
         }
     }
-    if (s_active && (pressedKeys & KEY_UP) != 0u) {
-        s_viewMode = (s_viewMode + 1u) % 5u;
-    } else if (s_active && (pressedKeys & KEY_DOWN) != 0u) {
-        s_viewMode = (s_viewMode + 4u) % 5u;
-    }
-    if (s_active && s_viewMode == 1u) {
-        if ((pressedKeys & KEY_RIGHT) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
-        if ((pressedKeys & KEY_LEFT) != 0u) s_paletteIndex = (s_paletteIndex + 6u) % 7u;
-    } else if (s_active && s_viewMode == 2u) {
-        if ((pressedKeys & KEY_RIGHT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
-        if ((pressedKeys & KEY_LEFT) != 0u) s_ppuStreamIndex = (s_ppuStreamIndex + NES_EXCITEBIKE_PPU_STREAM_COUNT - 1u) % NES_EXCITEBIKE_PPU_STREAM_COUNT;
-    } else if (s_active && s_viewMode == 0u) {
-        /* X/Y: atlas palette mode (grayscale, bg 0-3, sprite 0-3); L/R: source palette preset. */
-        if ((pressedKeys & KEY_X) != 0u) s_atlasMode = (s_atlasMode + 1u) % NES_ATLAS_MODE_COUNT;
-        if ((pressedKeys & KEY_Y) != 0u) s_atlasMode = (s_atlasMode + NES_ATLAS_MODE_COUNT - 1u) % NES_ATLAS_MODE_COUNT;
-        if ((pressedKeys & KEY_R) != 0u) s_paletteIndex = (s_paletteIndex + 1u) % 7u;
-        if ((pressedKeys & KEY_L) != 0u) s_paletteIndex = (s_paletteIndex + 6u) % 7u;
-        if ((pressedKeys & KEY_RIGHT) != 0u && s_totalTiles > 0u) {
-            const size_t pages = (s_totalTiles + EXTRACTOR_PAGE_TILES - 1u) / EXTRACTOR_PAGE_TILES;
-            s_page = (s_page + 1u) % pages;
-        }
-        if ((pressedKeys & KEY_LEFT) != 0u && s_totalTiles > 0u) {
-            const size_t pages = (s_totalTiles + EXTRACTOR_PAGE_TILES - 1u) / EXTRACTOR_PAGE_TILES;
-            s_page = (s_page + pages - 1u) % pages;
-        }
-    }
     if ((pressedKeys & KEY_B) != 0u) {
         if (s_active) s_active = 0;
-        else loadChrRom(); /* B retries extraction while the atlas is closed. */
+        else loadChrRom(); /* B retries extraction while the extractor is closed. */
     }
 }
 
@@ -456,75 +393,9 @@ int assetExtractorIsActive(void)
     return s_active;
 }
 
-const uint8_t *assetExtractorGetPixels(size_t *tileCount)
-{
-    if (tileCount != NULL) *tileCount = s_tileCount;
-    return &s_pixels[0][0];
-}
-
-const uint8_t *assetExtractorGetPagePixels(size_t *pageTileCount, size_t *pageFirstTile)
-{
-    const size_t firstTile = s_page * EXTRACTOR_PAGE_TILES;
-    size_t count;
-    if (pageTileCount != NULL) *pageTileCount = 0u;
-    if (pageFirstTile != NULL) *pageFirstTile = 0u;
-    if (s_totalTiles == 0u || firstTile >= s_totalTiles) return NULL;
-    count = s_totalTiles - firstTile;
-    if (count > EXTRACTOR_PAGE_TILES) count = EXTRACTOR_PAGE_TILES;
-    if (s_rawChr != NULL) {
-        size_t decoded = 0u;
-        if (nesChrDecodeRaw(s_rawChr + firstTile * 16u, count * 16u,
-                            &s_pagePixels[0][0], EXTRACTOR_PAGE_TILES,
-                            &decoded) != NES_CHR_DECODE_OK || decoded != count) {
-            return NULL;
-        }
-    } else if (firstTile < s_tileCount) {
-        size_t eagerCount = s_tileCount - firstTile;
-        if (eagerCount > count) eagerCount = count;
-        memcpy(&s_pagePixels[0][0], &s_pixels[firstTile][0], eagerCount * 64u);
-        count = eagerCount;
-    } else {
-        return NULL;
-    }
-    if (pageTileCount != NULL) *pageTileCount = count;
-    if (pageFirstTile != NULL) *pageFirstTile = firstTile;
-    return &s_pagePixels[0][0];
-}
-
 const char *assetExtractorGetStatus(void)
 {
     return s_status;
-}
-
-size_t assetExtractorGetPage(void)
-{
-    return s_page;
-}
-
-void assetExtractorSetPage(size_t page)
-{
-    const size_t pages = (s_totalTiles + EXTRACTOR_PAGE_TILES - 1u) / EXTRACTOR_PAGE_TILES;
-    s_page = pages == 0u ? 0u : page % pages;
-}
-
-unsigned int assetExtractorGetViewMode(void)
-{
-    return s_viewMode;
-}
-
-unsigned int assetExtractorGetAtlasMode(void)
-{
-    return s_atlasMode;
-}
-
-size_t assetExtractorGetPaletteIndex(void)
-{
-    return s_paletteIndex;
-}
-
-size_t assetExtractorGetPpuStreamIndex(void)
-{
-    return s_ppuStreamIndex;
 }
 
 size_t assetExtractorGetTotalTiles(void)

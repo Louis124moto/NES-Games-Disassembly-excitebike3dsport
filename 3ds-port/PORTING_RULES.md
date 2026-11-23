@@ -31,10 +31,9 @@ Keep gameplay rules independent from 3DS APIs. Prefer small modules with explici
 - `bike.c`: bike/player state and frame update;
 - `track.c`: course geometry, ramps, scrolling and track events;
 - `opponents.c`: opponent state and AI;
-- `collision.c`: source-derived collision rules;
 - `menus.c`: title, selector, design, save/load and transitions;
 - `game_flow.c`: state machine, race timing, scoring and results;
-- `renderer.c`: native 3DS composition using verified source assets;
+- `native_scene.c`: scene description (textured quads) built from verified source assets; `gfx_c3d.c`/`renderer.c`: citro3d drawing of that description;
 - `audio.c`: native audio events/playback using verified sound data;
 - platform-specific input, graphics, audio and storage backends.
 

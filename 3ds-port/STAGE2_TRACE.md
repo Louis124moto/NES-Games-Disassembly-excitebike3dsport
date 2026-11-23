@@ -688,7 +688,7 @@ The exported snapshot set includes source command streams 05, 16 and 17, which c
 
 - `native_menu_assets.c` now loads snapshots 05, 16 and 17 into separate native scene buffers, in addition to title/selector/design scenes.
 - The loader now imports palette presets 12 through 18 and their write masks. The editor setup's C551 branch sees state 9 ($09 >= $08), so it selects source palette key $12 (palette preset 12); other current front-end/tape scenes retain preset 18.
-- `native_menu_renderer.c` draws these three additional backgrounds directly to the top framebuffer for states 9, 12 and 13. No PPU interpreter, OAM builder, CPU or ROM is used.
+- `native_scene.c` (formerly `native_menu_renderer.c`) draws these three additional backgrounds directly to the top framebuffer for states 9, 12 and 13. No PPU interpreter, OAM builder, CPU or ROM is used.
 - `test_native_menu_assets.c` creates synthetic exported snapshots and all seven palette files, then verifies the six scene buffers and palette indexing.
 
 **Scope limitation:** these are static command-stream snapshots, not complete original frames. The editor's C5C2 object setup, editor cursor/object interaction and guarded B-return are not translated here; save/load state handshakes and the native SD-card file backend are also not implemented. Dynamic transition sprites, missing OAM overlays, visual comparisons and physical New 3DS validation remain open. This milestone must not be described as a finished editor or functional save/load menu.
@@ -699,7 +699,7 @@ The initial title/selector/design path is no longer just an isolated state helpe
 
 - `game.c` initializes `NativeMenuState`, ticks its timers, dispatches input, executes one source setup command per frame, and renders the native menu scene. The optional extractor is opened with X and is not initialized on normal startup.
 - `native_menu_assets.c` reads only the exported `chr_pixels.ebp`, four source snapshots, and palette-18 files. It validates the EBPX header, exact file lengths, tile count, snapshot ordering and palette files. It does not open a ROM.
-- `native_menu_renderer.c` merges the source setup-list snapshots into three native tilemap assets, selects palette groups from the source attribute bytes, draws decoded CHR pixels directly to the 3DS top framebuffer, and draws the menu cursor as a native sprite instance. It does not call the PPU command interpreter, PPU nametable compositor or OAM builder.
+- `native_scene.c` (formerly `native_menu_renderer.c`) merges the source setup-list snapshots into three native tilemap assets, selects palette groups from the source attribute bytes, draws decoded CHR pixels directly to the 3DS top framebuffer, and draws the menu cursor as a native sprite instance. It does not call the PPU command interpreter, PPU nametable compositor or OAM builder.
 - Host test `test_native_menu_assets.c` creates synthetic exported files and verifies EBPX loading, ordered scene merge and palette loading without a ROM. The host verification workflow passes on commit `9504c4b5afd940247d1459e736c3ea235a301876`; the matching 3DS build also passes.
 
 This is a real native renderer path for the three source setup scenes, but it is not yet visually accepted. The exported static snapshots may not include every dynamic update. Remaining work: compare captures against the original, translate dynamic transition updates, finish the editor and tape/save/load flows, and verify on physical New 3DS. Unsupported states clear the native scene instead of displaying invented artwork.
