@@ -87,6 +87,19 @@ int main(void)
         return 1;
     }
 
+    /* C5A7/CB77 result-time glyphs are drawn at the source PPU rows. */
+    session.result_active = 1u;
+    session.result_record_glyphs[0] = 0u;
+    session.result_current_glyphs[0] = 1u;
+    if (!nativeRaceRenderFrame(&assets, &menu, &session) ||
+        framebuffer[pixelOffset(72u + 18u * 8u, 15u * 8u)] != 116u ||
+        framebuffer[pixelOffset(72u + 18u * 8u, 17u * 8u)] != 144u) {
+        puts("FAIL source result times were not rendered at $21F2/$2232");
+        free(assets.chr_pixels);
+        return 1;
+    }
+    session.result_active = 0u;
+
     /* Invalid PPU addresses are rejected instead of corrupting the map. */
     session.course_column_serial = 2u;
     session.course_column_buffer[1] = 0x30u;
