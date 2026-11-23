@@ -4,35 +4,6 @@
 #include <string.h>
 
 
-/* Source CBA4/CBD4/CBE3 + CCCA/D1C7: build the three 2x2 podium
- * sprite blocks at OAM $02C4, $02CC and $02D4. */
-void nativeRaceSessionBuildResultsPodium(NativeRaceSession *session)
-{
-    static const uint8_t x_position[3] = { 0x78u, 0x70u, 0x80u };
-    static const uint8_t y_position[3] = { 0x37u, 0x3Fu, 0x3Fu };
-    static const uint8_t tile_base[3] = { 0xB7u, 0xB9u, 0xB9u };
-    static const uint8_t attribute[3] = { 0x01u, 0x01u, 0x41u };
-    static const uint8_t oam_offset[3] = { 0x04u, 0x0Cu, 0x14u };
-    unsigned int podium, row, column;
-
-    if (session == 0) return;
-    for (podium = 0u; podium < 3u; ++podium) {
-        const unsigned int base = 0xC0u + oam_offset[podium];
-        for (row = 0u; row < 2u; ++row) {
-            for (column = 0u; column < 2u; ++column) {
-                const unsigned int offset = base + row * 8u + column * 4u;
-                session->oam.bytes[offset] = (uint8_t)(y_position[podium] + row * 8u);
-                session->oam.bytes[offset + 1u] =
-                    (uint8_t)(tile_base[podium] + row + column);
-                session->oam.bytes[offset + 2u] = attribute[podium];
-                session->oam.bytes[offset + 3u] =
-                    (uint8_t)(x_position[podium] + column * 8u);
-            }
-        }
-    }
-    session->result_podium_active = 1u;
-}
-
 void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multiplayer_flag,
                                  RaceWorld *world)
 {
