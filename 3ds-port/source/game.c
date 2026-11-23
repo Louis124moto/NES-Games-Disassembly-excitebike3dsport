@@ -1,6 +1,7 @@
 #include <3ds.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "game.h"
 #include "asset_extractor.h"
 #include "game_state.h"
@@ -28,6 +29,88 @@ static NativeRngState s_raceRng;
 static int s_raceSessionReady;
 static int s_raceFinishLatched;
 static uint32_t s_raceUnsupportedMask;
+static uint8_t s_raceRecords[0x40];
+
+
+#define RACE_RECORD_PATH "sdmc:/3ds/excitebike/records.bin"
+
+static void loadRaceRecords(void)
+{
+    FILE *file;
+    memset(s_raceRecords, 0xFF, sizeof(s_raceRecords));
+    file = fopen(RACE_RECORD_PATH, "rb");
+    if (file == NULL) return;
+    (void)fread(s_raceRecords, 1u, sizeof(s_raceRecords), file);
+    fclose(file);
+}
+
+static void saveRaceRecords(void)
+{
+    FILE *file;
+    (void)mkdir("sdmc:/3ds", 0777);
+    (void)mkdir("sdmc:/3ds/excitebike", 0777);
+    file = fopen(RACE_RECORD_PATH, "wb");
+    if (file == NULL) return;
+    (void)fwrite(s_raceRecords, 1u, sizeof(s_raceRecords), file);
+    fclose(file);
+}
+
+static void applyRaceRecordsToWorld(void)
+{
+    memcpy(raceWorldByte(&s_raceWorld, 0x580u),
+           s_raceRecords, sizeof(s_raceRecords));
+}
+
+/* C485/C53E/CB06: compare the race time with the saved record selected by
+ * course, $0046 variant and multiplayer mode. The source's record window is
+ * $0580-$05BF (64 bytes); one entry is three time bytes. */
+static void buildRaceResultTimes(void)
+{
+    uint8_t course = *raceWorldByte(&s_raceWorld, 0x43u);
+    uint8_t offset;
+    uint8_t *record;
+    uint8_t current[3];
+    unsigned i;
+    int comparison;
+
+    if (course > 4u) course = 0u;
+    offset = (uint8_t)(course * 3u);
+    if (*raceWorldByte(&s_raceWorld, 0x46u) != 0u)
+        offset = (uint8_t)(offset | 0x10u);
+    if (*raceWorldByte(&s_raceWorld, 0x3F2u) != 0u)
+        offset = (uint8_t)(offset + 0x23u);
+    if ((unsigned)offset + 3u > sizeof(s_raceRecords)) offset = 0u;
+
+    record = &s_raceRecords[offset];
+    current[0] = *raceWorldByte(&s_raceWorld, 0x68u);
+    current[1] = *raceWorldByte(&s_raceWorld, 0x69u);
+    current[2] = *raceWorldByte(&s_raceWorld, 0x6Au);
+    comparison = memcmp(record, current, sizeof(current));
+    if (comparison > 0) {
+        memcpy(record, current, sizeof(current));
+        memcpy(raceWorldByte(&s_raceWorld, 0x580u),
+               s_raceRecords, sizeof(s_raceRecords));
+        saveRaceRecords();
+        *raceWorldByte(&s_raceWorld, 0x53u) = 1u;
+    } else if (comparison == 0) {
+        *raceWorldByte(&s_raceWorld, 0x53u) = 1u;
+    } else {
+        /* C485 computes a threshold-based placement for slower runs. The
+         * first-course transition treats rank >= 4 as the non-advancing path. */
+        *raceWorldByte(&s_raceWorld, 0x53u) = 4u;
+    }
+
+    s_raceSession.result_record_glyphs[0] = (uint8_t)(record[0] % 10u);
+    s_raceSession.result_record_glyphs[1] = 0xFBu;
+    s_raceSession.result_record_glyphs[2] = (uint8_t)(record[1] / 10u);
+    s_raceSession.result_record_glyphs[3] = (uint8_t)(record[1] % 10u);
+    s_raceSession.result_record_glyphs[4] = 0xFBu;
+    s_raceSession.result_record_glyphs[5] = (uint8_t)(record[2] / 10u);
+    s_raceSession.result_record_glyphs[6] = (uint8_t)(record[2] % 10u);
+    for (i = 0u; i < 7u; ++i)
+        s_raceSession.result_current_glyphs[i] =
+            *raceWorldByte(&s_raceWorld, 0x3D9u + i);
+}
 
 static void rememberExecutablePath(const char *path)
 {
@@ -64,6 +147,7 @@ void gameInit(const char *executablePath)
     s_input.pressed = 0u;
     gameStateReset(&s_diagnosticState);
     nativeMenuInit(&s_menu);
+    loadRaceRecords();
     nativeRngReset(&s_raceRng); /* C1CE seed; startup wait-loop advances are still pending. */
     memset(&s_raceSession, 0, sizeof(s_raceSession));
     s_raceSessionReady = 0;
@@ -181,11 +265,8 @@ void gameUpdate(void)
         if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
             *raceWorldByte(&s_raceWorld, 0x52u) == 1u) {
             s_raceFinishLatched = 1;
+            buildRaceResultTimes();
             s_raceSession.result_active = 1u;
-            memcpy(s_raceSession.result_record_glyphs,
-                   raceWorldByte(&s_raceWorld, 0x3D1u), 7u);
-            memcpy(s_raceSession.result_current_glyphs,
-                   raceWorldByte(&s_raceWorld, 0x3D9u), 7u);
             s_menu.source_state = 3u;
             s_menu.transition_phase = 0u;
             s_menu.transition_gate_0053 = *raceWorldByte(&s_raceWorld, 0x53u);
@@ -248,6 +329,7 @@ void gameUpdate(void)
             s_raceUnsupportedMask = 0u;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
+            applyRaceRecordsToWorld();
             nativeRaceRenderReset();
             rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
                                 "Native bike movement, opponent, collision and course-stream stages run.\n"
