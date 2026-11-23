@@ -1,0 +1,780 @@
+#include "bike_physics.h"
+
+/* Source: Excitebike/bank_FF.asm, tbl_C0BC ($C0BC), tbl_C0CE ($C0CE),
+ * tbl_C0D1 ($C0D1), and sub_CE29 ($CE29-$CE57).
+ * The values below are copied from the source tables, not tuned estimates. */
+static const uint8_t kAccelerationIncrement[5] = { 0x18u, 0x3Fu, 0x28u, 0x20u, 0x28u };
+static const uint8_t kPlayerSpeedFractionCap[3] = { 0x20u, 0x40u, 0x7Fu };
+static const uint8_t kPlayerSpeedWholeCap[3] = { 0x03u, 0x03u, 0x01u };
+
+static void bikePhysicsAccelerateObject(BikeSpeedState *speed,
+                                        uint8_t frame_phase,
+                                        uint8_t object_index,
+                                        uint8_t acceleration_mode)
+{
+    uint16_t sum;
+
+    if (speed == 0 || frame_phase != object_index || acceleration_mode > 4u) {
+        return;
+    }
+
+    /* CLC / ADC / STA / BCC / INC from sub_CE29. */
+    sum = (uint16_t)speed->fraction + kAccelerationIncrement[acceleration_mode];
+    speed->fraction = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        speed->whole = (uint8_t)(speed->whole + 1u);
+    }
+
+    /* Only object X=0 is capped here (CE39 TXA/BNE); opponents return uncapped. */
+    if (object_index == 0u && acceleration_mode <= 2u &&
+        (speed->whole > kPlayerSpeedWholeCap[acceleration_mode] ||
+         (speed->whole == kPlayerSpeedWholeCap[acceleration_mode] &&
+          speed->fraction >= kPlayerSpeedFractionCap[acceleration_mode]))) {
+        speed->fraction = kPlayerSpeedFractionCap[acceleration_mode];
+        speed->whole = kPlayerSpeedWholeCap[acceleration_mode];
+    }
+}
+
+
+void bikePhysicsAcceleratePlayer(BikeSpeedState *speed,
+                                 uint8_t frame_phase,
+                                 uint8_t acceleration_mode)
+{
+    bikePhysicsAccelerateObject(speed, frame_phase, 0u, acceleration_mode);
+}
+
+/* Source: tbl_C0C1 ($C0C1), tbl_C0CC ($C0CC), sub_CE58/sub_CE5C ($CE58-$CE82). */
+static const uint8_t kDecelerationAmount[7] = {
+    0x38u, 0x0Cu, 0x00u, 0x3Cu, 0x1Cu, 0xC0u, 0x7Fu
+};
+static void bikePhysicsDecelerateObject(BikeSpeedState *speed,
+                                        uint8_t frame_phase,
+                                        uint8_t object_index,
+                                        uint8_t deceleration_mode,
+                                        uint8_t zero_whole_threshold)
+{
+    uint8_t old_fraction;
+    uint8_t amount;
+
+    if (speed == 0 || frame_phase != object_index ||
+        deceleration_mode >= 7u ||
+        (zero_whole_threshold != 0x01u && zero_whole_threshold != 0xB0u)) {
+        return;
+    }
+
+    if (speed->whole == 0u &&
+        speed->fraction < zero_whole_threshold) {
+        return;
+    }
+
+    old_fraction = speed->fraction;
+    amount = kDecelerationAmount[deceleration_mode];
+    speed->fraction = (uint8_t)(old_fraction - amount);
+
+    /* 6502 SBC sets carry iff no borrow; a borrow lowers the whole byte.
+     * If the whole byte is already zero, the source clamps the fraction to 0. */
+    if (old_fraction < amount) {
+        if (speed->whole != 0u) {
+            speed->whole = (uint8_t)(speed->whole - 1u);
+        } else {
+            speed->fraction = 0u;
+        }
+    }
+}
+
+
+void bikePhysicsDeceleratePlayer(BikeSpeedState *speed,
+                                 uint8_t frame_phase,
+                                 uint8_t deceleration_mode,
+                                 uint8_t zero_whole_threshold)
+{
+    bikePhysicsDecelerateObject(speed, frame_phase, 0u, deceleration_mode,
+                                zero_whole_threshold);
+}
+
+/* Source: sub_CDEE ($CDEE-$CE28), player object X=0. */
+uint8_t bikePhysicsTerrainGateForObject(BikeTerrainGateState *state, uint8_t object_index)
+{
+    uint8_t high_path;
+
+    if (state == 0) return 0u;
+    high_path = (uint8_t)(
+        state->object_class == 0xE4u ||
+        (state->surface == 0x03u && state->surface_state >= 0x03u) ||
+        state->vertical_position < 0x08u ||
+        state->vertical_position >= 0x38u);
+
+    if (high_path != 0u) {
+        if (state->posture_state != 0x01u) state->posture_state = 0x02u;
+        /* sub_CDEE writes global $00FD only for X=0, not opponent slots. */
+        if (object_index == 0u) state->player_event_flag = 0x04u;
+        return 0u;
+    }
+
+    if (state->posture_state != 0x01u) state->posture_state = 0x00u;
+    return 1u;
+}
+
+uint8_t bikePhysicsTerrainGate(BikeTerrainGateState *state)
+{
+    return bikePhysicsTerrainGateForObject(state, 0u);
+}
+
+/* Player branch of sub_CD59 ($CD59-$CDEB), excluding its later steering/
+ * animation side effects at loc_CDBD. The exact called speed/gate helpers
+ * are independently differential-tested against their original ASM. */
+static int playerSpeedCompareCap(const BikeSpeedState *speed, uint8_t mode)
+{
+    static const uint8_t whole_cap[3] = { 0x03u, 0x03u, 0x01u };
+    static const uint8_t fraction_cap[3] = { 0x20u, 0x40u, 0x7Fu };
+
+    if (speed->whole < whole_cap[mode]) {
+        return -1;
+    }
+    if (speed->whole > whole_cap[mode]) {
+        return 1;
+    }
+    if (speed->fraction < fraction_cap[mode]) {
+        return -1;
+    }
+    if (speed->fraction > fraction_cap[mode]) {
+        return 1;
+    }
+    return 0;
+}
+
+static int updateObjectSpeedPrefix(BikeObjectSpeedContext *object);
+
+void bikePhysicsUpdateObjectSpeed(BikeObjectSpeedContext *object)
+{
+    BikeSteeringState tail;
+    if (!updateObjectSpeedPrefix(object)) return;
+    tail.collision_state_0098 = object->collision_lock_0098;
+    tail.object_status_00B0 = object->object_status_00B0;
+    tail.inactive_0058 = object->inactive_0058;
+    tail.track_finished_0052 = object->race_finished;
+    tail.speed_fraction_0090 = object->speed.fraction;
+    tail.speed_whole_0094 = object->speed.whole;
+    tail.movement_flags_005C = object->controller;
+    tail.approach_00AC = object->approach_00AC;
+    tail.animation_state_0368 = object->animation_state_0368;
+    tail.movement_mode_0388 = object->movement_mode_0388;
+    tail.steer_timer_0026 = object->steer_timer_0026;
+    tail.approach_timer_002A = object->approach_timer_002A;
+    bikePhysicsSteeringTail(&tail);
+    object->collision_lock_0098 = tail.collision_state_0098;
+    object->approach_00AC = tail.approach_00AC;
+    object->movement_mode_0388 = tail.movement_mode_0388;
+    object->steer_timer_0026 = tail.steer_timer_0026;
+    object->approach_timer_002A = tail.approach_timer_002A;
+}
+
+/* Returns 0 when the input is outside the verified domain (no tail run). */
+static int updateObjectSpeedPrefix(BikeObjectSpeedContext *object)
+{
+    uint8_t deceleration_mode;
+    uint8_t acceleration_mode;
+    uint8_t zero_whole_threshold;
+    uint8_t gate_z;
+    const uint8_t index = object != 0 ? object->object_index : 0xFFu;
+
+    if (object == 0 || index >= 4u || object->frame_phase > 3u ||
+        object->object_status_00B0 > 3u) {
+        return 0;
+    }
+
+    zero_whole_threshold =
+        (object->object_status_00B0 & 0x02u) != 0u ? 0xB0u : 0x01u;
+
+    if (object->object_lock_0374 != 0u ||
+        object->collision_lock_0098 != 0u ||
+        (object->movement_state_009C != 0u &&
+         object->movement_state_009C != 5u)) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
+                                    0u, zero_whole_threshold);
+        return 1;
+    }
+
+    /* Only player X=0 takes the track-finished speed-cap branch. */
+    if (index == 0u && object->race_finished != 0u) {
+        const int cap_order = playerSpeedCompareCap(&object->speed, 2u);
+        if (cap_order < 0) {
+            bikePhysicsAccelerateObject(&object->speed, object->frame_phase,
+                                        index, 2u);
+        } else if (cap_order > 0) {
+            bikePhysicsDecelerateObject(&object->speed, object->frame_phase,
+                                        index, 3u, zero_whole_threshold);
+        }
+        return 1;
+    }
+
+    if (object->object_status_00B0 != 0u) {
+        const uint8_t direction = (uint8_t)(object->controller & 0x03u);
+        deceleration_mode = direction == 0u ? 4u : (uint8_t)(direction + 1u);
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
+                                    deceleration_mode, zero_whole_threshold);
+        return 1;
+    }
+
+    if ((object->controller & 0xC0u) == 0u) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
+                                    0u, zero_whole_threshold);
+        return 1;
+    }
+
+    acceleration_mode = (object->controller & 0x80u) != 0u ? 0u : 1u;
+    gate_z = bikePhysicsTerrainGateForObject(&object->terrain, index);
+    if (gate_z == 0u && object->speed.whole != 0u) {
+        bikePhysicsDecelerateObject(&object->speed, object->frame_phase, index,
+                                    0u, zero_whole_threshold);
+        return 1;
+    }
+
+    if (index != 0u) {
+        /* CD95/CDAC: opponents use Y = X (+1 for the 0x40 throttle bit), no cap compare. */
+        bikePhysicsAccelerateObject(&object->speed, object->frame_phase, index,
+                                    (uint8_t)(index + (acceleration_mode != 0u ? 1u : 0u)));
+        return 1;
+    }
+    {
+        const int cap_order = playerSpeedCompareCap(&object->speed, acceleration_mode);
+        if (cap_order < 0) {
+            bikePhysicsAccelerateObject(&object->speed, object->frame_phase,
+                                        index, acceleration_mode);
+        } else if (cap_order > 0) {
+            bikePhysicsDecelerateObject(&object->speed, object->frame_phase,
+                                        index, (uint8_t)(acceleration_mode + 1u),
+                                        zero_whole_threshold);
+        }
+    }
+    return 1;
+}
+
+void bikePhysicsUpdatePlayerSpeed(BikePlayerSpeedContext *player)
+{
+    if (player == 0) return;
+    player->object_index = 0u;
+    bikePhysicsUpdateObjectSpeed(player);
+}
+
+/* tbl_C0C8..tbl_C0D5 as laid out in the PRG (C0C8,C0CA,C0D4 tables overlap-free
+ * for the verified index domain 0..1). */
+static const uint8_t k_tblC0C8[2] = { 0x06u, 0x02u };
+static const uint8_t k_tblC0CA[2] = { 0x0Au, 0x0Bu };
+static const uint8_t k_tblC0D4[2] = { 0x06u, 0x04u };
+
+/* Source: loc_CE83 ($CE83-$CECF). `which` is ram_0000_t18 (= 005C & 3). */
+static void steeringApproach(BikeSteeringState *s, uint8_t which)
+{
+    unsigned y;
+    if (s->steer_timer_0026 != 0u) return;
+    y = (unsigned)(s->object_status_00B0 >> 1);
+    if (y > 1u) return; /* outside the verified table domain */
+    s->steer_timer_0026 = k_tblC0D4[y];
+    if ((which & 1u) != 0u) {
+        if (s->approach_00AC == k_tblC0C8[y]) return;
+        if (s->approach_00AC < k_tblC0C8[y]) {
+            s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+        } else {
+            s->approach_00AC = (uint8_t)(s->approach_00AC - 1u);
+        }
+        return;
+    }
+    s->movement_mode_0388 = (uint8_t)(s->movement_mode_0388 & 2u);
+    if (s->approach_00AC < k_tblC0CA[y]) {
+        s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+        return;
+    }
+    if ((s->movement_flags_005C & 0xC0u) == 0u) return;
+    if (s->object_status_00B0 != 0u) return;
+    s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+    s->steer_timer_0026 = 0x0Du;
+    if (s->approach_00AC < 0x0Du) return;
+    s->collision_state_0098 = 1u;
+    s->steer_timer_0026 = 2u;
+}
+
+/* Source: loc_CDBD ($CDBD-$CDEB). */
+void bikePhysicsSteeringTail(BikeSteeringState *s)
+{
+    uint8_t branch;
+    int steer;
+    if (s == 0 || s->collision_state_0098 != 0u) return;
+    branch = (uint8_t)(s->movement_flags_005C & 3u); /* ram_000A_t06 */
+    if (s->object_status_00B0 != 0u) {
+        steer = 1;
+    } else if ((s->inactive_0058 | s->track_finished_0052) != 0u) {
+        steer = 0;
+    } else if (s->speed_whole_0094 != 0u) {
+        steer = 1;
+    } else {
+        steer = s->speed_fraction_0090 >= 0xA0u;
+    }
+    if (steer && branch != 0u) {
+        steeringApproach(s, branch);
+        return;
+    }
+    if (s->object_status_00B0 != 0u) return;
+    if (s->animation_state_0368 == s->approach_00AC) return;
+    /* JMP loc_DCC7 with A = ram_0368, Y = 5 */
+    if (s->approach_timer_002A != 0u) return;
+    s->approach_timer_002A = 5u;
+    if (s->approach_00AC == s->animation_state_0368) return;
+    if (s->approach_00AC > s->animation_state_0368) {
+        s->approach_00AC = (uint8_t)(s->approach_00AC - 1u);
+    } else {
+        s->approach_00AC = (uint8_t)(s->approach_00AC + 1u);
+    }
+}
+
+/* Source: sub_CD1F ($CD1F-$CD58), object loop only. The original then
+ * performs the race-start input/timer handshake; that is intentionally not
+ * folded into this deterministic speed subsystem. */
+void bikePhysicsUpdateRaceSpeeds(BikeRaceSpeedState *race)
+{
+    int index;
+    if (race == 0 || race->race_started == 0u || race->frame_phase > 3u) {
+        return;
+    }
+
+    for (index = 3; index >= 0; --index) {
+        BikeObjectSpeedContext *object = &race->bikes[index];
+        if (race->active[index] == 0u) continue;
+
+        object->object_index = (uint8_t)index;
+        object->frame_phase = race->frame_phase;
+        object->race_finished = race->race_finished;
+
+        /* CD29-CD38: inactive-state/collision/heat flags clear the object's
+         * throttle before sub_CD59; state 5 is the special unconditional path. */
+        if (object->movement_state_009C != 5u &&
+            (object->movement_state_009C != 0u ||
+             object->collision_lock_0098 != 0u ||
+             object->overheat_lock_03E0 != 0u)) {
+            object->controller = 0u;
+        }
+
+        bikePhysicsUpdateObjectSpeed(object);
+    }
+}
+
+/* Source: sub_E359 ($E359-$E3F3), tbl_D8F7 ($D8F7-$D8FA),
+ * tbl_D8FB ($D8FB-$D8FE). This translates gameplay meter/overheat state;
+ * the final 12-sprite OAM loop remains in the native renderer. */
+uint8_t bikePhysicsUpdateTemperature(BikeTemperatureState *temperature,
+                                     uint8_t controller,
+                                     uint8_t race_started,
+                                     uint8_t race_finished)
+{
+    static const uint8_t heat_increment[4] = { 0x3Fu, 0x0Fu, 0x07u, 0x07u };
+    static const uint8_t heat_threshold[4] = { 0x08u, 0x20u, 0x11u, 0x11u };
+    uint8_t mode = 0u;
+
+    if (temperature == 0) {
+        return 0xFEu;
+    }
+
+    if (race_finished != 0u) {
+        return 0xFEu;
+    }
+
+    if (temperature->overheat_state != 0u) {
+        return (temperature->overheat_timer & 1u) != 0u ? 0xFEu : 0xFCu;
+    }
+
+    if ((controller & 0xC0u) != 0u) {
+        const uint8_t throttle = race_started != 0u
+            ? (uint8_t)(controller & 0xC0u)
+            : 0x80u;
+        if (throttle == 0x40u) {
+            mode = 1u;
+        } else if (throttle == 0x80u) {
+            mode = 2u;
+        } else {
+            mode = 3u;
+        }
+    }
+
+    if (temperature->whole < heat_threshold[mode]) {
+        const uint16_t sum = (uint16_t)temperature->fraction + heat_increment[mode];
+        temperature->fraction = (uint8_t)sum;
+        if (sum > 0xFFu) {
+            temperature->whole = (uint8_t)(temperature->whole + 1u);
+        }
+    } else if (temperature->whole > heat_threshold[mode]) {
+        const uint8_t old_fraction = temperature->fraction;
+        temperature->fraction = (uint8_t)(old_fraction - 0x0Bu);
+        if (old_fraction < 0x0Bu && temperature->whole != 0u) {
+            temperature->whole = (uint8_t)(temperature->whole - 1u);
+        }
+    }
+
+    if (temperature->whole >= 0x20u) {
+        temperature->overheat_timer = temperature->whole;
+        temperature->overheat_state = temperature->whole;
+    }
+
+    if (temperature->whole >= 0x1Au) {
+        if (mode == 1u) {
+            temperature->sound_flags = (uint8_t)(temperature->sound_flags | 0xB0u);
+        }
+    }
+
+    return 0xFEu;
+}
+
+
+
+/* Source: sub_DBFE ($DBFE-$DC19). The first four shifts preserve the
+ * 6502 carry chain; the final ADC consumes the carry from the fraction sum. */
+void bikePhysicsAdvanceSecondaryScroll(BikeMovementState *movement)
+{
+    uint8_t accumulator;
+    uint8_t carry;
+    uint16_t sum;
+
+    if (movement == 0) return;
+
+    accumulator = movement->movement_delta[0];
+    carry = (uint8_t)(accumulator & 0x01u);
+    accumulator >>= 1;
+    {
+        unsigned int shift;
+        for (shift = 0u; shift < 3u; ++shift) {
+            const uint8_t next_carry = (uint8_t)(accumulator & 0x01u);
+            accumulator = (uint8_t)((accumulator >> 1) | (uint8_t)(carry << 7));
+            carry = next_carry;
+        }
+    }
+
+    /* CLC in the source explicitly discards the final ROR carry. */
+    sum = (uint16_t)accumulator + movement->secondary_scroll_fraction;
+    movement->secondary_scroll_fraction = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    sum = (uint16_t)movement->movement_delta[0] +
+          movement->secondary_scroll_x + carry;
+    movement->secondary_scroll_x = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->secondary_base_nametable ^= 0x01u;
+    }
+}
+
+
+/* Source: sub_DCDE ($DCDE-$DCF1), one bike slot. */
+static void bikePhysicsUpdateObjectLockTimer(BikeMovementState *movement, unsigned index)
+{
+    uint8_t *timer = &movement->object_lock_timer[index];
+    if (*timer == 0u) return;
+    *timer = (uint8_t)(*timer - 1u);
+    if ((movement->movement_flags[index] & 0xC0u) != 0u) *timer = 0u;
+}
+
+void bikePhysicsUpdateObjectLockTimers(BikeMovementState *movement)
+{
+    int index;
+    if (movement == 0) return;
+    for (index = 3; index >= 0; --index) {
+        bikePhysicsUpdateObjectLockTimer(movement, (unsigned)index);
+    }
+}
+
+/* Source: sub_DA58 ($DA58-$DA69), one bike slot. */
+static void bikePhysicsBuildMovementDelta(BikeMovementState *movement, unsigned index)
+{
+    const uint16_t sum = (uint16_t)movement->speed_fraction[index] +
+                         movement->fraction_accumulator[index];
+    movement->movement_delta[index] = movement->speed_whole[index];
+    movement->fraction_accumulator[index] = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->movement_delta[index] =
+            (uint8_t)(movement->movement_delta[index] + 1u);
+    }
+}
+
+/* Standalone helper used by tests/tools; the race pass calls DA58 in source order. */
+void bikePhysicsBuildMovementDeltas(BikeMovementState *movement)
+{
+    unsigned i;
+    if (movement == 0) return;
+    for (i = 0; i < 4u; ++i) bikePhysicsBuildMovementDelta(movement, i);
+}
+
+/* Source: sub_DA6A ($DA6A-$DA79). The base nametable toggles only on carry. */
+void bikePhysicsAdvancePlayerScroll(BikeMovementState *movement)
+{
+    uint16_t sum;
+    if (movement == 0) {
+        return;
+    }
+    sum = (uint16_t)movement->player_scroll_x + movement->movement_delta[0];
+    movement->player_scroll_x = (uint8_t)sum;
+    if (sum > 0xFFu) {
+        movement->base_nametable ^= 0x01u;
+    }
+}
+
+/* Source: sub_DA7A ($DA7A-$DAA0). Slots 3,2,1 are opponent-relative;
+ * slot 0 is the player and moves the camera instead. previous_x is shifted
+ * for every opponent slot, even when its active flag is clear. */
+void bikePhysicsAdvanceOpponentPositions(BikeMovementState *movement)
+{
+    int i;
+    if (movement == 0) {
+        return;
+    }
+    for (i = 3; i >= 1; --i) {
+        if (movement->object_active[i] != 0u) {
+            const uint16_t sum = (uint16_t)movement->x_low[i] +
+                                 movement->movement_delta[i];
+            const uint8_t moved_low = (uint8_t)sum;
+            uint8_t moved_high = movement->x_high[i];
+            uint8_t relative_low;
+            if (sum > 0xFFu) {
+                moved_high = (uint8_t)(moved_high + 1u);
+            }
+
+            relative_low = (uint8_t)(moved_low - movement->movement_delta[0]);
+            if (moved_low < movement->movement_delta[0]) {
+                moved_high = (uint8_t)(moved_high - 1u);
+            }
+            movement->x_low[i] = relative_low;
+            movement->x_high[i] = moved_high;
+            movement->previous_x[i] =
+                (uint8_t)(movement->previous_x[i] - movement->movement_delta[0]);
+        }
+    }
+}
+
+
+
+/* Source: sub_DC1A ($DC1A-$DC96), including its DC97/DC9A vertical delta.
+ * Tables are copied byte-for-byte from tbl_D86C/D87C in bank_FF.asm. */
+void bikePhysicsUpdateVerticalRecovery(BikeMovementState *movement, uint8_t object_index)
+{
+    static const uint8_t minimum_approach[16] = {
+        0x03u, 0x02u, 0x03u, 0x02u, 0x09u, 0x06u, 0x08u, 0x0Fu,
+        0x03u, 0x02u, 0x02u, 0x02u, 0x08u, 0x05u, 0x07u, 0x0Fu
+    };
+    static const uint8_t maximum_approach[16] = {
+        0x0Cu, 0x09u, 0x0Au, 0x07u, 0x0Cu, 0x0Cu, 0x0Cu, 0x00u,
+        0x0Cu, 0x0Au, 0x0Bu, 0x08u, 0x0Cu, 0x0Cu, 0x0Cu, 0x06u
+    };
+    uint8_t vertical_delta;
+    uint8_t table_index;
+    uint8_t target;
+
+    if (movement == 0 || object_index >= 4u ||
+        movement->object_status[object_index] == 0u) {
+        return;
+    }
+
+    /* SEC / SBC $00BC,X / SBC object-Y: all arithmetic wraps at 8 bits. */
+    {
+        const uint8_t first = (uint8_t)(movement->global_vertical_reference -
+                                        movement->vertical_reference[object_index]);
+        const uint8_t first_borrow =
+            movement->global_vertical_reference < movement->vertical_reference[object_index]
+                ? 1u : 0u;
+        vertical_delta = (uint8_t)(first - movement->object_y[object_index] -
+                                   first_borrow);
+    }
+
+    if (vertical_delta >= movement->y_low[object_index] ||
+        movement->y_low[object_index] >= 0xA8u ||
+        movement->rider_state[object_index] == 0u) {
+        return;
+    }
+
+    if (object_index == 0u) {
+        movement->player_event = 0x02u;
+    }
+    movement->object_status[object_index] = 0u;
+    movement->rider_state[object_index] = 0u;
+
+    if (movement->collision_state[object_index] != 0u) {
+        movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+        return;
+    }
+
+    if (movement->track_finished != 0u) {
+        if (movement->brake_state[object_index] == 0u) {
+            movement->approach[object_index] = 0x06u;
+        }
+        return;
+    }
+
+    target = movement->movement_mode[object_index];
+    movement->movement_mode[object_index] = 0u;
+    if (target != 0u) {
+        movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+        return;
+    }
+
+    target = movement->brake_state[object_index];
+    /* CPY #$02 / BPL falls through to ADC #$08 when the signed
+     * subtraction is negative: speed 0..1 or $82..$FF. */
+    if (movement->speed_whole[object_index] < 0x02u ||
+        movement->speed_whole[object_index] >= 0x82u) {
+        target = (uint8_t)(target + 0x08u);
+    }
+    table_index = target;
+    if (movement->approach[object_index] < minimum_approach[table_index] ||
+        movement->approach[object_index] >= maximum_approach[table_index]) {
+        movement->collision_state[object_index] = 0xFFu;
+        return;
+    }
+
+    if (movement->animation_state[object_index] != movement->approach[object_index] &&
+        (uint8_t)(movement->brake_state[object_index] |
+                  movement->lateral_state[object_index]) == 0u) {
+        movement->object_lock_timer[object_index] = 0x04u;
+        movement->movement_mode[object_index] = 0x02u;
+        movement->object_status[object_index] = 0x01u;
+    }
+
+    movement->y_low[object_index] = (uint8_t)(vertical_delta - 1u);
+}
+
+/* Shared DD1A/DD6F step. The incoming carry is source-visible state left
+ * by the preceding DD38/DCF2 branch and must not be normalized. */
+static void initialize_vertical_arc(BikeMovementState *movement,
+                                    uint8_t object_index,
+                                    uint8_t initial_whole);
+
+static void advance_vertical_arc(BikeMovementState *movement,
+                                 unsigned int object_index,
+                                 uint8_t carry)
+{
+    static const uint8_t direction_delta[4] = { 0x34u, 0x34u, 0x18u, 0x34u };
+    uint8_t temp_y;
+    uint16_t sum;
+
+    temp_y = (uint8_t)(movement->movement_flags[object_index] & 0x03u);
+    movement->motion_delta[object_index] = direction_delta[temp_y];
+    temp_y = movement->y_low[object_index];
+
+    /* DD6F: ADC 038C, ADC #0, SBC 037C, ADC 0384. */
+    sum = (uint16_t)movement->motion_fraction[object_index] +
+          movement->motion_delta[object_index] + carry;
+    movement->motion_fraction[object_index] = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    sum = (uint16_t)movement->motion_whole[object_index] + carry;
+    movement->motion_whole[object_index] = (uint8_t)sum;
+    carry = (uint8_t)(sum > 0xFFu);
+
+    {
+        const unsigned subtrahend =
+            (unsigned)movement->motion_whole_start[object_index] +
+            (carry != 0u ? 0u : 1u);
+        const uint8_t difference = (uint8_t)(temp_y - subtrahend);
+        carry = (uint8_t)((unsigned)temp_y >= subtrahend);
+        sum = (uint16_t)difference + movement->motion_whole[object_index] + carry;
+        movement->y_low[object_index] = (uint8_t)sum;
+    }
+
+    if (movement->lateral_state[object_index] == 0u) {
+        movement->rider_state[object_index] = 0x01u;
+    }
+}
+
+/* Source: sub_DCF2 ($DCF2-$DD37), with DD38/DD6F translated natively. */
+void bikePhysicsUpdateVerticalMotion(BikeMovementState *movement, uint8_t object_index)
+{
+    uint8_t carry = 0u;
+    uint8_t mode;
+
+    if (movement == 0 || object_index >= 4u) return;
+    mode = movement->object_status[object_index];
+    if (mode == 0u) return;
+
+    if (mode == 0x02u) {
+        carry = (uint8_t)(movement->movement_flags[object_index] & 0x01u);
+        if (carry != 0u && movement->frame_phase == 0u) return;
+    } else {
+        /* DCFA loads zero into 0384 before the DCF2 DD38 initialization. */
+        initialize_vertical_arc(movement, object_index, 0u);
+        return;
+    }
+
+    advance_vertical_arc(movement, object_index, carry);
+}
+
+/* DD08 entry: A seeds ram_0384, then DD38 and DD1A/DD6F run. DD06 passes the
+ * speed whole byte; loc_DCFA passes zero. */
+static void initialize_vertical_arc(BikeMovementState *movement,
+                                    uint8_t object_index,
+                                    uint8_t initial_whole)
+{
+    uint8_t carry;
+    uint16_t sum;
+
+    movement->motion_whole[object_index] = initial_whole;
+    movement->object_status[object_index] = 0x02u;
+    movement->motion_fraction[object_index] = 0x0Fu;
+
+    sum = (uint16_t)movement->speed_fraction[object_index] + 0xAFu;
+    movement->motion_fraction_start[object_index] = (uint8_t)sum;
+    movement->motion_whole_start[object_index] =
+        (uint8_t)(movement->speed_whole[object_index] +
+                  (sum > 0xFFu ? 1u : 0u));
+
+    if (movement->movement_mode[object_index] == 0x02u) {
+        const uint8_t high = movement->motion_whole_start[object_index];
+        const uint8_t low = movement->motion_fraction_start[object_index];
+        movement->motion_whole_start[object_index] = (uint8_t)(high >> 1);
+        movement->motion_fraction_start[object_index] =
+            (uint8_t)((low >> 1) | ((high & 1u) << 7));
+        carry = (uint8_t)(low & 1u);
+    } else {
+        carry = (uint8_t)(movement->movement_mode[object_index] >= 0x02u);
+    }
+
+    if (object_index == 0u) {
+        uint8_t event = (uint8_t)(movement->speed_whole[0] << 4);
+        event ^= 0x30u;
+        movement->player_event = event == 0u ? 0x08u : event;
+        carry = (uint8_t)((movement->speed_whole[0] >> 4) & 1u);
+    }
+
+    advance_vertical_arc(movement, object_index, carry);
+}
+
+/* Source: sub_DD06. Unlike DCF2's DCFA path, DD06 first copies speed whole
+ * into 0384, then invokes DD38 and immediately executes DD1A/DD6F. */
+void bikePhysicsInitializeVerticalJump(BikeMovementState *movement,
+                                       uint8_t object_index)
+{
+    if (movement == 0 || object_index >= 4u) return;
+    initialize_vertical_arc(movement, object_index,
+                            movement->speed_whole[object_index]);
+}
+
+/* Source: loc_DCFA -> DD08 with A = 0. */
+void bikePhysicsInitializeVerticalFall(BikeMovementState *movement,
+                                       uint8_t object_index)
+{
+    if (movement == 0 || object_index >= 4u) return;
+    initialize_vertical_arc(movement, object_index, 0u);
+}
+
+/* Source: sub_DA26 ($DA26-$DA43), complete movement/camera portion.
+ * The caller supplies the source race-start flag. The timer-selected
+ * post-movement state jump at DA44 is intentionally outside this pass. */
+void bikePhysicsUpdateRaceMovementPass(BikeMovementState *movement, uint8_t race_started)
+{
+    int index;
+    if (movement == 0 || race_started == 0u) return;
+
+    for (index = 3; index >= 0; --index) {
+        bikePhysicsBuildMovementDelta(movement, (unsigned)index);
+        bikePhysicsUpdateVerticalRecovery(movement, (uint8_t)index);
+        bikePhysicsUpdateVerticalMotion(movement, (uint8_t)index);
+        bikePhysicsUpdateObjectLockTimer(movement, (unsigned)index);
+    }
+
+    bikePhysicsAdvancePlayerScroll(movement);
+    bikePhysicsAdvanceOpponentPositions(movement);
+    bikePhysicsAdvanceSecondaryScroll(movement);
+}

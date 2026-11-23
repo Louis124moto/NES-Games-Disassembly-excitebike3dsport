@@ -10,16 +10,15 @@ include $(DEVKITARM)/3ds_rules
 
 TARGET   := excitebike3ds
 BUILD    := build
-SOURCES  := source
+SOURCES  := source/app source/frontend source/engine source/graphics source/audio source/assets source/platform
 DATA     :=
-INCLUDES := include
+INCLUDES := include source source/app source/frontend source/engine source/graphics source/audio source/assets source/platform
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -O2 -mword-relocations -ffunction-sections -fdata-sections $(ARCH)
 CFLAGS += $(INCLUDE) -D__3DS__
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
-# Recursive expansion is required: OUTPUT is assigned below, after this line.
 LDFLAGS = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(OUTPUT).map
 LIBS := -lcitro3d -lctru -lm
 LIBDIRS := $(CTRULIB)
@@ -30,7 +29,8 @@ export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
-# Compile the current native C modules; no emulator source files remain in source/.
+# Build only real module files. source/*.c contains compatibility symlinks
+# for host tests and is deliberately excluded to avoid duplicate objects.
 CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
@@ -46,7 +46,6 @@ endif
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES_BIN := $(addsuffix .o,$(BINFILES)) $(PICAFILES:.v.pica=.shbin.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
-# Generated headers (shader binaries) must exist before any C file is compiled.
 export HFILES := $(PICAFILES:.v.pica=_shbin.h)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
@@ -62,17 +61,14 @@ clean:
 	@rm -rf $(BUILD) $(TARGET).elf $(TARGET).3dsx $(TARGET).smdh
 
 else
-# devkitARM's rules initialize OUTPUT relative to the build subdirectory;
-# override it so the ELF and 3DSX are emitted under the top-level build/ directory.
 OUTPUT := $(TOPDIR)/$(BUILD)/$(TARGET)
 .PHONY: all
 all: $(OUTPUT).elf $(OUTPUT).3dsx
 
 $(OFILES_SOURCES): $(HFILES)
-
 $(OUTPUT).elf: $(OFILES)
 
-# PICA200 vertex shaders: scene.v.pica -> scene.shbin -> scene_shbin.h + object.
+# PICA200 shader is compiled from the graphics module.
 .PRECIOUS: %.shbin
 %.shbin: %.v.pica
 	@echo $(notdir $<)
