@@ -12,6 +12,9 @@ void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multi
     if (session == 0 || world == 0 || session->initialized == 0u) return;
 
     memset(world, 0, sizeof(*world));
+    /* D0F4's decimal-time display uses $FB for both separators. */
+    *raceWorldByte(world, 0x3D2u) = 0xFBu;
+    *raceWorldByte(world, 0x3D5u) = 0xFBu;
     raceWorldStore_BikeMovementState(&session->movement, world);
     raceWorldStore_BikeStateMachineState(&session->states, world);
     /* D0AB/D0C6 are part of the original first-course setup. Their outputs
