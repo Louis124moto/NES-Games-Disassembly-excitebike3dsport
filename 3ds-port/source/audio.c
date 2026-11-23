@@ -24,6 +24,8 @@ typedef struct AudioBuffer {
 static AudioBuffer s_buffers[2];
 static unsigned s_nextBuffer;
 static uint32_t s_phase;
+static uint32_t s_engineStep;
+static uint32_t s_effectStep;
 static uint32_t s_noise = 0x6D2B79F5u;
 static uint16_t s_engineCode;
 static uint16_t s_effectTicks;
@@ -43,6 +45,8 @@ void audioInit(void)
     memset(s_buffers, 0, sizeof(s_buffers));
     s_nextBuffer = 0u;
     s_phase = 0u;
+    s_engineStep = 0u;
+    s_effectStep = 0u;
     s_engineCode = 0u;
     s_effectTicks = 0u;
     s_effectDuration = 0u;
@@ -75,27 +79,30 @@ void audioSubmitSourceEvents(uint8_t engine, uint8_t request_fb,
 {
     if (!s_initialized) return;
     s_engineCode = engine;
+    s_engineStep = engine != 0u ? phaseStep(58u + (uint32_t)(engine & 0x3Fu) * 7u) : 0u;
     if (request_fd != 0u) { s_effectType = 2u; s_effectTicks = 18u * AUDIO_SAMPLES; }
     else if (request_fe != 0u) { s_effectType = 3u; s_effectTicks = 12u * AUDIO_SAMPLES; }
     else if (request_fb != 0u) { s_effectType = 1u; s_effectTicks = 24u * AUDIO_SAMPLES; }
     else if (request_ff != 0u) { s_effectType = 4u; s_effectTicks = 8u * AUDIO_SAMPLES; }
-    if (s_effectTicks != 0u) s_effectDuration = s_effectTicks;
+    if (s_effectTicks != 0u) {
+        s_effectDuration = s_effectTicks;
+        s_effectStep = s_effectType == 3u ? phaseStep(880u) :
+                       s_effectType == 4u ? phaseStep(660u) : phaseStep(440u);
+    }
 }
 
 static int16_t renderSample(void)
 {
-    uint32_t frequency = 0u;
     int32_t sample = 0;
     if (s_engineCode != 0u) {
         /* $00FC is the source engine-sound intensity/pitch request. */
-        frequency = 58u + (uint32_t)(s_engineCode & 0x3Fu) * 7u;
-        s_phase += phaseStep(frequency);
+        s_phase += s_engineStep;
         sample = (s_phase & 0x80000000u) ? 3600 : -3600;
     }
     if (s_effectTicks != 0u) {
         int32_t effect = 0;
         --s_effectTicks;
-        s_phase += phaseStep(s_effectType == 3u ? 880u : 440u);
+        if (s_effectType != 2u) s_phase += s_effectStep;
         switch (s_effectType) {
         case 1u: /* countdown/start cue */
             effect = (s_phase & 0x40000000u) ? 4200 : -4200;
