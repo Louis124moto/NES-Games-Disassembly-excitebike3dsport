@@ -1,9 +1,73 @@
 #include <stdio.h>
 #include <string.h>
 #include "race_session_world.h"
+#include "race_spawn.h"
+#include "race_frame.h"
 
 static RaceWorld world;
 static NativeRaceSession session;
+
+
+/* End-to-end source terrain semantics:
+ * F4FF writes the six CPU course pages; DB95/raceSpawnPlace uses page 5
+ * (and page 2) to decide whether a slot-3 obstacle can exist; E09F then
+ * consumes that spawned obstacle's coordinates for the actual hit test.
+ */
+static int testF4ffObstacleCollision(void)
+{
+    RaceSpawnState source, candidate;
+    RaceObstacleHitState hit;
+    unsigned base;
+    int found = 0;
+
+    raceWorldLoad_RaceSpawnState(&source, &world);
+    for (base = 0u; base < 64u; ++base) {
+        uint8_t cell;
+        candidate = source;
+        candidate.x_high[3] = 1u;
+        candidate.object_class[0] = (uint8_t)base;
+        if (!raceSpawnPlace(&candidate, 3u, 1u)) continue;
+        cell = candidate.track_pages[5u][candidate.object_class[3] & 0x3Fu];
+        if (cell < 0x3Bu || cell >= 0x93u) continue;
+
+        memset(&hit, 0, sizeof(hit));
+        hit.x_high_slot3 = candidate.x_high[3];
+        hit.rider_present_0373 = 1u;
+        hit.object_y_player = (uint8_t)(candidate.y_low[3] + 2u);
+        hit.obstacle_y_006F = candidate.y_low[3];
+        hit.x_low_player = (uint8_t)(candidate.x_low[3] - 5u);
+        hit.obstacle_x_0393 = candidate.x_low[3];
+        hit.global_vertical_reference_03F1 = 0xB6u;
+        hit.vertical_reference_player = 0u;
+        hit.y_low_player = 0xFFu;
+        raceObstacleHit(&hit);
+        if (hit.collision_player != 0xFFu ||
+            hit.movement_state[3] != 1u ||
+            hit.sound_request_00FD != 1u) {
+            puts("FAIL F4FF road cell spawned an obstacle but E09F did not hit it");
+            return 1;
+        }
+        found = 1;
+        break;
+    }
+    if (!found) {
+        puts("FAIL no source-road cell from F4FF pages could feed obstacle collision");
+        return 1;
+    }
+
+    /* A non-road page byte outside the source's accepted $3B-$92 range
+     * must block obstacle creation, so E09F has no phantom object to hit. */
+    candidate = source;
+    memset(candidate.track_pages[5], 0x20, sizeof(candidate.track_pages[5]));
+    candidate.x_high[3] = 1u;
+    candidate.object_class[0] = 0u;
+    if (raceSpawnPlace(&candidate, 3u, 1u) != 0u) {
+        puts("FAIL non-road F4FF terrain incorrectly allowed obstacle spawn");
+        return 1;
+    }
+    puts("PASS: F4FF terrain pages gate source obstacle spawn and the spawned coordinates feed E09F collision.");
+    return 0;
+}
 
 int main(void)
 {
@@ -104,6 +168,7 @@ int main(void)
             return 1;
         }
     }
+    if (testF4ffObstacleCollision() != 0) return 1;
     printf("PASS: native first course reached source finish transition (runtime column updates=%lu, frames=%u started=%u moved=%u)\n",
            (unsigned long)session.course_column_serial, f + 1u, started, moved);
     return 0;
