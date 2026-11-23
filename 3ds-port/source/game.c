@@ -233,7 +233,7 @@ void gameUpdate(void)
                     if (s_raceSession.result_podium_active == 0u &&
                         s_menu.timer_values[18] == s_menu.transition_duration &&
                         s_menu.frame_timer == 0u) {
-                        nativeRaceSessionBuildResultsPodium(&s_raceSession);
+                        nativeRaceRenderBuildResultsPodium(&s_raceSession);
                         s_menu.timer_values[14] = 3u; /* $002F podium timer */
                         audioSubmitSourceEvents(0u,
                             s_menu.transition_gate_0053 < 4u ? 2u : 1u,
