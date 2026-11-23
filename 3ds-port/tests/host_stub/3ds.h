@@ -19,4 +19,10 @@ typedef uint32_t u32;
 void hidScanInput(void);
 u32 hidKeysHeld(void);
 u32 hidKeysDown(void);
+
+typedef uint16_t u16;
+#define GFX_TOP 0
+#define GFX_LEFT 0
+uint8_t *gfxGetFramebuffer(int screen, int side, u16 *width, u16 *height);
+
 #endif
