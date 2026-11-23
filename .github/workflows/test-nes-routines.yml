@@ -264,6 +264,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_loop.c source/race_world.c source/race_frame.c source/race_frame_control.c source/race_course_stream.c source/race_course_stream_data.c source/race_spawn.c source/race_ai.c source/race_script.c source/race_countdown.c source/race_sprites.c source/race_vertical.c source/bike_physics.c source/nes_routines.c source/native_race_session.c source/native_race_setup.c source/native_rng.c source/track.c source/bike_state.c source/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
           /tmp/test_race_loop /tmp/prg.bin 80 2500
 
+      - name: Differentially test the native controller layer (sub_D347, both pads) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/nes_pad.c tests/oracle/cpu6502.c tests/test_nes_pad.c -o /tmp/test_nes_pad
+          /tmp/test_nes_pad /tmp/prg.bin 200000
+
       - name: Differentially test the native sound driver against original ASM (APU write logs)
         run: |
           cd 3ds-port
@@ -337,6 +343,6 @@ jobs:
         run: /tmp/test_native_scene_golden
 
       - name: Compile native 3DS controller mapping test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/input.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/input.c 3ds-port/source/nes_pad.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping
       - name: Test native 3DS controller mapping
         run: ./test_input_mapping

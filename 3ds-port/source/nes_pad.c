@@ -1,0 +1,1 @@
+platform/nes_pad.c

@@ -9,6 +9,7 @@ void inputUpdate(InputState *input)
     hidScanInput();
     input->held = hidKeysHeld();
     input->pressed = hidKeysDown();
+    nesPadScan(&input->pad, inputMapNesButtons(input->held));
 }
 
 
@@ -32,10 +33,10 @@ uint8_t inputMapNesButtons(u32 keys)
 
 uint8_t inputNesHeld(const InputState *input)
 {
-    return input == 0 ? 0u : inputMapNesButtons(input->held);
+    return input == 0 ? 0u : input->pad.hold;
 }
 
 uint8_t inputNesPressed(const InputState *input)
 {
-    return input == 0 ? 0u : inputMapNesButtons(input->pressed);
+    return input == 0 ? 0u : input->pad.press;
 }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "input.h"
 
 static u32 s_held;
@@ -31,32 +32,36 @@ int main(void)
         const uint8_t expected = (uint8_t)value;
         const u32 keys = keys_for_nes(expected);
 
-        input.held = keys;
-        input.pressed = keys;
-        if (inputMapNesButtons(keys) != expected ||
-            inputNesHeld(&input) != expected ||
-            inputNesPressed(&input) != expected) {
-            printf("FAIL: controller map input=%02X got=%02X\n",
-                   expected, inputMapNesButtons(keys));
+        memset(&input, 0, sizeof(input));
+        if (inputMapNesButtons(keys) != expected) {
+            printf("FAIL: controller map input=%02X got=%02X\n", expected, inputMapNesButtons(keys));
             return 1;
         }
-
         s_held = keys;
         s_pressed = keys;
-        input.held = 0u;
-        input.pressed = 0u;
         inputUpdate(&input);
+        /* First frame: A was not held before, so press == hold (sub_D347). */
         if (input.held != keys || input.pressed != keys ||
-            inputNesHeld(&input) != expected ||
-            inputNesPressed(&input) != expected) {
+            inputNesHeld(&input) != expected || inputNesPressed(&input) != expected) {
             printf("FAIL: inputUpdate mapping input=%02X held=%02X pressed=%02X\n",
+                   expected, inputNesHeld(&input), inputNesPressed(&input));
+            return 1;
+        }
+        /* Second frame, same keys held: only A turns into a no-press (D37A-D384);
+         * every other press bit stays level, as in the source. */
+        s_pressed = 0u;
+        inputUpdate(&input);
+        if (inputNesHeld(&input) != expected ||
+            inputNesPressed(&input) != (uint8_t)(expected & 0x7Fu)) {
+            printf("FAIL: A edge handling input=%02X hold=%02X press=%02X\n",
                    expected, inputNesHeld(&input), inputNesPressed(&input));
             return 1;
         }
     }
 
     {
-        InputState empty = { 0u, 0u };
+        InputState empty;
+        memset(&empty, 0, sizeof(empty));
         if (inputNesHeld(0) != 0u || inputNesPressed(0) != 0u ||
             inputNesHeld(&empty) != 0u || inputNesPressed(&empty) != 0u) {
             puts("FAIL: null/empty input mapping");
@@ -64,11 +69,11 @@ int main(void)
         }
     }
 
-    if (s_scans != 256u) {
-        printf("FAIL: hidScanInput called %u times, expected 256\n", s_scans);
+    if (s_scans != 512u) {
+        printf("FAIL: hidScanInput called %u times, expected 512\n", s_scans);
         return 1;
     }
 
-    puts("PASS: all 256 NES controller combinations map correctly from libctru keys.");
+    puts("PASS: all 256 NES controller combinations map correctly with source hold/press semantics.");
     return 0;
 }
