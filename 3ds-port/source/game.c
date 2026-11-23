@@ -140,7 +140,7 @@ void gameUpdate(void)
                 s_menuDirty = 1;
                 rendererPrintBottom("FIRST COURSE COMPLETE\n"
                                     "D-pad: choose course   A/Start: confirm\n"
-                                    "B: title   X: asset extractor\n");
+                                    "X: asset extractor\n");
             }
             return;
         }
