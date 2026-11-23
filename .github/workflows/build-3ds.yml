@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Nintendo 3DS development libraries
         # The devkitpro/devkitarm image already ships the 3ds-dev group, so
@@ -51,7 +51,7 @@ jobs:
           ls -lh 3ds-port/build/excitebike3ds.3dsx 3ds-port/build/excitebike3ds.elf
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: excitebike3ds-homebrew
           path: |
