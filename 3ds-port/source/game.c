@@ -227,9 +227,22 @@ void gameUpdate(void)
                 nativeMenuTickTimers(&s_menu);
                 if (s_menu.transition_phase == 1u)
                     nativeMenuTransitionPhase1(&s_menu);
-                else if (s_menu.transition_phase == 2u &&
-                         s_menu.timer_values[18] == 0u)
-                    nativeMenuTransitionPhase3(&s_menu);
+                else if (s_menu.transition_phase == 2u) {
+                    /* CBA4 waits for $0033 == $03AD and the 10-frame
+                     * divider at $0020 to expire before building the podium. */
+                    if (s_raceSession.result_podium_active == 0u &&
+                        s_menu.timer_values[18] == s_menu.transition_duration &&
+                        s_menu.frame_timer == 0u) {
+                        nativeRaceSessionBuildResultsPodium(&s_raceSession);
+                        s_menu.timer_values[14] = 3u; /* $002F podium timer */
+                        audioSubmitSourceEvents(0u,
+                            s_menu.transition_gate_0053 < 4u ? 2u : 1u,
+                            0u, 0u, 0u);
+                        s_menuDirty = 1;
+                    }
+                    if (s_menu.timer_values[18] == 0u)
+                        nativeMenuTransitionPhase3(&s_menu);
+                }
             }
 
             if (s_menu.transition_phase == 3u ||
