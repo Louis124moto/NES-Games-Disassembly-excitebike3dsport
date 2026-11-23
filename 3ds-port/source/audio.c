@@ -27,6 +27,7 @@ static uint32_t s_phase;
 static uint32_t s_noise = 0x6D2B79F5u;
 static uint16_t s_engineCode;
 static uint16_t s_effectTicks;
+static uint16_t s_effectDuration;
 static uint8_t s_effectType;
 static uint8_t s_initialized;
 
@@ -44,6 +45,7 @@ void audioInit(void)
     s_phase = 0u;
     s_engineCode = 0u;
     s_effectTicks = 0u;
+    s_effectDuration = 0u;
     s_effectType = 0u;
     s_noise = 0x6D2B79F5u;
     if (R_FAILED(ndspInit())) return;
@@ -73,10 +75,11 @@ void audioSubmitSourceEvents(uint8_t engine, uint8_t request_fb,
 {
     if (!s_initialized) return;
     s_engineCode = engine;
-    if (request_fd != 0u) { s_effectType = 2u; s_effectTicks = 18u; }
-    else if (request_fe != 0u) { s_effectType = 3u; s_effectTicks = 12u; }
-    else if (request_fb != 0u) { s_effectType = 1u; s_effectTicks = 24u; }
-    else if (request_ff != 0u) { s_effectType = 4u; s_effectTicks = 8u; }
+    if (request_fd != 0u) { s_effectType = 2u; s_effectTicks = 18u * AUDIO_SAMPLES; }
+    else if (request_fe != 0u) { s_effectType = 3u; s_effectTicks = 12u * AUDIO_SAMPLES; }
+    else if (request_fb != 0u) { s_effectType = 1u; s_effectTicks = 24u * AUDIO_SAMPLES; }
+    else if (request_ff != 0u) { s_effectType = 4u; s_effectTicks = 8u * AUDIO_SAMPLES; }
+    if (s_effectTicks != 0u) s_effectDuration = s_effectTicks;
 }
 
 static int16_t renderSample(void)
@@ -92,6 +95,7 @@ static int16_t renderSample(void)
     if (s_effectTicks != 0u) {
         int32_t effect = 0;
         --s_effectTicks;
+        s_phase += phaseStep(s_effectType == 3u ? 880u : 440u);
         switch (s_effectType) {
         case 1u: /* countdown/start cue */
             effect = (s_phase & 0x40000000u) ? 4200 : -4200;
@@ -109,7 +113,8 @@ static int16_t renderSample(void)
             effect = (s_effectTicks & 2u) ? 1800 : -1800;
             break;
         }
-        sample += (effect * (int32_t)s_effectTicks) / 24;
+        if (s_effectDuration != 0u)
+            sample += (effect * (int32_t)s_effectTicks) / (int32_t)s_effectDuration;
     }
     if (sample > 12000) sample = 12000;
     if (sample < -12000) sample = -12000;
