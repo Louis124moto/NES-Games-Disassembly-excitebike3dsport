@@ -10,6 +10,7 @@
  */
 int nativeMenuRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu);
 void nativeRaceRenderReset(void);
+void nativeRaceRenderBuildResultsPodium(NativeRaceSession *session);
 int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState *menu,
                           const NativeRaceSession *session);
 
