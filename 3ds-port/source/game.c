@@ -127,13 +127,20 @@ void gameUpdate(void)
              * dispatcher would leave C99A here; do not keep calling CA9B and
              * increment the source state again on every rendered frame. */
             if ((s_input.pressed & KEY_B) != 0u) {
+                /* Course 2 is outside this porting milestone. Return to the
+                 * native course selector and preserve the selected race mode. */
                 s_raceSessionReady = 0;
                 s_raceFinishLatched = 0;
                 nativeMenuInit(&s_menu);
+                s_menu.source_state = 1u;
+                s_menu.selected_mode = s_raceMultiplayer;
+                s_menu.selected_course = 0u;
+                s_menu.input.selection = 0u;
+                nativeMenuUpdate(&s_menu, 0u);
                 s_menuDirty = 1;
-                rendererPrintBottom("EXCITEBIKE — NATIVE MENU\n"
-                                    "D-pad: move   A/Start: confirm\n"
-                                    "X: asset extractor\n");
+                rendererPrintBottom("FIRST COURSE COMPLETE\n"
+                                    "D-pad: choose course   A/Start: confirm\n"
+                                    "B: title   X: asset extractor\n");
             }
             return;
         }
@@ -147,10 +154,9 @@ void gameUpdate(void)
         if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
             *raceWorldByte(&s_raceWorld, 0x52u) == 1u) {
             s_raceFinishLatched = 1;
-            rendererPrintBottom("RACE COMPLETE — SOURCE FINISH TRANSITION\n"
-                                "The native race is frozen at the finish state.\n"
-                                "Original result table is still being ported.\n"
-                                "B: return to title\n");
+            rendererPrintBottom("FIRST COURSE COMPLETE — SOURCE FINISH TRANSITION\n"
+                                "The first native race has reached its source finish state.\n"
+                                "B: return to the course selector\n");
         }
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
