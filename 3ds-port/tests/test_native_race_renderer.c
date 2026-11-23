@@ -88,17 +88,21 @@ int main(void)
     }
 
     /* CBA4/CBD4/CBE3/CCCA: exact three podium 2x2 OAM blocks. */
-    nativeRaceSessionBuildResultsPodium(&session);
+    nativeRaceRenderBuildResultsPodium(&session);
     if (session.result_podium_active == 0u ||
         session.oam.bytes[0xC4u] != 0x37u ||
         session.oam.bytes[0xC5u] != 0xB7u ||
         session.oam.bytes[0xC7u] != 0x78u ||
         session.oam.bytes[0xC8u] != 0x3Fu ||
         session.oam.bytes[0xC9u] != 0xB8u ||
+        session.oam.bytes[0xCBu] != 0x80u ||
         session.oam.bytes[0xCCu] != 0x3Fu ||
         session.oam.bytes[0xCDu] != 0xB9u ||
+        session.oam.bytes[0xCFu] != 0x70u ||
         session.oam.bytes[0xD4u] != 0x3Fu ||
-        session.oam.bytes[0xD6u] != 0x41u) {
+        session.oam.bytes[0xD5u] != 0xB9u ||
+        session.oam.bytes[0xD6u] != 0x41u ||
+        session.oam.bytes[0xD7u] != 0x80u) {
         puts("FAIL source podium OAM blocks were not built correctly");
         free(assets.chr_pixels);
         return 1;
