@@ -131,6 +131,7 @@ void gameUpdate(void)
                  * native course selector and preserve the selected race mode. */
                 s_raceSessionReady = 0;
                 s_raceFinishLatched = 0;
+                s_raceUnsupportedMask = 0u;
                 nativeMenuInit(&s_menu);
                 s_menu.source_state = 1u;
                 s_menu.selected_mode = s_raceMultiplayer;
@@ -205,6 +206,7 @@ void gameUpdate(void)
         if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
             s_raceSessionReady = 1;
             s_raceFinishLatched = 0;
+            s_raceUnsupportedMask = 0u;
             s_raceMultiplayer = s_menu.selected_mode;
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
             nativeRaceRenderReset();
