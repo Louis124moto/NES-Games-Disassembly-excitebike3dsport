@@ -169,6 +169,58 @@ static void drawRaceHud(uint8_t *framebuffer, const NativeMenuAssets *assets,
     }
 }
 
+
+/* C5A7/CB77 score-time PPU writes: seven source CHR glyphs at $21F2
+ * (stored course record) and $2232 (just-finished race time). */
+static void drawResultGlyphRow(uint8_t *framebuffer,
+                               const NativeMenuAssets *assets,
+                               const NativeMenuSceneAssets *scene,
+                               const uint8_t glyphs[7],
+                               unsigned int tileY,
+                               unsigned int tileX,
+                               unsigned int paletteSet)
+{
+    unsigned int i, px, py;
+    for (i = 0u; i < 7u; ++i) {
+        const unsigned int column = tileX + i;
+        const uint8_t attribute = scene->nametable[
+            960u + (size_t)(tileY / 4u) * 8u + column / 4u];
+        const unsigned int shift =
+            (unsigned int)(((tileY & 2u) << 1u) | (column & 2u));
+        const unsigned int subpalette = (attribute >> shift) & 3u;
+        const size_t chrTile = EXCITEBIKE_BG_CHR_TILE_BASE + (size_t)glyphs[i];
+        const uint8_t *pixels;
+        if (chrTile >= assets->chr_tile_count) continue;
+        pixels = assets->chr_pixels + chrTile * 64u;
+        for (py = 0u; py < 8u; ++py) {
+            for (px = 0u; px < 8u; ++px) {
+                const uint8_t value = (uint8_t)(pixels[py * 8u + px] & 3u);
+                const size_t paletteIndex =
+                    value == 0u ? 0u : (size_t)subpalette * 4u + value;
+                if (value != 0u &&
+                    assets->palette_written[paletteSet][paletteIndex] != 0u) {
+                    putPixel(framebuffer, 72u + column * 8u + px,
+                             tileY * 8u + py,
+                             assets->palettes[paletteSet][paletteIndex]);
+                }
+            }
+        }
+    }
+}
+
+static void drawRaceResultTimes(uint8_t *framebuffer,
+                                const NativeMenuAssets *assets,
+                                const NativeMenuSceneAssets *scene,
+                                const NativeRaceSession *session)
+{
+    if (session->result_active == 0u) return;
+    /* Source tbl_C0EC: index 0 -> $21F2, index 4 -> $2232. */
+    drawResultGlyphRow(framebuffer, assets, scene,
+                       session->result_record_glyphs, 15u, 18u, 6u);
+    drawResultGlyphRow(framebuffer, assets, scene,
+                       session->result_current_glyphs, 17u, 18u, 6u);
+}
+
 static void drawRaceOam(uint8_t *framebuffer, const NativeMenuAssets *assets,
                           const NativeRaceSession *session, unsigned paletteSet)
 {
@@ -308,6 +360,7 @@ int nativeRaceRenderFrame(const NativeMenuAssets *assets, const NativeMenuState 
     memset(framebuffer, 0, 400u * 240u * 3u);
     if (!drawRaceCourse(framebuffer, assets, scene, session)) return 0;
     drawRaceHud(framebuffer, assets, scene, session, 6u);
+    drawRaceResultTimes(framebuffer, assets, scene, session);
     drawRaceOam(framebuffer, assets, session, 6u);
     drawCursor(framebuffer, assets, menu, 6u); /* OAM sprite zero has highest priority. */
     return 1;
