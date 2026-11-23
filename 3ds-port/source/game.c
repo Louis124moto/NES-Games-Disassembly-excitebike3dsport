@@ -126,23 +126,37 @@ void gameUpdate(void)
      * and can consume gameplay inputs or mutate the selected mode/state. */
     if (s_raceSessionReady) {
         if (s_raceFinishLatched) {
-            /* C3AF advances $0041 out of race state 2. The original main
-             * dispatcher would leave C99A here; do not keep calling CA9B and
-             * increment the source state again on every rendered frame. */
+            /* State 3: source result/record display (CB3B -> CB77 -> CBA4).
+             * Keep the native race scene alive while its source time glyphs
+             * remain visible; then perform the source phase-3 state advance. */
             if ((s_input.pressed & KEY_B) != 0u) {
-                /* Course 2 is outside this porting milestone. Return to the
-                 * native course selector and preserve the selected race mode. */
+                s_menu.transition_phase = 3u;
+            } else {
+                nativeMenuTickTimers(&s_menu);
+                if (s_menu.transition_phase == 1u)
+                    nativeMenuTransitionPhase1(&s_menu);
+                else if (s_menu.transition_phase == 2u &&
+                         s_menu.timer_values[18] == 0u)
+                    nativeMenuTransitionPhase3(&s_menu);
+            }
+
+            if (s_menu.transition_phase == 3u ||
+                (s_menu.source_state != 3u && s_menu.transition_phase == 0u)) {
+                /* The next course is not yet playable. Finish the original
+                 * results interval, then expose the native selector. */
+                const uint8_t nextCourse = s_menu.selected_course;
+                s_raceSession.result_active = 0u;
                 s_raceSessionReady = 0;
                 s_raceFinishLatched = 0;
                 s_raceUnsupportedMask = 0u;
+                audioSubmitSourceEvents(0u, 0u, 0u, 0u, 0u);
                 nativeMenuInit(&s_menu);
                 s_menu.source_state = 1u;
                 s_menu.selected_mode = s_raceMultiplayer;
-                s_menu.selected_course = 0u;
-                s_menu.input.selection = 0u;
-                nativeMenuUpdate(&s_menu, 0u);
+                s_menu.selected_course = nextCourse;
+                s_menu.input.selection = nextCourse;
                 s_menuDirty = 1;
-                rendererPrintBottom("FIRST COURSE COMPLETE\n"
+                rendererPrintBottom("RACE RESULTS COMPLETE\n"
                                     "D-pad: choose course   A/Start: confirm\n"
                                     "X: asset extractor\n");
             }
@@ -167,9 +181,22 @@ void gameUpdate(void)
         if (*raceWorldByte(&s_raceWorld, 0x41u) != 2u &&
             *raceWorldByte(&s_raceWorld, 0x52u) == 1u) {
             s_raceFinishLatched = 1;
-            rendererPrintBottom("FIRST COURSE COMPLETE — SOURCE FINISH TRANSITION\n"
-                                "The first native race has reached its source finish state.\n"
-                                "B: return to the course selector\n");
+            s_raceSession.result_active = 1u;
+            memcpy(s_raceSession.result_record_glyphs,
+                   raceWorldByte(&s_raceWorld, 0x3D1u), 7u);
+            memcpy(s_raceSession.result_current_glyphs,
+                   raceWorldByte(&s_raceWorld, 0x3D9u), 7u);
+            s_menu.source_state = 3u;
+            s_menu.transition_phase = 0u;
+            s_menu.transition_gate_0053 = *raceWorldByte(&s_raceWorld, 0x53u);
+            s_menu.transition_flag_0046 = *raceWorldByte(&s_raceWorld, 0x46u);
+            s_menu.transition_flag_004B = *raceWorldByte(&s_raceWorld, 0x4Bu);
+            s_menu.selected_mode = s_raceMultiplayer;
+            nativeMenuTransitionPhase0(&s_menu);
+            audioSubmitSourceEvents(0u, 0u, 0u, 0u, 0u);
+            rendererPrintBottom("RACE RESULTS — SOURCE TIME DISPLAY\n"
+                                "The stored time and finished-race time are shown.\n"
+                                "B: skip to course selector\n");
         }
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
