@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <3ds.h>
 #include "native_menu_renderer.h"
 
 static uint8_t framebuffer[400u * 240u * 3u];
