@@ -10,7 +10,7 @@
 - [x] Host-only reference execution is allowed for offline deterministic differential tests.
 - [x] Use native ARM11/libctru input, graphics, audio, storage and timing.
 - [x] Main branch is the faithful baseline. Do not create `enhanced` until faithful acceptance; then branch from the exact accepted main commit.
-- [ ] Full original game reproduced: menus, editor, courses, physics, opponents, collisions, heat, scoring, sound, transitions and results.
+- [ ] Full original game reproduced: menus, editor, all courses, physics, opponents, collisions, heat, scoring, original soundtrack, transitions and results.
 - [ ] Complete end-to-end session validated on New Nintendo 3DS.
 - [ ] Faithful `.3dsx` release accepted.
 
@@ -72,9 +72,9 @@ A function, passing test, successful build or screenshot alone does not mean the
 - [x] The first-course F4FF stream is extracted as 1,335 source records × six vertical-band values, with the full 18-byte packet and source provenance.
 - [x] The native race renderer draws the scrolling course map, HUD and native OAM bike/effect sprites from extracted CHR and palette assets.
 - [ ] The final race renderer still needs fixed-frame comparison against the original and physical New 3DS validation.
-- [ ] Native audio/music is not implemented; source/audio.c is still an empty interface.
-- [ ] Source-faithful result/score presentation and the original post-race/next-course transition remain incomplete.
-- [ ] First-course terrain/event interpretation and its collision/render consequences still need source-backed validation.
+- [x] Native NDSP backend generates procedural engine-sputter and source-event effects from `$00FB/$00FC/$00FD/$00FE/$00FF`; original music is not included.
+- [x] First-course result times, persistent best-time record, podium OAM blocks and timed result phases are implemented. [ ] Final automatic next-course transition and all source `$CC15/$CC7D` presentation side effects remain.
+- [x] F4FF page data gates source obstacle spawning; spawned coordinates feed E09F obstacle collision. An end-to-end regression now exercises the actual first-course pages. [ ] Complete ramp/surface/elevation interpretation for all bike-physics cases remains.
 - [ ] Full first-course acceptance and faithful .3dsx release remain open.
 
 ### Native subsystem status
@@ -87,8 +87,8 @@ A function, passing test, successful build or screenshot alone does not mean the
 | Opponents/collisions | Native opponent AI/state handlers, bike contacts, obstacle-hit checks and crash recovery integrated. | Validate complete course-specific interactions against the original. |
 | Course stream | F4FF and dependencies integrated; exact first-course source pass is differentially tested through F638. | Verify live scroll/render behavior and source-defined terrain/event semantics. |
 | Graphics | Native scrolling nametable framebuffer renderer, HUD and OAM sprite rendering. | Fixed-frame visual parity, transitions and hardware performance. |
-| Audio | Empty interface only. | Source-derived sound/music assets and native 3DS playback/mixing. |
-| Finish/flow | Full native session reaches source finish; B returns to course selector. | Original score/results and source-faithful post-race/next-course flow. |
+| Audio | Native NDSP procedural event/sputter effects. | Original soundtrack and complete source sound sequencing. |
+| Finish/flow | Best/current time rows, persistent record, podium sprites and timed result phases; returns to selector. | Complete `$CC15/$CC7D` and automatic next-course transition. |
 
 ### Current build/test evidence
 
@@ -169,7 +169,7 @@ Goal: one original course playable from native menu entry through source-faithfu
 - [x] Integrate the F4FF packets into the native scrolling course renderer; render the native OAM bikes/effects and HUD using extracted assets.
 - [x] Drive a complete native first-course session to the source finish transition. The host test reached $0052=1 and $0041!=2 after 34,370 frames, with 13,177 live scroll updates and no unsupported-stage bits.
 - [x] Add a first-course-only B exit from the finish latch back to the native course selector, preserving the selected race mode. Course 2 remains outside this milestone.
-- [ ] Implement the original post-race/next-course transition and any source-defined score/results presentation. The current selector return is a scoped fallback, not the original transition.
+- [x] Implement source best/current time rows, persistent record comparison, podium OAM and timed result phases. [ ] Complete the final automatic next-course transition and remaining `$CC15/$CC7D` effects; selector return remains the fallback.
 - [ ] Complete source-backed terrain/event and collision validation using the actual first-course run, not only randomized routine vectors.
 - [ ] Implement source-derived race sound effects and music through native 3DS audio. audio.c is currently empty.
 - [ ] Compare fixed-frame course, bike, opponent, HUD and finish captures against the original NES reference.
