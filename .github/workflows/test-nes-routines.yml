@@ -42,31 +42,31 @@ jobs:
       - name: Guard the native 3DS runtime boundary
         run: python 3ds-port/tests/test_native_runtime_boundary.py
       - name: Compile host-side reference test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/nes_routines.c 3ds-port/tests/test_nes_routines.c -o test_nes_routines
       - name: Exhaustively compare all 8-bit inputs
         run: ./test_nes_routines
       - name: Compile host-side runtime CHR decoder test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_chr_decode.c 3ds-port/tests/test_nes_chr_decode.c -o test_nes_chr_decode
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/nes_chr_decode.c 3ds-port/tests/test_nes_chr_decode.c -o test_nes_chr_decode
       - name: Test runtime CHR decoder
         run: ./test_nes_chr_decode
       - name: Compile ROM identity test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_nes_rom_identify.c -o test_nes_rom_identify
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/nes_rom_identify.c 3ds-port/tests/test_nes_rom_identify.c -o test_nes_rom_identify
       - name: Test ROM identity
         run: ./test_nes_rom_identify
       - name: Compile decoded-pixel cache test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_chr_cache.c 3ds-port/tests/test_nes_chr_cache.c -o test_nes_chr_cache
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/nes_chr_cache.c 3ds-port/tests/test_nes_chr_cache.c -o test_nes_chr_cache
       - name: Test decoded-pixel cache
         run: ./test_nes_chr_cache
       - name: Compile native PPU renderer regression test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_palette.c 3ds-port/tests/test_nes_ppu_render.c -o test_nes_ppu_render
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/nes_ppu_render.c 3ds-port/source/assets/nes_palette.c 3ds-port/tests/test_nes_ppu_render.c -o test_nes_ppu_render
       - name: Test native PPU renderer
         run: ./test_nes_ppu_render
       - name: Compile source-derived PPU command interpreter test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/nes_ppu_commands.c 3ds-port/tests/test_nes_ppu_commands.c -o test_nes_ppu_commands
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/nes_ppu_commands.c 3ds-port/tests/test_nes_ppu_commands.c -o test_nes_ppu_commands
       - name: Test source-derived PPU command interpreter
         run: ./test_nes_ppu_commands
       - name: Compile integrated first-course asset export test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/course_asset_export.c 3ds-port/source/race_course_stream.c 3ds-port/source/race_course_stream_data.c 3ds-port/tests/test_course_asset_export.c -o test_course_asset_export
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/assets/course_asset_export.c 3ds-port/source/engine/race_course_stream.c 3ds-port/source/engine/race_course_stream_data.c 3ds-port/tests/test_course_asset_export.c -o test_course_asset_export
       - name: Test integrated first-course asset export
         run: ./test_course_asset_export
       - name: Compile native CHR export test
@@ -74,41 +74,41 @@ jobs:
         # nes_ppu_render.c must be linked in too (missing since this step was
         # added on 2026-10-31; the step never executed before 2026-11-01 because
         # the cache test failed earlier in the pipeline).
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/asset_export.c 3ds-port/source/course_asset_export.c 3ds-port/source/race_course_stream.c 3ds-port/source/race_course_stream_data.c 3ds-port/source/nes_ppu_commands.c 3ds-port/source/nes_ppu_render.c 3ds-port/source/nes_palette.c 3ds-port/source/nes_chr_decode.c 3ds-port/source/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -Wno-unused-function -Wno-sign-compare -Wno-unused-parameter -I3ds-port/include 3ds-port/source/assets/asset_export.c 3ds-port/source/assets/course_asset_export.c 3ds-port/source/engine/race_course_stream.c 3ds-port/source/engine/race_course_stream_data.c 3ds-port/source/assets/nes_ppu_commands.c 3ds-port/source/assets/nes_ppu_render.c 3ds-port/source/assets/nes_palette.c 3ds-port/source/assets/nes_chr_decode.c 3ds-port/source/assets/nes_rom_identify.c 3ds-port/tests/test_asset_export.c -lm -o test_asset_export
       - name: Test native CHR exports
         run: ./test_asset_export
       - name: Compile native semantic C875 setup test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_race_setup.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_setup.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
 
       - name: Run native semantic C875 setup test
         run: ./test_native_race_setup
 
       - name: Compile native DD8D countdown test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/race_countdown.c 3ds-port/tests/test_race_countdown.c -o test_race_countdown
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/race_countdown.c 3ds-port/tests/test_race_countdown.c -o test_race_countdown
 
       - name: Run native DD8D countdown test
         run: ./test_race_countdown
 
       - name: Compile native D326 RNG test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_rng.c 3ds-port/tests/test_native_rng.c -o test_native_rng
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_rng.c 3ds-port/tests/test_native_rng.c -o test_native_rng
 
       - name: Run native D326 RNG test
         run: ./test_native_rng
 
       - name: Compile native first-course track test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/track.c 3ds-port/tests/test_track_first_course.c -o test_track_first_course
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/track.c 3ds-port/tests/test_track_first_course.c -o test_track_first_course
 
       - name: Run native first-course track test
         run: ./test_track_first_course
 
       - name: Compile native first-course vertical test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/race_vertical.c 3ds-port/source/bike_physics.c 3ds-port/tests/test_race_vertical.c -o test_race_vertical
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/race_vertical.c 3ds-port/source/engine/bike_physics.c 3ds-port/tests/test_race_vertical.c -o test_race_vertical
 
       - name: Run native first-course vertical test
         run: ./test_race_vertical
 
       - name: Compile native first-course race session test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/native_race_session.c 3ds-port/source/bike_state.c 3ds-port/source/native_race_setup.c 3ds-port/source/track.c 3ds-port/source/race_countdown.c 3ds-port/source/race_vertical.c 3ds-port/source/bike_physics.c 3ds-port/source/race_sprites.c 3ds-port/tests/test_native_race_session.c -o test_native_race_session
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_session.c 3ds-port/source/engine/bike_state.c 3ds-port/source/engine/native_race_setup.c 3ds-port/source/engine/track.c 3ds-port/source/engine/race_countdown.c 3ds-port/source/engine/race_vertical.c 3ds-port/source/engine/bike_physics.c 3ds-port/source/engine/race_sprites.c 3ds-port/tests/test_native_race_session.c -o test_native_race_session
 
       - name: Run native first-course race session test
         run: ./test_native_race_session
@@ -132,84 +132,84 @@ jobs:
       - name: Differentially test complete first-course C875 setup and bike identities against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/native_race_setup.c tests/oracle/cpu6502.c tests/test_native_race_setup_differential.c -o /tmp/test_native_race_setup_differential
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/native_race_setup.c tests/oracle/cpu6502.c tests/test_native_race_setup_differential.c -o /tmp/test_native_race_setup_differential
           /tmp/test_native_race_setup_differential /tmp/prg.bin
 
       - name: Differentially test native player acceleration against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_speed.c -o /tmp/test_bike_speed
           /tmp/test_bike_speed /tmp/prg.bin
       - name: Differentially test native bike movement against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_movement.c -o /tmp/test_bike_movement
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_movement.c -o /tmp/test_bike_movement
           /tmp/test_bike_movement /tmp/prg.bin
 
       - name: Differentially test secondary race camera scroll against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_secondary_scroll.c -o /tmp/test_bike_secondary_scroll
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_secondary_scroll.c -o /tmp/test_bike_secondary_scroll
           /tmp/test_bike_secondary_scroll /tmp/prg.bin
 
       - name: Differentially test native speed control for all four bike slots
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_object_speed.c -o /tmp/test_bike_object_speed
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_object_speed.c -o /tmp/test_bike_object_speed
           /tmp/test_bike_object_speed /tmp/prg.bin
 
       - name: Differentially test all first-course E96C vertical phases and DD06 jump physics against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_vertical.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_vertical_differential.c -o /tmp/test_race_vertical_differential
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_vertical.c source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_race_vertical_differential.c -o /tmp/test_race_vertical_differential
           /tmp/test_race_vertical_differential /tmp/prg.bin
 
       - name: Differentially test E836 screen-Y projection against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_vertical.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_screen_projection.c -o /tmp/test_race_screen_projection
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_vertical.c source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_race_screen_projection.c -o /tmp/test_race_screen_projection
           /tmp/test_race_screen_projection /tmp/prg.bin
 
       - name: Differentially test initial bike OAM against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_sprites.c tests/oracle/cpu6502.c tests/test_race_sprites.c -o /tmp/test_race_sprites
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_sprites.c tests/oracle/cpu6502.c tests/test_race_sprites.c -o /tmp/test_race_sprites
           /tmp/test_race_sprites /tmp/prg.bin
 
       - name: Differentially test native DD06 jump initialization against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical_init.c -o /tmp/test_bike_vertical_init
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical_init.c -o /tmp/test_bike_vertical_init
           /tmp/test_bike_vertical_init /tmp/prg.bin
 
       - name: Differentially test native sub_CD59 steering tail against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_steering_tail.c -o /tmp/test_bike_steering_tail
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_steering_tail.c -o /tmp/test_bike_steering_tail
           /tmp/test_bike_steering_tail /tmp/prg.bin
 
       - name: Differentially test native race-frame helpers (DDD1, DEBB, DEE2, DE31, EA44, E4C8, E42B) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame.c source/race_spawn.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_frame.c source/engine/race_spawn.c source/engine/nes_routines.c tests/oracle/cpu6502.c tests/test_race_frame.c -o /tmp/test_race_frame
           /tmp/test_race_frame /tmp/prg.bin
 
       - name: Differentially test native opponent script interpreter (E733, E927, handlers) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_script.c source/bike_physics.c tests/oracle/cpu6502.c tests/test_race_script.c -o /tmp/test_race_script
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_script.c source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_race_script.c -o /tmp/test_race_script
           /tmp/test_race_script /tmp/prg.bin
 
       - name: Differentially test native opponent spawn (DA9F, DAE3, DB50, DB95, DBC4) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_spawn.c tests/oracle/cpu6502.c tests/test_race_spawn.c -o /tmp/test_race_spawn
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_spawn.c tests/oracle/cpu6502.c tests/test_race_spawn.c -o /tmp/test_race_spawn
           /tmp/test_race_spawn /tmp/prg.bin
 
       - name: Differentially test native course stream reader (F4FF, F64E, F676, F681, F82E, ECBF) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_course_stream.c source/race_course_stream_data.c tests/oracle/cpu6502.c tests/test_race_course_stream.c -o /tmp/test_race_course_stream
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_course_stream.c source/engine/race_course_stream_data.c tests/oracle/cpu6502.c tests/test_race_course_stream.c -o /tmp/test_race_course_stream
           /tmp/test_race_course_stream /tmp/prg.bin
 
       - name: Extract complete first-course geometry as editable JSON
@@ -242,13 +242,13 @@ jobs:
       - name: Differentially test native pause/input and finish flow (CA38, CA1B, CA9B) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_frame_control.c tests/oracle/cpu6502.c tests/test_race_frame_control.c -o /tmp/test_race_frame_control
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_frame_control.c tests/oracle/cpu6502.c tests/test_race_frame_control.c -o /tmp/test_race_frame_control
           /tmp/test_race_frame_control /tmp/prg.bin
 
       - name: Differentially test native DA44 race tail (E0E6 banner, E2AF finish sign) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_tail.c source/nes_routines.c tests/oracle/cpu6502.c tests/test_race_tail.c -o /tmp/test_race_tail
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_tail.c source/engine/nes_routines.c tests/oracle/cpu6502.c tests/test_race_tail.c -o /tmp/test_race_tail
           /tmp/test_race_tail /tmp/prg.bin
 
       - name: Check generated race world is reproducible
@@ -256,93 +256,93 @@ jobs:
           cd 3ds-port
           python3 tools/gen_race_world_parse.py > /dev/null
           python3 tools/gen_race_world.py
-          git diff --exit-code include/race_world.h include/race_world_glue.h source/race_world.c
+          git diff --exit-code include/race_world.h include/race_world_glue.h source/engine/race_world.c
 
       - name: Differentially test the composed native race frame loop stage by stage against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_loop.c source/race_world.c source/race_frame.c source/race_frame_control.c source/race_course_stream.c source/race_course_stream_data.c source/race_spawn.c source/race_ai.c source/race_script.c source/race_countdown.c source/race_sprites.c source/race_vertical.c source/bike_physics.c source/nes_routines.c source/native_race_session.c source/native_race_setup.c source/native_rng.c source/track.c source/bike_state.c source/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
           /tmp/test_race_loop /tmp/prg.bin 80 2500
 
       - name: Differentially test the native controller layer (sub_D347, both pads) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/nes_pad.c tests/oracle/cpu6502.c tests/test_nes_pad.c -o /tmp/test_nes_pad
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/platform/nes_pad.c tests/oracle/cpu6502.c tests/test_nes_pad.c -o /tmp/test_nes_pad
           /tmp/test_nes_pad /tmp/prg.bin 200000
 
       - name: Differentially test the native sound driver against original ASM (APU write logs)
         run: |
           cd 3ds-port
           python3 -I tools/gen_sound_data.py /tmp/prg.bin /tmp/sound_data_check.c
-          diff -q /tmp/sound_data_check.c source/sound_data.c
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/sound_driver.c source/sound_data.c tests/oracle/cpu6502.c tests/test_sound_driver.c -o /tmp/test_sound_driver
+          diff -q /tmp/sound_data_check.c source/audio/sound_data.c
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/audio/sound_driver.c source/audio/sound_data.c tests/oracle/cpu6502.c tests/test_sound_driver.c -o /tmp/test_sound_driver
           /tmp/test_sound_driver /tmp/prg.bin 400 3000
 
       - name: Test native sound synthesizer and driver chain
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/sound_synth.c source/sound_driver.c source/sound_data.c tests/test_sound_synth.c -lm -o /tmp/test_sound_synth
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/audio/sound_synth.c source/audio/sound_driver.c source/audio/sound_data.c tests/test_sound_synth.c -lm -o /tmp/test_sound_synth
           /tmp/test_sound_synth
 
       - name: Run native first-course race to source finish transition (up to 100000 native frames)
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/race_session_world.c source/race_loop.c source/race_world.c source/race_frame.c source/race_frame_control.c source/race_course_stream.c source/race_course_stream_data.c source/race_spawn.c source/race_ai.c source/race_script.c source/race_countdown.c source/race_sprites.c source/race_vertical.c source/bike_physics.c source/nes_routines.c source/native_race_session.c source/native_race_setup.c source/native_rng.c source/track.c source/bike_state.c source/race_tail.c tests/test_race_session_world.c -o /tmp/test_race_session_world
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/engine/race_session_world.c source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/test_race_session_world.c -o /tmp/test_race_session_world
           /tmp/test_race_session_world
 
       - name: Differentially test native opponent AI (CED0, D018, D000, CF0C and helpers) against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/race_ai.c source/race_spawn.c tests/oracle/cpu6502.c tests/test_race_ai.c -o /tmp/test_race_ai
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_ai.c source/engine/race_spawn.c tests/oracle/cpu6502.c tests/test_race_ai.c -o /tmp/test_race_ai
           /tmp/test_race_ai /tmp/prg.bin
 
       - name: Differentially test native vertical recovery and motion against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical.c -o /tmp/test_bike_vertical
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_vertical.c -o /tmp/test_bike_vertical
           /tmp/test_bike_vertical /tmp/prg.bin
 
       - name: Differentially test complete native DA26 four-bike movement pass
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_race_movement.c -o /tmp/test_bike_race_movement
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c tests/oracle/cpu6502.c tests/test_bike_race_movement.c -o /tmp/test_bike_race_movement
           /tmp/test_bike_race_movement /tmp/prg.bin
 
       - name: Differentially test native D918 bike state machine against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/bike_physics.c source/bike_state.c tests/oracle/cpu6502.c tests/test_bike_state.c -o /tmp/test_bike_state
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/bike_physics.c source/engine/bike_state.c tests/oracle/cpu6502.c tests/test_bike_state.c -o /tmp/test_bike_state
           /tmp/test_bike_state /tmp/prg.bin
 
       - name: Differentially test native menu selection against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu.c -o /tmp/test_native_menu
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/frontend/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu.c -o /tmp/test_native_menu
           /tmp/test_native_menu /tmp/prg.bin
 
 
       - name: Differentially test native title and menu state transitions against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu_state.c -o /tmp/test_native_menu_state
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Isource -Itests/oracle source/frontend/native_menu.c tests/oracle/cpu6502.c tests/test_native_menu_state.c -o /tmp/test_native_menu_state
           /tmp/test_native_menu_state /tmp/prg.bin
 
       - name: Compile native menu asset loader test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/source 3ds-port/source/native_menu_assets.c 3ds-port/tests/test_native_menu_assets.c -o test_native_menu_assets
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/frontend/native_menu_assets.c 3ds-port/tests/test_native_menu_assets.c -o test_native_menu_assets
       - name: Test native menu asset loader
         run: ./test_native_menu_assets
 
       - name: Compile native race renderer regression test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/native_scene.c 3ds-port/source/nes_palette.c 3ds-port/tests/test_native_race_renderer.c -o /tmp/test_native_race_renderer
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/graphics/native_scene.c 3ds-port/source/assets/nes_palette.c 3ds-port/tests/test_native_race_renderer.c -o /tmp/test_native_race_renderer
       - name: Test native race renderer
         run: /tmp/test_native_race_renderer
 
       - name: Compile citro3d scene golden test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/native_scene.c 3ds-port/source/nes_palette.c 3ds-port/tests/legacy/legacy_native_renderer.c 3ds-port/tests/test_native_scene_golden.c -o /tmp/test_native_scene_golden
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/source -I3ds-port/include 3ds-port/source/graphics/native_scene.c 3ds-port/source/assets/nes_palette.c 3ds-port/tests/legacy/legacy_native_renderer.c 3ds-port/tests/test_native_scene_golden.c -o /tmp/test_native_scene_golden
       - name: Test citro3d scene against frozen legacy renderer
         run: /tmp/test_native_scene_golden
 
       - name: Compile native 3DS controller mapping test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/input.c 3ds-port/source/nes_pad.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/tests/host_stub -I3ds-port/include 3ds-port/source/platform/input.c 3ds-port/source/platform/nes_pad.c 3ds-port/tests/test_input_mapping.c -o test_input_mapping
       - name: Test native 3DS controller mapping
         run: ./test_input_mapping

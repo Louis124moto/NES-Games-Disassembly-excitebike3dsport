@@ -30,7 +30,16 @@ never compiled twice.
 
 ## Compatibility policy
 
-The root-level source symlinks are migration support for existing host tests and
-scripts. New implementation files belong in their owning module directory.
-New tests should prefer the real module path. Remove compatibility symlinks only
-after all workflows and downstream scripts have migrated.
+The former root-level `source/*.c` compatibility symlinks have been removed:
+workflows, tests, scripts and docs now use the real module paths, and
+`source/` contains only the module directories. Public headers live in
+`include/` (there are no headers inside `source/`).
+
+## Enforcement
+
+`tests/test_native_runtime_boundary.py` (run by CI) fails when:
+- `source/` contains anything but the module directories, or a header sits in a module directory;
+- `frontend`, `engine`, `assets` or the pure parts of `graphics`/`audio` (scene builder, sound driver/synth/data) include libctru/citro3d;
+- `engine`, `platform` or `audio` depend on another module, `frontend` on anything but `engine`, or `graphics` on anything but `frontend`/`engine`/`assets`;
+- PPU/software-framebuffer leftovers or emulator sources reappear in the runtime.
+Physical key mapping stays in `platform` (the extractor takes semantic confirm/cancel).

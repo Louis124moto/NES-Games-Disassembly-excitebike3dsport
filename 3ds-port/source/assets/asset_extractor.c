@@ -1,4 +1,3 @@
-#include <3ds.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -368,9 +367,9 @@ void assetExtractorInit(const char *executablePath)
     }
 }
 
-void assetExtractorUpdate(unsigned int pressedKeys)
+void assetExtractorUpdate(int confirm, int cancel)
 {
-    if ((pressedKeys & KEY_A) != 0u) {
+    if (confirm) {
         if (!s_active) {
             s_active = 1;
             if (!s_attempted) {
@@ -382,7 +381,7 @@ void assetExtractorUpdate(unsigned int pressedKeys)
             (void)exportCurrentRomAssets();
         }
     }
-    if ((pressedKeys & KEY_B) != 0u) {
+    if (cancel) {
         if (s_active) s_active = 0;
         else loadChrRom(); /* B retries extraction while the extractor is closed. */
     }

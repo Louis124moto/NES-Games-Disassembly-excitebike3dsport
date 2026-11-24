@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths:
       - "Excitebike/bank_FF.asm"
-      - "3ds-port/source/race_course_stream.c"
-      - "3ds-port/source/race_course_stream_data.c"
+      - "3ds-port/source/engine/race_course_stream.c"
+      - "3ds-port/source/engine/race_course_stream_data.c"
       - "3ds-port/include/race_course_stream*.h"
       - "3ds-port/tools/extract_first_course.c"
       - "3ds-port/tools/extract_first_course.py"

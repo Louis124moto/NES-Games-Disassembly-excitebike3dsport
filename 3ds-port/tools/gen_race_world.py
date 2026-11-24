@@ -144,6 +144,6 @@ def emit(outdir):
     h.append('#endif'); g.append('#endif')
     open(outdir+'/include/race_world.h','w').write('\n'.join(h)+'\n')
     open(outdir+'/include/race_world_glue.h','w').write('\n'.join(g)+'\n')
-    open(outdir+'/source/race_world.c','w').write('\n'.join(c)+'\n')
+    open(outdir+'/source/engine/race_world.c','w').write('\n'.join(c)+'\n')
     print(len(blocks),'blocks emitted')
 if __name__=='__main__' and len(sys.argv)==1: emit('.')

@@ -30,7 +30,7 @@ def embedded_stream_bytes() -> tuple[int, int, bytes]:
         raise RuntimeError("cannot read course-stream base/size from its header")
     base, size = int(base_match.group(1), 16), int(size_match.group(1))
 
-    source = (PORT / "source" / "race_course_stream_data.c").read_text(encoding="utf-8")
+    source = (PORT / "source" / "engine" / "race_course_stream_data.c").read_text(encoding="utf-8")
     start = source.find("kCourseStreamRom")
     opening = source.find("{", start)
     closing = source.find("};", opening)
@@ -68,8 +68,8 @@ def compile_and_extract(max_columns: int, temp_dir: Path) -> dict:
     command = [
         "gcc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
         "-I", str(PORT / "include"),
-        str(PORT / "source" / "race_course_stream.c"),
-        str(PORT / "source" / "race_course_stream_data.c"),
+        str(PORT / "source" / "engine" / "race_course_stream.c"),
+        str(PORT / "source" / "engine" / "race_course_stream_data.c"),
         str(PORT / "tools" / "extract_first_course.c"),
         "-o", str(executable),
     ]

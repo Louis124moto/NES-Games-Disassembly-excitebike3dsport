@@ -229,7 +229,7 @@ The handlers above still depend on variables whose writers and meaning are not c
 
 ## First native exact-translation unit: `nesSubDA15DerivedY`
 
-Implementation: `3ds-port/include/nes_routines.h` and `3ds-port/source/nes_routines.c`.
+Implementation: `3ds-port/include/nes_routines.h` and `3ds-port/source/engine/nes_routines.c`.
 
 - The function `nesSubDA15DerivedY(ram0390, ram0080, ramY)` translates the instruction sequence at CPU `$DA15` byte-by-byte.
 - It explicitly preserves the no-borrow carry from the first `SBC` for the second `SBC #$08`, and the carry from `ADC ramY` for the final `ADC #$04`.
@@ -306,7 +306,7 @@ The disassembly contains 177 labels named sub_* in Excitebike/bank_FF.asm. The n
 - Decrements ram_0020_0A_frm_timer as an 8-bit value.
 - Uses the 6502 Negative flag (bit 7 of the decremented result) for BPL. If bit 7 is set, resets the frame timer to $0A and processes all 29 timer bytes at RAM $0021–$003D; otherwise processes the first 15 bytes at RAM $0021–$002F.
 - Each selected timer is decremented only if nonzero.
-- Native helper: nesSubD310DecreaseAllTimers in source/nes_routines.c.
+- Native helper: nesSubD310DecreaseAllTimers in source/engine/nes_routines.c.
 - A separate reference test compares 65,536 frame-timer/value vectors with generated timer-array patterns. CI must pass before this is considered validated.
 
 This helper models the RAM/timing routine only; it does not recreate the NES's interrupt cadence or call schedule.

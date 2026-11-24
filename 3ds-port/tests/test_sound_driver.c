@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     memcpy(window, cpu.prg + (SOUND_DATA_BASE - 0xC000u), sizeof(window));
-    if (memcmp(window, kSoundData, sizeof(window)) != 0) { puts("FAIL source/sound_data.c is stale; rerun tools/gen_sound_data.py"); return 1; }
+    if (memcmp(window, kSoundData, sizeof(window)) != 0) { puts("FAIL source/audio/sound_data.c is stale; rerun tools/gen_sound_data.py"); return 1; }
     memset(seenReg, 0, sizeof(seenReg));
 
     for (seq = 0u; seq < seqs; ++seq) {

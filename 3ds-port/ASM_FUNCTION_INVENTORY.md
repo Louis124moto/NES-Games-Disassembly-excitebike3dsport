@@ -65,17 +65,17 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$CE29` | `sub_CE29` | Native object-index-aware acceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE58` | `sub_CE58` | Native object-index-aware deceleration primitive; exhaustive player and four-slot speed-control tests pass | — |
 | `$CE5C` | `sub_CE5C` | Pending | — |
-| `$CED0` | `sub_CED0` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF0C` | `sub_CF0C` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF47` | `sub_CF47` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF6A` | `sub_CF6A` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF88` | `sub_CF88` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF8B` | `sub_CF8B` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CF96` | `sub_CF96` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CFCB` | `sub_CFCB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$CFDB` | `sub_CFDB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CED0` | `sub_CED0` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF0C` | `sub_CF0C` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF47` | `sub_CF47` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF6A` | `sub_CF6A` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF88` | `sub_CF88` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF8B` | `sub_CF8B` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CF96` | `sub_CF96` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CFCB` | `sub_CFCB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CFDB` | `sub_CFDB` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$CFE3` | `sub_CFE3` | Translated in C; exhaustive regression wired, execution pending | called by sub_CFEA |
-| `$CFEA` | `sub_CFEA` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$CFEA` | `sub_CFEA` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 
 ### Menu setup entry translations
 
@@ -87,10 +87,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$D000` | `sub_D000` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
-| `$D018` | `sub_D018` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$D000` | `sub_D000` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
+| `$D018` | `sub_D018` | Differential-tested via `sub_CED0`/`sub_D018` (600k vectors, 10 of 11 mutants killed, 1 equivalent) | `source/engine/race_ai.c`, `tests/test_race_ai.c`; not yet wired into the app race loop |
 | `$D0AB` | `sub_D0AB` | Translated in C; audit/test coverage recorded separately | — |
-| `$D0C6` | `sub_D0C6` | Native semantic effect (per-bike course parameters) in `source/track.c`; the $03C0 byte copy is PPU-feed data only | `source/track.c` |
+| `$D0C6` | `sub_D0C6` | Native semantic effect (per-bike course parameters) in `source/engine/track.c`; the $03C0 byte copy is PPU-feed data only | `source/engine/track.c` |
 | `$D0F4` | `sub_D0F4` | Presentation only (builds a PPU packet for the HUD at $2356); the native renderer draws HUD from semantic state, no PPU packet is produced | out of scope by PORTING_RULES (no PPU) |
 | `$D11F` | `sub_D11F` | Translated in C; audit/test coverage recorded separately | — |
 | `$D13F` | `sub_D13F` | Presentation only (three ECE4 PPU strip packets) | out of scope by PORTING_RULES (no PPU) |
@@ -109,65 +109,65 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$D347` | `sub_D347_read_joy_regs` | Pending | calls: sub_D35B |
 | `$D35B` | `sub_D35B` | Translated + host regression passed; 3DS build pending | — |
 | `$D3C1` | `sub_D3C1` | Pending | — |
-| `$D918` | `sub_D918` | Native translation + 50,000 randomized four-bike ASM differential frames; valid state domain 0–5 | `source/bike_state.c`, `tests/test_bike_state.c`; semantic session API exists, full frame-loop integration pending |
-| `$D924` | `sub_D924` | Native six-entry dispatch and five non-idle handlers translated and covered by the D918 50,000-frame oracle comparison | `source/bike_state.c`; invalid state values outside 0–5 are intentionally rejected by setup validation |
+| `$D918` | `sub_D918` | Native translation + 50,000 randomized four-bike ASM differential frames; valid state domain 0–5 | `source/engine/bike_state.c`, `tests/test_bike_state.c`; semantic session API exists, full frame-loop integration pending |
+| `$D924` | `sub_D924` | Native six-entry dispatch and five non-idle handlers translated and covered by the D918 50,000-frame oracle comparison | `source/engine/bike_state.c`; invalid state values outside 0–5 are intentionally rejected by setup validation |
 | `$DA15` | `sub_DA15` | Translated + tested (host regression passed; 3DS build pending) | — |
-| `$DA26` | `sub_DA26` | Native (movement pass + DA44 tail E0E6/E2AF); verified inside the composed race loop vs ASM | `bikePhysicsUpdateRaceMovementPass`, `raceFrameTail` in `source/race_tail.c`, `tests/test_race_tail.c`, `tests/test_race_loop.c` |
+| `$DA26` | `sub_DA26` | Native (movement pass + DA44 tail E0E6/E2AF); verified inside the composed race loop vs ASM | `bikePhysicsUpdateRaceMovementPass`, `raceFrameTail` in `source/engine/race_tail.c`, `tests/test_race_tail.c`, `tests/test_race_loop.c` |
 | `$DA58` | `sub_DA58` | Translated in C; audit/test coverage recorded separately | — |
 | `$DA6A` | `sub_DA6A` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DA7A` | `sub_DA7A` | Translated + tested; host regression passed, 3DS build status being checked | Exact helper and instruction-level regression test added |
-| `$DA9F` | `sub_DA9F` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
-| `$DAE3` | `sub_DAE3` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
-| `$DB50` | `sub_DB50` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
-| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
-| `$DBC4` | `sub_DBC4` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DA9F` | `sub_DA9F` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/engine/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DAE3` | `sub_DAE3` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/engine/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DB50` | `sub_DB50` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/engine/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DB95` | `sub_DB95_clear_opponent_bike_data` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/engine/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
+| `$DBC4` | `sub_DBC4` | Differential-tested (200k vectors per entry, 10 mutants killed; domain slots 1..3, x_high 0..2) | `source/engine/race_spawn.c`, `tests/test_race_spawn.c`; not yet wired into the app race loop |
 | `$DBFE` | `sub_DBFE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DC1A` | `sub_DC1A` | Pending | calls: sub_DC97 |
 | `$DC97` | `sub_DC97` | Translated in C; audit/test coverage recorded separately | — |
-| `$DC9A` | `sub_DC9A` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$DC9A` | `sub_DC9A` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/engine/race_frame.c`; not yet wired into the app race loop |
 | `$DCA0` | `sub_DCA0` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Helper and regression test added |
 | `$DCC7` | `loc_DCC7` | Translated + tested; host tests and 3DS build passed on `a7537aff` | Shared helper and regression test added |
 | `$DCDE` | `sub_DCDE` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DCF2` | `sub_DCF2` | Pending | — |
-| `$DD06` | `sub_DD06` | Native (upstream `bikePhysics` DD06 jump init, differential-tested by `test_bike_vertical_init`) | `source/bike_physics.c` |
+| `$DD06` | `sub_DD06` | Native (upstream `bikePhysics` DD06 jump init, differential-tested by `test_bike_vertical_init`) | `source/engine/bike_physics.c` |
 | `$DD38` | `sub_DD38` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
 | `$DD6F` | `sub_DD6F` | Translated + tested; host tests and 3DS build passed on code revision `730a1048` | Exact instruction-level/RAM-field regression test added |
-| `$DD8D` | `sub_DD8D` | Native semantic port (upstream) | `bikePhysicsUpdateRaceCountdown` in `source/race_countdown.c`, `tests/test_race_countdown.c`; not yet wired into a full frame loop |
-| `$DDD1` | `sub_DDD1` | Differential-tested (120k vectors) | `source/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
-| `$DE31` | `sub_DE31` | Differential-tested (300k vectors) | `source/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
-| `$DEBB` | `sub_DEBB` | Differential-tested (100k vectors) | `raceOpponentCue` in `source/race_frame.c` |
-| `$DEE2` | `sub_DEE2` | Differential-tested (200k vectors) | `raceEngineSound` in `source/race_frame.c` |
-| `$DF30` | `sub_DF30` | Native inside the composed race loop; compared stage by stage vs ASM | `source/race_loop.c`, `tests/test_race_loop.c` |
+| `$DD8D` | `sub_DD8D` | Native semantic port (upstream) | `bikePhysicsUpdateRaceCountdown` in `source/engine/race_countdown.c`, `tests/test_race_countdown.c`; not yet wired into a full frame loop |
+| `$DDD1` | `sub_DDD1` | Differential-tested (120k vectors) | `source/engine/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
+| `$DE31` | `sub_DE31` | Differential-tested (300k vectors) | `source/engine/race_frame.c`, `tests/test_race_frame.c`; not yet wired into the app race loop |
+| `$DEBB` | `sub_DEBB` | Differential-tested (100k vectors) | `raceOpponentCue` in `source/engine/race_frame.c` |
+| `$DEE2` | `sub_DEE2` | Differential-tested (200k vectors) | `raceEngineSound` in `source/engine/race_frame.c` |
+| `$DF30` | `sub_DF30` | Native inside the composed race loop; compared stage by stage vs ASM | `source/engine/race_loop.c`, `tests/test_race_loop.c` |
 | `$DF7F` | `sub_DF7F` | Pending | calls: sub_DFA2; ; in |
 | `$DFA2` | `sub_DFA2` | Translated in C; audit/test coverage recorded separately | — |
 | `$DFA4` | `sub_DFA4` | Translated in C; audit/test coverage recorded separately | — |
 | `$DFB2` | `sub_DFB2` | Translated in C; audit/test coverage recorded separately | — |
-| `$DFD5` | `sub_DFD5` | Differential-tested (400k vectors, 10 mutants killed; includes sub_E091/E098) | `raceBikeContacts` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$DFD5` | `sub_DFD5` | Differential-tested (400k vectors, 10 mutants killed; includes sub_E091/E098) | `raceBikeContacts` in `source/engine/race_frame.c`; not yet wired into the app race loop |
 
 ## $E000–$EFFF · race/object updates
 
 | CPU address | ASM label | Status | Calls / notes |
 |---|---|---|---|
-| `$E091` | `sub_E091` | Differential-tested (via `sub_DFD5`) | `raceBikeContacts` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$E098` | `sub_E098` | Differential-tested (via `sub_DFD5`) | `raceBikeContacts` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$E09F` | `sub_E09F` | Differential-tested (400k vectors; includes sub_DC97 borrow chain) | `raceObstacleHit` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$E091` | `sub_E091` | Differential-tested (via `sub_DFD5`) | `raceBikeContacts` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$E098` | `sub_E098` | Differential-tested (via `sub_DFD5`) | `raceBikeContacts` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$E09F` | `sub_E09F` | Differential-tested (400k vectors; includes sub_DC97 borrow chain) | `raceObstacleHit` in `source/engine/race_frame.c`; not yet wired into the app race loop |
 | `$E16C` | `sub_E16C` | Translated + regression-tested; 3DS build passed | OAM writes at Y=6,5,2,1; instruction-level edge cases still need expansion |
-| `$E17F` | `sub_E17F` | Native + differential (50,000 OAM frames) and consecutive-frame persistence in the race loop (exports E3F4 order in $0088 and $039F) | `nativeRaceUpdateBikeOam` in `source/race_sprites.c` |
+| `$E17F` | `sub_E17F` | Native + differential (50,000 OAM frames) and consecutive-frame persistence in the race loop (exports E3F4 order in $0088 and $039F) | `nativeRaceUpdateBikeOam` in `source/engine/race_sprites.c` |
 | `$E1A3` | `sub_E1A3` | Command setup + overlay regression passed; 3DS build passed | `$D1C7` renderer remains separate |
 | `$E1F9` | `sub_E1F9` | Full branch-level translation; host regression and 3DS build passed | Includes `$000E` and `$039F` side effects and all RTS paths |
 | `$E26A` | `sub_E26A` | Command-preparation model; host regression and 3DS build passed | Gate and renderer parameters translated; `loc_D1C7` rendering remains separate |
-| `$E2F6` | `sub_E2F6` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$E2F6` | `sub_E2F6` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/engine/race_frame.c`; not yet wired into the app race loop |
 | `$E359` | `sub_E359_display_temperature_meter_with_sprites` | Host regression and 3DS build passed | Heat update and four OAM sprite records |
 | `$E3F4` | `sub_E3F4` | Translated + regression-tested; 3DS build passed | Four-slot unsigned Y sort and slot-3 override |
-| `$E456` | `sub_E456` | Differential-tested (200k vectors); host suite and 3DS build passed | `raceHideOffscreenOpponentSprites` in `source/race_frame.c`, `tests/test_race_frame.c`; session integration pending |
+| `$E456` | `sub_E456` | Differential-tested (200k vectors); host suite and 3DS build passed | `raceHideOffscreenOpponentSprites` in `source/engine/race_frame.c`, `tests/test_race_frame.c`; session integration pending |
 | `$E49B` | `sub_E49B_hide_12_sprites` | Translated + regression-tested; 3DS build passed | Actual helper invokes `sub_E4AD` for each clear low bit |
-| `$E4AD` | `sub_E4AD_hide_4_sprites` | Differential-tested via `loc_E42B` | `raceHideCollidedSprites` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$E4C8` | `sub_E4C8` | Differential-tested (400k vectors, 7 mutants killed; includes sub_E52C Z-flag quirk) | `raceBikeCollision` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$E52C` | `sub_E52C` | Differential-tested via `sub_E4C8` | `raceBikeCollision` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$E70B` | `sub_E70B` | Differential-tested (upstream `RacePositionSmoothingState`; see FIRST_COURSE_TODO) | `source/race_frame.c` |
-| `$E733` | `sub_E733` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
-| `$E73B` | `sub_E73B` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
-| `$E794` | `sub_E794` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E4AD` | `sub_E4AD_hide_4_sprites` | Differential-tested via `loc_E42B` | `raceHideCollidedSprites` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$E4C8` | `sub_E4C8` | Differential-tested (400k vectors, 7 mutants killed; includes sub_E52C Z-flag quirk) | `raceBikeCollision` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$E52C` | `sub_E52C` | Differential-tested via `sub_E4C8` | `raceBikeCollision` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$E70B` | `sub_E70B` | Differential-tested (upstream `RacePositionSmoothingState`; see FIRST_COURSE_TODO) | `source/engine/race_frame.c` |
+| `$E733` | `sub_E733` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/engine/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E73B` | `sub_E73B` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/engine/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E794` | `sub_E794` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/engine/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
 | `$E7FC` | `sub_E7FC` | Translated in C; audit/test coverage recorded separately | — |
 | `$E7FF` | `sub_E7FF` | Translated in C; audit/test coverage recorded separately | — |
 | `$E803` | `sub_E803` | Translated in C; audit/test coverage recorded separately | calls: sub_E80D_prepare_pointers |
@@ -176,10 +176,10 @@ Source: `Excitebike/bank_FF.asm` on branch `nes-game`. This is a tracking index,
 | `$E84F` | `sub_E84F` | Pending | — |
 | `$E86F` | `sub_E86F` | Pending | — |
 | `$E893` | `sub_E893` | Pending | ; in |
-| `$E927` | `sub_E927` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
-| `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
-| `$EA44` | `sub_EA44` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/race_frame.c`; not yet wired into the app race loop |
-| `$EAC5` | `sub_EAC5` | Differential-tested (200k vectors, 7 mutants killed) | `raceBannerSprites` in `source/race_frame.c`; not yet wired into the app race loop |
+| `$E927` | `sub_E927` | Differential-tested (E733 398k, E927 300k vectors; 8/9 mutants killed, 1 equivalent) | `source/engine/race_script.c`, `tests/test_race_script.c`; not yet wired into the app race loop |
+| `$E96C` | `sub_E96C` | Native (upstream; first-course phases) | `bikePhysicsUpdateFirstCourseVertical` in `source/engine/race_vertical.c`, `tests/test_race_vertical_differential.c`; unsupported states are reported, not guessed |
+| `$EA44` | `sub_EA44` | Differential-tested via `sub_EA44` (300k vectors, 6 mutants killed) | `raceEffectSprites` in `source/engine/race_frame.c`; not yet wired into the app race loop |
+| `$EAC5` | `sub_EAC5` | Differential-tested (200k vectors, 7 mutants killed) | `raceBannerSprites` in `source/engine/race_frame.c`; not yet wired into the app race loop |
 | `$EB17` | `sub_EB17` | Pending | — |
 | `$EC25` | `sub_EC25` | Pending | — |
 | `$EC3B` | `sub_EC3B` | Pending | — |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate source/sound_data.c (sound driver tables + music sequences).
+"""Generate source/audio/sound_data.c (sound driver tables + music sequences).
 
 usage: gen_sound_data.py <prg.bin> <out.c>
 <prg.bin> is the 16 KiB fixed bank built from Excitebike/bank_FF.asm by

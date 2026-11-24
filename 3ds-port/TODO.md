@@ -241,7 +241,7 @@ The next playable milestone is restricted to course 1. See [FIRST_COURSE_TODO.md
 
 ### E456 off-screen sprite pass — 2026-11-20
 
-- Native implementation: `raceHideOffscreenOpponentSprites` in `source/race_frame.c`; semantic interface in `include/race_frame.h`.
+- Native implementation: `raceHideOffscreenOpponentSprites` in `source/engine/race_frame.c`; semantic interface in `include/race_frame.h`.
 - Source trace: `E456-E4C7` uses `D8C0` OAM block bases and `D8DC` group offsets. It copies each mapped opponent's `0084` high byte into three masks; the low-byte `F8/F0` increments execute on both carry paths, while the `70-8F` clear window is gated by the initial high-byte bit. The clear operation delegates to the already-differential-tested `raceSpawnClearSlot` (`DB95`).
 - Differential test: 200,000 randomized vectors compare all OAM bytes, the `03A6` event flag and every DB95-cleared semantic field against the original ASM.
 - Host CI and New 3DS build both passed at `8f301eab1088b0fc7682ed2616d14deabb76e2ad`: [host test run](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44788058666), [3DS build](https://github.com/Louis124moto/NES-Games-Disassembly-excitebike3dsport/actions/runs/44788058703).

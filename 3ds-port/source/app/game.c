@@ -177,7 +177,7 @@ void gameUpdate(void)
     audioUpdate();
 
     if (assetExtractorIsActive()) {
-        assetExtractorUpdate(s_input.pressed);
+        assetExtractorUpdate((s_input.pressed & KEY_A) != 0u, (s_input.pressed & KEY_B) != 0u);
         if (!assetExtractorIsActive()) {
             s_assetsLoaded = nativeMenuAssetsLoad(&s_menuAssets, s_executablePath);
             rendererInvalidateAssets();
@@ -321,7 +321,7 @@ void gameUpdate(void)
             assetExtractorInit(s_executablePath);
             s_extractorInitialized = 1;
         }
-        assetExtractorUpdate(KEY_A);
+        assetExtractorUpdate(1, 0);
         return;
     }
 

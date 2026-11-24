@@ -1,1 +1,0 @@
-assets/nes_rom_identify.c
