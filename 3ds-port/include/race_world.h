@@ -18,16 +18,22 @@ typedef struct RaceWorld {
     uint8_t b0042[1]; /* $0042-$0042 */
     uint8_t b0043[1]; /* $0043-$0043 */
     uint8_t b0044[1]; /* $0044-$0044 */
+    uint8_t b0045[1]; /* $0045-$0045 */
     uint8_t b0046[1]; /* $0046-$0046 */
     uint8_t b0047[1]; /* $0047-$0047 */
     uint8_t b0049[1]; /* $0049-$0049 */
     uint8_t b004A[1]; /* $004A-$004A */
+    uint8_t b004B[1]; /* $004B-$004B */
     uint8_t b004C[1]; /* $004C-$004C */
     uint8_t b004D[1]; /* $004D-$004D */
     uint8_t b004E[1]; /* $004E-$004E */
     uint8_t b004F[1]; /* $004F-$004F */
     uint8_t b0050[1]; /* $0050-$0050 */
     uint8_t b0052[1]; /* $0052-$0052 */
+    uint8_t b0053[1]; /* $0053-$0053 */
+    uint8_t b0054[1]; /* $0054-$0054 */
+    uint8_t b0055[1]; /* $0055-$0055 */
+    uint8_t b0056[1]; /* $0056-$0056 */
     uint8_t b0057[1]; /* $0057-$0057 */
     uint8_t b0058[4]; /* $0058-$005B */
     uint8_t b005C[4]; /* $005C-$005F */
@@ -82,8 +88,7 @@ typedef struct RaceWorld {
     uint8_t b00FE[1]; /* $00FE-$00FE */
     uint8_t b00FF[1]; /* $00FF-$00FF */
     uint8_t b0200[256]; /* $0200-$02FF */
-    uint8_t b0300[18]; /* $0300-$0311 */
-    uint8_t b0312[10]; /* $0312-$031B */
+    uint8_t b0300[64]; /* $0300-$033F */
     uint8_t b0360[4]; /* $0360-$0363 */
     uint8_t b0364[4]; /* $0364-$0367 */
     uint8_t b0368[4]; /* $0368-$036B */
@@ -130,15 +135,18 @@ typedef struct RaceWorld {
     uint8_t b03E4[4]; /* $03E4-$03E7 */
     uint8_t b03F1[1]; /* $03F1-$03F1 */
     uint8_t b03F2[1]; /* $03F2-$03F2 */
+    uint8_t b03F3[1]; /* $03F3-$03F3 */
     uint8_t b03F7[1]; /* $03F7-$03F7 */
+    uint8_t b03F8[1]; /* $03F8-$03F8 */
     uint8_t b0400[384]; /* $0400-$057F */
+    uint8_t b0580[64]; /* $0580-$05BF */
     uint8_t b4015[1]; /* $4015-$4015 */
 } RaceWorld;
 
 /* Block table for host tests: base source address, length, and byte pointer. */
 typedef struct RaceWorldBlock { uint16_t base; uint16_t length; } RaceWorldBlock;
-extern const RaceWorldBlock kRaceWorldBlocks[126];
-#define RACE_WORLD_BLOCK_COUNT 126
+extern const RaceWorldBlock kRaceWorldBlocks[134];
+#define RACE_WORLD_BLOCK_COUNT 134
 uint8_t *raceWorldByte(RaceWorld *world, unsigned source_address);
 
 struct BikeMovementState;

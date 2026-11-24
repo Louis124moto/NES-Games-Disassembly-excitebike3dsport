@@ -40,7 +40,7 @@ Scope: **only the first original course** (the title-menu selector's first race 
 - [ ] Compare fixed-frame captures with the original reference and record any known platform-specific differences.
 
 ### D. Acceptance gate
-- [x] First course can be raced to the source finish; result-time rows, saved best record, podium sprites and timed result phases are now rendered. [ ] Full automatic next-course flow remains.
+- [x] First course can be raced to the source finish; result-time rows, saved best record, podium sprites and result phases are now the exact sub_CB2C port (`race_results.c`: CB3B/CB77/CBA4/CC6B/CC15/CC7D/CCCA), verified byte-for-byte against the original code over 300k random states. Course 2 stays out of scope.
 - [ ] Physics, course events, opponent behavior and scoring pass deterministic differential scenarios.
 - [ ] Host tests and exact-commit New 3DS build pass.
 - [ ] Physical New 3DS run and visual comparison recorded.
@@ -92,7 +92,7 @@ This is the execution order for completing the first playable race. A checked it
 - [x] Integrate heat/overheat into E359 using the semantic temperature state and native OAM output; verified by the full race-loop ASM differential suite.
 - [x] Integrate bike-to-bike contacts (DFD5), obstacle-hit checks (E09F), bike collision checks (E4C8), crash recovery (DDD1) and collision sprite hiding (E42B) at their source-ordered race-loop call sites; the race-frame and full-loop ASM differential tests pass.
 - [ ] Complete semantic interpretation of first-course terrain/obstacle events and validate every obstacle-hit input against the extracted raw stream.
-- [x] Port the source best/current time result rows, record comparison/storage, podium OAM and timed state-3 phases. [ ] Finish the automatic next-course and remaining `$CC15/$CC7D` visual transitions.
+- [x] Port the source best/current time result rows, record comparison/storage, podium OAM and state-3 phases (`$CC15/$CC7D` included) as `raceResultsPhaseStep` on the RaceWorld; the ad-hoc menu-timer/podium hack was removed. The world now models `$0300`, `$0580` and `$45/$4B/$53-$56/$3F3/$3F8`, fixing a NULL `raceWorldByte` crash at the finish line.
 - [ ] Build deterministic race-frame fixtures and compare all semantic bike state against the original ASM oracle over long frame sequences.
 
 ### 3. Recover the actual first-course data (do not guess geometry)

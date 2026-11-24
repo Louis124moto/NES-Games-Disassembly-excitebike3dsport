@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "race_session_world.h"
+#include "race_results.h"
+#include "race_loop.h"
 #include "race_world_glue.h"
 #include "race_spawn.h"
 #include "race_frame.h"
@@ -188,6 +190,30 @@ int main(void)
         if (session.course_column_serial < 1335u) {
             printf("FAIL first-course runtime column updates=%lu (below 1335-record source pass)\n",
                    (unsigned long)session.course_column_serial);
+            return 1;
+        }
+    }
+    /* Results flow (sub_CB2C): CB3B -> CB77 -> CBA4 -> CC6B must run to
+     * completion on the world and leave state 3 (return to $41 == 0). */
+    {
+        unsigned r, phase_seen = 0u, podium = 0u;
+        *raceWorldByte(&world, 0x53u) = 1u;
+        *raceWorldByte(&world, 0x4Bu) = 0u;
+        if (*raceWorldByte(&world, 0x41u) != 3u) {
+            printf("FAIL finish did not enter results state (41=%02X)\n", *raceWorldByte(&world, 0x41u));
+            return 1;
+        }
+        for (r = 0u; r < 4000u && *raceWorldByte(&world, 0x41u) == 3u; ++r) {
+            *raceWorldByte(&world, 0x14u) = (uint8_t)(r > 600u ? 0x10u : 0u);
+            raceLoopNmiTick(&world);
+            if (raceResultsPhaseStep(&world) != 0u) { puts("FAIL results step out of model"); return 1; }
+            *raceWorldByte(&world, 0x300u) = 0u;
+            phase_seen |= 1u << (*raceWorldByte(&world, 0x44u) & 7u);
+            if (*raceWorldByte(&world, 0x204u) != 0u && *raceWorldByte(&world, 0x205u) != 0u) podium = 1u;
+        }
+        if (*raceWorldByte(&world, 0x41u) == 3u || (phase_seen & 7u) != 7u || podium == 0u) {
+            printf("FAIL results flow state=%02X phases=%02X podium=%u frames=%u\n",
+                   *raceWorldByte(&world, 0x41u), phase_seen, podium, r);
             return 1;
         }
     }

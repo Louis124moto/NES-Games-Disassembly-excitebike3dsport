@@ -264,6 +264,12 @@ jobs:
           gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
           /tmp/test_race_loop /tmp/prg.bin 80 2500
 
+      - name: Differentially test the results phases (sub_CB2C) against original ASM
+        run: |
+          cd 3ds-port
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_results.c source/engine/race_world.c source/engine/nes_routines.c tests/oracle/cpu6502.c tests/test_race_results.c -o /tmp/test_race_results
+          /tmp/test_race_results /tmp/prg.bin 200000
+
       - name: Differentially test the native controller layer (sub_D347, both pads) against original ASM
         run: |
           cd 3ds-port
@@ -287,7 +293,7 @@ jobs:
       - name: Run native first-course race to source finish transition (up to 100000 native frames)
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/engine/race_session_world.c source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/test_race_session_world.c -o /tmp/test_race_session_world
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude source/engine/race_session_world.c source/engine/race_results.c source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/test_race_session_world.c -o /tmp/test_race_session_world
           /tmp/test_race_session_world
 
       - name: Differentially test native opponent AI (CED0, D018, D000, CF0C and helpers) against original ASM

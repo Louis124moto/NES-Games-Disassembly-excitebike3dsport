@@ -64,7 +64,6 @@ int nativeSceneBuildRace(SceneDrawList *list, const NativeMenuAssets *assets,
                          const NativeRaceSession *session);
 
 void nativeSceneRaceReset(void);
-void nativeSceneBuildResultsPodium(NativeRaceSession *session);
 
 /* Bakes the 512x1024 RGBA8 atlas (SCENE_ATLAS_WIDTH * SCENE_ATLAS_HEIGHT
  * uint32_t, row-major, top-down) for one extracted palette preset. */

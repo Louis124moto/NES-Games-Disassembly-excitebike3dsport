@@ -10,6 +10,8 @@
 #include "native_scene.h"
 #include "native_race_session.h"
 #include "race_session_world.h"
+#include "race_results.h"
+#include "race_loop.h"
 #include "renderer.h"
 #include "audio.h"
 
@@ -212,34 +214,27 @@ void gameUpdate(void)
      * and can consume gameplay inputs or mutate the selected mode/state. */
     if (s_raceSessionReady) {
         if (s_raceFinishLatched) {
-            /* State 3: source result/record display (CB3B -> CB77 -> CBA4).
-             * Keep the native race scene alive while its source time glyphs
-             * remain visible; then perform the source phase-3 state advance. */
-            if ((s_input.pressed & KEY_B) != 0u) {
-                s_menu.transition_phase = 3u;
-            } else {
-                nativeMenuTickTimers(&s_menu);
-                if (s_menu.transition_phase == 1u)
-                    nativeMenuTransitionPhase1(&s_menu);
-                else if (s_menu.transition_phase == 2u) {
-                    /* CBA4 waits for $0033 == $03AD and the 10-frame
-                     * divider at $0020 to expire before building the podium. */
-                    if (s_raceSession.result_podium_active == 0u &&
-                        s_menu.timer_values[18] == s_menu.transition_duration &&
-                        s_menu.frame_timer == 0u) {
-                        nativeSceneBuildResultsPodium(&s_raceSession);
-                        s_menu.timer_values[14] = 3u; /* $002F podium timer */
-                        audioSubmitSourceEvents(0u,
-                            s_menu.transition_gate_0053 < 4u ? 2u : 1u,
-                            0u, 0u, 0u);
-                    }
-                    if (s_menu.timer_values[18] == 0u)
-                        nativeMenuTransitionPhase3(&s_menu);
-                }
+            /* States 3/6/$0B: sub_CB2C on the race world (CB3B/CB77/CBA4/CC6B),
+             * verified byte-for-byte against the original code. The NMI
+             * prefix (timers, $003F) runs first; the PPU command buffer at
+             * $0300 is drained by the renderer, so $0300 is cleared like NMI. */
+            *raceWorldByte(&s_raceWorld, 0x14u) = inputNesHeld(&s_input);
+            *raceWorldByte(&s_raceWorld, 0x15u) = inputNesPressed(&s_input);
+            raceLoopNmiTick(&s_raceWorld);
+            if (raceResultsPhaseStep(&s_raceWorld) != 0u)
+                *raceWorldByte(&s_raceWorld, 0x41u) = 0u; /* out of model: leave */
+            *raceWorldByte(&s_raceWorld, 0x300u) = 0u;
+            memcpy(s_raceSession.oam.bytes, raceWorldByte(&s_raceWorld, 0x200u),
+                   sizeof(s_raceSession.oam.bytes));
+            audioSubmitSourceEvents(0u, *raceWorldByte(&s_raceWorld, 0xFBu), 0u, 0u, 0u);
+            *raceWorldByte(&s_raceWorld, 0xFBu) = 0u;
+            {
+                const uint8_t st = *raceWorldByte(&s_raceWorld, 0x41u);
+                s_menu.transition_phase = (st == 3u || st == 6u || st == 0x0Bu) ? 0u : 3u;
+                s_menu.source_state = (st == 3u || st == 6u || st == 0x0Bu) ? 3u : st;
             }
-
             if (s_menu.transition_phase == 3u ||
-                (s_menu.source_state != 3u && s_menu.transition_phase == 0u)) {
+                0) {
                 /* The next course is not yet playable. Finish the original
                  * results interval, then expose the native selector. */
                 const uint8_t completedState = s_menu.source_state;
@@ -297,11 +292,10 @@ void gameUpdate(void)
             s_menu.transition_flag_0046 = *raceWorldByte(&s_raceWorld, 0x46u);
             s_menu.transition_flag_004B = *raceWorldByte(&s_raceWorld, 0x4Bu);
             s_menu.selected_mode = s_raceMultiplayer;
-            nativeMenuTransitionPhase0(&s_menu);
             audioSubmitSourceEvents(0u, 0u, 0u, 0u, 0u);
             rendererPrintBottom("RACE RESULTS — SOURCE TIME DISPLAY\n"
                                 "The stored time and finished-race time are shown.\n"
-                                "B: skip to course selector\n");
+                                "Press a button to continue.\n");
         }
         /* Keep out-of-domain source states observable instead of silently
          * presenting a partially simulated frame as a verified result. */
