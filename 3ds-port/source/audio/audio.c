@@ -29,6 +29,9 @@ static SoundDriver s_driver;
 static SoundSynth s_synth;
 static uint8_t s_pendingFb, s_pendingFd, s_pendingFe, s_pendingFf, s_engineFc;
 static uint8_t s_initialized;
+static uint8_t s_apuEnable = 0x0Fu;      /* last value forwarded to the synth */
+static uint8_t s_apuEnablePending;
+static uint8_t s_apuEnableValue;
 
 void audioInit(void)
 {
@@ -37,6 +40,7 @@ void audioInit(void)
     memset(s_buffers, 0, sizeof(s_buffers));
     s_nextBuffer = 0u;
     s_pendingFb = s_pendingFd = s_pendingFe = s_pendingFf = s_engineFc = 0u;
+    s_apuEnable = 0x0Fu; s_apuEnablePending = 0u;
     soundDriverReset(&s_driver, kSoundData);
     soundSynthReset(&s_synth);
     if (R_FAILED(ndspInit())) return;
@@ -71,6 +75,14 @@ void audioSubmitSourceEvents(uint8_t engine, uint8_t request_fb,
     s_pendingFf |= request_ff;
 }
 
+void audioSubmitApuEnable(uint8_t value)
+{
+    if (!s_initialized || value == s_apuEnable) return;
+    s_apuEnable = value;
+    s_apuEnableValue = value;
+    s_apuEnablePending = 1u;
+}
+
 static unsigned busyBuffers(void)
 {
     unsigned i, busy = 0u;
@@ -91,7 +103,16 @@ void audioUpdate(void)
                                s_pendingFe, s_pendingFf);
         s_pendingFb = s_pendingFd = s_pendingFe = s_pendingFf = 0u;
         soundDriverFrame(&s_driver);
-        count = soundSynthFrame(&s_synth, s_driver.writes, s_driver.write_count, buffer->samples);
+        if (s_apuEnablePending) {          /* the main loop's $4015 write precedes the NMI driver */
+            SoundApuWrite log[SOUND_MAX_WRITES + 1u];
+            unsigned n = s_driver.write_count;
+            log[0].reg = 0x4015u; log[0].value = s_apuEnableValue;
+            memcpy(&log[1], s_driver.writes, n * sizeof(log[0]));
+            s_apuEnablePending = 0u;
+            count = soundSynthFrame(&s_synth, log, n + 1u, buffer->samples);
+        } else {
+            count = soundSynthFrame(&s_synth, s_driver.writes, s_driver.write_count, buffer->samples);
+        }
         DSP_FlushDataCache(buffer->samples, count * sizeof(int16_t));
         buffer->wave.data_pcm16 = buffer->samples;
         buffer->wave.nsamples = count;

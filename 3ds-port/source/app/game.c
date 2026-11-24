@@ -279,6 +279,7 @@ void gameUpdate(void)
                                 *raceWorldByte(&s_raceWorld, 0xFDu),
                                 *raceWorldByte(&s_raceWorld, 0xFEu),
                                 *raceWorldByte(&s_raceWorld, 0xFFu));
+        audioSubmitApuEnable(*raceWorldByte(&s_raceWorld, 0x4015u));
         *raceWorldByte(&s_raceWorld, 0xFBu) = 0u;
         *raceWorldByte(&s_raceWorld, 0xFDu) = 0u;
         *raceWorldByte(&s_raceWorld, 0xFEu) = 0u;
@@ -330,6 +331,7 @@ void gameUpdate(void)
 
     /* Source $00FB music requests raised by the title/menu setup code (C2D1,
      * C514...) go to the sound driver, which consumes them once. */
+    audioSubmitApuEnable(0x0Fu);     /* menu/title code (C2E3) keeps all APU channels on */
     if (s_menu.title_animation_flag != 0u) {
         audioSubmitSourceEvents(0u, s_menu.title_animation_flag, 0u, 0u, 0u);
         s_menu.title_animation_flag = 0u;

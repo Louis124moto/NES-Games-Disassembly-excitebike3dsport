@@ -89,6 +89,28 @@ int main(void)
     if (!nativeRaceSessionInitFirstCourse(&session, &in, &rng)) { puts("FAIL init"); return 1; }
     nativeRaceSessionBuildWorld(&session, 0u, &world);
 
+    /* $4015: all channels on after setup; pause mutes (CA71), unpause re-enables (CA5E). */
+    if (*raceWorldByte(&world, 0x4015u) != 0x0Fu) { puts("FAIL $4015 initial value"); return 1; }
+    {
+        RaceWorld pw = world;
+        unsigned f;
+        /* Start is ignored while the setup latch $03B0 is non-zero (countdown/setup). */
+        for (f = 0u; f < 4000u && *raceWorldByte(&pw, 0x3B0u) != 0u; ++f)
+            (void)nativeRaceSessionStepFrame(&session, &pw, 0u, 0u);
+        if (*raceWorldByte(&pw, 0x3B0u) != 0u) { puts("FAIL setup latch never cleared"); return 1; }
+        (void)nativeRaceSessionStepFrame(&session, &pw, 0u, 0x10u);       /* Start pressed */
+        if (*raceWorldByte(&pw, 0x3B1u) != 1u || *raceWorldByte(&pw, 0xFBu) != 0x80u) {
+            puts("FAIL pause request/jingle"); return 1;
+        }
+        /* CA63: the 0x28-frame pause timer runs first, then CA71 mutes every frame. */
+        for (f = 0u; f < 0x30u; ++f) (void)nativeRaceSessionStepFrame(&session, &pw, 0u, 0u);
+        if (*raceWorldByte(&pw, 0x4015u) != 0x00u) { puts("FAIL pause did not mute $4015"); return 1; }
+        (void)nativeRaceSessionStepFrame(&session, &pw, 0u, 0x10u);       /* Start again */
+        if (*raceWorldByte(&pw, 0x3B1u) != 0u || *raceWorldByte(&pw, 0x4015u) != 0x0Fu) {
+            puts("FAIL unpause did not re-enable $4015"); return 1;
+        }
+    }
+
     if (*raceWorldByte(&world, 0x4Au) != 1u || session.setup.player_slot != 0u ||
         session.setup.first_opponent_slot != 1u ||
         session.setup.bike[0].role != NATIVE_RACE_BIKE_PLAYER ||
