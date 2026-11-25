@@ -139,7 +139,7 @@ typedef struct RaceWorld {
     uint8_t b03F7[1]; /* $03F7-$03F7 */
     uint8_t b03F8[1]; /* $03F8-$03F8 */
     uint8_t b0400[384]; /* $0400-$057F */
-    uint8_t b0580[64]; /* $0580-$05BF */
+    uint8_t b0580[66]; /* $0580-$05C1 */
     uint8_t b4015[1]; /* $4015-$4015 */
 } RaceWorld;
 

@@ -62,7 +62,7 @@ static void initWorld(RaceWorld *w)
     for (i = 0u; i < 5u; ++i) r.bytes[i] = nb();
     in.multiplayer_flag = (uint8_t)(nb() & 1u);
     in.setup_index_0041 = 2u; in.timer_0034 = 0x2Du; in.transition_counter_03F8 = 4u;
-    nativeRaceSessionInitFirstCourse(&s, &in, &r);
+    nativeRaceSessionInit(&s, &in, &r);
     memset(w, 0, sizeof(*w));
     raceWorldStore_BikeMovementState(&s.movement, w);
     raceWorldStore_BikeStateMachineState(&s.states, w);

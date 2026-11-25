@@ -13,7 +13,6 @@
 
 #define MENU_PALETTE_SET 6u        /* source palette preset 18 */
 #define MENU_PALETTE_SET_DESIGN 0u /* C551: state 9 uses preset 12 */
-#define RACE_PALETTE_SET 6u
 
 
 /* ------------------------------------------------------------------ atlas */
@@ -325,6 +324,17 @@ static void addRaceHud(SceneDrawList *list, const NativeMenuAssets *assets,
                 SCENE_VARIANT_BACKGROUND + subpaletteFor(scene->nametable, tileX, tileY),
                 0u, 0u, 8u, 8u, 0, 0);
     }
+    if (session->setup.counter_visible != 0u) {
+        /* C8E2: PPU $2378 = tile row 27, column 24. */
+        for (i = 0u; i < 4u; ++i) {
+            const unsigned int cx = 24u + i, cy = 27u;
+            const size_t chrTile = EXCITEBIKE_BG_CHR_TILE_BASE + (size_t)session->setup.counter_tiles[i];
+            if (!tileAvailable(assets, chrTile)) continue;
+            addTile(list, (int)(cx * 8u), (int)(cy * 8u), (unsigned)chrTile,
+                    SCENE_VARIANT_BACKGROUND + subpaletteFor(scene->nametable, cx, cy),
+                    0u, 0u, 8u, 8u, 0, 0);
+        }
+    }
 }
 
 /* C5A7/CB77 score-time PPU writes: seven source CHR glyphs at $21F2
@@ -369,7 +379,8 @@ int nativeSceneBuildRace(SceneDrawList *list, const NativeMenuAssets *assets,
 {
     const NativeMenuSceneAssets *scene;
     if (list == NULL) return 0;
-    listClear(list, RACE_PALETTE_SET);
+    listClear(list, NATIVE_RACE_PALETTE_BASE +
+                     ((session != NULL && session->course < NATIVE_RACE_COURSE_COUNT) ? session->course : 0u));
     if (assets == NULL || menu == NULL || session == NULL ||
         assets->loaded == 0u || assets->race_scene_available == 0u ||
         session->initialized == 0u || !assetsUsable(assets)) return 0;

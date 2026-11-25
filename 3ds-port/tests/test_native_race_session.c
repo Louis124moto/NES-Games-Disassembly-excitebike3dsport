@@ -30,7 +30,7 @@ int main(void)
     input.setup_counter_0040 = 0u;
     input.setup_counter_0047 = 0u;
 
-    CHECK(nativeRaceSessionInitFirstCourse(&session, &input, &rng) == 1, 1);
+    CHECK(nativeRaceSessionInit(&session, &input, &rng) == 1, 1);
     CHECK(session.initialized == 1u, 2);
     CHECK(session.setup.timer_0034 == 0x2Du, 3);
     CHECK(session.setup.bike[0].y == 0x0Eu && session.setup.bike[3].y == 0x32u, 4);
@@ -67,15 +67,15 @@ int main(void)
     CHECK(memcmp(&first_oam, &session.oam, sizeof(first_oam)) == 0, 15);
 
     input.setup_index_0041 = 8u;
-    CHECK(nativeRaceSessionInitFirstCourse(&session, &input, &rng) == 0, 20);
+    CHECK(nativeRaceSessionInit(&session, &input, &rng) == 0, 20);
     CHECK(session.initialized == 0u, 21);
     CHECK(nativeRaceSessionUpdateCountdown(&session) == BIKE_COUNTDOWN_RENDER_NONE, 22);
     CHECK(nativeRaceSessionUpdateVertical(&session) == 0x0Fu, 23);
     CHECK(nativeRaceSessionUpdateSprites(0) == 0x0Fu, 33);
     nativeRaceSessionUpdateBikeStates(0);
-    CHECK(nativeRaceSessionInitFirstCourse(0, &input, &rng) == 0, 24);
-    CHECK(nativeRaceSessionInitFirstCourse(&session, 0, &rng) == 0, 25);
-    CHECK(nativeRaceSessionInitFirstCourse(&session, &input, 0) == 0, 26);
+    CHECK(nativeRaceSessionInit(0, &input, &rng) == 0, 24);
+    CHECK(nativeRaceSessionInit(&session, 0, &rng) == 0, 25);
+    CHECK(nativeRaceSessionInit(&session, &input, 0) == 0, 26);
 
     puts("PASS: composed native first-course race session.");
     return 0;

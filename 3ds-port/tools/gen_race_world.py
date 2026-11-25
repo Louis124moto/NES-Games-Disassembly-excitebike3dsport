@@ -87,7 +87,7 @@ def build():
     for a in EXTRA4: ivs.append((a,a+4))
     for a in EXTRA1: ivs.append((a,a+1))
     ivs.append((0x300,0x340))  # PPU command buffer ($0300 length + commands)
-    ivs.append((0x580,0x5C0))  # saved best-time records
+    ivs.append((0x580,0x5C2))  # saved best-time records
     ivs.append((0x20,0x3F))  # sub_D310 timers $0020-$003E (NMI tick)
     ivs.sort()
     blocks=[]

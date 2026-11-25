@@ -54,10 +54,10 @@ int main(void)
     assets.race_scene_available = 1u;
     memset(assets.chr_pixels + 256u * 64u, 1, 64u);
     memset(assets.chr_pixels + 257u * 64u, 2, 64u);
-    assets.palette_written[6][1] = 1u;
-    assets.palette_written[6][2] = 1u;
-    assets.palettes[6][1] = 0x01u;
-    assets.palettes[6][2] = 0x02u;
+    assets.palette_written[NATIVE_RACE_PALETTE_BASE][1] = 1u;
+    assets.palette_written[NATIVE_RACE_PALETTE_BASE][2] = 1u;
+    assets.palettes[NATIVE_RACE_PALETTE_BASE][1] = 0x01u;
+    assets.palettes[NATIVE_RACE_PALETTE_BASE][2] = 0x02u;
 
     session.initialized = 1u;
     for (i = 0u; i < 64u; ++i)

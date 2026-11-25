@@ -8,11 +8,14 @@
 /* Semantic inputs consumed by C875 from setup state established earlier. */
 typedef struct NativeRaceSetupInput {
     uint8_t multiplayer_flag;       /* ram_03F2: nonzero initializes slots 1..3 during C875; identity is fixed separately */
-    uint8_t course_index_0043;       /* selected course; this initializer accepts course 0 only */
+    uint8_t course_index_0043;       /* selected course 0..4 (tbl_ED3A stream / tbl_C091 row) */
+    const uint8_t *records;          /* $0580-$05C1 record window (NULL = power-on seed) */
     uint8_t setup_index_0041;        /* C905: first-course path is below $08 */
     uint8_t transition_flag_0046;    /* ram_0046, consumed by sub_C522/sub_CB13 */
     uint8_t timer_0034;
     uint8_t countdown_timer_003C; /* ram_003C_timer, not cleared by C869/C820 */
+    uint8_t flag_004B;               /* ram_004B: set after the first race of a session */
+    uint8_t counter_03F3;            /* ram_03F3: course-5 replay counter (C8F3) */
     uint8_t transition_counter_03F8; /* ram_03F8 consumed by C90E */
     uint8_t setup_counter_0040;
     uint8_t setup_counter_0047;
@@ -58,6 +61,8 @@ typedef struct NativeRaceSetupState {
     uint8_t countdown_index_03BE;   /* ram_03BE = $02 */
     uint8_t course_setup_parameters[3]; /* sub_C522: tbl_C091 + course/transition offset */
     uint8_t race_object_parameters[3]; /* sub_C53E: C1FD-seeded $0580 lookup */
+    uint8_t counter_visible;        /* C8E2: $0046 != 0 && course 4 queues PPU $2378 */
+    uint8_t counter_tiles[4];       /* C158 text: $1D,$F8,tens|$FE,units (PPU $2378) */
     uint8_t hud_glyphs[7]; /* semantic digit/sentinel bytes produced by DF7F/C935 */
 } NativeRaceSetupState;
 

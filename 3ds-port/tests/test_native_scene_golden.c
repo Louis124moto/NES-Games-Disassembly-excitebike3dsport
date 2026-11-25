@@ -88,6 +88,12 @@ static void randomAssets(unsigned tileCount)
                                                       : (uint8_t)((r >> 8u) & 0x3Fu);
             s_assets.palette_written[s][i] = (r >> 20u) % 10u < 8u;
         }
+    /* The legacy reference draws the race with preset 6; the runtime now uses
+     * the per-course race palette set, so give both the same colours here. */
+    for (s = 0u; s < NATIVE_RACE_COURSE_COUNT; ++s) {
+        memcpy(s_assets.palettes[NATIVE_RACE_PALETTE_BASE + s], s_assets.palettes[6], 32u);
+        memcpy(s_assets.palette_written[NATIVE_RACE_PALETTE_BASE + s], s_assets.palette_written[6], 32u);
+    }
     s_assets.race_scene_available = 1u;
     s_assets.loaded = 1u;
 }

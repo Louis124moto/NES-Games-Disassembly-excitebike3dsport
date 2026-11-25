@@ -78,7 +78,7 @@ jobs:
       - name: Test native CHR exports
         run: ./test_asset_export
       - name: Compile native semantic C875 setup test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_setup.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_setup.c 3ds-port/source/engine/nes_routines.c 3ds-port/source/engine/race_world.c 3ds-port/source/engine/race_results.c 3ds-port/tests/test_native_race_setup.c -o test_native_race_setup
 
       - name: Run native semantic C875 setup test
         run: ./test_native_race_setup
@@ -108,7 +108,7 @@ jobs:
         run: ./test_race_vertical
 
       - name: Compile native first-course race session test
-        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_session.c 3ds-port/source/engine/bike_state.c 3ds-port/source/engine/native_race_setup.c 3ds-port/source/engine/track.c 3ds-port/source/engine/race_countdown.c 3ds-port/source/engine/race_vertical.c 3ds-port/source/engine/bike_physics.c 3ds-port/source/engine/race_sprites.c 3ds-port/tests/test_native_race_session.c -o test_native_race_session
+        run: gcc -std=c11 -O2 -Wall -Wextra -Werror -I3ds-port/include 3ds-port/source/engine/native_race_session.c 3ds-port/source/engine/bike_state.c 3ds-port/source/engine/native_race_setup.c 3ds-port/source/engine/nes_routines.c 3ds-port/source/engine/race_world.c 3ds-port/source/engine/race_results.c 3ds-port/source/engine/track.c 3ds-port/source/engine/race_countdown.c 3ds-port/source/engine/race_vertical.c 3ds-port/source/engine/bike_physics.c 3ds-port/source/engine/race_sprites.c 3ds-port/tests/test_native_race_session.c -o test_native_race_session
 
       - name: Run native first-course race session test
         run: ./test_native_race_session
@@ -132,7 +132,7 @@ jobs:
       - name: Differentially test complete first-course C875 setup and bike identities against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/native_race_setup.c tests/oracle/cpu6502.c tests/test_native_race_setup_differential.c -o /tmp/test_native_race_setup_differential
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/native_race_setup.c source/engine/nes_routines.c source/engine/race_world.c source/engine/race_results.c tests/oracle/cpu6502.c tests/test_native_race_setup_differential.c -o /tmp/test_native_race_setup_differential
           /tmp/test_native_race_setup_differential /tmp/prg.bin
 
       - name: Differentially test native player acceleration against original ASM
@@ -261,7 +261,7 @@ jobs:
       - name: Differentially test the composed native race frame loop stage by stage against original ASM
         run: |
           cd 3ds-port
-          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
+          gcc -std=c11 -O2 -Wall -Wextra -Werror -Iinclude -Itests/oracle source/engine/race_loop.c source/engine/race_world.c source/engine/race_frame.c source/engine/race_frame_control.c source/engine/race_course_stream.c source/engine/race_course_stream_data.c source/engine/race_spawn.c source/engine/race_ai.c source/engine/race_script.c source/engine/race_countdown.c source/engine/race_sprites.c source/engine/race_vertical.c source/engine/bike_physics.c source/engine/nes_routines.c source/engine/native_race_session.c source/engine/native_race_setup.c source/engine/race_results.c source/engine/native_rng.c source/engine/track.c source/engine/bike_state.c source/engine/race_tail.c tests/oracle/cpu6502.c tests/test_race_loop.c -o /tmp/test_race_loop
           /tmp/test_race_loop /tmp/prg.bin 80 2500
 
       - name: Differentially test the results phases (sub_CB2C) against original ASM

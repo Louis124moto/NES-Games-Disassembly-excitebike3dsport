@@ -1,7 +1,7 @@
 #include <string.h>
 #include "native_race_session.h"
 
-int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
+int nativeRaceSessionInit(NativeRaceSession *session,
                                      const NativeRaceSetupInput *input,
                                      const NativeRngState *rng)
 {
@@ -21,6 +21,10 @@ int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
         return 0;
     }
 
+    session->course = input->course_index_0043;
+    session->flag_004B = input->flag_004B;
+    session->counter_03F3 = input->counter_03F3;
+    session->counter_03F8 = input->transition_counter_03F8;
     session->countdown.timer_003C = input->countdown_timer_003C;
     /* C820 clears $0340-$03EF, including $03B6. */
     session->countdown.overheat_timer_03B6 = 0u;

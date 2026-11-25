@@ -3,6 +3,7 @@
  * are the source labels; carry-flag hand-offs that the source relies on
  * (CC15 -> CC7D -> sub_DD6F's ADC) are tracked explicitly.
  */
+#include <string.h>
 #include "race_results.h"
 #include "nes_routines.h"
 
@@ -154,6 +155,150 @@ CCBB:
     if (x >= 3u)
         x = 3u;
     subCCCA(w, x, t01, t02, 0x02u);
+}
+
+/* tbl_C091 (00:C091..C0B3), read by sub_C522 through sub_CB13 indices. */
+static const uint8_t kC091[0x23] = {
+    0x01u, 0x10u, 0x00u, 0x01u, 0x10u, 0x00u, 0x01u, 0x10u, 0x00u, 0x01u, 0x0Cu, 0x00u,
+    0x01u, 0x06u, 0x00u, 0x00u, 0x01u, 0x18u, 0x00u, 0x01u, 0x16u, 0x00u, 0x01u, 0x0Au,
+    0x00u, 0x01u, 0x14u, 0x00u, 0x01u, 0x06u, 0x00u, 0x09u, 0x0Bu, 0x0Du, 0x0Fu
+};
+
+/* sub_C1FD + sub_C229: power-on seed of the record window $0580-$05C1. */
+void raceRecordsDefault(uint8_t out[RACE_RECORD_BYTES])
+{
+    unsigned i;
+    memset(out, 0, RACE_RECORD_BYTES);
+    for (i = 0u; i <= 0x1Eu; ++i) {            /* LDX #$1E ... BPL */
+        out[i] = kC091[i];
+        out[0x23u + i] = kC091[i];
+    }
+    for (i = 0u; i < 3u; ++i)                  /* C229: $05A0+X = $0A, $00, $00 */
+        out[0x20u + i] = (uint8_t)(i == 0u ? 0x0Au : 0x00u);
+}
+
+/* sub_CB13: A = course * 3 (0x20 for course 5), | $10 when $0046 != 0. */
+static uint8_t subCB13(const RaceWorld *cw, uint8_t course)
+{
+    RaceWorld *w = (RaceWorld *)cw;
+    uint8_t a = 0x20u, y;
+    if (course == 5u)
+        return a;
+    a = 0u;
+    for (y = course; y != 0u; --y)
+        a = (uint8_t)(a + 3u);
+    if (B(0x46u) != 0u)
+        a = (uint8_t)(a | 0x10u);
+    return a;
+}
+
+/* sub_CB06 (+$23 when $03F2 != 0): index into the record window. */
+unsigned raceRecordIndex(uint8_t course, uint8_t flag46, uint8_t multiplayer)
+{
+    RaceWorld tmp;
+    unsigned y;
+    memset(&tmp, 0, sizeof(tmp));
+    *raceWorldByte(&tmp, 0x46u) = flag46;
+    y = subCB13(&tmp, course);
+    return multiplayer != 0u ? y + 0x23u : y;
+}
+
+/* sub_C522: tbl_C091 triplet selected by sub_CB13. */
+void raceThresholdTriplet(uint8_t course, uint8_t flag46, uint8_t out[3])
+{
+    RaceWorld tmp;
+    unsigned y, i;
+    memset(&tmp, 0, sizeof(tmp));
+    *raceWorldByte(&tmp, 0x46u) = flag46;
+    y = subCB13(&tmp, course);
+    for (i = 0u; i < 3u; ++i)
+        out[i] = kC091[y + i];
+}
+
+/* ofs_001_C485_03_05: compare the finished time ($0068-$006A) with the saved
+ * record (sub_C53A/CB06) and the sub_C522 threshold, store a new record and
+ * compute the rank/gate byte $0053; then the C514 tail. */
+unsigned raceResultsEnter(RaceWorld *w)
+{
+    uint8_t y, cur[3], rec[3], thr[3], rank, a;
+    unsigned i;
+    int cmp;
+    y = subCB13(w, B(0x43u));
+    if (B(0x3F2u) != 0u)
+        y = (uint8_t)(y + 0x23u);
+    if ((unsigned)y + 3u > RACE_RECORD_BYTES)
+        return 1u;                       /* record window / table outside model */
+    for (i = 0u; i < 3u; ++i) {
+        cur[i] = B(0x68u + i);
+        rec[i] = B(0x580u + y + i);
+    }
+    cmp = (rec[0] != cur[0]) ? (rec[0] > cur[0] ? 1 : -1)
+        : (rec[1] != cur[1]) ? (rec[1] > cur[1] ? 1 : -1)
+        : (rec[2] != cur[2]) ? (rec[2] > cur[2] ? 1 : -1) : 0;
+    if (cmp >= 0) {
+        /* bra_C49A (record slower) stores; equal skips the store. */
+        if (cmp > 0)
+            for (i = 0u; i < 3u; ++i) B(0x580u + y + i) = cur[i];
+        rank = 1u;
+    } else {
+        uint8_t th_y = 0u;
+        int tcmp = -1;
+        if (B(0x41u) < 0x08u) {
+            th_y = subCB13(w, B(0x43u));
+            if ((unsigned)th_y + 3u > sizeof(kC091))
+                return 1u;
+            for (i = 0u; i < 3u; ++i) thr[i] = kC091[th_y + i];
+            tcmp = (thr[0] != cur[0]) ? (thr[0] > cur[0] ? 1 : -1)
+                 : (thr[1] != cur[1]) ? (thr[1] > cur[1] ? 1 : -1)
+                 : (thr[2] != cur[2]) ? (thr[2] > cur[2] ? 1 : -1) : 0;
+        }
+        if (B(0x41u) < 0x08u && tcmp >= 0) {
+            rank = 2u;                   /* threshold >= time (carry set) */
+        } else {
+            /* bra_C4CC: $05..$07 = threshold (CC522 ran) or the record. */
+            const uint8_t *t = (B(0x41u) < 0x08u) ? thr : rec;
+            const uint8_t n3f8 = B(0x3F8u);
+            uint8_t m0a = n3f8, m09 = (uint8_t)(n3f8 << 1), x08;
+            unsigned acc = 0u, cnt = (uint8_t)(cur[0] - t[0]);
+            int ovf = 0;
+            while (cnt-- != 0u) {        /* DEY/BMI loop, ADC #$3C until carry */
+                acc += 0x3Cu;
+                if (acc > 0xFFu) { ovf = 1; break; }
+            }
+            a = (uint8_t)acc;
+            if (!ovf) {
+                unsigned sum;
+                x08 = a;
+                sum = (unsigned)(uint8_t)(cur[1] - t[1]);
+                if (cur[1] >= t[1]) {
+                    sum += x08;
+                    if (sum > 0xFFu) ovf = 1;
+                } else {
+                    sum += x08;
+                }
+                a = (uint8_t)sum;
+            }
+            if (ovf)
+                a = 0xFFu;
+            if (ovf || a >= m09) {       /* bra_C50B */
+                a = (uint8_t)(((uint8_t)(a - m09) >> 1) + 4u);
+            } else {
+                a = (uint8_t)(a + m09);
+                for (;;) {
+                    m0a >>= 1;
+                    if (m0a == 0u) break;
+                    a >>= 1;
+                }
+            }
+            rank = a;
+        }
+    }
+    B(0x53u) = rank;
+    B(0x45u) = 0x18u;                    /* ofs_001_C514 */
+    B(0x49u) = 1u;
+    B(0x40u) = 1u;
+    B(0x44u) = 0u;
+    return 0u;
 }
 
 /* ofs_CB3B_00 */

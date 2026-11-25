@@ -77,6 +77,33 @@ static void randomWorld(RaceWorld *w0, unsigned phase)
     *w0 = w;
 }
 
+static void randomEnterWorld(RaceWorld *w0)
+{
+    RaceWorld w;
+    unsigned b, i;
+    for (b = 0u; b < RACE_WORLD_BLOCK_COUNT; ++b)
+        for (i = 0u; i < kRaceWorldBlocks[b].length; ++i)
+            *raceWorldByte(&w, (unsigned)(kRaceWorldBlocks[b].base + i)) = nb();
+    W(0x41) = (uint8_t)((nb() & 3u) ? 3u : nb() % 14u);
+    W(0x43) = (uint8_t)(nb() % 6u);
+    W(0x46) = (uint8_t)(nb() & 1u);
+    W(0x3F2) = (uint8_t)((nb() % 5u) == 0u ? 1u : 0u);
+    W(0x3F8) = (uint8_t)(nb() % 9u);
+    W(0x68) = (uint8_t)(nb() % 4u);
+    W(0x69) = (uint8_t)(nb() % 0x40u);
+    W(0x6A) = (uint8_t)(nb() % 0x40u);
+    for (i = 0u; i < RACE_RECORD_BYTES; ++i)
+        W(0x580 + i) = (uint8_t)((nb() & 3u) ? (i % 3u == 0u ? nb() % 4u : nb() % 0x40u) : 0xFFu);
+    /* make equal / near records likely */
+    if ((nb() & 3u) == 0u) {
+        unsigned y = (unsigned)(W(0x43) % 5u) * 3u;
+        if (W(0x46)) y |= 0x10u;
+        if (W(0x3F2)) y += 0x23u;
+        if (y + 3u <= RACE_RECORD_BYTES) { W(0x580 + y) = W(0x68); W(0x581 + y) = W(0x69); W(0x582 + y) = (uint8_t)(W(0x6A) + (nb() % 3u) - 1u); }
+    }
+    *w0 = w;
+}
+
 int main(int argc, char **argv)
 {
     static Cpu6502 cpu;
@@ -89,6 +116,15 @@ int main(int argc, char **argv)
     if (fp == NULL || fread(cpu.prg, 1u, sizeof(cpu.prg), fp) != sizeof(cpu.prg)) return 2;
     fclose(fp);
     cpu6502_reset_state(&cpu);
+    {
+        uint8_t def[RACE_RECORD_BYTES];
+        memset(cpu.ram, 0, sizeof(cpu.ram));
+        cpu.a = cpu.x = cpu.y = 0u; cpu.sp = 0xFDu; cpu.p = 0x24u; cpu.cycles = 0u; cpu.bad_opcode = -1;
+        if (cpu6502_call(&cpu, 0xC1FDu, 200000u) != 0) { puts("FAIL oracle C1FD"); return 1; }
+        raceRecordsDefault(def);
+        if (memcmp(def, &cpu.ram[0x580], RACE_RECORD_BYTES) != 0) { puts("FAIL raceRecordsDefault != C1FD/C229"); return 1; }
+        puts("PASS: raceRecordsDefault matches C1FD/C229");
+    }
     for (it = 0u; it < n; ++it) {
         const unsigned phase = nb() & 3u;
         randomWorld(&w, phase);
@@ -104,6 +140,26 @@ int main(int argc, char **argv)
             return 1;
         }
         ++covered[phase];
+    }
+    {
+        unsigned ok = 0u, uns = 0u, ranks[256];
+        memset(ranks, 0, sizeof(ranks));
+        for (it = 0u; it < n; ++it) {
+            randomEnterWorld(&w);
+            before = w;
+            worldToRam(&w, &cpu);
+            cpu.a = cpu.x = cpu.y = 0u; cpu.sp = 0xFDu; cpu.p = 0x24u; cpu.cycles = 0u; cpu.bad_opcode = -1;
+            if (cpu6502_call(&cpu, 0xC485u, 2000000u) != 0) { puts("FAIL oracle enter run"); return 1; }
+            if (raceResultsEnter(&w) != 0u) { ++uns; continue; }
+            if (compareWorld(&w, &cpu, it) != 0) {
+                printf("  enter: $41=%02X $43=%02X $46=%02X $3F2=%02X $3F8=%02X cur=%02X%02X%02X\n",
+                       *raceWorldByte(&before,0x41), *raceWorldByte(&before,0x43), *raceWorldByte(&before,0x46), *raceWorldByte(&before,0x3F2), *raceWorldByte(&before,0x3F8),
+                       *raceWorldByte(&before,0x68), *raceWorldByte(&before,0x69), *raceWorldByte(&before,0x6A));
+                return 1;
+            }
+            ++ranks[W(0x53)]; ++ok;
+        }
+        printf("enter: %u matched (unsupported=%u) rank1=%u rank2=%u rank3+=%u\n", ok, uns, ranks[1], ranks[2], ok - ranks[1] - ranks[2]);
     }
     printf("coverage: CB3B=%u CB77=%u CBA4=%u CC6B=%u (unsupported=%u)\n", covered[0], covered[1], covered[2], covered[3], unsupported);
     printf("PASS: %u results-phase steps match the original code\n", it - unsupported);

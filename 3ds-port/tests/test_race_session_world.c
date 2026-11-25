@@ -88,7 +88,7 @@ int main(void)
     in.timer_0034 = 0x2Du;
     in.transition_counter_03F8 = 4u;
     in.transition_flag_0046 = 1u;
-    if (!nativeRaceSessionInitFirstCourse(&session, &in, &rng)) { puts("FAIL init"); return 1; }
+    if (!nativeRaceSessionInit(&session, &in, &rng)) { puts("FAIL init"); return 1; }
     nativeRaceSessionBuildWorld(&session, 0u, &world);
 
     /* $4015: all channels on after setup; pause mutes (CA71), unpause re-enables (CA5E). */
@@ -157,9 +157,16 @@ int main(void)
         puts("FAIL pressed Start did not toggle pause"); return 1;
     }
 
+    {
+    unsigned course, variant;
+    for (variant = 0u; variant < 10u; ++variant) {
+    course = variant % 5u;
+    in.multiplayer_flag = (uint8_t)(variant / 5u);
+    started = moved = 0u; mask = 0u;
     /* Resume the test in a fresh session so pause timing cannot mask movement. */
-    if (!nativeRaceSessionInitFirstCourse(&session, &in, &rng)) { puts("FAIL reinit"); return 1; }
-    nativeRaceSessionBuildWorld(&session, 0u, &world);
+    in.course_index_0043 = (uint8_t)course;
+    if (!nativeRaceSessionInit(&session, &in, &rng)) { puts("FAIL reinit"); return 1; }
+    nativeRaceSessionBuildWorld(&session, in.multiplayer_flag, &world);
     {
         int track_finished = 0;
         int finish_transition = 0;
@@ -174,20 +181,21 @@ int main(void)
                 break;
             }
         }
-        if (mask != 0u) { printf("FAIL unsupported mask %08X\n", (unsigned)mask); return 1; }
+        if (mask != 0u) {
+            printf("(course %u) ", course); printf("FAIL unsupported mask %08X\n", (unsigned)mask); return 1; }
         if (started == 0u || moved == 0u) {
             printf("FAIL race never started/moved (%u/%u)\n", started, moved); return 1;
         }
         if (!track_finished || !finish_transition) {
-            printf("FAIL first course did not complete (finished=%d transition=%d frame=%u columns=%lu)\n",
-                   track_finished, finish_transition, f,
+            printf("FAIL course %u did not complete (finished=%d transition=%d frame=%u columns=%lu)\n",
+                   course, track_finished, finish_transition, f,
                    (unsigned long)session.course_column_serial);
             return 1;
         }
         /* This serial counts live horizontal-scroll column updates, not
          * unique F4FF source records: the race can scroll through repeated
          * course data many times before the source finish gate is reached. */
-        if (session.course_column_serial < 1335u) {
+        if (session.course_column_serial < (course == 0u ? 1335u : 200u)) {
             printf("FAIL first-course runtime column updates=%lu (below 1335-record source pass)\n",
                    (unsigned long)session.course_column_serial);
             return 1;
@@ -199,6 +207,7 @@ int main(void)
         unsigned r, phase_seen = 0u, podium = 0u;
         *raceWorldByte(&world, 0x53u) = 1u;
         *raceWorldByte(&world, 0x4Bu) = 0u;
+        if (*raceWorldByte(&world, 0x43u) != course) { printf("FAIL course %u not in world\n", course); return 1; }
         if (*raceWorldByte(&world, 0x41u) != 3u) {
             printf("FAIL finish did not enter results state (41=%02X)\n", *raceWorldByte(&world, 0x41u));
             return 1;
@@ -217,8 +226,11 @@ int main(void)
             return 1;
         }
     }
+    printf("PASS: course %u mp=%u runs from start to source finish and results (columns=%lu frames=%u)\n", course, (unsigned)in.multiplayer_flag,
+           (unsigned long)session.course_column_serial, f + 1u);
+    }
+    }
     if (testF4ffObstacleCollision() != 0) return 1;
-    printf("PASS: native first course reached source finish transition (runtime column updates=%lu, frames=%u started=%u moved=%u)\n",
-           (unsigned long)session.course_column_serial, f + 1u, started, moved);
+    puts("PASS: all five courses complete natively.");
     return 0;
 }

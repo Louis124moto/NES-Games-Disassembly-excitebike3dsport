@@ -44,6 +44,10 @@ void nativeRaceSessionBuildWorld(const NativeRaceSession *session, uint8_t multi
     *raceWorldByte(world, 0x3BDu) = session->setup.countdown_limit_03BD;
     *raceWorldByte(world, 0x3BEu) = session->setup.countdown_index_03BE;
     *raceWorldByte(world, 0x41u) = 2u;
+    *raceWorldByte(world, 0x43u) = session->course;
+    *raceWorldByte(world, 0x4Bu) = session->flag_004B;
+    *raceWorldByte(world, 0x3F3u) = session->counter_03F3;
+    *raceWorldByte(world, 0x3F8u) = session->counter_03F8;
     *raceWorldByte(world, 0x46u) = session->setup.transition_flag_0046;
     /* C36C's $004A=1 excludes the human player (slot 0) from CED0 AI. */
     *raceWorldByte(world, 0x4Au) = session->setup.first_opponent_slot;

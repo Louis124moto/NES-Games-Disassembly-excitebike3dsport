@@ -1,16 +1,11 @@
 #include <string.h>
 #include "native_race_setup.h"
+#include "race_results.h"
 
 /* bank_FF.asm: tbl_C0B0, tbl_C0B4, tbl_C0B8 and ofs_001_C875_02_06. */
 static const uint8_t s_object_class[4] = { 0x09u, 0x0Bu, 0x0Du, 0x0Fu };
 static const uint8_t s_start_y[4] = { 0x0Eu, 0x1Au, 0x26u, 0x32u };
 static const uint8_t s_start_x[4] = { 0x38u, 0x48u, 0x58u, 0x68u };
-/* tbl_C091 at offsets 0 and $10: sub_CB13 for course index zero. */
-static const uint8_t s_course0_parameters[2][3] = {
-    { 0x01u, 0x10u, 0x00u },
-    { 0x01u, 0x18u, 0x00u }
-};
-
 /* Source sub_DFA2: unsigned 8-bit divide by ten, returning quotient/remainder. */
 static void split_decimal(uint8_t value, uint8_t *quotient, uint8_t *remainder)
 {
@@ -116,11 +111,15 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     unsigned int last;
     unsigned int half_lock_slot;
 
+    uint8_t seed[RACE_RECORD_BYTES];
+    const uint8_t *records;
+    unsigned record_index;
+
     if (out == 0 || in == 0 || rng == 0 || movement == 0 || states == 0)
         return 0;
-    /* C905 skips sub_C53A only while ram_0041 < $08. The first-course
-     * selector path enters this setup list with ram_0041 = $02. */
-    if (in->setup_index_0041 >= 0x08u || in->course_index_0043 != 0u)
+    /* C905 skips sub_C53A only while ram_0041 < $08; the selector path
+     * enters this setup list with ram_0041 = $02. */
+    if (in->setup_index_0041 >= 0x08u || in->course_index_0043 > 4u)
         return 0;
 
     memset(out, 0, sizeof(*out));
@@ -141,13 +140,30 @@ int nativeRaceSetupFirstCourse(NativeRaceSetupState *out,
     out->race_setup_state_03B0 = 0x80u;
     out->countdown_limit_03BD = 0xFFu;
     out->countdown_index_03BE = 0x02u;
-    memcpy(out->course_setup_parameters,
-           s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
-           sizeof(out->course_setup_parameters));
-    /* C92C/C53E: CB06 selects $0580+$23 for ram_03F2=1; C1FD copied
-     * the same tbl_C091 bytes to $05A3, so the first-course triplet matches. */
-    memcpy(out->race_object_parameters,
-           s_course0_parameters[in->transition_flag_0046 != 0u ? 1u : 0u],
+    /* C8E2: second pass of the last course shows the $03F3 counter. */
+    if (in->transition_flag_0046 != 0u && in->course_index_0043 == 4u) {
+        uint8_t quotient, remainder;
+        split_decimal(in->counter_03F3, &quotient, &remainder);
+        out->counter_visible = 1u;
+        out->counter_tiles[0] = 0x1Du;
+        out->counter_tiles[1] = 0xF8u;
+        out->counter_tiles[2] = quotient != 0u ? quotient : 0xFEu;
+        out->counter_tiles[3] = remainder;
+    }
+    /* C902: sub_C522 -> tbl_C091 row for this course/$0046. */
+    raceThresholdTriplet(in->course_index_0043, in->transition_flag_0046,
+                         out->course_setup_parameters);
+    /* C92C/C53E: the record at $0580 + CB06 ($23 more in multiplayer). */
+    if (in->records == 0) {
+        raceRecordsDefault(seed);
+        records = seed;
+    } else {
+        records = in->records;
+    }
+    record_index = raceRecordIndex(in->course_index_0043, in->transition_flag_0046,
+                                   (uint8_t)(in->multiplayer_flag != 0u));
+    if (record_index + 3u > RACE_RECORD_BYTES) return 0;
+    memcpy(out->race_object_parameters, &records[record_index],
            sizeof(out->race_object_parameters));
     build_first_course_hud_glyphs(out);
 

@@ -79,6 +79,9 @@ int main(void)
         assets.scenes[4].nametable[0] != 0x25u ||
         assets.scenes[5].nametable[0] != 0x26u ||
         assets.palettes[6][18u] != 6u ||
+        /* race palette = stream $12+course, overlaid by $17 where $17 writes */
+        assets.palettes[NATIVE_RACE_PALETTE_BASE + 2u][1u] != assets.palettes[5][1u] ||
+        assets.palettes[NATIVE_RACE_PALETTE_BASE + 2u][9u] != assets.palettes[5][9u] ||
         assets.palette_written[6][18u] != 1u) {
         puts("FAIL: native scene merge, CHR decode or palette selection mismatch");
         goto done;

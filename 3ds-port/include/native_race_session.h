@@ -25,11 +25,15 @@ typedef struct NativeRaceSession {
     BikeRaceCountdownRenderEvent countdown_render_event;
     uint8_t vertical_unsupported_mask;
     uint8_t sprite_unsupported_mask;
+    uint8_t course;                     /* ram_0043: 0..4 */
+    uint8_t flag_004B;
+    uint8_t counter_03F3;
+    uint8_t counter_03F8;
     uint8_t initialized;
 } NativeRaceSession;
 
-/* Compose the native equivalents of C869, C820, C875 and D0C6 for course 0. */
-int nativeRaceSessionInitFirstCourse(NativeRaceSession *session,
+/* Compose the native equivalents of C869, C820, C875 and D0C6 for the selected course (0..4). */
+int nativeRaceSessionInit(NativeRaceSession *session,
                                      const NativeRaceSetupInput *input,
                                      const NativeRngState *rng);
 

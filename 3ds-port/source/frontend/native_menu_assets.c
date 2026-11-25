@@ -167,7 +167,7 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
      * source palette preset 18, as in the existing front-end renderer. */
     {
         unsigned paletteIndex;
-        for (paletteIndex = 0u; paletteIndex < NATIVE_MENU_PALETTE_COUNT; ++paletteIndex) {
+        for (paletteIndex = 0u; paletteIndex < NATIVE_MENU_PRESET_COUNT; ++paletteIndex) {
             char filename[48];
             (void)snprintf(filename, sizeof(filename), "ppu_palette_%u.bin", paletteIndex + 12u);
             if (!makeAssetPath(path, sizeof(path), executablePath, filename) ||
@@ -182,6 +182,22 @@ int nativeMenuAssetsLoad(NativeMenuAssets *assets, const char *executablePath)
                 (void)snprintf(assets->error, sizeof(assets->error),
                                "Missing or invalid palette mask %u", paletteIndex + 12u);
                 goto fail;
+            }
+        }
+    }
+
+    /* Race setup list 2: C551 uploads palette $12+course, C5A3 then overlays
+     * palette $17 (only the entries each stream writes). */
+    {
+        unsigned course, i;
+        for (course = 0u; course < NATIVE_RACE_COURSE_COUNT; ++course) {
+            const unsigned set = NATIVE_RACE_PALETTE_BASE + course;
+            memcpy(assets->palettes[set], assets->palettes[course], 32u);
+            memcpy(assets->palette_written[set], assets->palette_written[course], 32u);
+            for (i = 0u; i < 32u; ++i) {
+                if (assets->palette_written[5][i] == 0u) continue;
+                assets->palettes[set][i] = assets->palettes[5][i];
+                assets->palette_written[set][i] = 1u;
             }
         }
     }

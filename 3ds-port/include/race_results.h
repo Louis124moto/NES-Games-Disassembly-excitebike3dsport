@@ -1,7 +1,10 @@
 #ifndef EXCITEBIKE_RACE_RESULTS_H
 #define EXCITEBIKE_RACE_RESULTS_H
 
+#include <stdint.h>
 #include "race_world.h"
+
+#define RACE_RECORD_BYTES 0x42u /* $0580-$05C1: widest record triplet read via CB06 */
 
 /*
  * Exact translation of the results-screen phase dispatcher sub_CB2C and its
@@ -18,5 +21,20 @@
  * left untouched.
  */
 unsigned raceResultsPhaseStep(RaceWorld *world);
+
+/*
+ * ofs_001_C485_03_05: result-state entry. Compares $0068-$006A with the saved
+ * record at $0580 + sub_CB06 index (updating it when faster), derives the
+ * rank/gate byte $0053 (sub_C522 thresholds, $03F8 scaling) and runs the
+ * C514 tail. Returns 1 if the record index leaves the modelled $0580 window.
+ */
+unsigned raceResultsEnter(RaceWorld *world);
+
+/* sub_C1FD/C229 power-on record seed (tbl_C091 twice, $05A0 = $0A). */
+void raceRecordsDefault(uint8_t out[RACE_RECORD_BYTES]);
+
+/* sub_CB06 record index and sub_C522 threshold triplet (course 0..4). */
+unsigned raceRecordIndex(uint8_t course, uint8_t flag46, uint8_t multiplayer);
+void raceThresholdTriplet(uint8_t course, uint8_t flag46, uint8_t out[3]);
 
 #endif

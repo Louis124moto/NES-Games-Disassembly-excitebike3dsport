@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "native_race_setup.h"
+#include "race_results.h"
 #include "cpu6502.h"
 
 static uint32_t random_state = 0xC8752026u;
@@ -38,15 +39,15 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
     NativeRngState rng;
     BikeMovementState movement;
     BikeStateMachineState states;
-    static const uint8_t course_parameters[2][3] = {
-        { 0x01u, 0x10u, 0x00u },
-        { 0x01u, 0x18u, 0x00u }
-    };
+    uint8_t records[RACE_RECORD_BYTES];
+    uint8_t expected_threshold[3];
+    uint8_t course = (uint8_t)(next_byte() % 5u);
     unsigned i;
     uint8_t mode = (uint8_t)(next_byte() & 1u);
     uint8_t transition = (uint8_t)(next_byte() & 1u);
     uint8_t timer = (uint8_t)(next_byte() & 0x7Fu);
     uint8_t counter = next_byte();
+    uint8_t counter3f3 = (uint8_t)(next_byte() % 100u);
     uint8_t counter40 = next_byte();
     uint8_t counter47 = next_byte();
 
@@ -67,6 +68,12 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
         return 1;
     }
 
+    /* Random saved records (as left in $0580 by the title/menu) instead of
+     * only the power-on seed, so every course/variant row is exercised. */
+    for (i = 0u; i < RACE_RECORD_BYTES; ++i) {
+        records[i] = (uint8_t)((next_byte() & 1u) ? cpu->ram[0x580u + i] : (next_byte() % 0x60u));
+        cpu->ram[0x580u + i] = records[i];
+    }
     for (i = 0u; i < sizeof(rng.bytes); ++i)
         cpu->ram[0x18u + i] = rng.bytes[i];
     /* Execute the original menu-selection tail at C36A. It derives
@@ -80,12 +87,13 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
     }
 
     cpu->ram[0x41u] = 0x02u; /* first-course C875 setup list */
-    cpu->ram[0x43u] = 0x00u; /* first course: tbl_ED3A stream zero */
+    cpu->ram[0x43u] = course;
     cpu->ram[0x46u] = transition;
     cpu->ram[0x34u] = timer;
     cpu->ram[0x40u] = counter40;
     cpu->ram[0x47u] = counter47;
     cpu->ram[0x3F8u] = counter;
+    cpu->ram[0x3F3u] = counter3f3;
     cpu->ram[0xE8u] = 0x3Fu;
     cpu->ram[0xE9u] = 0x1Fu;
     cpu->ram[0xEAu] = 0x25u;
@@ -99,11 +107,13 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
 
     nativeRaceSetupClearFirstCourseState(&movement, &states);
     input.multiplayer_flag = mode;
-    input.course_index_0043 = 0u;
+    input.course_index_0043 = course;
+    input.records = records;
     input.setup_index_0041 = 0x02u;
     input.transition_flag_0046 = transition;
     input.timer_0034 = timer;
     input.transition_counter_03F8 = counter;
+    input.counter_03F3 = counter3f3;
     input.setup_counter_0040 = counter40;
     input.setup_counter_0047 = counter47;
     if (!nativeRaceSetupFirstCourse(&setup, &input, &rng, &movement, &states)) {
@@ -128,10 +138,20 @@ static int run_case(Cpu6502 *cpu, unsigned vector)
     CHECK_EQ("player rider flag", setup.player_rider_present, cpu->ram[0x370u], vector);
 
     for (i = 0u; i < 3u; ++i) {
+        raceThresholdTriplet(course, transition, expected_threshold);
         CHECK_EQ("C522 course params", setup.course_setup_parameters[i],
-                 course_parameters[transition][i], vector);
+                 expected_threshold[i], vector);
         CHECK_EQ("C53E object params", setup.race_object_parameters[i],
                  cpu->ram[0x05u + i], vector);
+    }
+    if (transition != 0u && course == 4u) {
+        CHECK_EQ("counter visible", setup.counter_visible, 1u, vector);
+        CHECK_EQ("counter tile0", setup.counter_tiles[0], cpu->ram[0x304u], vector);
+        CHECK_EQ("counter tile1", setup.counter_tiles[1], cpu->ram[0x305u], vector);
+        CHECK_EQ("counter tile2", setup.counter_tiles[2], cpu->ram[0x306u], vector);
+        CHECK_EQ("counter tile3", setup.counter_tiles[3], cpu->ram[0x307u], vector);
+    } else {
+        CHECK_EQ("counter hidden", setup.counter_visible, 0u, vector);
     }
     CHECK_EQ("HUD first digit", setup.hud_glyphs[0], cpu->ram[0x3D1u], vector);
     CHECK_EQ("HUD second tens", setup.hud_glyphs[2], cpu->ram[0x3D3u], vector);
@@ -191,6 +211,6 @@ int main(int argc, char **argv)
     for (vector = 0u; vector < 2000u; ++vector)
         if (run_case(&cpu, vector) != 0) return 1;
 
-    puts("PASS: 2000 complete C875 first-course setup vectors match original ASM; player=0, opponents=1..3.");
+    puts("PASS: 2000 complete C875 setup vectors (all five courses) match original ASM; player=0, opponents=1..3.");
     return 0;
 }

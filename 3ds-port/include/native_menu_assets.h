@@ -5,7 +5,10 @@
 #include <stdint.h>
 
 #define NATIVE_MENU_SCENE_COUNT 7u
-#define NATIVE_MENU_PALETTE_COUNT 7u
+#define NATIVE_MENU_PRESET_COUNT 7u   /* source palette streams $12..$18 */
+#define NATIVE_RACE_PALETTE_BASE 7u   /* + course: $12+course, then $17 (setup list 2) */
+#define NATIVE_RACE_COURSE_COUNT 5u
+#define NATIVE_MENU_PALETTE_COUNT (NATIVE_RACE_PALETTE_BASE + NATIVE_RACE_COURSE_COUNT)
 #define NATIVE_MENU_SCENE_BYTES 4096u
 #define NATIVE_MENU_CHR_TILE_LIMIT 960u
 

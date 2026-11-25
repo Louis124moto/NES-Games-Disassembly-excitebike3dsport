@@ -103,7 +103,9 @@ int main(void)
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, 0) == 0, 43);
     in.setup_index_0041 = 2u;
     in.course_index_0043 = 1u;
-    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 53);
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 1, 53); /* all five courses */
+    in.course_index_0043 = 5u;
+    CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 54);
     in.course_index_0043 = 0u;
     in.setup_index_0041 = 8u;
     CHECK(nativeRaceSetupFirstCourse(&out, &in, &rng, &movement, &states) == 0, 44);

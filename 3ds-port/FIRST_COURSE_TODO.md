@@ -242,3 +242,12 @@ This is the execution order for completing the first playable race. A checked it
 - [x] (2026-11-24) Source pause now reaches the audio: the race world starts with $4015=$0F (C2E3), the pause code's $4015 writes (CA71 mute every paused frame after the 0x28-frame timer, CA5E re-enable) are forwarded to the synth via `audioSubmitApuEnable`, and the menu restores $0F. Regression: test_race_session_world (pause/unpause scenario, full race still reaches the finish in 34,370 frames).
 - [x] Sound driver (sub_F844), voice synth and the sub_D347 controller layer are ported and differentially tested (commits 7e5847f, 1b667b2); the former "original music" and "D347 input layer" open items are closed.
 - [ ] Still open and not verifiable in this environment: physical New 3DS run (rendering orientation, audio pacing, frame rate), fixed-frame visual comparison against NES reference captures, automatic course 2 (out of scope).
+
+## Courses 2-5 (all five source courses)
+
+- [x] `$0043` course index threaded through setup (`NativeRaceSetupInput.course_index_0043`), session, world (`$43/$4B/$3F3/$3F8`) and results; C875 setup (tbl_C091 row, `$0580+CB06` record, course-5 `$03F3` counter text at PPU `$2378`) differentially verified against the original for all five courses and both `$0046` variants.
+- [x] Records: `raceRecordsDefault` = C1FD/C229 power-on seed (oracle-verified); `raceResultsEnter` = exact sub_C485 (record compare/store, tbl_C091 threshold, `$03F8` rank scaling) verified over 100k random states.
+- [x] Race palette per course = stream `$12+course` overlaid by `$17` (setup list 2), instead of the title preset.
+- [x] After results the carried `$43/$46/$4B/$03F3/$03F8` feed the selector (CB3B bookkeeping), so the next course follows the source order.
+- [x] Full-race test runs every course (single and multiplayer) from start to results with no unsupported stage.
+- [ ] Not verifiable here: on-hardware run and visual comparison of courses 2-5 against NES captures; extractor EBCG export still covers course 1 only (not used at runtime).

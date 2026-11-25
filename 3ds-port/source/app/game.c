@@ -29,7 +29,7 @@ static NativeRngState s_raceRng;
 static int s_raceSessionReady;
 static int s_raceFinishLatched;
 static uint32_t s_raceUnsupportedMask;
-static uint8_t s_raceRecords[0x40];
+static uint8_t s_raceRecords[RACE_RECORD_BYTES];
 
 
 #define RACE_RECORD_PATH "sdmc:/3ds/excitebike/records.bin"
@@ -37,11 +37,17 @@ static uint8_t s_raceRecords[0x40];
 static void loadRaceRecords(void)
 {
     FILE *file;
-    memset(s_raceRecords, 0xFF, sizeof(s_raceRecords));
+    uint8_t saved[RACE_RECORD_BYTES];
+    size_t got = 0u, i;
+    raceRecordsDefault(s_raceRecords);              /* C1FD/C229 power-on seed */
     file = fopen(RACE_RECORD_PATH, "rb");
     if (file == NULL) return;
-    (void)fread(s_raceRecords, 1u, sizeof(s_raceRecords), file);
+    memset(saved, 0xFF, sizeof(saved));
+    got = fread(saved, 1u, sizeof(saved), file);
     fclose(file);
+    /* 0xFF marks bytes never written (older save files); keep the seed there. */
+    for (i = 0u; i < got; ++i)
+        if (saved[i] != 0xFFu) s_raceRecords[i] = saved[i];
 }
 
 static void saveRaceRecords(void)
@@ -61,53 +67,29 @@ static void applyRaceRecordsToWorld(void)
            s_raceRecords, sizeof(s_raceRecords));
 }
 
-/* C485/C53E/CB06: compare the race time with the saved record selected by
- * course, $0046 variant and multiplayer mode. The source's record window is
- * $0580-$05BF (64 bytes); one entry is three time bytes. */
+/* C485/C53A/CB06: exact result-state entry (raceResultsEnter) on the world's
+ * record window $0580-$05BF, which mirrors the saved records file. */
 static void buildRaceResultTimes(void)
 {
     uint8_t course = *raceWorldByte(&s_raceWorld, 0x43u);
-    uint8_t offset;
-    uint8_t *record;
-    uint8_t current[3];
-    unsigned i;
-    int comparison;
+    unsigned offset, i;
+    const uint8_t *record;
+    uint8_t before[sizeof(s_raceRecords)];
 
-    if (course > 4u) course = 0u;
-    offset = (uint8_t)(course * 3u);
-    if (*raceWorldByte(&s_raceWorld, 0x46u) != 0u)
-        offset = (uint8_t)(offset | 0x10u);
-    if (*raceWorldByte(&s_raceWorld, 0x3F2u) != 0u)
-        offset = (uint8_t)(offset + 0x23u);
-    if ((unsigned)offset + 3u > sizeof(s_raceRecords)) offset = 0u;
-
-    record = &s_raceRecords[offset];
-    current[0] = *raceWorldByte(&s_raceWorld, 0x68u);
-    current[1] = *raceWorldByte(&s_raceWorld, 0x69u);
-    current[2] = *raceWorldByte(&s_raceWorld, 0x6Au);
-    comparison = memcmp(record, current, sizeof(current));
-    if (comparison > 0) {
-        memcpy(record, current, sizeof(current));
-        memcpy(raceWorldByte(&s_raceWorld, 0x580u),
-               s_raceRecords, sizeof(s_raceRecords));
+    applyRaceRecordsToWorld();
+    memcpy(before, raceWorldByte(&s_raceWorld, 0x580u), sizeof(before));
+    if (raceResultsEnter(&s_raceWorld) != 0u)
+        *raceWorldByte(&s_raceWorld, 0x53u) = 4u;   /* outside the modelled window */
+    memcpy(s_raceRecords, raceWorldByte(&s_raceWorld, 0x580u), sizeof(s_raceRecords));
+    if (memcmp(before, s_raceRecords, sizeof(before)) != 0)
         saveRaceRecords();
-        *raceWorldByte(&s_raceWorld, 0x53u) = 1u;
-    } else if (comparison == 0) {
-        *raceWorldByte(&s_raceWorld, 0x53u) = 1u;
-    } else {
-        /* C4AD/C522: first-course threshold from tbl_C091. sub_CB13
-         * selects index 0, or index $10 when $0046 is set. Only the
-         * <4 / >=4 distinction affects the native first-course transition. */
-        const uint8_t threshold[3] = {
-            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Bu : 0x01u,
-            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Du : 0x10u,
-            *raceWorldByte(&s_raceWorld, 0x46u) != 0u ? 0x0Fu : 0x00u
-        };
-        const int thresholdComparison = memcmp(current, threshold, sizeof(current));
-        *raceWorldByte(&s_raceWorld, 0x53u) =
-            thresholdComparison <= 0 ? 2u : 4u;
-    }
 
+    /* CB06: record index = course*3 (0x20 for 5), |$10 if $0046, +$23 if $03F2. */
+    offset = course == 5u ? 0x20u : (unsigned)course * 3u;
+    if (course != 5u && *raceWorldByte(&s_raceWorld, 0x46u) != 0u) offset |= 0x10u;
+    if (*raceWorldByte(&s_raceWorld, 0x3F2u) != 0u) offset += 0x23u;
+    if (offset + 3u > sizeof(s_raceRecords)) offset = 0u;
+    record = &s_raceRecords[offset];
     s_raceSession.result_record_glyphs[0] = (uint8_t)(record[0] % 10u);
     s_raceSession.result_record_glyphs[1] = 0xFBu;
     s_raceSession.result_record_glyphs[2] = (uint8_t)(record[1] / 10u);
@@ -238,7 +220,13 @@ void gameUpdate(void)
                 /* The next course is not yet playable. Finish the original
                  * results interval, then expose the native selector. */
                 const uint8_t completedState = s_menu.source_state;
-                const uint8_t nextCourse = s_menu.selected_course;
+                /* CB3B advanced $0043/$0046/$004B/$03F3/$03F8 on the world; they are
+                 * plain RAM in the source and carry over to the selector. */
+                const uint8_t nextCourse = *raceWorldByte(&s_raceWorld, 0x43u);
+                const uint8_t carried0046 = *raceWorldByte(&s_raceWorld, 0x46u);
+                const uint8_t carried004B = *raceWorldByte(&s_raceWorld, 0x4Bu);
+                const uint8_t carried03F3 = *raceWorldByte(&s_raceWorld, 0x3F3u);
+                const uint8_t carried03F8 = *raceWorldByte(&s_raceWorld, 0x3F8u);
                 const uint8_t returnToTitle = (uint8_t)(completedState == 0u);
                 s_raceSession.result_active = 0u;
                 s_raceSession.result_podium_active = 0u;
@@ -249,6 +237,10 @@ void gameUpdate(void)
                 nativeMenuInit(&s_menu);
                 s_menu.selected_mode = s_raceMultiplayer;
                 s_menu.selected_course = nextCourse;
+                s_menu.transition_flag_0046 = carried0046;
+                s_menu.transition_flag_004B = carried004B;
+                s_menu.title_flag_03F3 = carried03F3;
+                s_menu.transition_counter_03F8 = carried03F8;
                 if (returnToTitle == 0u) {
                     s_menu.source_state = 1u;
                     s_menu.input.selection = nextCourse;
@@ -344,9 +336,13 @@ void gameUpdate(void)
         setupInput.timer_0034 = s_menu.transition_timer_0034;
         setupInput.countdown_timer_003C = 0u;
         setupInput.transition_counter_03F8 = s_menu.transition_counter_03F8;
+        setupInput.counter_03F3 = s_menu.title_flag_03F3;
+        setupInput.flag_004B = s_menu.transition_flag_004B;
+        setupInput.course_index_0043 = s_menu.selected_course;
+        setupInput.records = s_raceRecords;
         setupInput.setup_counter_0040 = 0u;
         setupInput.setup_counter_0047 = 0u;
-        if (nativeRaceSessionInitFirstCourse(&s_raceSession, &setupInput, &s_raceRng)) {
+        if (nativeRaceSessionInit(&s_raceSession, &setupInput, &s_raceRng)) {
             s_raceSessionReady = 1;
             s_raceFinishLatched = 0;
             s_raceUnsupportedMask = 0u;
@@ -354,12 +350,12 @@ void gameUpdate(void)
             nativeRaceSessionBuildWorld(&s_raceSession, s_raceMultiplayer, &s_raceWorld);
             applyRaceRecordsToWorld();
             nativeSceneRaceReset();
-            rendererPrintBottom("FIRST COURSE — NATIVE SIMULATION\n"
-                                "Native bike movement, opponent, collision and course-stream stages run.\n"
-                                "F4FF columns feed the native renderer; source time results, podium and timed transition are implemented.\n");
+            rendererPrintBottom("NATIVE RACE SIMULATION\n"
+                                "Native bike movement, opponents, collisions and course stream run.\n"
+                                "Results, podium and course progression follow the source.\n");
         } else {
-            rendererPrintBottom("FIRST COURSE — NATIVE SETUP FAILED\n"
-                                "Check the first-course setup input state.\n");
+            rendererPrintBottom("NATIVE RACE SETUP FAILED\n"
+                                "Check the race setup input state.\n");
         }
     }
 
